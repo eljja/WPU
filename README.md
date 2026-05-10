@@ -10,6 +10,16 @@ PyTorch reference implementation and research scaffold for a state-native
 execution model: worlds are represented as persistent objects, typed relations,
 time, uncertainty, events, deltas, and future branches.
 
+## Compute Context
+
+WPU is positioned as a proposed world-state processing architecture alongside
+CPU, GPU, TPU, NPU, and LPU designs. The intent is not to claim universal
+superiority, but to isolate a different execution target: persistent state,
+structured relations, sparse updates, temporal branches, and hierarchical
+memory.
+
+![WPU in the AI compute architecture landscape](docs/figures/wpu_compute_context.png)
+
 ## Core Thesis
 
 Token sequences can describe a world, but they do not make world-state
@@ -28,6 +38,15 @@ The current claim is intentionally conditional: WPU should help in regimes where
 persistent identity, local causal change, uncertainty, and branching dominate.
 The repository includes negative and mixed results where token/graph baselines
 remain stronger.
+
+## Hybrid Execution Architecture
+
+The v1 reference model implements WPU as event-driven sparse propagation with a
+dense tensor recompute fallback. A scheduler estimates the affected-state ratio,
+fanout, propagation depth, and branch complexity, then routes execution through
+sparse, hybrid, or dense paths.
+
+![WPU hybrid sparse-dense execution architecture](docs/figures/wpu_hybrid_architecture.png)
 
 ## Repository Layout
 

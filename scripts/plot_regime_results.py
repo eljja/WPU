@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=Path, default=Path("artifacts/regime_sweep_trained.csv"))
+    parser.add_argument("--input", type=Path, default=Path("artifacts/n_sweep_v1/regime_sweep.csv"))
     parser.add_argument("--output-dir", type=Path, default=Path("docs/figures"))
     parser.add_argument("--max-n", type=int, default=None)
     args = parser.parse_args()
@@ -55,7 +55,7 @@ def _plot_route_regime(rows: list[dict[str, str]], output: Path) -> None:
         axis.set_ylim(-0.05, 1.05)
         axis.grid(True, alpha=0.25)
     axes[0].set_ylabel("route ratio")
-    axes[-1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
+    axes[-1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=16)
     fig.suptitle("Routed WPU switches execution path as affected-state fraction changes")
     fig.tight_layout()
     fig.savefig(output, dpi=200, bbox_inches="tight")
@@ -77,7 +77,7 @@ def _plot_accuracy_work(rows: list[dict[str, str]], output: Path) -> None:
         "wpu-routed": "#7f5539",
         "wpu-sparse": "#e879f9",
     }
-    fig, axes = plt.subplots(1, 2, figsize=(11.2, 4.6), sharex=True)
+    fig, axes = plt.subplots(1, 2, figsize=(12.8, 4.6), sharex=True)
     for model in models:
         xs, ys, yerrs, works = [], [], [], []
         for n in ns:
@@ -121,7 +121,7 @@ def _plot_accuracy_work(rows: list[dict[str, str]], output: Path) -> None:
     axes[1].set_yscale("log")
     axes[1].set_ylabel("routed work proxy (log)")
     axes[1].set_title("Work proxy at B=3")
-    axes[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=8)
+    axes[1].legend(loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize=16)
     fig.suptitle("Accuracy and routed work across world size at B=3")
     fig.tight_layout()
     fig.savefig(output, dpi=200, bbox_inches="tight")

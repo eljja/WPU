@@ -1,6 +1,6 @@
 # WPU: World-State Processing Unit
 
-![WPU compute architecture overview](docs/figures/wpu_compute_architectures.svg)
+![WPU compute architecture overview](docs/figures/wpu_compute_architectures.png)
 
 This repository contains the first research prototype for **State Is All You
 Need** and the **World-State Processing Unit (WPU)** idea.

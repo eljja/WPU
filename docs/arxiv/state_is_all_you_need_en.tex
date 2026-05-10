@@ -116,15 +116,15 @@ starting point for stronger benchmarks rather than as final evidence.
 \draw[arrow] (t4) -- (t5);
 \node[align=center, font=\small] (tokcap) at (0,-1.15) {ordered evidence\\append / attend};
 
-\node[box, fill=green!8] (statetitle) at (7.0,1.35) {State Processor};
-\node[small] (cup) at (7.0,0) {cup};
+\node[box, fill=green!8] (statetitle) at (7.3,1.35) {State Processor};
+\node[small] (cup) at (7.3,0) {cup};
 \node[small] (hand) at (5.35,0) {hand};
-\node[small] (table) at (8.65,0) {table};
-\node[small] (edge) at (7.0,-1.15) {edge};
-\draw[arrow] (hand) -- node[above, font=\scriptsize] {near} (cup);
-\draw[arrow] (cup) -- node[above, font=\scriptsize] {on} (table);
-\draw[arrow] (cup) -- node[right, font=\scriptsize] {near} (edge);
-\node[align=center, font=\small] at (7.0,-2.15) {persistent entities\\patch / propagate};
+\node[small] (table) at (9.25,0) {table};
+\node[small] (edge) at (7.3,-1.35) {edge};
+\draw[arrow] (hand) -- node[above, pos=0.52, yshift=2pt, font=\scriptsize, fill=white, inner sep=1pt] {near} (cup);
+\draw[arrow] (cup) -- node[above, pos=0.52, yshift=2pt, font=\scriptsize, fill=white, inner sep=1pt] {on} (table);
+\draw[arrow] (cup) -- node[right, pos=0.55, xshift=2pt, font=\scriptsize, fill=white, inner sep=1pt] {near} (edge);
+\node[align=center, font=\small] at (7.3,-2.45) {persistent entities\\patch / propagate};
 \end{tikzpicture}
 }
 \caption{Token processing operates over ordered evidence. State processing

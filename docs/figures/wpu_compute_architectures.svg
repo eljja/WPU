@@ -1,192 +1,336 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
-  <title id="title">AI Compute Architectures: CPU vs GPU vs TPU vs NPU vs LPU vs WPU</title>
-  <desc id="desc">A schematic comparison of common AI compute architectures, emphasizing WPU as a world-state processor for objects, relations, deltas, propagation, branches, and sparse-dense routing.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1254" height="1254" viewBox="0 0 1254 1254" role="img" aria-labelledby="title desc">
+  <title id="title">WPU Architecture Schematic</title>
+  <desc id="desc">A World Processing Unit schematic showing world-state input, state memory, propagation scheduling, sparse propagation, dense recompute fallback, branching, rollout, hierarchical memory, and key WPU properties.</desc>
   <defs>
     <style>
-      .bg { fill: #fbfaf7; }
-      .title { font: 700 42px "Trebuchet MS", "Segoe UI", sans-serif; fill: #7aa2d6; letter-spacing: 1px; }
-      .subtitle { font: 700 28px "Trebuchet MS", "Segoe UI", sans-serif; fill: #4b4b4b; }
-      .panel-title { font: 700 30px "Trebuchet MS", "Segoe UI", sans-serif; fill: #202020; }
-      .label { font: 600 14px "Trebuchet MS", "Segoe UI", sans-serif; fill: #202020; }
-      .tiny { font: 500 11px "Trebuchet MS", "Segoe UI", sans-serif; fill: #353535; }
-      .micro { font: 600 9px "Trebuchet MS", "Segoe UI", sans-serif; fill: #353535; }
-      .panel { fill: #f8fbff; stroke: #8ab1d6; stroke-width: 2; }
-      .panel-green { fill: #f6fbf6; stroke: #8ac19b; stroke-width: 2; }
-      .panel-yellow { fill: #fffaf0; stroke: #d7b46a; stroke-width: 2; }
-      .panel-purple { fill: #fbf7ff; stroke: #b89ddc; stroke-width: 2; }
-      .box { fill: #ffffff; stroke: #6e7a87; stroke-width: 1.4; }
-      .box-blue { fill: #dff0ff; stroke: #6aa6d8; stroke-width: 1.4; }
-      .box-green { fill: #dff5e5; stroke: #74b989; stroke-width: 1.4; }
-      .box-yellow { fill: #fff1c9; stroke: #d8ad42; stroke-width: 1.4; }
-      .box-red { fill: #ffe4db; stroke: #d98573; stroke-width: 1.4; }
-      .box-purple { fill: #eee6fa; stroke: #a88bd5; stroke-width: 1.4; }
-      .chip { fill: #ffffff; stroke: #2c6f3e; stroke-width: 3; }
-      .wire { stroke: #697586; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
-      .wire-soft { stroke: #95a2af; stroke-width: 1.2; fill: none; stroke-dasharray: 4 4; }
-      .grid { fill: #cfd5db; }
-      .grid-hot { fill: #7bc68d; }
-      .core { fill: #dff0ff; stroke: #5193c8; stroke-width: 1; }
-      .wpu-core { fill: #e3f7df; stroke: #4f9d64; stroke-width: 1.4; }
-      .delta { fill: #fff3cf; stroke: #c99325; stroke-width: 1.4; }
-      .route { fill: #eaf0ff; stroke: #748dd7; stroke-width: 1.4; }
-      .branch { fill: #f1e6ff; stroke: #9a76d2; stroke-width: 1.4; }
+      .bg { fill: #fbfaf6; }
+      .title { font-family: "Trebuchet MS", "Aptos Display", sans-serif; font-size: 78px; font-weight: 800; fill: #3d74c7; letter-spacing: 2px; }
+      .subtitle { font-family: "Trebuchet MS", "Aptos", sans-serif; font-size: 31px; font-weight: 800; fill: #0b2d63; letter-spacing: 1px; }
+      .tagline { font-family: "Aptos", "Segoe UI", sans-serif; font-size: 19px; font-weight: 600; fill: #3c3c3c; }
+      .heading { font-family: "Trebuchet MS", "Aptos", sans-serif; font-size: 26px; font-weight: 800; letter-spacing: 1px; }
+      .subheading { font-family: "Trebuchet MS", "Aptos", sans-serif; font-size: 19px; font-weight: 800; }
+      .body { font-family: "Aptos", "Segoe UI", sans-serif; font-size: 14px; fill: #1e2633; }
+      .small { font-family: "Aptos", "Segoe UI", sans-serif; font-size: 12px; fill: #1e2633; }
+      .tiny { font-family: "Aptos", "Segoe UI", sans-serif; font-size: 11px; fill: #1e2633; }
+      .caption { font-family: "Aptos", "Segoe UI", sans-serif; font-size: 16px; font-weight: 700; fill: #1e2633; }
+      .main-frame { fill: #ffffff; stroke: #123c7a; stroke-width: 2.5; }
+      .panel-blue { fill: #f2f8ff; stroke: #4d83d4; stroke-width: 1.8; }
+      .panel-green { fill: #f2fbf0; stroke: #3f9346; stroke-width: 1.8; }
+      .panel-purple { fill: #faf6ff; stroke: #8f65c9; stroke-width: 1.8; }
+      .panel-gold { fill: #fff9e9; stroke: #c98212; stroke-width: 1.8; }
+      .panel-red { fill: #fff5f3; stroke: #d86a55; stroke-width: 1.5; }
+      .panel-line { fill: #ffffff; stroke: #2e5f9f; stroke-width: 1.4; }
+      .soft-line { fill: none; stroke: #5c6b7a; stroke-width: 1.4; }
+      .arrow { stroke: #313b46; stroke-width: 1.7; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #b88429; stroke-width: 1.2; fill: none; stroke-dasharray: 5 4; }
+      .green-text { fill: #1d5f2a; }
+      .blue-text { fill: #123c7a; }
+      .purple-text { fill: #432163; }
+      .gold-text { fill: #744400; }
+      .side-title { font-family: "Trebuchet MS", "Aptos", sans-serif; font-size: 27px; font-weight: 800; fill: #6c3f0c; }
+      .side-label { font-family: "Aptos", "Segoe UI", sans-serif; font-size: 18px; font-weight: 700; fill: #27272a; }
+      .divider { stroke: #e2b75f; stroke-width: 1.2; stroke-dasharray: 4 4; }
     </style>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#697586"/>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#313b46"/>
     </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#123c7a" flood-opacity="0.12"/>
+    </filter>
   </defs>
 
-  <rect class="bg" width="1200" height="780"/>
-  <text class="title" x="600" y="54" text-anchor="middle">6 AI Compute Architectures</text>
-  <text class="subtitle" x="600" y="92" text-anchor="middle">CPU vs GPU vs TPU vs NPU vs LPU vs WPU</text>
+  <rect class="bg" x="0" y="0" width="1254" height="1254"/>
 
-  <!-- CPU -->
-  <rect class="panel-green" x="18" y="128" rx="18" ry="18" width="360" height="300"/>
-  <text class="panel-title" x="120" y="174">CPU</text>
-  <rect class="chip" x="58" y="156" width="42" height="42" rx="5"/>
-  <g transform="translate(44 142)">
-    <g stroke="#2c6f3e" stroke-width="3">
-      <line x1="20" y1="0" x2="20" y2="12"/><line x1="30" y1="0" x2="30" y2="12"/><line x1="40" y1="0" x2="40" y2="12"/>
-      <line x1="20" y1="70" x2="20" y2="82"/><line x1="30" y1="70" x2="30" y2="82"/><line x1="40" y1="70" x2="40" y2="82"/>
-      <line x1="0" y1="20" x2="12" y2="20"/><line x1="0" y1="30" x2="12" y2="30"/><line x1="0" y1="40" x2="12" y2="40"/>
-      <line x1="70" y1="20" x2="82" y2="20"/><line x1="70" y1="30" x2="82" y2="30"/><line x1="70" y1="40" x2="82" y2="40"/>
-    </g>
-  </g>
-  <rect class="box-green" x="38" y="216" rx="8" width="120" height="86"/>
-  <text class="label" x="98" y="252" text-anchor="middle">Control</text>
-  <text class="tiny" x="98" y="275" text-anchor="middle">branching</text>
+  <text class="title" x="627" y="66" text-anchor="middle">WPU</text>
+  <text class="subtitle" x="627" y="102" text-anchor="middle">World Processing Unit / World-State Processing Unit</text>
+  <text class="tagline" x="627" y="130" text-anchor="middle">State-based, sparse-first, dense-when-needed architecture</text>
+
+  <rect class="main-frame" x="30" y="140" width="940" height="1020" rx="18" filter="url(#shadow)"/>
+
+  <!-- World-state input -->
+  <rect class="panel-blue" x="185" y="150" width="650" height="82" rx="8"/>
+  <circle cx="274" cy="190" r="29" fill="#9bd4ec" stroke="#1f5f99" stroke-width="2"/>
+  <path d="M255 184 C266 176 274 176 281 184 C290 194 286 204 274 211 C262 203 251 199 255 184Z" fill="#74b86f" stroke="#356f38" stroke-width="1"/>
+  <path d="M284 167 C298 174 304 186 299 199" class="soft-line"/>
+  <circle cx="234" cy="170" r="5" fill="#ffd166" stroke="#6b4b11"/>
+  <circle cx="320" cy="168" r="5" fill="#ffd166" stroke="#6b4b11"/>
+  <circle cx="235" cy="214" r="5" fill="#ef6f86" stroke="#672235"/>
+  <circle cx="318" cy="214" r="5" fill="#8ecae6" stroke="#21556b"/>
+  <path d="M241 173 L253 181 M302 178 L315 170 M246 211 L255 202 M299 202 L313 212" class="soft-line"/>
+  <text class="heading blue-text" x="410" y="178">World-State Input</text>
+  <text class="body" x="410" y="201" font-style="italic">S = {(o_i, a_i, r_ij, t, p)}</text>
+  <text class="body" x="365" y="223">objects, attributes, relations, time, uncertainty</text>
+  <path class="arrow" d="M500 232 L500 249"/>
+
+  <!-- State memory layer -->
+  <rect class="panel-green" x="90" y="250" width="825" height="135" rx="9"/>
+  <text class="heading green-text" x="502" y="278" text-anchor="middle">State Memory Layer</text>
   <g>
-    <rect class="core" x="190" y="216" rx="8" width="58" height="48"/><text class="tiny" x="219" y="245" text-anchor="middle">ALU</text>
-    <rect class="core" x="265" y="216" rx="8" width="58" height="48"/><text class="tiny" x="294" y="245" text-anchor="middle">ALU</text>
-    <rect class="core" x="190" y="280" rx="8" width="58" height="48"/><text class="tiny" x="219" y="309" text-anchor="middle">ALU</text>
-    <rect class="core" x="265" y="280" rx="8" width="58" height="48"/><text class="tiny" x="294" y="309" text-anchor="middle">ALU</text>
+    <rect class="panel-line" x="100" y="285" width="145" height="92" rx="7" stroke="#2e7d32"/>
+    <text class="subheading green-text" x="172" y="307" text-anchor="middle">Object Store</text>
+    <ellipse cx="150" cy="325" rx="18" ry="7" fill="#e9eef2" stroke="#4b5563"/>
+    <rect x="132" y="325" width="36" height="33" fill="#e9eef2" stroke="#4b5563"/>
+    <ellipse cx="150" cy="358" rx="18" ry="7" fill="#e9eef2" stroke="#4b5563"/>
+    <rect x="190" y="328" width="15" height="15" fill="#93c47d" stroke="#2e7d32"/>
+    <rect x="208" y="345" width="15" height="15" fill="#8ecae6" stroke="#2e5f9f"/>
+    <rect x="180" y="349" width="15" height="15" fill="#8ecae6" stroke="#2e5f9f"/>
   </g>
-  <text class="tiny" x="278" y="190" text-anchor="middle">Scalar + SIMD</text>
-  <rect class="box-purple" x="38" y="342" rx="7" width="302" height="38"/><text class="label" x="189" y="366" text-anchor="middle">L1 / L2 / L3 Cache</text>
-  <path class="wire" d="M189 380 L189 402"/>
-  <rect class="box-red" x="38" y="402" rx="7" width="302" height="36"/><text class="label" x="189" y="426" text-anchor="middle">DRAM (off-chip main memory)</text>
+  <g>
+    <rect class="panel-line" x="260" y="285" width="145" height="92" rx="7" stroke="#2e7d32"/>
+    <text class="subheading green-text" x="332" y="307" text-anchor="middle">Relation Graph</text>
+    <path d="M300 345 L325 324 L350 342 L376 322 M325 324 L338 360 M300 345 L338 360" class="soft-line"/>
+    <circle cx="300" cy="345" r="7" fill="#93c47d" stroke="#2e7d32"/>
+    <circle cx="325" cy="324" r="7" fill="#93c47d" stroke="#2e7d32"/>
+    <circle cx="350" cy="342" r="7" fill="#ef6f86" stroke="#672235"/>
+    <circle cx="376" cy="322" r="7" fill="#8ecae6" stroke="#2e5f9f"/>
+    <circle cx="338" cy="360" r="7" fill="#93c47d" stroke="#2e7d32"/>
+  </g>
+  <g>
+    <rect class="panel-line" x="420" y="285" width="145" height="92" rx="7" stroke="#2e7d32"/>
+    <text class="subheading green-text" x="492" y="307" text-anchor="middle">Temporal Buffer</text>
+    <circle cx="493" cy="339" r="21" fill="#edf6ff" stroke="#2e5f9f" stroke-width="1.6"/>
+    <path d="M493 322 L493 339 L507 348" class="soft-line"/>
+    <path d="M450 364 L535 364" stroke="#64748b" stroke-width="1.4" stroke-dasharray="8 6"/>
+    <circle cx="460" cy="364" r="4" fill="#8ecae6"/><circle cx="492" cy="364" r="4" fill="#8ecae6"/><circle cx="525" cy="364" r="4" fill="#8ecae6"/>
+  </g>
+  <g>
+    <rect class="panel-line" x="580" y="285" width="145" height="92" rx="7" stroke="#2e7d32"/>
+    <text class="subheading green-text" x="652" y="307" text-anchor="middle">Uncertainty Store</text>
+    <path d="M604 358 C622 355 627 325 645 325 C666 325 669 358 699 358" fill="#bde0fe" stroke="#2e5f9f" stroke-width="1.4"/>
+    <path d="M646 358 C663 354 666 326 681 326 C696 326 703 351 715 354" fill="none" stroke="#2e5f9f" stroke-width="1.4" stroke-dasharray="6 4"/>
+  </g>
+  <g>
+    <rect class="panel-line" x="740" y="285" width="165" height="92" rx="7" stroke="#2e7d32"/>
+    <text class="subheading green-text" x="822" y="307" text-anchor="middle">Branch Delta Store</text>
+    <path d="M823 322 L798 344 L823 344 L850 344 M798 344 L780 362 M823 344 L822 362 M850 344 L870 362" class="soft-line"/>
+    <circle cx="823" cy="322" r="6" fill="#8ecae6" stroke="#2e5f9f"/>
+    <circle cx="798" cy="344" r="6" fill="#8ecae6" stroke="#2e5f9f"/>
+    <circle cx="850" cy="344" r="6" fill="#8ecae6" stroke="#2e5f9f"/>
+    <path d="M850 344 C864 336 877 340 886 350" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4 4"/>
+  </g>
+  <path class="arrow" d="M500 385 L500 405"/>
 
-  <!-- GPU -->
-  <rect class="panel" x="622" y="128" rx="18" ry="18" width="560" height="300"/>
-  <text class="panel-title" x="987" y="174">GPU</text>
-  <rect class="chip" x="930" y="150" width="42" height="42" rx="5" style="stroke:#6b6fc8"/>
-  <text class="tiny" x="760" y="174" text-anchor="middle">SIMT parallel processing</text>
-  <g transform="translate(664 210)">
-    <rect class="box-yellow" x="0" y="0" rx="8" width="190" height="160"/>
-    <text class="label" x="95" y="22" text-anchor="middle">Streaming Multiprocessor</text>
-    <rect class="box" x="22" y="38" width="146" height="20" rx="4"/><text class="micro" x="95" y="52" text-anchor="middle">Warp Scheduler(s)</text>
-    <rect class="box" x="22" y="64" width="146" height="20" rx="4"/><text class="micro" x="95" y="78" text-anchor="middle">Register File</text>
-    <g transform="translate(28 94)">
-      <rect class="core" x="0" y="0" width="42" height="32" rx="4"/><text class="micro" x="21" y="19" text-anchor="middle">CUDA</text>
-      <rect class="core" x="54" y="0" width="42" height="32" rx="4"/><text class="micro" x="75" y="19" text-anchor="middle">CUDA</text>
-      <rect class="core" x="108" y="0" width="42" height="32" rx="4"/><text class="micro" x="129" y="19" text-anchor="middle">CUDA</text>
-      <rect class="core" x="0" y="42" width="42" height="32" rx="4"/><text class="micro" x="21" y="61" text-anchor="middle">CUDA</text>
-      <rect class="core" x="54" y="42" width="42" height="32" rx="4"/><text class="micro" x="75" y="61" text-anchor="middle">CUDA</text>
-      <rect class="core" x="108" y="42" width="42" height="32" rx="4"/><text class="micro" x="129" y="61" text-anchor="middle">CUDA</text>
+  <!-- Event/frontier -->
+  <rect class="panel-purple" x="90" y="405" width="825" height="50" rx="8"/>
+  <circle cx="166" cy="430" r="20" fill="#ede9fe" stroke="#8f65c9" stroke-width="1.6"/>
+  <path d="M170 412 L157 433 L168 433 L160 448 L181 425 L169 425 Z" fill="#6d3bbd"/>
+  <text class="heading purple-text" x="502" y="429" text-anchor="middle">Event &amp; Frontier Generator</text>
+  <text class="small" x="502" y="448" text-anchor="middle">detect changed objects and initialize affected set</text>
+  <path class="arrow" d="M500 455 L500 475"/>
+
+  <!-- Scheduler -->
+  <rect class="panel-gold" x="90" y="475" width="825" height="115" rx="8"/>
+  <text class="heading gold-text" x="502" y="502" text-anchor="middle">Propagation Scheduler (Core)</text>
+  <rect x="230" y="508" width="250" height="52" rx="7" fill="#fffef8" stroke="#c98212" stroke-width="1.6"/>
+  <text class="body" x="355" y="541" text-anchor="middle" font-style="italic" font-size="22">rho = (DeltaN * k^h * B) / N</text>
+  <text class="body" x="540" y="524">affected ratio</text>
+  <text class="body" x="540" y="544">fanout</text>
+  <text class="body" x="540" y="564">propagation depth</text>
+  <text class="body" x="710" y="524">branch count</text>
+  <text class="body" x="710" y="544">uncertainty growth</text>
+  <circle cx="530" cy="520" r="2.5"/><circle cx="530" cy="540" r="2.5"/><circle cx="530" cy="560" r="2.5"/>
+  <circle cx="700" cy="520" r="2.5"/><circle cx="700" cy="540" r="2.5"/>
+  <rect x="215" y="566" width="585" height="18" rx="4" fill="#fffdf7" stroke="#c98212" stroke-width="1" stroke-dasharray="5 3"/>
+  <text class="small" x="316" y="580" text-anchor="middle">Sparse if rho &lt; 0.05</text>
+  <text class="small" x="507" y="580" text-anchor="middle">Hybrid if 0.05-0.25</text>
+  <text class="small" x="700" y="580" text-anchor="middle">Dense if rho &gt; 0.25</text>
+  <path class="arrow" d="M360 590 L280 610"/>
+  <path class="arrow" d="M650 590 L755 610"/>
+
+  <!-- Sparse propagation path -->
+  <rect class="panel-green" x="70" y="610" width="360" height="250" rx="8"/>
+  <path d="M96 620 L121 607 L134 626 L113 642 Z" fill="#dff3d8" stroke="#2e7d32"/>
+  <text class="heading green-text" x="250" y="634" text-anchor="middle">Sparse Propagation Path</text>
+  <g>
+    <rect x="95" y="642" width="310" height="62" rx="6" fill="#ffffff" stroke="#3f9346" stroke-width="1.2"/>
+    <circle cx="116" cy="674" r="14" fill="#2e7d32"/><text class="caption" x="116" y="680" text-anchor="middle" fill="#fff">1</text>
+    <path d="M168 681 L195 662 L220 681 M195 662 L196 697 M168 681 L196 697" class="soft-line"/>
+    <circle cx="168" cy="681" r="6" fill="#93c47d" stroke="#2e7d32"/><circle cx="195" cy="662" r="6" fill="#8ecae6" stroke="#2e5f9f"/><circle cx="220" cy="681" r="6" fill="#93c47d" stroke="#2e7d32"/><circle cx="196" cy="697" r="6" fill="#93c47d" stroke="#2e7d32"/>
+    <text class="subheading green-text" x="245" y="664">Graph Engine</text>
+    <text class="small" x="245" y="681">neighbor fetch</text>
+    <text class="small" x="245" y="696">relation lookup</text>
+  </g>
+  <g>
+    <rect x="95" y="710" width="310" height="62" rx="6" fill="#ffffff" stroke="#3f9346" stroke-width="1.2"/>
+    <circle cx="116" cy="741" r="14" fill="#2e7d32"/><text class="caption" x="116" y="747" text-anchor="middle" fill="#fff">2</text>
+    <circle cx="176" cy="740" r="21" fill="#e7f0f8" stroke="#4b5563" stroke-width="1.4"/>
+    <path d="M176 710 L176 722 M176 758 L176 770 M146 740 L158 740 M194 740 L206 740 M155 719 L164 728 M188 752 L197 761 M155 761 L164 752 M188 728 L197 719" class="soft-line"/>
+    <text class="subheading green-text" x="245" y="732">Local Update Engine</text>
+    <text class="small" x="245" y="749">attribute update</text>
+    <text class="small" x="245" y="764">partial recompute</text>
+  </g>
+  <g>
+    <rect x="95" y="778" width="310" height="62" rx="6" fill="#ffffff" stroke="#3f9346" stroke-width="1.2"/>
+    <circle cx="116" cy="809" r="14" fill="#2e7d32"/><text class="caption" x="116" y="815" text-anchor="middle" fill="#fff">3</text>
+    <path d="M158 797 L145 784 M158 797 L144 797 M186 797 L199 784 M186 797 L200 797 M158 819 L145 832 M158 819 L144 819 M186 819 L199 832 M186 819 L200 819" stroke="#2e5f9f" stroke-width="2" fill="none"/>
+    <text class="subheading green-text" x="245" y="800">Frontier Expansion</text>
+    <text class="small" x="245" y="817">selective propagation</text>
+    <text class="small" x="245" y="832">threshold filtering</text>
+  </g>
+
+  <!-- Dense recompute path -->
+  <rect class="panel-blue" x="575" y="610" width="360" height="250" rx="8"/>
+  <rect x="610" y="618" width="23" height="23" fill="#bde0fe" stroke="#2e5f9f"/><rect x="626" y="631" width="23" height="23" fill="#bde0fe" stroke="#2e5f9f"/>
+  <text class="heading blue-text" x="755" y="634" text-anchor="middle">Dense Recompute Path</text>
+  <g>
+    <rect x="600" y="642" width="310" height="62" rx="6" fill="#ffffff" stroke="#4d83d4" stroke-width="1.2"/>
+    <circle cx="621" cy="674" r="14" fill="#2e5f9f"/><text class="caption" x="621" y="680" text-anchor="middle" fill="#fff">1</text>
+    <rect x="664" y="659" width="20" height="20" fill="#bde0fe" stroke="#2e5f9f"/><rect x="684" y="669" width="20" height="20" fill="#8ecae6" stroke="#2e5f9f"/><rect x="644" y="669" width="20" height="20" fill="#8ecae6" stroke="#2e5f9f"/>
+    <text class="subheading blue-text" x="735" y="664">State -&gt; Tensor Projection</text>
+    <text class="small" x="735" y="681">graph embedding</text>
+    <text class="small" x="735" y="696">regional tensorization</text>
+  </g>
+  <g>
+    <rect x="600" y="710" width="310" height="62" rx="6" fill="#ffffff" stroke="#4d83d4" stroke-width="1.2"/>
+    <circle cx="621" cy="741" r="14" fill="#2e5f9f"/><text class="caption" x="621" y="747" text-anchor="middle" fill="#fff">2</text>
+    <g fill="#76a9ea">
+      <rect x="655" y="727" width="10" height="10"/><rect x="671" y="727" width="10" height="10"/><rect x="687" y="727" width="10" height="10"/>
+      <rect x="655" y="743" width="10" height="10"/><rect x="671" y="743" width="10" height="10"/><rect x="687" y="743" width="10" height="10"/>
+      <rect x="655" y="759" width="10" height="10"/><rect x="671" y="759" width="10" height="10"/><rect x="687" y="759" width="10" height="10"/>
     </g>
+    <text class="subheading blue-text" x="735" y="732">Tensor Compute Engine</text>
+    <text class="small" x="735" y="749">GEMM / attention</text>
+    <text class="small" x="735" y="764">global consistency update</text>
   </g>
-  <g transform="translate(896 210)">
-    <rect class="box-yellow" x="0" y="0" rx="8" width="190" height="160"/>
-    <text class="label" x="95" y="22" text-anchor="middle">Streaming Multiprocessor</text>
-    <rect class="box" x="22" y="38" width="146" height="20" rx="4"/><text class="micro" x="95" y="52" text-anchor="middle">Warp Scheduler(s)</text>
-    <rect class="box" x="22" y="64" width="146" height="20" rx="4"/><text class="micro" x="95" y="78" text-anchor="middle">Register File</text>
-    <g transform="translate(28 94)">
-      <rect class="core" x="0" y="0" width="42" height="32" rx="4"/><text class="micro" x="21" y="19" text-anchor="middle">CUDA</text>
-      <rect class="core" x="54" y="0" width="42" height="32" rx="4"/><text class="micro" x="75" y="19" text-anchor="middle">CUDA</text>
-      <rect class="core" x="108" y="0" width="42" height="32" rx="4"/><text class="micro" x="129" y="19" text-anchor="middle">CUDA</text>
-      <rect class="core" x="0" y="42" width="42" height="32" rx="4"/><text class="micro" x="21" y="61" text-anchor="middle">CUDA</text>
-      <rect class="core" x="54" y="42" width="42" height="32" rx="4"/><text class="micro" x="75" y="61" text-anchor="middle">CUDA</text>
-      <rect class="core" x="108" y="42" width="42" height="32" rx="4"/><text class="micro" x="129" y="61" text-anchor="middle">CUDA</text>
+  <g>
+    <rect x="600" y="778" width="310" height="62" rx="6" fill="#ffffff" stroke="#4d83d4" stroke-width="1.2"/>
+    <circle cx="621" cy="809" r="14" fill="#2e5f9f"/><text class="caption" x="621" y="815" text-anchor="middle" fill="#fff">3</text>
+    <path d="M679 790 L654 815 L704 815 Z" fill="#dbeafe" stroke="#2e5f9f" stroke-width="1.3"/>
+    <circle cx="679" cy="790" r="6" fill="#8ecae6" stroke="#2e5f9f"/><circle cx="654" cy="815" r="6" fill="#8ecae6" stroke="#2e5f9f"/><circle cx="704" cy="815" r="6" fill="#8ecae6" stroke="#2e5f9f"/>
+    <text class="subheading blue-text" x="735" y="800">State Reconstruction</text>
+    <text class="small" x="735" y="817">tensor -&gt; state graph</text>
+    <text class="small" x="735" y="832">state synchronization</text>
+  </g>
+  <path class="arrow" d="M250 860 L360 875"/>
+  <path class="arrow" d="M755 860 L640 875"/>
+
+  <!-- Branch manager -->
+  <rect class="panel-purple" x="170" y="875" width="655" height="60" rx="8"/>
+  <path d="M224 887 L206 910 L235 910 M206 910 L194 926 M235 910 L248 926" class="soft-line"/>
+  <circle cx="224" cy="887" r="5" fill="#c4b5fd" stroke="#432163"/><circle cx="206" cy="910" r="5" fill="#c4b5fd" stroke="#432163"/><circle cx="235" cy="910" r="5" fill="#c4b5fd" stroke="#432163"/>
+  <text class="heading purple-text" x="498" y="899" text-anchor="middle">Branch &amp; Uncertainty Manager</text>
+  <text class="small" x="310" y="920">multi-hypothesis branches</text>
+  <text class="small" x="495" y="920">probability update</text>
+  <text class="small" x="650" y="920">base state + delta branches</text>
+  <path class="arrow" d="M500 935 L500 945"/>
+
+  <!-- Rollout -->
+  <rect class="panel-blue" x="120" y="945" width="740" height="62" rx="8"/>
+  <circle cx="180" cy="976" r="25" fill="#eef6ff" stroke="#2e5f9f" stroke-width="1.6"/>
+  <path d="M164 959 L173 968 M196 959 L188 968 M180 951 L180 963 M160 984 L172 984" class="soft-line"/>
+  <path d="M180 976 C196 976 202 993 190 1002" fill="none" stroke="#2e5f9f" stroke-width="2"/>
+  <text class="heading blue-text" x="430" y="973" text-anchor="middle">Temporal / Rollout Engine</text>
+  <text class="body" x="430" y="998" text-anchor="middle" font-style="italic">State(t) -&gt; State(t+1) -&gt; ... -&gt; State(t+k)</text>
+  <text class="small" x="650" y="970">action-conditioned simulation</text>
+  <text class="small" x="650" y="987">future branching rollout</text>
+  <text class="small" x="650" y="1004">causal consequence tracking</text>
+  <path class="arrow" d="M500 1007 L500 1020"/>
+
+  <!-- Hierarchical memory -->
+  <rect class="panel-blue" x="45" y="1020" width="910" height="125" rx="10"/>
+  <text class="heading blue-text" x="500" y="1044" text-anchor="middle">Hierarchical Memory</text>
+  <g>
+    <rect class="panel-green" x="70" y="1055" width="260" height="76" rx="8"/>
+    <rect x="98" y="1076" width="36" height="36" rx="4" fill="#70ad63" stroke="#1d5f2a" stroke-width="2"/>
+    <path d="M92 1082 L80 1082 M92 1092 L80 1092 M92 1102 L80 1102 M140 1082 L152 1082 M140 1092 L152 1092 M140 1102 L152 1102" stroke="#1d5f2a" stroke-width="2"/>
+    <text class="subheading green-text" x="200" y="1079" text-anchor="middle">On-chip SRAM</text>
+    <text class="small" x="158" y="1098">ultra-low latency</text>
+    <text class="small" x="158" y="1114">active working set</text>
+  </g>
+  <g>
+    <rect class="panel-blue" x="380" y="1055" width="230" height="76" rx="8"/>
+    <rect x="402" y="1077" width="40" height="42" fill="#bde0fe" stroke="#2e5f9f" stroke-width="1.6"/>
+    <path d="M410 1085 L434 1085 M410 1095 L434 1095 M410 1105 L434 1105 M416 1077 L416 1119 M428 1077 L428 1119" stroke="#2e5f9f" stroke-width="1"/>
+    <text class="subheading blue-text" x="505" y="1079" text-anchor="middle">HBM / HBF</text>
+    <text class="small" x="462" y="1098">active state</text>
+    <text class="small" x="462" y="1114">adjacency &amp; tensors</text>
+  </g>
+  <g>
+    <rect class="panel-purple" x="660" y="1055" width="250" height="76" rx="8"/>
+    <ellipse cx="700" cy="1078" rx="27" ry="9" fill="#e9d5ff" stroke="#6b3fa0"/>
+    <rect x="673" y="1078" width="54" height="34" fill="#e9d5ff" stroke="#6b3fa0"/>
+    <ellipse cx="700" cy="1112" rx="27" ry="9" fill="#e9d5ff" stroke="#6b3fa0"/>
+    <text class="subheading purple-text" x="790" y="1079" text-anchor="middle">NAND / Storage</text>
+    <text class="small" x="745" y="1098">long-term state</text>
+    <text class="small" x="745" y="1114">branch archives</text>
+  </g>
+
+  <!-- Side panel -->
+  <rect class="panel-gold" x="985" y="190" width="250" height="970" rx="18" filter="url(#shadow)"/>
+  <text class="side-title" x="1110" y="232" text-anchor="middle">Key WPU</text>
+  <text class="side-title" x="1110" y="265" text-anchor="middle">Properties</text>
+
+  <g transform="translate(1000 300)">
+    <rect x="0" y="0" width="78" height="83" rx="10" fill="#fffef8" stroke="#d89b28" stroke-width="1.4"/>
+    <ellipse cx="39" cy="25" rx="23" ry="10" fill="#93c47d" stroke="#2e7d32"/>
+    <rect x="16" y="25" width="46" height="32" fill="#93c47d" stroke="#2e7d32"/>
+    <ellipse cx="39" cy="57" rx="23" ry="10" fill="#93c47d" stroke="#2e7d32"/>
+    <text class="side-label" x="102" y="39">state-based</text>
+    <text class="side-label" x="102" y="63">processing</text>
+    <line class="divider" x1="0" y1="104" x2="218" y2="104"/>
+  </g>
+
+  <g transform="translate(1000 422)">
+    <rect x="0" y="0" width="78" height="83" rx="10" fill="#f2fbf0" stroke="#3f9346" stroke-width="1.4"/>
+    <path d="M24 55 L39 28 L58 40 M39 28 L22 23 M39 28 L55 18 M24 55 L58 40 L63 62" class="soft-line"/>
+    <circle cx="24" cy="55" r="7" fill="#5f9f7f" stroke="#2e7d32"/><circle cx="39" cy="28" r="7" fill="#5f9f7f" stroke="#2e7d32"/><circle cx="58" cy="40" r="7" fill="#5f9f7f" stroke="#2e7d32"/><circle cx="22" cy="23" r="6" fill="#5f9f7f" stroke="#2e7d32"/><circle cx="55" cy="18" r="6" fill="#5f9f7f" stroke="#2e7d32"/><circle cx="63" cy="62" r="6" fill="#5f9f7f" stroke="#2e7d32"/>
+    <text class="side-label" x="102" y="38">sparse structured</text>
+    <text class="side-label" x="102" y="63">memory</text>
+    <line class="divider" x1="0" y1="104" x2="218" y2="104"/>
+  </g>
+
+  <g transform="translate(1000 544)">
+    <rect x="0" y="0" width="78" height="83" rx="10" fill="#eef6ff" stroke="#4d83d4" stroke-width="1.4"/>
+    <path d="M18 20 H60 L45 42 V60 L33 66 V42 Z" fill="#bde0fe" stroke="#2e5f9f" stroke-width="1.6"/>
+    <circle cx="39" cy="70" r="3" fill="#2e5f9f"/>
+    <text class="side-label" x="102" y="38">selective</text>
+    <text class="side-label" x="102" y="63">propagation</text>
+    <line class="divider" x1="0" y1="104" x2="218" y2="104"/>
+  </g>
+
+  <g transform="translate(1000 666)">
+    <rect x="0" y="0" width="78" height="83" rx="10" fill="#faf6ff" stroke="#8f65c9" stroke-width="1.4"/>
+    <g fill="#c4b5fd" stroke="#432163" stroke-width="1">
+      <rect x="17" y="18" width="12" height="12"/><rect x="36" y="18" width="12" height="12"/><rect x="55" y="18" width="12" height="12"/>
+      <rect x="17" y="38" width="12" height="12"/><rect x="36" y="38" width="12" height="12"/><rect x="55" y="38" width="12" height="12"/>
+      <rect x="17" y="58" width="12" height="12"/><rect x="36" y="58" width="12" height="12"/><rect x="55" y="58" width="12" height="12"/>
     </g>
+    <text class="side-label" x="102" y="38">dense fallback</text>
+    <text class="side-label" x="102" y="63">when needed</text>
+    <line class="divider" x1="0" y1="104" x2="218" y2="104"/>
   </g>
-  <rect class="box-purple" x="670" y="388" rx="7" width="470" height="30"/><text class="label" x="905" y="408" text-anchor="middle">L2 Cache → GDDR / HBM</text>
 
-  <!-- TPU -->
-  <rect class="panel-yellow" x="382" y="236" rx="18" ry="18" width="276" height="260"/>
-  <text class="panel-title" x="540" y="292">TPU</text>
-  <rect class="chip" x="486" y="266" width="42" height="42" rx="5" style="stroke:#7e5bb7"/>
-  <text class="tiny" x="540" y="315" text-anchor="middle">Tensor / matrix processing</text>
-  <rect class="box-yellow" x="414" y="338" rx="8" width="212" height="86"/>
-  <text class="label" x="520" y="360" text-anchor="middle">Systolic Array</text>
-  <g transform="translate(454 372)">
-    <circle cx="0" cy="0" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="0" y="3" text-anchor="middle">MAC</text>
-    <circle cx="44" cy="0" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="44" y="3" text-anchor="middle">MAC</text>
-    <circle cx="88" cy="0" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="88" y="3" text-anchor="middle">MAC</text>
-    <circle cx="132" cy="0" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="132" y="3" text-anchor="middle">MAC</text>
-    <circle cx="0" cy="34" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="0" y="37" text-anchor="middle">MAC</text>
-    <circle cx="44" cy="34" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="44" y="37" text-anchor="middle">MAC</text>
-    <circle cx="88" cy="34" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="88" y="37" text-anchor="middle">MAC</text>
-    <circle cx="132" cy="34" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="132" y="37" text-anchor="middle">MAC</text>
+  <g transform="translate(1000 788)">
+    <rect x="0" y="0" width="78" height="83" rx="10" fill="#fff5f3" stroke="#d86a55" stroke-width="1.4"/>
+    <path d="M39 17 L23 43 L55 43 M23 43 L18 64 M55 43 L61 64 M39 17 L39 64" class="soft-line"/>
+    <circle cx="39" cy="17" r="5" fill="#f4a6b6" stroke="#672235"/><circle cx="23" cy="43" r="5" fill="#f4a6b6" stroke="#672235"/><circle cx="55" cy="43" r="5" fill="#f4a6b6" stroke="#672235"/><circle cx="18" cy="64" r="5" fill="#f4a6b6" stroke="#672235"/><circle cx="39" cy="64" r="5" fill="#f4a6b6" stroke="#672235"/><circle cx="61" cy="64" r="5" fill="#f4a6b6" stroke="#672235"/>
+    <text class="side-label" x="102" y="38">branch-aware</text>
+    <text class="side-label" x="102" y="63">execution</text>
+    <line class="divider" x1="0" y1="104" x2="218" y2="104"/>
   </g>
-  <rect class="box-purple" x="426" y="442" rx="7" width="188" height="30"/><text class="label" x="520" y="462" text-anchor="middle">On-chip SRAM</text>
-  <rect class="box-red" x="426" y="480" rx="7" width="188" height="30"/><text class="label" x="520" y="500" text-anchor="middle">HBM / off-chip memory</text>
 
-  <!-- NPU -->
-  <rect class="panel" x="18" y="456" rx="18" ry="18" width="360" height="292"/>
-  <text class="panel-title" x="120" y="506">NPU</text>
-  <text class="tiny" x="244" y="506" text-anchor="middle">neural inference compute</text>
-  <rect class="box-yellow" x="64" y="530" rx="8" width="250" height="34"/><text class="label" x="189" y="552" text-anchor="middle">Tensor Buffer</text>
-  <rect class="box-yellow" x="64" y="586" rx="8" width="250" height="84"/><text class="label" x="189" y="606" text-anchor="middle">Neural Compute Engine</text>
-  <g transform="translate(101 622)">
-    <rect class="core" x="0" y="0" width="42" height="26" rx="4"/><text class="micro" x="21" y="16" text-anchor="middle">MAC</text>
-    <rect class="core" x="54" y="0" width="42" height="26" rx="4"/><text class="micro" x="75" y="16" text-anchor="middle">MAC</text>
-    <rect class="core" x="108" y="0" width="42" height="26" rx="4"/><text class="micro" x="129" y="16" text-anchor="middle">MAC</text>
-    <rect class="core" x="162" y="0" width="42" height="26" rx="4"/><text class="micro" x="183" y="16" text-anchor="middle">MAC</text>
+  <g transform="translate(1000 910)">
+    <rect x="0" y="0" width="78" height="83" rx="10" fill="#fff9e9" stroke="#c98212" stroke-width="1.4"/>
+    <rect x="24" y="24" width="30" height="30" rx="3" fill="#ffffff" stroke="#6c3f0c" stroke-width="2"/>
+    <path d="M19 20 V58 M59 20 V58 M16 27 H24 M16 36 H24 M16 45 H24 M54 27 H63 M54 36 H63 M54 45 H63 M28 16 V24 M39 16 V24 M50 16 V24 M28 54 V63 M39 54 V63 M50 54 V63" stroke="#6c3f0c" stroke-width="1.6"/>
+    <text class="side-label" x="102" y="38">memory-centric</text>
+    <text class="side-label" x="102" y="63">architecture</text>
+    <line class="divider" x1="0" y1="104" x2="218" y2="104"/>
   </g>
-  <rect class="box-green" x="64" y="684" rx="8" width="250" height="30"/><text class="label" x="189" y="704" text-anchor="middle">Activation / Fusion Engine</text>
-  <rect class="box-purple" x="64" y="724" rx="8" width="250" height="30"/><text class="label" x="189" y="744" text-anchor="middle">On-chip SRAM / LPDDR</text>
 
-  <!-- LPU -->
-  <rect class="panel-green" x="408" y="526" rx="18" ry="18" width="342" height="222"/>
-  <text class="panel-title" x="505" y="576">LPU</text>
-  <rect class="chip" x="454" y="548" width="42" height="42" rx="5" style="stroke:#4f9d64"/>
-  <text class="tiny" x="630" y="576" text-anchor="middle">deterministic token streaming</text>
-  <rect class="box-blue" x="444" y="612" rx="8" width="86" height="58"/><text class="label" x="487" y="644" text-anchor="middle">MXM</text>
-  <rect class="box-blue" x="558" y="612" rx="8" width="86" height="58"/><text class="label" x="601" y="644" text-anchor="middle">VXM</text>
-  <rect class="box-blue" x="672" y="612" rx="8" width="50" height="58"/><text class="label" x="697" y="644" text-anchor="middle">SXM</text>
-  <path class="wire" d="M530 641 L558 641"/>
-  <path class="wire" d="M644 641 L672 641"/>
-  <rect class="box-purple" x="448" y="692" rx="8" width="260" height="32"/><text class="label" x="578" y="713" text-anchor="middle">On-chip SRAM; no DRAM critical path</text>
-
-  <!-- WPU -->
-  <rect class="panel-purple" x="778" y="456" rx="18" ry="18" width="404" height="292"/>
-  <text class="panel-title" x="880" y="506">WPU</text>
-  <rect class="chip" x="826" y="478" width="42" height="42" rx="5" style="stroke:#8855aa"/>
-  <text class="tiny" x="1022" y="505" text-anchor="middle">world-state processing</text>
-
-  <rect class="box-green" x="810" y="538" rx="8" width="132" height="54"/>
-  <text class="label" x="876" y="560" text-anchor="middle">State Store</text>
-  <text class="tiny" x="876" y="580" text-anchor="middle">objects · relations · belief</text>
-  <rect class="delta" x="1016" y="538" rx="8" width="132" height="54"/>
-  <text class="label" x="1082" y="560" text-anchor="middle">Delta Log</text>
-  <text class="tiny" x="1082" y="580" text-anchor="middle">patches · time · events</text>
-
-  <rect class="route" x="810" y="618" rx="8" width="154" height="70"/>
-  <text class="label" x="887" y="640" text-anchor="middle">Frontier + Router</text>
-  <text class="tiny" x="887" y="660" text-anchor="middle">ρ = ΔN·k^h·B / N</text>
-  <text class="tiny" x="887" y="678" text-anchor="middle">sparse · hybrid · dense</text>
-  <rect class="wpu-core" x="994" y="618" rx="8" width="154" height="70"/>
-  <text class="label" x="1071" y="640" text-anchor="middle">Propagation Core</text>
-  <text class="tiny" x="1071" y="660" text-anchor="middle">message passing</text>
-  <text class="tiny" x="1071" y="678" text-anchor="middle">local causal updates</text>
-  <path class="wire" d="M942 565 C972 565 986 565 1016 565"/>
-  <path class="wire" d="M887 592 L887 618"/>
-  <path class="wire" d="M964 653 L994 653"/>
-  <path class="wire" d="M1071 618 L1082 592"/>
-
-  <rect class="branch" x="846" y="708" rx="8" width="266" height="34"/>
-  <text class="label" x="979" y="730" text-anchor="middle">Branch overlays: BaseState + ΔState</text>
-  <path class="wire" d="M1071 688 L1040 708"/>
-  <path class="wire" d="M887 688 L918 708"/>
-
-  <!-- Decorative grids -->
-  <g transform="translate(300 186)">
-    <rect class="grid-hot" x="0" y="0" width="8" height="8"/><rect class="grid" x="12" y="0" width="8" height="8"/><rect class="grid" x="24" y="0" width="8" height="8"/><rect class="grid" x="36" y="0" width="8" height="8"/>
-    <rect class="grid" x="0" y="12" width="8" height="8"/><rect class="grid" x="12" y="12" width="8" height="8"/><rect class="grid" x="24" y="12" width="8" height="8"/><rect class="grid" x="36" y="12" width="8" height="8"/>
-    <rect class="grid" x="0" y="24" width="8" height="8"/><rect class="grid-hot" x="12" y="24" width="8" height="8"/><rect class="grid" x="24" y="24" width="8" height="8"/><rect class="grid" x="36" y="24" width="8" height="8"/>
+  <g transform="translate(1000 1032)">
+    <rect x="0" y="0" width="78" height="83" rx="10" fill="#eefbff" stroke="#4aa3b8" stroke-width="1.4"/>
+    <circle cx="39" cy="42" r="26" fill="#d8f3ff" stroke="#246b80" stroke-width="1.6"/>
+    <path d="M13 42 H65 M39 16 V68 M21 25 C31 34 47 34 57 25 M21 59 C31 50 47 50 57 59 M29 18 C20 34 20 50 29 66 M49 18 C58 34 58 50 49 66" fill="none" stroke="#246b80" stroke-width="1.1"/>
+    <text class="side-label" x="102" y="38">world-state</text>
+    <text class="side-label" x="102" y="63">simulation</text>
   </g>
-  <g transform="translate(1100 690)">
-    <circle cx="0" cy="0" r="3" fill="#9a76d2"/><circle cx="18" cy="-14" r="3" fill="#9a76d2"/><circle cx="36" cy="0" r="3" fill="#9a76d2"/>
-    <line x1="0" y1="0" x2="18" y2="-14" stroke="#9a76d2"/><line x1="18" y1="-14" x2="36" y2="0" stroke="#9a76d2"/>
-  </g>
+
+  <!-- Core concept -->
+  <rect class="panel-gold" x="30" y="1175" width="1194" height="55" rx="16"/>
+  <path d="M74 1201 C74 1188 88 1181 99 1188 C111 1195 109 1210 98 1216 L98 1222 H82 L82 1216 C77 1212 74 1207 74 1201Z" fill="#ffec99" stroke="#8a5a00" stroke-width="1.6"/>
+  <path d="M84 1226 H96 M84 1231 H96 M87 1216 V1205 M93 1216 V1205 M82 1199 L90 1206 L99 1197" stroke="#8a5a00" stroke-width="1.4" fill="none"/>
+  <text class="side-title" x="127" y="1210">Core Concept</text>
+  <line x1="327" y1="1185" x2="327" y2="1220" stroke="#d6a64d" stroke-width="1.2"/>
+  <text class="tagline" x="360" y="1210">WPU updates and simulates explicit world state rather than processing token sequences.</text>
 </svg>

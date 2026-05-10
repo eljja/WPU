@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1100" viewBox="0 0 1400 1100" role="img" aria-labelledby="title desc">
+  <title id="title">WPU hybrid execution architecture</title>
+  <desc id="desc">A clean WPU hybrid architecture diagram showing event-driven sparse propagation and dense recompute fallback.</desc>
+  <defs>
+    <style>
+      .bg { fill: #fbfaf6; }
+      .title { font-family: "Trebuchet MS", "Aptos Display", sans-serif; font-size: 62px; font-weight: 800; fill: #2e66bd; letter-spacing: 1px; }
+      .subtitle { font-family: "Trebuchet MS", "Aptos", sans-serif; font-size: 29px; font-weight: 800; fill: #32313a; }
+      .panel { fill: #ffffff; stroke: #2f5f9f; stroke-width: 2; }
+      .panel-green { fill: #f2fbf0; stroke: #3f9346; stroke-width: 2; }
+      .panel-blue { fill: #f2f8ff; stroke: #4d83d4; stroke-width: 2; }
+      .panel-gold { fill: #fff9e9; stroke: #c98212; stroke-width: 2; }
+      .panel-purple { fill: #faf6ff; stroke: #8f65c9; stroke-width: 2; }
+      .panel-red { fill: #fff4f1; stroke: #d86a55; stroke-width: 2; }
+      .heading { font-family: "Trebuchet MS", "Aptos", sans-serif; font-size: 26px; font-weight: 800; fill: #17171a; }
+      .subheading { font-family: "Trebuchet MS", "Aptos", sans-serif; font-size: 22px; font-weight: 800; fill: #17171a; }
+      .body { font-family: "Aptos", "Segoe UI", sans-serif; font-size: 17px; fill: #24242a; }
+      .small { font-family: "Aptos", "Segoe UI", sans-serif; font-size: 14px; fill: #24242a; }
+      .formula { font-family: "Cambria Math", "Times New Roman", serif; font-size: 28px; font-style: italic; fill: #17171a; }
+      .box { fill: #ffffff; stroke: #637083; stroke-width: 1.4; }
+      .green-box { fill: #e3f5df; stroke: #3f9346; stroke-width: 1.4; }
+      .blue-box { fill: #e4f0ff; stroke: #4d83d4; stroke-width: 1.4; }
+      .gold-box { fill: #fff0c7; stroke: #c98212; stroke-width: 1.4; }
+      .purple-box { fill: #efe6ff; stroke: #8f65c9; stroke-width: 1.4; }
+      .arrow { stroke: #475569; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .green-arrow { stroke: #3f9346; stroke-width: 2.5; fill: none; marker-end: url(#greenArrow); }
+      .blue-arrow { stroke: #2e7fc6; stroke-width: 2.5; fill: none; marker-end: url(#blueArrow); }
+      .dash-green { stroke: #3f9346; stroke-width: 2.2; fill: none; stroke-dasharray: 8 6; marker-end: url(#greenArrow); }
+      .dash-blue { stroke: #2e7fc6; stroke-width: 2.2; fill: none; stroke-dasharray: 8 6; marker-end: url(#blueArrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#475569"/>
+    </marker>
+    <marker id="greenArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#3f9346"/>
+    </marker>
+    <marker id="blueArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#2e7fc6"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#123c7a" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect class="bg" width="1400" height="1100"/>
+  <text class="title" x="700" y="72" text-anchor="middle">WPU Hybrid Architecture</text>
+  <text class="subtitle" x="700" y="116" text-anchor="middle">Event-driven sparse propagation plus dense tensor recompute</text>
+
+  <!-- Memory side panels -->
+  <rect class="panel-blue" x="45" y="160" width="280" height="170" rx="16" filter="url(#shadow)"/>
+  <text class="subheading" x="185" y="198" text-anchor="middle">Hierarchical Memory</text>
+  <rect class="box" x="75" y="220" width="220" height="42" rx="9"/>
+  <text class="body" x="185" y="247" text-anchor="middle">On-chip SRAM: hot state</text>
+  <rect class="box" x="75" y="275" width="220" height="42" rx="9"/>
+  <text class="body" x="185" y="302" text-anchor="middle">High-bandwidth memory</text>
+
+  <rect class="panel-blue" x="1075" y="160" width="280" height="170" rx="16" filter="url(#shadow)"/>
+  <text class="subheading" x="1215" y="198" text-anchor="middle">Active State Cache</text>
+  <rect class="box" x="1105" y="220" width="220" height="42" rx="9"/>
+  <text class="body" x="1215" y="247" text-anchor="middle">Object and relation cache</text>
+  <rect class="box" x="1105" y="275" width="220" height="42" rx="9"/>
+  <text class="body" x="1215" y="302" text-anchor="middle">Delta and branch cache</text>
+
+  <!-- Scheduler core -->
+  <rect class="panel-gold" x="435" y="155" width="530" height="260" rx="18" filter="url(#shadow)"/>
+  <text class="heading" x="700" y="198" text-anchor="middle">WPU Hybrid State Processor</text>
+  <rect class="gold-box" x="535" y="225" width="330" height="46" rx="8"/>
+  <text class="subheading" x="700" y="256" text-anchor="middle">Event</text>
+  <path class="arrow" d="M700 271 V300"/>
+  <rect class="box" x="485" y="300" width="430" height="92" rx="12"/>
+  <text class="subheading" x="700" y="330" text-anchor="middle">Propagation Scheduler</text>
+  <text class="formula" x="700" y="365" text-anchor="middle">rho = (DeltaN * k^h * B) / N</text>
+  <text class="small" x="535" y="386">DeltaN: affected objects</text>
+  <text class="small" x="735" y="386">k: fanout, h: depth, B: branches</text>
+
+  <path class="arrow" d="M700 415 V460"/>
+
+  <!-- State memory and decision -->
+  <rect class="panel" x="45" y="460" width="1310" height="430" rx="18" filter="url(#shadow)"/>
+  <text class="heading" x="260" y="500" text-anchor="middle">State Memory Layer</text>
+  <text class="heading" x="1140" y="500" text-anchor="middle">Dense Recompute</text>
+
+  <path class="dash-green" d="M425 535 H595"/>
+  <path class="dash-blue" d="M805 535 H975"/>
+  <rect class="gold-box" x="590" y="500" width="220" height="90" rx="12"/>
+  <text class="subheading" x="700" y="535" text-anchor="middle">Routing Decision</text>
+  <text class="small" x="700" y="562" text-anchor="middle">sparse if rho &lt; 0.05</text>
+  <text class="small" x="700" y="582" text-anchor="middle">hybrid if 0.05 &lt;= rho &lt; 0.25</text>
+
+  <!-- Sparse path -->
+  <rect class="panel-green" x="75" y="530" width="480" height="300" rx="14"/>
+  <rect class="green-box" x="100" y="555" width="170" height="40" rx="10"/>
+  <text class="body" x="185" y="582" text-anchor="middle">Sparse Path</text>
+  <rect class="box" x="100" y="615" width="410" height="92" rx="10"/>
+  <text class="subheading" x="305" y="645" text-anchor="middle">Graph Engine</text>
+  <text class="body" x="145" y="675">neighbor fetch</text>
+  <text class="body" x="330" y="675">relation lookup</text>
+  <text class="body" x="145" y="698">edge scoring</text>
+  <rect class="box" x="100" y="725" width="410" height="82" rx="10"/>
+  <text class="subheading" x="305" y="755" text-anchor="middle">Local Update Engine</text>
+  <text class="body" x="145" y="785">attribute update</text>
+  <text class="body" x="330" y="785">constraint solve</text>
+  <path class="green-arrow" d="M305 807 V865"/>
+
+  <!-- Hybrid metrics -->
+  <rect class="panel-purple" x="605" y="630" width="190" height="190" rx="14"/>
+  <text class="subheading" x="700" y="665" text-anchor="middle">Hybrid Metrics</text>
+  <text class="body" x="635" y="705">affected state</text>
+  <text class="body" x="635" y="735">fanout</text>
+  <text class="body" x="635" y="765">depth</text>
+  <text class="body" x="635" y="795">branch density</text>
+  <path class="arrow" d="M700 590 V630"/>
+  <path class="green-arrow" d="M555 725 H605"/>
+  <path class="blue-arrow" d="M795 725 H845"/>
+
+  <!-- Dense path -->
+  <rect class="panel-blue" x="845" y="530" width="480" height="300" rx="14"/>
+  <rect class="blue-box" x="1120" y="555" width="170" height="40" rx="10"/>
+  <text class="body" x="1205" y="582" text-anchor="middle">Dense Path</text>
+  <rect class="box" x="890" y="615" width="390" height="58" rx="10"/>
+  <text class="subheading" x="1085" y="651" text-anchor="middle">State to Tensor Projection</text>
+  <rect class="box" x="890" y="692" width="390" height="58" rx="10"/>
+  <text class="subheading" x="1085" y="728" text-anchor="middle">Tensor Compute Engine</text>
+  <rect class="box" x="890" y="769" width="390" height="58" rx="10"/>
+  <text class="subheading" x="1085" y="805" text-anchor="middle">State Reconstruction</text>
+  <path class="blue-arrow" d="M1085 827 V865"/>
+
+  <!-- Branch manager -->
+  <rect class="panel-gold" x="230" y="865" width="940" height="70" rx="18" filter="url(#shadow)"/>
+  <text class="heading" x="700" y="910" text-anchor="middle">Branch &amp; Uncertainty Manager</text>
+  <path class="arrow" d="M700 935 V965"/>
+
+  <rect class="panel-blue" x="300" y="965" width="800" height="60" rx="15"/>
+  <text class="subheading" x="700" y="1003" text-anchor="middle">State(t) -> State(t+1) -> ... -> State(t+k)</text>
+
+  <rect class="panel" x="120" y="1040" width="1160" height="38" rx="12"/>
+  <text class="body" x="700" y="1065" text-anchor="middle">Sparse propagation performs local graph updates; dense recompute performs regional or global state synchronization when locality breaks.</text>
+</svg>

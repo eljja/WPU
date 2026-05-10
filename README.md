@@ -18,7 +18,7 @@ superiority, but to isolate a different execution target: persistent state,
 structured relations, sparse updates, temporal branches, and hierarchical
 memory.
 
-![WPU in the AI compute architecture landscape](docs/figures/wpu_compute_context.png)
+![WPU in the AI compute architecture landscape](docs/figures/wpu_compute_context.svg)
 
 ## Core Thesis
 
@@ -46,7 +46,7 @@ dense tensor recompute fallback. A scheduler estimates the affected-state ratio,
 fanout, propagation depth, and branch complexity, then routes execution through
 sparse, hybrid, or dense paths.
 
-![WPU hybrid sparse-dense execution architecture](docs/figures/wpu_hybrid_architecture.png)
+![WPU hybrid sparse-dense execution architecture](docs/figures/wpu_hybrid_architecture.svg)
 
 ## Repository Layout
 

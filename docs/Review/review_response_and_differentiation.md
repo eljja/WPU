@@ -1,7 +1,7 @@
 # WPU Review Response and Differentiation
 
 This note maps the two external reviews to the current manuscript state after the
-May 9, 2026 revision.
+May 11, 2026 revision.
 
 ## Review Coverage Matrix
 
@@ -10,7 +10,7 @@ May 9, 2026 revision.
 | Experiments too small, single seed, no confidence intervals | Substantially addressed | Added 5-seed robust baseline suite, dense N sweep, B sweep, step sweep, relation-noise stress, affected-count stress, CPU latency reporting. |
 | Serialized-token baseline beats WPU in some regimes | Addressed by narrowing claim | Manuscript now explicitly rejects universal WPU dominance and reports the N≈120 accuracy crossover. |
 | Need stronger graph/token baselines | Partially addressed | Added dense graph, graph-transformer, serialized-token baselines. Still missing full DreamerV3/IRIS/GNS matched training. |
-| Sparse/dense route points too coarse | Addressed | Route and robust accuracy figures now use N=4,8,12,16,24,36,52,68,84,108,132,164,204 within the original range. |
+| Sparse/dense route points too coarse | Addressed | Route and dense N sweep now use N=4,8,12,16,24,36,52,68,84,108,132,164,204,260. |
 | Existing work overlap with GNNs/message passing | Addressed in framing | Added Related Work section. Manuscript now states WPU novelty is not a new message-passing equation but state-memory execution abstraction. |
 | Missing object discovery/state construction | Not solved, explicitly acknowledged | Added limitation that v1 assumes object/relation state; roadmap now includes Slot Attention/IODINE-style front-end. |
 | Fixed rho thresholds arbitrary | Addressed empirically, not solved | B sweep shows hard threshold weakness; text states thresholds are engineering defaults and learned routing is required. |
@@ -20,6 +20,7 @@ May 9, 2026 revision.
 | State corruption/security missing | Not implemented, explicitly acknowledged | Added limitation and roadmap item for checkpoint, rollback, uncertainty gates, and consistency checks. |
 | Need real/simulator benchmarks | Not solved | Roadmap now explicitly lists learned-physics, MuJoCo, Isaac Gym, robotics manipulation, and matched baselines. |
 | References too sparse | Addressed | Bibliography expanded from 4 to 22 references, including object-centric learning, GNN simulators, world models, sparse world models, graph world models, and accelerator context. |
+| Manuscript reads like a roadmap rather than a paper | Addressed | Main paper now keeps only central claim, architecture, evidence, and discussion. Roadmap-style material moved to `docs/arxiv/README.md`; dense sweep tables and secondary figures moved to supplementary materials. |
 
 ## Added Reference Families
 
@@ -54,6 +55,9 @@ May 9, 2026 revision.
 - No learned router is implemented yet.
 - No real GPU sparse-kernel or hardware simulation evidence exists.
 - No state-integrity, rollback, or corruption-recovery mechanism is implemented.
+- The current v1 accuracy-runtime crossovers do not yet overlap: WPU-family
+  accuracy advantage ends around `N≈120`, while routed runtime advantage starts
+  around `N≈124` versus serialized-token and `N≈178` versus dense-graph.
 
 ## Revised Claim
 
@@ -66,4 +70,3 @@ The current evidence supports the route/regime hypothesis and noisy local-update
 robustness, but it does not prove universal model-quality superiority over
 token, graph, or latent world-model baselines.
 ```
-

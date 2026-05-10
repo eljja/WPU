@@ -113,6 +113,7 @@ python scripts/analyze_controlled_stress.py
 
 Key reports:
 
+- `docs/experiments/README.md`
 - `docs/experiments/robust_v1_results.md`
 - `docs/experiments/n_sweep_v1_results.md`
 - `docs/experiments/b_sweep_v1_results.md`
@@ -124,6 +125,7 @@ Key reports:
 - English LaTeX: `docs/arxiv/state_is_all_you_need_en.tex`
 - English PDF: `docs/arxiv/state_is_all_you_need_en.pdf`
 - Korean companion: `docs/arxiv/state_is_all_you_need_ko.md`
+- Compact research brief: `docs/paper/state_is_all_you_need.md`
 - Review response and differentiation: `docs/Review/review_response_and_differentiation.md`
 
 Build the PDF:
@@ -137,11 +139,19 @@ pdflatex -interaction=nonstopmode -halt-on-error -output-directory docs/arxiv do
 
 The current evidence supports a regime hypothesis, not universal dominance.
 
-- WPU-hybrid is robust under irrelevant relation noise.
-- Routed sparse execution can become faster at larger `N`.
-- Current WPU accuracy collapses in some large-`N` regimes.
-- Serialized-token and graph-transformer baselines remain strong.
-- Fixed `rho` routing thresholds are not sufficient as a final scheduler.
+- WPU-family models are competitive or best in the synthetic local regime up to
+  about `N=108`, but the advantage disappears around `N≈120`.
+- Routed WPU becomes faster than serialized-token around `N≈124` and faster
+  than dense-graph around `N≈178` in the CPU v1 sweep.
+- WPU-hybrid is robust under irrelevant relation noise: accuracy drop is
+  `0.0250` from 0 to 128 noise edges, versus `0.3438` for Graph Transformer.
+- Current WPU accuracy collapses in large-`N` regimes such as `N=204`; graph and
+  token baselines remain stronger there.
+- Fixed `rho` routing thresholds are useful for exposing route regimes but are
+  not sufficient as a final scheduler.
+
+The central v1 target is now precise: push the accuracy crossover beyond the
+runtime crossover while preserving sparse routed work.
 
 The next important steps are learned routing, stronger long-horizon dynamics,
 real/simulator-backed benchmarks, state construction from perception, and

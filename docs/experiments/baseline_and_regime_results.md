@@ -1,5 +1,18 @@
 # Baseline and Regime Results
 
+This is the original small baseline/regime report. It is useful as historical
+evidence that the route mechanism exists, but it is superseded for paper claims
+by the 5-seed robust suite and dense sweep reports:
+
+- `docs/experiments/robust_v1_results.md`
+- `docs/experiments/n_sweep_v1_results.md`
+- `docs/experiments/b_sweep_v1_results.md`
+- `docs/experiments/step_sweep_v1_results.md`
+- `docs/experiments/controlled_stress_v1_results.md`
+
+Use this document only to trace how the v1 evidence evolved. The current claim
+boundary is regime-specific, not universal WPU superiority.
+
 ## Baseline Suite
 
 All models were trained for 100 steps on the synthetic robot-cup task with 80 background objects, then evaluated on 128 held-out samples.

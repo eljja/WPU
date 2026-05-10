@@ -1,0 +1,41 @@
+# WPU Experiment Reports
+
+This directory contains the experiment evidence behind the current WPU v1 paper.
+The paper claim is intentionally regime-specific: WPU is not shown to be
+universally superior to token or graph baselines.
+
+## Current Evidence Hierarchy
+
+Use these reports for paper-level claims:
+
+- `robust_v1_results.md`: 5-seed baseline comparison, confidence intervals,
+  route sweep, CPU latency, and the central v1 accuracy-runtime tension.
+- `n_sweep_v1_results.md`: dense object-count sweep over
+  `N=4,8,12,16,24,36,52,68,84,108,132,164,204,260` and estimated crossovers.
+- `b_sweep_v1_results.md`: branch-pressure sweep showing that fixed `rho`
+  thresholds are not a final scheduler.
+- `step_sweep_v1_results.md`: training-step sweep showing that single-step
+  comparisons can be misleading.
+- `controlled_stress_v1_results.md`: relation-noise and affected-background
+  stress tests.
+
+Historical or preliminary reports:
+
+- `v1_object_physics_results.md`: first small validation of
+  `WorldStateProcessor`.
+- `baseline_and_regime_results.md`: initial one-seed baseline and route sweep;
+  superseded for claims by the robust reports.
+
+## Main Takeaways
+
+- WPU-family accuracy is competitive or best in small-to-medium local synthetic
+  regimes, but fails at large `N`.
+- WPU-family accuracy advantage disappears around `N≈120` in the dense N sweep.
+- Routed WPU runtime becomes favorable around `N≈124` versus serialized-token
+  and around `N≈178` versus dense-graph.
+- WPU-hybrid is robust to irrelevant relation noise.
+- Affected-background stress does not support broad WPU superiority; token
+  baselines remain strong.
+
+The v2 target is to move the accuracy crossover beyond the runtime crossover
+while preserving sparse routed work.

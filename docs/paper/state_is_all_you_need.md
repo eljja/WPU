@@ -1,285 +1,217 @@
 # State Is All You Need
 
-## Abstract
+This Markdown note is the compact research brief for the WPU paper. The
+submission-oriented source is `docs/arxiv/state_is_all_you_need_en.tex`; the
+Korean companion is `docs/arxiv/state_is_all_you_need_ko.md`.
 
-Modern sequence models process the world through dense token streams. This paper
-explores a different primitive: persistent world state. We introduce the
-World-State Processing Unit (WPU), a state-centric neural architecture that
-represents a scene as objects, relations, time, uncertainty, events, and future
-branches. The first reference implementation, `WorldStateProcessor`, updates an
-explicit state graph through sparse event-conditioned propagation, switches to
-hybrid or dense recomputation when the affected world fraction grows, and
-predicts multiple future branches as deltas over a base state. On a synthetic
-robot-cup object physics task, the v1 model reduces next-state prediction MSE
-from `0.8111` to `0.0005` after 200 training steps and improves branch
-classification from `0.1289` untrained accuracy to `0.7188`, exceeding the
-`0.6680` majority baseline. These results are not evidence of broad capability;
-they establish a minimal reproducible substrate for state-first neural modeling.
+## Central Claim
 
-## 1. Motivation
+World processing should not be framed only as token continuation. A world model
+must often maintain persistent entities, typed relations, local causal changes,
+uncertainty, and multiple possible futures. A token sequence can describe these
+objects, but serialization does not make object identity, relation traversal,
+delta update, or branch overlay first-class operations.
 
-The dominant abstraction in current foundation models is the token sequence.
-This abstraction is powerful, but it is not the natural substrate for many
-embodied and simulation-heavy tasks. Physical scenes contain persistent
-entities, typed relations, heterogeneous attributes, temporal memory, uncertain
-observations, and multiple plausible futures. A cup near the edge of a table is
-not merely a span of text; it is an object with position, support relations,
-confidence, possible motion, and causal neighbors.
-
-The WPU hypothesis is that some classes of intelligence should be modeled as
-state transition over a structured world memory:
+The WPU claim is therefore operational rather than representational:
 
 ```text
-WorldState != TokenSequence
-WorldState = ObjectGraph + TemporalMemory + BeliefDistribution
+Token = ordered evidence for append / attend
+State = persistent substrate for patch / propagate / branch
 ```
 
-The goal is not to replace Transformers in text modeling. The goal is to define
-a reference architecture for learning over explicit world states, analogous in
-spirit to how early Transformer work made attention a first-class computation.
+The current paper does not claim universal superiority over Transformers,
+Graph Transformers, GPUs, TPUs, NPUs, or LPUs. It proposes a falsifiable regime
+hypothesis: state-native propagation should matter when persistent identity,
+local causal change, uncertainty, and branchable futures dominate the workload.
 
-## 2. State Input
+## Relation To Existing Work
 
-The model input is:
+The novelty is not a new message-passing equation. WPU overlaps directly with
+object-centric learning, graph neural simulators, Set/Graph Transformers, latent
+world models, and sparse world-model systems. The difference is the execution
+abstraction:
 
 ```text
-S = {O, R, T, P}
+persistent state memory
+event frontier
+sparse / hybrid / dense routing
+delta overlay
+branch sharing
+accuracy-compute-memory regime surface
+```
+
+Slot Attention or IODINE can be used as perception-to-state front ends. Graph
+Network-based Simulators can be used as propagation cores. Set/Graph
+Transformers can be used as dense fallback or baselines. WPU asks what execution
+substrate is appropriate once the system must repeatedly update an explicit
+world state rather than only process a fresh sequence.
+
+## State Primitive
+
+The state is represented as:
+
+```text
+S_t = {O_t, R_t, T_t, P_t}
 ```
 
 Where:
 
-- `O` is a set of objects with typed, heterogeneous attributes.
-- `R` is a set of typed relations between objects.
-- `T` is temporal state, including current time and delta history.
-- `P` is uncertainty, represented initially as confidence and branch
-  probabilities.
+- `O_t`: persistent objects with typed attributes.
+- `R_t`: typed relations between objects.
+- `T_t`: temporal memory and event/delta history.
+- `P_t`: uncertainty, confidence, and branch probabilities.
 
-The reference implementation batches state graphs as:
-
-```text
-StateGraphBatch = {
-  object_features,
-  relation_indices,
-  relation_features,
-  event_features,
-  object_mask,
-  relation_mask,
-  target_indices,
-  time_features,
-  scheduler_metrics
-}
-```
-
-This projection is a practical PyTorch interface. It does not reduce the theory
-to token modeling: object identity, relation structure, event target, masks, and
-state deltas remain explicit.
-
-## 3. Model
-
-`WorldStateProcessor` is a PyTorch `nn.Module` with three execution paths.
-
-The sparse path performs event-conditioned message passing from the affected
-frontier. Relation encodings are used as edge-conditioned messages, and an event
-encoding biases which objects receive local updates.
-
-The dense path applies global attention over the object set. In v1 this is a
-small multi-head attention block over object embeddings. Its role is not to be a
-Transformer over text, but to provide a learned global consistency operator when
-local propagation becomes inefficient.
-
-The hybrid path mixes sparse and dense representations around the affected
-region. It is the transition regime between local graph propagation and full
-state recomputation.
-
-The model returns:
+Events patch state rather than append to a sequence:
 
 ```text
-StatePrediction = {
-  object_delta,
-  relation_logits,
-  uncertainty,
-  branch_logits,
-  branch_probabilities,
-  selected_paths
-}
-```
-
-Branches are represented as:
-
-```text
+S_{t+1} = S_t + Delta S_t
 Branch = BaseState + DeltaState
 ```
 
-This avoids copying the entire world state for every future hypothesis.
+This gives the model explicit operations for identity-preserving updates,
+local graph traversal, copy-on-write futures, and partial state materialization.
 
-## 4. Sparse-Dense Routing
+## WPU Architecture
 
-The scheduler selects the execution path using the crossover metric:
+The v1 reference implementation is `WorldStateProcessor`, a PyTorch
+`nn.Module`. It accepts a `StateGraphBatch` with object features, relation edge
+indices, relation features, event/action features, masks, target indices, time
+features, and scheduler metrics.
 
-```text
-rho = (delta_n * fanout ** depth * branches) / total_n
-```
+It returns a `StatePrediction` with object deltas, relation logits, uncertainty
+updates, branch logits/probabilities, and selected execution paths.
 
-The v1 policy is:
+The execution paths are:
 
-```text
-rho < 0.05       -> sparse
-rho < 0.25       -> hybrid
-otherwise        -> dense
-```
+- Sparse path: event-conditioned relation message passing from a frontier.
+- Hybrid path: sparse propagation plus regional dense correction.
+- Dense path: global object-set attention for full consistency recomputation.
 
-This is a hard routing policy. Later versions should learn routing or calibrate
-thresholds from runtime cost and prediction quality. The important point is that
-state update cost is measured against the affected fraction of the world, not
-against sequence length alone.
-
-## 5. Initial Task
-
-The first benchmark is a synthetic robot-cup object physics task.
-
-Scene:
-
-- `cup_001`
-- `table_001`
-- `hand_001`
-- `edge_001`
-- configurable background context objects
-
-Relations:
-
-- cup `on_top_of` table
-- hand `near` cup
-- cup `near` table edge
-
-Event:
+The hard v1 scheduler uses:
 
 ```text
-hand_touched_cup(target=cup_001, force=f)
+rho = (DeltaN * fanout^depth * branches) / N
+
+rho < 0.05  -> sparse
+rho < 0.25  -> hybrid
+otherwise   -> dense
 ```
 
-Targets:
+These thresholds are engineering defaults, not final constants. The B sweep
+shows that fixed thresholds are not sufficient; learned accuracy-latency-aware
+routing is required.
 
-- next object feature delta
-- branch label: `stable`, `falls`, or `caught`
+## Propagation Rather Than Attention
 
-The task is intentionally small. Its purpose is to validate the architecture
-surface: explicit state input, event-conditioned sparse update, branch
-prediction, and route switching.
+Attention asks which token or state element should be read. Propagation asks
+what consequence a state delta causes through typed relations.
 
-## 6. Results
+```text
+Delta o_i^{l+1}
+  = f(o_i, e_t, sum_j g(o_i, r_ij, o_j, Delta o_j^l))
+```
 
-Environment:
+Propagation can use attention-like neural blocks, but its intended semantics are
+different. It is a simplified local-causality prior: physical and world-state
+changes often begin at a small set of entities and spread through contact,
+support, proximity, constraints, or causal relations. Dense fallback is the
+global correction path when locality is no longer a good approximation.
 
-- Python 3.11.5
-- PyTorch 2.11.0
-- CPU execution
-- synthetic object physics dataset
-- 256 evaluation samples, seed `101`
-- training: 200 steps, batch size 16, seed `13`
+## Validation Task
 
-Main evaluation:
+The first task is intentionally small: a synthetic robot-cup object physics
+scene with cup, table, robot hand, table edge, and configurable background
+objects. The event is a hand touch with force. The targets are next-state object
+deltas and one of three branch labels: `stable`, `falls`, or `caught`.
 
-| Model | Next-State MSE | Branch NLL | Branch Accuracy |
+This is not a benchmark of general physical reasoning. It is a unit test for the
+WPU hypothesis: can explicit state graphs, event-conditioned propagation,
+sparse/dense routing, and branch probabilities be trained and inspected in one
+model?
+
+Primary validation after 200 steps on CPU:
+
+| Model | Next-state MSE | Branch NLL | Branch accuracy |
 |---|---:|---:|---:|
 | Untrained WSP | 0.8111 | 1.2070 | 0.1289 |
 | Majority baseline | n/a | n/a | 0.6680 |
 | Trained WSP | 0.0005 | 0.8074 | 0.7188 |
 
-Label distribution:
+## Stronger Experiments
 
-| Label | Count |
-|---|---:|
-| stable | 171 |
-| falls | 33 |
-| caught | 52 |
+The reviewer-driven experiment package adds five seeds, stronger baselines,
+denser sweeps, and runtime profiling. The strongest current conclusion is mixed
+and therefore more defensible.
 
-Routing sweep:
+Robust comparison over 5 seeds, 150 steps, 256 evaluation samples:
 
-| Background Objects | Sparse Ratio | Hybrid Ratio | Dense Ratio |
-|---:|---:|---:|---:|
-| 0 | 0.0000 | 0.0000 | 1.0000 |
-| 20 | 0.0000 | 1.0000 | 0.0000 |
-| 80 | 1.0000 | 0.0000 | 0.0000 |
+| N | Best WPU | Accuracy | Best non-WPU | Accuracy | Interpretation |
+|---:|---|---:|---|---:|---|
+| 4 | WPU-hybrid | 0.7242 +/- 0.0260 | Dense graph | 0.6398 +/- 0.1257 | WPU wins; routed scheduler can fail by choosing dense. |
+| 24 | WPU-hybrid | 0.7320 +/- 0.0280 | Graph Transformer | 0.6609 +/- 0.0680 | WPU wins in a medium local regime. |
+| 84 | WPU-hybrid | 0.7508 +/- 0.0244 | Graph Transformer | 0.6953 +/- 0.0388 | WPU remains best in this synthetic regime. |
+| 204 | WPU-routed/sparse | 0.4516 +/- 0.1957 | Graph Transformer | 0.7172 +/- 0.0615 | WPU fails; graph/token baselines dominate accuracy. |
 
-The routing result captures the WPU intuition: the same local event becomes
-dense when the entire world is small, hybrid at intermediate world size, and
-sparse when the event affects only a small fraction of a larger state memory.
+Dense N sweep:
 
-Baseline and ablation branch accuracy after 100 training steps:
+- Measured `N`: `4, 8, 12, 16, 24, 36, 52, 68, 84, 108, 132, 164, 204, 260`.
+- Route crossover: dense to hybrid at measured `N=16`.
+- Route crossover: hybrid to sparse at measured `N=68`.
+- Accuracy crossover: WPU-family advantage disappears around `N≈120`.
+- Runtime crossover: routed WPU becomes faster than serialized-token around
+  `N≈124`.
+- Runtime crossover: routed WPU becomes faster than dense-graph around `N≈178`.
 
-| Model | N=4 | N=24 | N=84 |
-|---|---:|---:|---:|
-| WPU routed | 0.6719 | 0.7969 | 0.6719 |
-| WPU sparse | 0.7812 | 0.8047 | 0.6719 |
-| WPU hybrid | 0.7812 | 0.7969 | 0.7969 |
-| WPU dense | 0.6719 | 0.6719 | 0.6719 |
-| Dense graph | 0.4219 | 0.5000 | 0.5938 |
-| Serialized token | 0.5625 | 0.6641 | 0.7891 |
+The central v1 gap is therefore precise:
 
-## 7. Interpretation
+```text
+WPU efficiency advantage appears at large N.
+WPU accuracy advantage currently appears at medium N.
+The next model must push the accuracy crossover beyond the runtime crossover.
+```
 
-The next-state MSE result shows that the model can learn the synthetic local
-delta rule quickly. This is expected and should not be overstated.
+Controlled stress tests:
 
-The branch result is more relevant. The trained model exceeds the majority
-baseline despite class imbalance, which means the event force, object position,
-and hand-cup geometry are being used rather than simply predicting `stable`.
-The margin is modest, so the next benchmark needs stronger branch calibration,
-balanced labels, and held-out scenario families.
+- Relation noise: WPU-hybrid accuracy drop is `0.0250` from 0 to 128 irrelevant
+  edges, while Graph Transformer drops `0.3438`.
+- Affected-background deltas: serialized-token has the best affected-background
+  MSE at the largest affected count; WPU is not broadly superior.
 
-The route sweep is the clearest architectural signal. It demonstrates that WPU
-routing depends on the fraction of affected world state. This differentiates the
-prototype from ordinary dense sequence processing: the same event does not imply
-the same compute pattern under different world memory sizes.
+## Current Evidence Boundary
 
-Propagation should be interpreted as a simplified local-physics prior. It is not
-an exact physical law, but it captures a common operational structure: physical
-changes often begin at a small set of entities and spread through contact,
-support, proximity, or causal relations before any global correction is needed.
-In that sense, WPU propagation is closer to a useful low-order physical
-approximation than to an arbitrary message-passing trick.
+Supported:
 
-The baseline results constrain the claim. WPU does not dominate every condition:
-the serialized-token baseline is strongest at `N=84` in the 100-step suite. The
-current evidence therefore supports the route-regime hypothesis more strongly
-than it supports universal quality dominance. The next paper-quality benchmark
-must compare matched models over accuracy, compute, and memory.
+- Explicit state-first modeling is implementable and trainable.
+- The hard scheduler produces the expected sparse/hybrid/dense route crossover.
+- WPU-family models are competitive or best in small-to-medium local synthetic
+  regimes.
+- WPU-hybrid is robust under irrelevant relation noise.
+- Routed sparse execution can reduce CPU latency at large `N`.
 
-## 8. Current Limitations
+Not supported:
 
-This is a v1 research scaffold, not a finished model family.
+- Universal WPU superiority over token or graph baselines.
+- General physical understanding.
+- End-to-end perception-to-state construction.
+- Hardware-level advantage over GPU/NPU/TPU/LPU.
+- Fixed `rho` thresholds as a final routing policy.
 
-- The dataset is synthetic and rule-generated.
-- The scheduler is hand-coded, not learned.
-- Dense fallback is a small attention block, not a hardware-optimized global
-  recompute kernel.
-- Uncertainty is limited to confidence heads and branch probabilities.
-- The physical prior has not yet been validated on real robotics data, video
-  perception, or long-horizon physical simulation.
-- The current branch task has class imbalance and only three branch labels.
+## Research Direction
 
-## 9. Next Experiments
+The correct high-impact framing is not a universal dominance claim. It is a
+testable claim about when a different computational primitive is appropriate.
 
-The next paper-quality experiments should add:
+The next decisive step is experimental, not rhetorical:
 
-- A balanced synthetic benchmark with controllable graph size, fanout, and
-  causal depth.
-- Ablations: sparse-only, dense-only, hybrid-only, and routed WPU.
-- A learned routing head compared against the hard `rho` scheduler.
-- Calibration metrics for branch probabilities.
-- Long-horizon rollout error over multiple events.
-- A real or simulator-backed object dynamics dataset.
-- Runtime and memory profiling as `N`, `fanout`, `depth`, and `branches` vary.
+- learned routing instead of fixed thresholds;
+- stronger sparse propagation capacity at large `N`;
+- long-horizon rollout and branch calibration;
+- matched Dreamer/GNS/object-centric baselines;
+- simulator-backed object dynamics;
+- explicit state integrity: checkpoint, rollback, and consistency checks;
+- hardware-aware profiling of frontier queues, relation fetch, scatter/gather,
+  delta logs, and branch overlays.
 
-## 10. Claim Boundary
-
-The current claim should be narrow:
-
-> Explicit world-state processing can be implemented as a learnable architecture
-> with sparse event propagation, dense fallback, and delta-based branching, and
-> the resulting reference implementation can be trained and evaluated
-> reproducibly on a small object-physics task.
-
-The current implementation should not claim general intelligence, broad physical
-reasoning, or superiority over Transformers. It establishes the substrate needed
-to test those claims later.
+Nature/Science-level direction requires showing a new computational principle
+that works in a clearly specified regime and fails outside it in predictable
+ways.

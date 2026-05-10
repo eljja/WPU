@@ -1,1 +1,136 @@
-# WPU
+# WPU: World-State Processing Unit
+
+![WPU compute architecture overview](docs/figures/wpu_compute_architectures.svg)
+
+This repository contains the first research prototype for **State Is All You
+Need** and the **World-State Processing Unit (WPU)** idea.
+
+WPU is not a chatbot memory system and it is not yet a chip design. It is a
+PyTorch reference implementation and research scaffold for a state-native
+execution model: worlds are represented as persistent objects, typed relations,
+time, uncertainty, events, deltas, and future branches.
+
+## Core Thesis
+
+Token sequences can describe a world, but they do not make world-state
+operations first-class. A WPU-style model treats these operations as the primary
+interface:
+
+- persistent object/relation state
+- event frontier generation
+- local causal propagation
+- sparse, hybrid, and dense execution routing
+- delta-state patching instead of full-state rewriting
+- branch overlays for multiple futures
+- uncertainty and branch probability updates
+
+The current claim is intentionally conditional: WPU should help in regimes where
+persistent identity, local causal change, uncertainty, and branching dominate.
+The repository includes negative and mixed results where token/graph baselines
+remain stronger.
+
+## Repository Layout
+
+```text
+wpu/                 PyTorch package and state/model implementation
+tests/               Unit and smoke tests
+demos/               End-to-end dataflow demo
+scripts/             Training, evaluation, sweeps, plotting
+docs/arxiv/          English LaTeX paper, Korean companion, generated PDF
+docs/experiments/    Experiment reports
+docs/figures/        Paper figures and README diagrams
+docs/Review/         External review notes and response matrix
+```
+
+## Install
+
+Python 3.11+ is recommended.
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+If PyTorch is not already installed, install a CPU or CUDA build appropriate for
+your environment before running training jobs.
+
+## Run The Demo
+
+```bash
+python demos/robot_cup_demo.py
+```
+
+Expected trace:
+
+- event and initial frontier
+- scheduler decision: sparse, hybrid, or dense
+- changed objects and relation updates
+- branch probabilities for stable, falls, and caught futures
+- memory estimate for base state, deltas, and branches
+
+## Train And Evaluate
+
+```bash
+python scripts/train_object_physics.py --steps 200 --batch-size 16 --seed 13 --checkpoint artifacts/object_physics_weighted.pt
+python scripts/eval_object_physics.py --samples 256 --batch-size 16 --seed 101 --checkpoint artifacts/object_physics_weighted.pt
+python scripts/route_sweep.py --samples 24 --batch-size 8 --background-sizes 0 20 80
+```
+
+The v1 model is `WorldStateProcessor`. It accepts batched state graphs, routes
+through sparse/hybrid/dense execution paths, and predicts object deltas, relation
+updates, uncertainty, and branch probabilities.
+
+## Reproduce The Main Experiment Reports
+
+The repository keeps raw generated experiment artifacts under `artifacts/`,
+which is ignored by git. The committed reports and figures are under `docs/`.
+
+```bash
+python scripts/robust_experiment_suite.py --out-dir artifacts/robust_v1
+python scripts/analyze_n_sweep.py
+python scripts/analyze_b_sweep.py
+python scripts/analyze_step_sweep.py
+python scripts/analyze_controlled_stress.py
+```
+
+Key reports:
+
+- `docs/experiments/robust_v1_results.md`
+- `docs/experiments/n_sweep_v1_results.md`
+- `docs/experiments/b_sweep_v1_results.md`
+- `docs/experiments/step_sweep_v1_results.md`
+- `docs/experiments/controlled_stress_v1_results.md`
+
+## Paper
+
+- English LaTeX: `docs/arxiv/state_is_all_you_need_en.tex`
+- English PDF: `docs/arxiv/state_is_all_you_need_en.pdf`
+- Korean companion: `docs/arxiv/state_is_all_you_need_ko.md`
+- Review response and differentiation: `docs/Review/review_response_and_differentiation.md`
+
+Build the PDF:
+
+```bash
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory docs/arxiv docs/arxiv/state_is_all_you_need_en.tex
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory docs/arxiv docs/arxiv/state_is_all_you_need_en.tex
+```
+
+## Current Evidence Summary
+
+The current evidence supports a regime hypothesis, not universal dominance.
+
+- WPU-hybrid is robust under irrelevant relation noise.
+- Routed sparse execution can become faster at larger `N`.
+- Current WPU accuracy collapses in some large-`N` regimes.
+- Serialized-token and graph-transformer baselines remain strong.
+- Fixed `rho` routing thresholds are not sufficient as a final scheduler.
+
+The next important steps are learned routing, stronger long-horizon dynamics,
+real/simulator-backed benchmarks, state construction from perception, and
+state-integrity mechanisms such as checkpoint and rollback.
+
+## Test
+
+```bash
+python -m pytest
+```
+

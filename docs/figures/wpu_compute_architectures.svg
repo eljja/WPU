@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
+  <title id="title">AI Compute Architectures: CPU vs GPU vs TPU vs NPU vs LPU vs WPU</title>
+  <desc id="desc">A schematic comparison of common AI compute architectures, emphasizing WPU as a world-state processor for objects, relations, deltas, propagation, branches, and sparse-dense routing.</desc>
+  <defs>
+    <style>
+      .bg { fill: #fbfaf7; }
+      .title { font: 700 42px "Trebuchet MS", "Segoe UI", sans-serif; fill: #7aa2d6; letter-spacing: 1px; }
+      .subtitle { font: 700 28px "Trebuchet MS", "Segoe UI", sans-serif; fill: #4b4b4b; }
+      .panel-title { font: 700 30px "Trebuchet MS", "Segoe UI", sans-serif; fill: #202020; }
+      .label { font: 600 14px "Trebuchet MS", "Segoe UI", sans-serif; fill: #202020; }
+      .tiny { font: 500 11px "Trebuchet MS", "Segoe UI", sans-serif; fill: #353535; }
+      .micro { font: 600 9px "Trebuchet MS", "Segoe UI", sans-serif; fill: #353535; }
+      .panel { fill: #f8fbff; stroke: #8ab1d6; stroke-width: 2; }
+      .panel-green { fill: #f6fbf6; stroke: #8ac19b; stroke-width: 2; }
+      .panel-yellow { fill: #fffaf0; stroke: #d7b46a; stroke-width: 2; }
+      .panel-purple { fill: #fbf7ff; stroke: #b89ddc; stroke-width: 2; }
+      .box { fill: #ffffff; stroke: #6e7a87; stroke-width: 1.4; }
+      .box-blue { fill: #dff0ff; stroke: #6aa6d8; stroke-width: 1.4; }
+      .box-green { fill: #dff5e5; stroke: #74b989; stroke-width: 1.4; }
+      .box-yellow { fill: #fff1c9; stroke: #d8ad42; stroke-width: 1.4; }
+      .box-red { fill: #ffe4db; stroke: #d98573; stroke-width: 1.4; }
+      .box-purple { fill: #eee6fa; stroke: #a88bd5; stroke-width: 1.4; }
+      .chip { fill: #ffffff; stroke: #2c6f3e; stroke-width: 3; }
+      .wire { stroke: #697586; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+      .wire-soft { stroke: #95a2af; stroke-width: 1.2; fill: none; stroke-dasharray: 4 4; }
+      .grid { fill: #cfd5db; }
+      .grid-hot { fill: #7bc68d; }
+      .core { fill: #dff0ff; stroke: #5193c8; stroke-width: 1; }
+      .wpu-core { fill: #e3f7df; stroke: #4f9d64; stroke-width: 1.4; }
+      .delta { fill: #fff3cf; stroke: #c99325; stroke-width: 1.4; }
+      .route { fill: #eaf0ff; stroke: #748dd7; stroke-width: 1.4; }
+      .branch { fill: #f1e6ff; stroke: #9a76d2; stroke-width: 1.4; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#697586"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1200" height="780"/>
+  <text class="title" x="600" y="54" text-anchor="middle">6 AI Compute Architectures</text>
+  <text class="subtitle" x="600" y="92" text-anchor="middle">CPU vs GPU vs TPU vs NPU vs LPU vs WPU</text>
+
+  <!-- CPU -->
+  <rect class="panel-green" x="18" y="128" rx="18" ry="18" width="360" height="300"/>
+  <text class="panel-title" x="120" y="174">CPU</text>
+  <rect class="chip" x="58" y="156" width="42" height="42" rx="5"/>
+  <g transform="translate(44 142)">
+    <g stroke="#2c6f3e" stroke-width="3">
+      <line x1="20" y1="0" x2="20" y2="12"/><line x1="30" y1="0" x2="30" y2="12"/><line x1="40" y1="0" x2="40" y2="12"/>
+      <line x1="20" y1="70" x2="20" y2="82"/><line x1="30" y1="70" x2="30" y2="82"/><line x1="40" y1="70" x2="40" y2="82"/>
+      <line x1="0" y1="20" x2="12" y2="20"/><line x1="0" y1="30" x2="12" y2="30"/><line x1="0" y1="40" x2="12" y2="40"/>
+      <line x1="70" y1="20" x2="82" y2="20"/><line x1="70" y1="30" x2="82" y2="30"/><line x1="70" y1="40" x2="82" y2="40"/>
+    </g>
+  </g>
+  <rect class="box-green" x="38" y="216" rx="8" width="120" height="86"/>
+  <text class="label" x="98" y="252" text-anchor="middle">Control</text>
+  <text class="tiny" x="98" y="275" text-anchor="middle">branching</text>
+  <g>
+    <rect class="core" x="190" y="216" rx="8" width="58" height="48"/><text class="tiny" x="219" y="245" text-anchor="middle">ALU</text>
+    <rect class="core" x="265" y="216" rx="8" width="58" height="48"/><text class="tiny" x="294" y="245" text-anchor="middle">ALU</text>
+    <rect class="core" x="190" y="280" rx="8" width="58" height="48"/><text class="tiny" x="219" y="309" text-anchor="middle">ALU</text>
+    <rect class="core" x="265" y="280" rx="8" width="58" height="48"/><text class="tiny" x="294" y="309" text-anchor="middle">ALU</text>
+  </g>
+  <text class="tiny" x="278" y="190" text-anchor="middle">Scalar + SIMD</text>
+  <rect class="box-purple" x="38" y="342" rx="7" width="302" height="38"/><text class="label" x="189" y="366" text-anchor="middle">L1 / L2 / L3 Cache</text>
+  <path class="wire" d="M189 380 L189 402"/>
+  <rect class="box-red" x="38" y="402" rx="7" width="302" height="36"/><text class="label" x="189" y="426" text-anchor="middle">DRAM (off-chip main memory)</text>
+
+  <!-- GPU -->
+  <rect class="panel" x="622" y="128" rx="18" ry="18" width="560" height="300"/>
+  <text class="panel-title" x="987" y="174">GPU</text>
+  <rect class="chip" x="930" y="150" width="42" height="42" rx="5" style="stroke:#6b6fc8"/>
+  <text class="tiny" x="760" y="174" text-anchor="middle">SIMT parallel processing</text>
+  <g transform="translate(664 210)">
+    <rect class="box-yellow" x="0" y="0" rx="8" width="190" height="160"/>
+    <text class="label" x="95" y="22" text-anchor="middle">Streaming Multiprocessor</text>
+    <rect class="box" x="22" y="38" width="146" height="20" rx="4"/><text class="micro" x="95" y="52" text-anchor="middle">Warp Scheduler(s)</text>
+    <rect class="box" x="22" y="64" width="146" height="20" rx="4"/><text class="micro" x="95" y="78" text-anchor="middle">Register File</text>
+    <g transform="translate(28 94)">
+      <rect class="core" x="0" y="0" width="42" height="32" rx="4"/><text class="micro" x="21" y="19" text-anchor="middle">CUDA</text>
+      <rect class="core" x="54" y="0" width="42" height="32" rx="4"/><text class="micro" x="75" y="19" text-anchor="middle">CUDA</text>
+      <rect class="core" x="108" y="0" width="42" height="32" rx="4"/><text class="micro" x="129" y="19" text-anchor="middle">CUDA</text>
+      <rect class="core" x="0" y="42" width="42" height="32" rx="4"/><text class="micro" x="21" y="61" text-anchor="middle">CUDA</text>
+      <rect class="core" x="54" y="42" width="42" height="32" rx="4"/><text class="micro" x="75" y="61" text-anchor="middle">CUDA</text>
+      <rect class="core" x="108" y="42" width="42" height="32" rx="4"/><text class="micro" x="129" y="61" text-anchor="middle">CUDA</text>
+    </g>
+  </g>
+  <g transform="translate(896 210)">
+    <rect class="box-yellow" x="0" y="0" rx="8" width="190" height="160"/>
+    <text class="label" x="95" y="22" text-anchor="middle">Streaming Multiprocessor</text>
+    <rect class="box" x="22" y="38" width="146" height="20" rx="4"/><text class="micro" x="95" y="52" text-anchor="middle">Warp Scheduler(s)</text>
+    <rect class="box" x="22" y="64" width="146" height="20" rx="4"/><text class="micro" x="95" y="78" text-anchor="middle">Register File</text>
+    <g transform="translate(28 94)">
+      <rect class="core" x="0" y="0" width="42" height="32" rx="4"/><text class="micro" x="21" y="19" text-anchor="middle">CUDA</text>
+      <rect class="core" x="54" y="0" width="42" height="32" rx="4"/><text class="micro" x="75" y="19" text-anchor="middle">CUDA</text>
+      <rect class="core" x="108" y="0" width="42" height="32" rx="4"/><text class="micro" x="129" y="19" text-anchor="middle">CUDA</text>
+      <rect class="core" x="0" y="42" width="42" height="32" rx="4"/><text class="micro" x="21" y="61" text-anchor="middle">CUDA</text>
+      <rect class="core" x="54" y="42" width="42" height="32" rx="4"/><text class="micro" x="75" y="61" text-anchor="middle">CUDA</text>
+      <rect class="core" x="108" y="42" width="42" height="32" rx="4"/><text class="micro" x="129" y="61" text-anchor="middle">CUDA</text>
+    </g>
+  </g>
+  <rect class="box-purple" x="670" y="388" rx="7" width="470" height="30"/><text class="label" x="905" y="408" text-anchor="middle">L2 Cache → GDDR / HBM</text>
+
+  <!-- TPU -->
+  <rect class="panel-yellow" x="382" y="236" rx="18" ry="18" width="276" height="260"/>
+  <text class="panel-title" x="540" y="292">TPU</text>
+  <rect class="chip" x="486" y="266" width="42" height="42" rx="5" style="stroke:#7e5bb7"/>
+  <text class="tiny" x="540" y="315" text-anchor="middle">Tensor / matrix processing</text>
+  <rect class="box-yellow" x="414" y="338" rx="8" width="212" height="86"/>
+  <text class="label" x="520" y="360" text-anchor="middle">Systolic Array</text>
+  <g transform="translate(454 372)">
+    <circle cx="0" cy="0" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="0" y="3" text-anchor="middle">MAC</text>
+    <circle cx="44" cy="0" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="44" y="3" text-anchor="middle">MAC</text>
+    <circle cx="88" cy="0" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="88" y="3" text-anchor="middle">MAC</text>
+    <circle cx="132" cy="0" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="132" y="3" text-anchor="middle">MAC</text>
+    <circle cx="0" cy="34" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="0" y="37" text-anchor="middle">MAC</text>
+    <circle cx="44" cy="34" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="44" y="37" text-anchor="middle">MAC</text>
+    <circle cx="88" cy="34" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="88" y="37" text-anchor="middle">MAC</text>
+    <circle cx="132" cy="34" r="12" fill="#dff0ff" stroke="#6aa6d8"/><text class="micro" x="132" y="37" text-anchor="middle">MAC</text>
+  </g>
+  <rect class="box-purple" x="426" y="442" rx="7" width="188" height="30"/><text class="label" x="520" y="462" text-anchor="middle">On-chip SRAM</text>
+  <rect class="box-red" x="426" y="480" rx="7" width="188" height="30"/><text class="label" x="520" y="500" text-anchor="middle">HBM / off-chip memory</text>
+
+  <!-- NPU -->
+  <rect class="panel" x="18" y="456" rx="18" ry="18" width="360" height="292"/>
+  <text class="panel-title" x="120" y="506">NPU</text>
+  <text class="tiny" x="244" y="506" text-anchor="middle">neural inference compute</text>
+  <rect class="box-yellow" x="64" y="530" rx="8" width="250" height="34"/><text class="label" x="189" y="552" text-anchor="middle">Tensor Buffer</text>
+  <rect class="box-yellow" x="64" y="586" rx="8" width="250" height="84"/><text class="label" x="189" y="606" text-anchor="middle">Neural Compute Engine</text>
+  <g transform="translate(101 622)">
+    <rect class="core" x="0" y="0" width="42" height="26" rx="4"/><text class="micro" x="21" y="16" text-anchor="middle">MAC</text>
+    <rect class="core" x="54" y="0" width="42" height="26" rx="4"/><text class="micro" x="75" y="16" text-anchor="middle">MAC</text>
+    <rect class="core" x="108" y="0" width="42" height="26" rx="4"/><text class="micro" x="129" y="16" text-anchor="middle">MAC</text>
+    <rect class="core" x="162" y="0" width="42" height="26" rx="4"/><text class="micro" x="183" y="16" text-anchor="middle">MAC</text>
+  </g>
+  <rect class="box-green" x="64" y="684" rx="8" width="250" height="30"/><text class="label" x="189" y="704" text-anchor="middle">Activation / Fusion Engine</text>
+  <rect class="box-purple" x="64" y="724" rx="8" width="250" height="30"/><text class="label" x="189" y="744" text-anchor="middle">On-chip SRAM / LPDDR</text>
+
+  <!-- LPU -->
+  <rect class="panel-green" x="408" y="526" rx="18" ry="18" width="342" height="222"/>
+  <text class="panel-title" x="505" y="576">LPU</text>
+  <rect class="chip" x="454" y="548" width="42" height="42" rx="5" style="stroke:#4f9d64"/>
+  <text class="tiny" x="630" y="576" text-anchor="middle">deterministic token streaming</text>
+  <rect class="box-blue" x="444" y="612" rx="8" width="86" height="58"/><text class="label" x="487" y="644" text-anchor="middle">MXM</text>
+  <rect class="box-blue" x="558" y="612" rx="8" width="86" height="58"/><text class="label" x="601" y="644" text-anchor="middle">VXM</text>
+  <rect class="box-blue" x="672" y="612" rx="8" width="50" height="58"/><text class="label" x="697" y="644" text-anchor="middle">SXM</text>
+  <path class="wire" d="M530 641 L558 641"/>
+  <path class="wire" d="M644 641 L672 641"/>
+  <rect class="box-purple" x="448" y="692" rx="8" width="260" height="32"/><text class="label" x="578" y="713" text-anchor="middle">On-chip SRAM; no DRAM critical path</text>
+
+  <!-- WPU -->
+  <rect class="panel-purple" x="778" y="456" rx="18" ry="18" width="404" height="292"/>
+  <text class="panel-title" x="880" y="506">WPU</text>
+  <rect class="chip" x="826" y="478" width="42" height="42" rx="5" style="stroke:#8855aa"/>
+  <text class="tiny" x="1022" y="505" text-anchor="middle">world-state processing</text>
+
+  <rect class="box-green" x="810" y="538" rx="8" width="132" height="54"/>
+  <text class="label" x="876" y="560" text-anchor="middle">State Store</text>
+  <text class="tiny" x="876" y="580" text-anchor="middle">objects · relations · belief</text>
+  <rect class="delta" x="1016" y="538" rx="8" width="132" height="54"/>
+  <text class="label" x="1082" y="560" text-anchor="middle">Delta Log</text>
+  <text class="tiny" x="1082" y="580" text-anchor="middle">patches · time · events</text>
+
+  <rect class="route" x="810" y="618" rx="8" width="154" height="70"/>
+  <text class="label" x="887" y="640" text-anchor="middle">Frontier + Router</text>
+  <text class="tiny" x="887" y="660" text-anchor="middle">ρ = ΔN·k^h·B / N</text>
+  <text class="tiny" x="887" y="678" text-anchor="middle">sparse · hybrid · dense</text>
+  <rect class="wpu-core" x="994" y="618" rx="8" width="154" height="70"/>
+  <text class="label" x="1071" y="640" text-anchor="middle">Propagation Core</text>
+  <text class="tiny" x="1071" y="660" text-anchor="middle">message passing</text>
+  <text class="tiny" x="1071" y="678" text-anchor="middle">local causal updates</text>
+  <path class="wire" d="M942 565 C972 565 986 565 1016 565"/>
+  <path class="wire" d="M887 592 L887 618"/>
+  <path class="wire" d="M964 653 L994 653"/>
+  <path class="wire" d="M1071 618 L1082 592"/>
+
+  <rect class="branch" x="846" y="708" rx="8" width="266" height="34"/>
+  <text class="label" x="979" y="730" text-anchor="middle">Branch overlays: BaseState + ΔState</text>
+  <path class="wire" d="M1071 688 L1040 708"/>
+  <path class="wire" d="M887 688 L918 708"/>
+
+  <!-- Decorative grids -->
+  <g transform="translate(300 186)">
+    <rect class="grid-hot" x="0" y="0" width="8" height="8"/><rect class="grid" x="12" y="0" width="8" height="8"/><rect class="grid" x="24" y="0" width="8" height="8"/><rect class="grid" x="36" y="0" width="8" height="8"/>
+    <rect class="grid" x="0" y="12" width="8" height="8"/><rect class="grid" x="12" y="12" width="8" height="8"/><rect class="grid" x="24" y="12" width="8" height="8"/><rect class="grid" x="36" y="12" width="8" height="8"/>
+    <rect class="grid" x="0" y="24" width="8" height="8"/><rect class="grid-hot" x="12" y="24" width="8" height="8"/><rect class="grid" x="24" y="24" width="8" height="8"/><rect class="grid" x="36" y="24" width="8" height="8"/>
+  </g>
+  <g transform="translate(1100 690)">
+    <circle cx="0" cy="0" r="3" fill="#9a76d2"/><circle cx="18" cy="-14" r="3" fill="#9a76d2"/><circle cx="36" cy="0" r="3" fill="#9a76d2"/>
+    <line x1="0" y1="0" x2="18" y2="-14" stroke="#9a76d2"/><line x1="18" y1="-14" x2="36" y2="0" stroke="#9a76d2"/>
+  </g>
+</svg>

@@ -134,3 +134,11 @@ state-integrity mechanisms such as checkpoint and rollback.
 python -m pytest
 ```
 
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0
+only (AGPL-3.0-only)**. See [LICENSE](LICENSE).
+
+The AGPL-3.0 network-copyleft requirement is intentional: if this code is
+modified and offered as a network service, the corresponding source code must be
+made available under the same license terms.

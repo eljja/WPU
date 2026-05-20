@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
 import time
 from pathlib import Path
@@ -28,8 +29,9 @@ def main() -> None:
     parser.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
     parser.add_argument("--n-values", type=int, nargs="+", default=[64, 128, 256, 512, 1024])
     parser.add_argument("--k-values", type=int, nargs="+", default=[4, 8, 16])
+    parser.add_argument("--distractor-values", type=int, nargs="+", default=[0, 8, 16, 32])
     parser.add_argument("--fixed-k", type=int, default=8)
-    parser.add_argument("--mode", choices=["n-sweep", "k-sweep"], default="n-sweep")
+    parser.add_argument("--mode", choices=["n-sweep", "k-sweep", "distractor-sweep"], default="n-sweep")
     parser.add_argument("--hidden-dim", type=int, default=256)
     parser.add_argument("--layers", type=int, default=2)
     parser.add_argument("--num-heads", type=int, default=8)
@@ -38,6 +40,7 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=256)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--seeds", type=int, nargs="+", default=None)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -50,19 +53,20 @@ def main() -> None:
     rows: list[dict[str, object]] = []
     for model_name in args.models:
         for value in _sweep_values(args):
-            background_objects, causal_obstacles = _condition(value, args)
+            background_objects, causal_obstacles, adversarial_distractors = _condition(value, args)
             for seed in seeds:
                 try:
-                    print(f"run model={model_name} seed={seed} N={background_objects + 4 + causal_obstacles} K={4 + causal_obstacles}")
-                    rows.append(_run_condition(model_name, background_objects, causal_obstacles, seed, args))
+                    total_n = _total_objects(background_objects, causal_obstacles, adversarial_distractors)
+                    print(f"run model={model_name} seed={seed} N={total_n} K={4 + causal_obstacles} distractors={adversarial_distractors}")
+                    rows.append(_run_condition(model_name, background_objects, causal_obstacles, adversarial_distractors, seed, args))
                 except torch.cuda.OutOfMemoryError as error:
                     torch.cuda.empty_cache()
-                    rows.append(_failed_row(model_name, background_objects, causal_obstacles, seed, args, f"cuda_oom: {error}"))
+                    rows.append(_failed_row(model_name, background_objects, causal_obstacles, adversarial_distractors, seed, args, f"cuda_oom: {error}"))
                 except RuntimeError as error:
                     if "out of memory" in str(error).lower():
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
-                        rows.append(_failed_row(model_name, background_objects, causal_obstacles, seed, args, f"oom: {error}"))
+                        rows.append(_failed_row(model_name, background_objects, causal_obstacles, adversarial_distractors, seed, args, f"oom: {error}"))
                     else:
                         raise
     _write_csv(args.out_dir / f"{args.mode}.csv", rows)
@@ -70,23 +74,34 @@ def main() -> None:
 
 
 def _sweep_values(args: argparse.Namespace) -> list[int]:
-    return args.n_values if args.mode == "n-sweep" else args.k_values
+    if args.mode == "n-sweep":
+        return args.n_values
+    if args.mode == "k-sweep":
+        return args.k_values
+    return args.distractor_values
 
 
-def _condition(value: int, args: argparse.Namespace) -> tuple[int, int]:
+def _condition(value: int, args: argparse.Namespace) -> tuple[int, int, int]:
     if args.mode == "n-sweep":
         causal_obstacles = max(0, args.fixed_k - 4)
         background_objects = max(0, value - 4 - causal_obstacles)
-        return background_objects, causal_obstacles
-    causal_obstacles = max(0, value - 4)
-    background_objects = max(0, max(args.n_values) - 4 - causal_obstacles)
-    return background_objects, causal_obstacles
+        return background_objects, causal_obstacles, 0
+    if args.mode == "k-sweep":
+        causal_obstacles = max(0, value - 4)
+        background_objects = max(0, max(args.n_values) - 4 - causal_obstacles)
+        return background_objects, causal_obstacles, 0
+    causal_obstacles = max(0, args.fixed_k - 4)
+    total_n = max(args.n_values)
+    adversarial_distractors = value
+    background_objects = max(0, total_n - 4 - causal_obstacles - adversarial_distractors)
+    return background_objects, causal_obstacles, adversarial_distractors
 
 
 def _run_condition(
     model_name: str,
     background_objects: int,
     causal_obstacles: int,
+    adversarial_distractors: int,
     seed: int,
     args: argparse.Namespace,
 ) -> dict[str, object]:
@@ -105,8 +120,10 @@ def _run_condition(
         seed=seed,
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
+        adversarial_distractors=adversarial_distractors,
     )
     loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=collate_working_set_samples)
+    class_weights = _class_weights(train_dataset).to(device) if args.class_weights else None
     model.train()
     last_loss = 0.0
     for step, (batch, target_delta, labels, _) in enumerate(loader, start=1):
@@ -115,7 +132,7 @@ def _run_condition(
         labels = labels.to(device)
         prediction = model(batch, num_branches=3, route_branches=3)
         loss = F.mse_loss(prediction.object_delta, target_delta)
-        loss = loss + F.cross_entropy(prediction.branch_logits, labels)
+        loss = loss + F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -123,8 +140,8 @@ def _run_condition(
         if step >= args.steps:
             break
 
-    eval_metrics = _evaluate(model, background_objects, causal_obstacles, seed, args, device)
-    runtime_metrics = _profile_runtime(model, background_objects, causal_obstacles, seed, args, device)
+    eval_metrics = _evaluate(model, background_objects, causal_obstacles, adversarial_distractors, seed, args, device)
+    runtime_metrics = _profile_runtime(model, background_objects, causal_obstacles, adversarial_distractors, seed, args, device)
     return {
         "status": "ok",
         "model": model_name,
@@ -132,8 +149,9 @@ def _run_condition(
         "params": _count_parameters(model),
         "hidden_dim": args.hidden_dim,
         "layers": args.layers,
-        "total_objects_n": background_objects + 4 + causal_obstacles,
+        "total_objects_n": _total_objects(background_objects, causal_obstacles, adversarial_distractors),
         "causal_k": 4 + causal_obstacles,
+        "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
         "train_loss": round(last_loss, 6),
         **eval_metrics,
@@ -145,6 +163,7 @@ def _evaluate(
     model: torch.nn.Module,
     background_objects: int,
     causal_obstacles: int,
+    adversarial_distractors: int,
     seed: int,
     args: argparse.Namespace,
     device: torch.device,
@@ -154,12 +173,14 @@ def _evaluate(
         seed=seed + 10_000,
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
+        adversarial_distractors=adversarial_distractors,
     )
     loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=collate_working_set_samples)
     model.eval()
     total = 0
     correct = 0
     mse_total = 0.0
+    label_counts: Counter[int] = Counter()
     selected_k_values: list[float] = []
     with torch.no_grad():
         for batch, target_delta, labels, causal_k in loader:
@@ -170,12 +191,14 @@ def _evaluate(
             predicted = prediction.branch_probabilities.argmax(dim=-1)
             batch_total = int(labels.numel())
             total += batch_total
+            label_counts.update(int(label) for label in labels.detach().cpu().tolist())
             correct += int((predicted == labels).sum().item())
             mse_total += float(F.mse_loss(prediction.object_delta, target_delta).item()) * batch_total
             selected_k_values.append(_selected_k(model, causal_k))
     model.train()
     return {
         "branch_accuracy": round(correct / max(total, 1), 6),
+        "majority_accuracy": round(max(label_counts.values(), default=0) / max(total, 1), 6),
         "mse": round(mse_total / max(total, 1), 6),
         "selected_k_mean": round(sum(selected_k_values) / max(len(selected_k_values), 1), 6),
     }
@@ -185,6 +208,7 @@ def _profile_runtime(
     model: torch.nn.Module,
     background_objects: int,
     causal_obstacles: int,
+    adversarial_distractors: int,
     seed: int,
     args: argparse.Namespace,
     device: torch.device,
@@ -194,6 +218,7 @@ def _profile_runtime(
         seed=seed + 20_000,
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
+        adversarial_distractors=adversarial_distractors,
     )
     batch, _, _, _ = collate_working_set_samples([dataset[index] for index in range(args.batch_size)])
     batch = _move_batch(batch, device)
@@ -237,10 +262,21 @@ def _selected_k(model: torch.nn.Module, causal_k: torch.Tensor) -> float:
     return float(causal_k.float().mean().item())
 
 
+def _class_weights(dataset: WorkingSetPhysicsDataset) -> torch.Tensor:
+    label_counts = Counter(dataset[index].branch_label for index in range(len(dataset)))
+    weights = torch.tensor([len(dataset) / max(1, label_counts.get(label, 0)) for label in range(3)], dtype=torch.float32)
+    return weights / weights.mean()
+
+
+def _total_objects(background_objects: int, causal_obstacles: int, adversarial_distractors: int) -> int:
+    return background_objects + 4 + causal_obstacles + adversarial_distractors
+
+
 def _failed_row(
     model_name: str,
     background_objects: int,
     causal_obstacles: int,
+    adversarial_distractors: int,
     seed: int,
     args: argparse.Namespace,
     error: str,
@@ -251,8 +287,9 @@ def _failed_row(
         "seed": seed,
         "hidden_dim": args.hidden_dim,
         "layers": args.layers,
-        "total_objects_n": background_objects + 4 + causal_obstacles,
+        "total_objects_n": _total_objects(background_objects, causal_obstacles, adversarial_distractors),
         "causal_k": 4 + causal_obstacles,
+        "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
         "error": error[:500],
     }

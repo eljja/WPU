@@ -128,6 +128,27 @@ python scripts/causal_working_set_experiment.py \
   --out-dir artifacts/causal_working_set_v2
 ```
 
+## Example Distractor Sweep
+
+```bash
+python scripts/causal_working_set_experiment.py \
+  --mode distractor-sweep \
+  --models wpu-cws-frontier wpu-cws-oracle wpu-cws-learned serialized-token graph-transformer \
+  --n-values 2048 \
+  --fixed-k 8 \
+  --distractor-values 0 8 16 32 64 128 \
+  --hidden-dim 512 \
+  --num-heads 8 \
+  --layers 2 \
+  --working-set-size 16 \
+  --steps 500 \
+  --samples 512 \
+  --batch-size 8 \
+  --runtime-repeats 30 \
+  --seeds 11 13 17 19 23 \
+  --out-dir artifacts/causal_working_set_v2_distractors
+```
+
 ## Interpretation Rules
 
 If oracle WPU succeeds at large `N` but learned/frontier WPU fails, the WPU core

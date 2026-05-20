@@ -88,6 +88,7 @@ def _condition_rows(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "acc-majority": round(_num(row.get("branch_accuracy")) - _num(row.get("majority_accuracy")), 6),
                 "mse": row.get("mse", ""),
                 "selected_K": row.get("selected_k_mean", ""),
+                "causal_recall": row.get("causal_recall_mean", ""),
                 "ms/sample": row.get("ms_per_sample_forward", ""),
                 "cuda_mb": row.get("cuda_peak_mb", ""),
             }
@@ -106,6 +107,7 @@ def _aggregate(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         mse = [_num(row.get("mse")) for row in group]
         latency = [_num(row.get("ms_per_sample_forward")) for row in group]
         selected_k = [_num(row.get("selected_k_mean")) for row in group]
+        causal_recall = [_num(row.get("causal_recall_mean")) for row in group]
         output.append(
             {
                 "model": model,
@@ -120,6 +122,7 @@ def _aggregate(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "acc_minus_majority": round(mean(accuracy) - mean(majority), 6),
                 "mse_mean": round(mean(mse), 6),
                 "selected_K_mean": round(mean(selected_k), 6),
+                "causal_recall_mean": round(mean(causal_recall), 6),
                 "ms_per_sample_mean": round(mean(latency), 6),
                 "ms_per_sample_ci95": round(_ci95(latency), 6),
             }

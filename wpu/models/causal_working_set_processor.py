@@ -15,6 +15,7 @@ from wpu.models.world_state_processor import StatePrediction
 class WorkingSetStats:
     mean_selected: float
     max_selected: int
+    mean_causal_recall: float
 
 
 class CausalWorkingSetProcessor(nn.Module):
@@ -96,6 +97,7 @@ class CausalWorkingSetProcessor(nn.Module):
         self.last_working_set_stats = WorkingSetStats(
             mean_selected=float(selected_counts.float().mean().detach().cpu().item()),
             max_selected=int(selected_counts.max().detach().cpu().item()),
+            mean_causal_recall=self._causal_recall(batch, selected_indices, selected_mask),
         )
         return StatePrediction(
             object_delta=object_delta,
@@ -152,15 +154,38 @@ class CausalWorkingSetProcessor(nn.Module):
     def _oracle_indices(self, batch: StateGraphBatch, batch_index: int, target: int) -> list[int]:
         if batch.object_ids is None:
             return self._frontier_indices(batch, batch_index, target)
-        causal_prefixes = ("cup_", "table_", "hand_", "edge_", "catcher_", "obstacle_")
         chosen = [
             index
             for index, object_id in enumerate(batch.object_ids[batch_index])
-            if object_id.startswith(causal_prefixes)
+            if _is_causal_object_id(object_id)
         ]
         if target not in chosen:
             chosen.insert(0, target)
         return chosen
+
+    def _causal_recall(
+        self,
+        batch: StateGraphBatch,
+        selected_indices: torch.Tensor,
+        selected_mask: torch.Tensor,
+    ) -> float:
+        if batch.object_ids is None:
+            return 0.0
+        recalls: list[float] = []
+        selected_cpu = selected_indices.detach().cpu()
+        mask_cpu = selected_mask.detach().cpu()
+        for batch_index, object_ids in enumerate(batch.object_ids):
+            causal_indices = {index for index, object_id in enumerate(object_ids) if _is_causal_object_id(object_id)}
+            if not causal_indices:
+                recalls.append(0.0)
+                continue
+            selected = {
+                int(index)
+                for index, valid in zip(selected_cpu[batch_index].tolist(), mask_cpu[batch_index].tolist(), strict=True)
+                if valid
+            }
+            recalls.append(len(causal_indices & selected) / len(causal_indices))
+        return float(sum(recalls) / max(len(recalls), 1))
 
     def _pool_working_set(
         self,
@@ -231,3 +256,8 @@ def _rows_to_index_tensor(
             indices[row_index, width:] = row[0]
         mask[row_index, :width] = True
     return indices, mask
+
+
+def _is_causal_object_id(object_id: str) -> bool:
+    causal_prefixes = ("cup_", "table_", "hand_", "edge_", "catcher_", "obstacle_")
+    return object_id.startswith(causal_prefixes)

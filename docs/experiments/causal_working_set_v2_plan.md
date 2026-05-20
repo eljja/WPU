@@ -84,6 +84,7 @@ fake cups / fake hands / fake edges / noisy relations increase
 - branch accuracy
 - next-state MSE
 - selected `K`
+- causal working-set recall
 - forward latency
 - peak GPU memory
 - OOM or timeout boundary
@@ -162,3 +163,6 @@ abstraction is not yet efficient enough.
 
 If token/graph baselines preserve accuracy and remain faster at matched
 parameters, WPU has no demonstrated advantage in this regime.
+
+If learned/frontier selectors have low causal recall while oracle remains
+strong, selector learning is the primary research problem.

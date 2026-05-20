@@ -105,6 +105,7 @@ python scripts/causal_working_set_experiment.py \
   --samples 8 \
   --batch-size 2 \
   --runtime-repeats 2 \
+  --seeds 11 13 \
   --out-dir artifacts/cws_smoke
 ```
 
@@ -123,6 +124,7 @@ python scripts/causal_working_set_experiment.py \
   --samples 512 \
   --batch-size 8 \
   --runtime-repeats 30 \
+  --seeds 11 13 17 19 23 \
   --out-dir artifacts/causal_working_set_v2
 ```
 

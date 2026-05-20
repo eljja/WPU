@@ -39,29 +39,32 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=13)
+    parser.add_argument("--seeds", type=int, nargs="+", default=None)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--runtime-repeats", type=int, default=20)
     parser.add_argument("--out-dir", type=Path, default=Path("artifacts/causal_working_set_v1"))
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
+    seeds = args.seeds or [args.seed]
     rows: list[dict[str, object]] = []
     for model_name in args.models:
         for value in _sweep_values(args):
             background_objects, causal_obstacles = _condition(value, args)
-            try:
-                print(f"run model={model_name} N={background_objects + 4 + causal_obstacles} K={4 + causal_obstacles}")
-                rows.append(_run_condition(model_name, background_objects, causal_obstacles, args))
-            except torch.cuda.OutOfMemoryError as error:
-                torch.cuda.empty_cache()
-                rows.append(_failed_row(model_name, background_objects, causal_obstacles, args, f"cuda_oom: {error}"))
-            except RuntimeError as error:
-                if "out of memory" in str(error).lower():
-                    if torch.cuda.is_available():
-                        torch.cuda.empty_cache()
-                    rows.append(_failed_row(model_name, background_objects, causal_obstacles, args, f"oom: {error}"))
-                else:
-                    raise
+            for seed in seeds:
+                try:
+                    print(f"run model={model_name} seed={seed} N={background_objects + 4 + causal_obstacles} K={4 + causal_obstacles}")
+                    rows.append(_run_condition(model_name, background_objects, causal_obstacles, seed, args))
+                except torch.cuda.OutOfMemoryError as error:
+                    torch.cuda.empty_cache()
+                    rows.append(_failed_row(model_name, background_objects, causal_obstacles, seed, args, f"cuda_oom: {error}"))
+                except RuntimeError as error:
+                    if "out of memory" in str(error).lower():
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
+                        rows.append(_failed_row(model_name, background_objects, causal_obstacles, seed, args, f"oom: {error}"))
+                    else:
+                        raise
     _write_csv(args.out_dir / f"{args.mode}.csv", rows)
     print(f"wrote={args.out_dir / f'{args.mode}.csv'}")
 
@@ -84,9 +87,10 @@ def _run_condition(
     model_name: str,
     background_objects: int,
     causal_obstacles: int,
+    seed: int,
     args: argparse.Namespace,
 ) -> dict[str, object]:
-    torch.manual_seed(args.seed)
+    torch.manual_seed(seed)
     device = torch.device(args.device)
     model = create_model(
         model_name,
@@ -98,7 +102,7 @@ def _run_condition(
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     train_dataset = WorkingSetPhysicsDataset(
         size=max(args.steps * args.batch_size, args.batch_size),
-        seed=args.seed,
+        seed=seed,
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
     )
@@ -119,11 +123,12 @@ def _run_condition(
         if step >= args.steps:
             break
 
-    eval_metrics = _evaluate(model, background_objects, causal_obstacles, args, device)
-    runtime_metrics = _profile_runtime(model, background_objects, causal_obstacles, args, device)
+    eval_metrics = _evaluate(model, background_objects, causal_obstacles, seed, args, device)
+    runtime_metrics = _profile_runtime(model, background_objects, causal_obstacles, seed, args, device)
     return {
         "status": "ok",
         "model": model_name,
+        "seed": seed,
         "params": _count_parameters(model),
         "hidden_dim": args.hidden_dim,
         "layers": args.layers,
@@ -140,12 +145,13 @@ def _evaluate(
     model: torch.nn.Module,
     background_objects: int,
     causal_obstacles: int,
+    seed: int,
     args: argparse.Namespace,
     device: torch.device,
 ) -> dict[str, object]:
     dataset = WorkingSetPhysicsDataset(
         size=args.samples,
-        seed=args.seed + 10_000,
+        seed=seed + 10_000,
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
     )
@@ -179,12 +185,13 @@ def _profile_runtime(
     model: torch.nn.Module,
     background_objects: int,
     causal_obstacles: int,
+    seed: int,
     args: argparse.Namespace,
     device: torch.device,
 ) -> dict[str, object]:
     dataset = WorkingSetPhysicsDataset(
         size=args.batch_size,
-        seed=args.seed + 20_000,
+        seed=seed + 20_000,
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
     )
@@ -234,12 +241,14 @@ def _failed_row(
     model_name: str,
     background_objects: int,
     causal_obstacles: int,
+    seed: int,
     args: argparse.Namespace,
     error: str,
 ) -> dict[str, object]:
     return {
         "status": "failed",
         "model": model_name,
+        "seed": seed,
         "hidden_dim": args.hidden_dim,
         "layers": args.layers,
         "total_objects_n": background_objects + 4 + causal_obstacles,

@@ -3,7 +3,9 @@ from __future__ import annotations
 import argparse
 import csv
 from collections import defaultdict
+import math
 from pathlib import Path
+from statistics import mean, stdev
 
 
 def main() -> None:
@@ -26,6 +28,7 @@ def _read_rows(path: Path) -> list[dict[str, str]]:
 def _render_report(path: Path, rows: list[dict[str, str]]) -> str:
     ok_rows = [row for row in rows if row.get("status") == "ok"]
     failed_rows = [row for row in rows if row.get("status") != "ok"]
+    aggregated = _aggregate(ok_rows)
     lines = [
         "# Causal Working Set v2 Results",
         "",
@@ -45,13 +48,17 @@ def _render_report(path: Path, rows: list[dict[str, str]]) -> str:
         "",
         _markdown_table(_condition_rows(ok_rows)),
         "",
+        "## Aggregated By Model And N",
+        "",
+        _markdown_table(aggregated),
+        "",
         "## Best Accuracy By N",
         "",
-        _markdown_table(_best_by(ok_rows, "total_objects_n", "branch_accuracy")),
+        _markdown_table(_best_by(aggregated, "N", "accuracy_mean")),
         "",
         "## Fastest Forward Latency By N",
         "",
-        _markdown_table(_best_by(ok_rows, "total_objects_n", "ms_per_sample_forward", lower_is_better=True)),
+        _markdown_table(_best_by(aggregated, "N", "ms_per_sample_mean", lower_is_better=True)),
         "",
         "## Interpretation Checklist",
         "",
@@ -85,16 +92,44 @@ def _condition_rows(rows: list[dict[str, str]]) -> list[dict[str, object]]:
     return output
 
 
+def _aggregate(rows: list[dict[str, str]]) -> list[dict[str, object]]:
+    grouped: dict[tuple[str, str, str], list[dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        grouped[(row["model"], row["total_objects_n"], row["causal_k"])].append(row)
+    output = []
+    for (model, n_value, k_value), group in sorted(grouped.items(), key=lambda item: (int(float(item[0][1])), item[0][0])):
+        accuracy = [_num(row.get("branch_accuracy")) for row in group]
+        mse = [_num(row.get("mse")) for row in group]
+        latency = [_num(row.get("ms_per_sample_forward")) for row in group]
+        selected_k = [_num(row.get("selected_k_mean")) for row in group]
+        output.append(
+            {
+                "model": model,
+                "N": n_value,
+                "K": k_value,
+                "seeds": len(group),
+                "params": group[0].get("params", ""),
+                "accuracy_mean": round(mean(accuracy), 6),
+                "accuracy_ci95": round(_ci95(accuracy), 6),
+                "mse_mean": round(mean(mse), 6),
+                "selected_K_mean": round(mean(selected_k), 6),
+                "ms_per_sample_mean": round(mean(latency), 6),
+                "ms_per_sample_ci95": round(_ci95(latency), 6),
+            }
+        )
+    return output
+
+
 def _best_by(
-    rows: list[dict[str, str]],
+    rows: list[dict[str, object]],
     group_key: str,
     metric: str,
     lower_is_better: bool = False,
 ) -> list[dict[str, object]]:
-    grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
+    grouped: dict[str, list[dict[str, object]]] = defaultdict(list)
     for row in rows:
-        grouped[row[group_key]].append(row)
-    output = []
+        grouped[str(row[group_key])].append(row)
+    output: list[dict[str, object]] = []
     for group, group_rows in sorted(grouped.items(), key=lambda item: int(float(item[0]))):
         best = min(group_rows, key=lambda row: _num(row.get(metric))) if lower_is_better else max(group_rows, key=lambda row: _num(row.get(metric)))
         output.append(
@@ -102,18 +137,24 @@ def _best_by(
                 group_key: group,
                 "model": best["model"],
                 metric: best.get(metric, ""),
-                "accuracy": best.get("branch_accuracy", ""),
-                "ms/sample": best.get("ms_per_sample_forward", ""),
+                "accuracy": best.get("accuracy_mean", ""),
+                "ms/sample": best.get("ms_per_sample_mean", ""),
                 "params": best.get("params", ""),
             }
         )
     return output
 
 
-def _num(value: str | None) -> float:
+def _ci95(values: list[float]) -> float:
+    if len(values) < 2:
+        return 0.0
+    return 1.96 * stdev(values) / math.sqrt(len(values))
+
+
+def _num(value: object) -> float:
     try:
         return float(value or "nan")
-    except ValueError:
+    except (TypeError, ValueError):
         return float("nan")
 
 

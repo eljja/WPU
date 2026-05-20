@@ -8,6 +8,8 @@ universally superior to token or graph baselines.
 
 Use these reports for paper-level claims:
 
+- `causal_working_set_v2_plan.md`: next large-`N` comparison plan that separates
+  total world size `N` from event-conditioned causal working set size `K`.
 - `robust_v1_results.md`: 5-seed baseline comparison, confidence intervals,
   route sweep, CPU latency, and the central v1 accuracy-runtime tension.
 - `n_sweep_v1_results.md`: dense object-count sweep over

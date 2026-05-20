@@ -1,0 +1,233 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import torch
+from torch import nn
+import torch.nn.functional as F
+
+from wpu.engines.scheduler import ExecutionPath
+from wpu.models.batch import EVENT_FEATURE_DIM, OBJECT_FEATURE_DIM, RELATION_FEATURE_DIM, StateGraphBatch
+from wpu.models.world_state_processor import StatePrediction
+
+
+@dataclass(frozen=True, slots=True)
+class WorkingSetStats:
+    mean_selected: float
+    max_selected: int
+
+
+class CausalWorkingSetProcessor(nn.Module):
+    """WPU v2 candidate that predicts over an event-conditioned causal subset.
+
+    The model keeps the public `StatePrediction` API, but its branch decision and
+    non-zero deltas are computed from a bounded working set `K` rather than from
+    a global mean over all `N` objects.
+    """
+
+    def __init__(
+        self,
+        object_feature_dim: int = OBJECT_FEATURE_DIM,
+        relation_feature_dim: int = RELATION_FEATURE_DIM,
+        event_feature_dim: int = EVENT_FEATURE_DIM,
+        hidden_dim: int = 256,
+        num_heads: int = 8,
+        layers: int = 2,
+        working_set_size: int = 16,
+        selector: str = "learned",
+    ) -> None:
+        super().__init__()
+        if selector not in {"learned", "target", "frontier", "oracle"}:
+            raise ValueError(f"unknown selector: {selector}")
+        self.selector = selector
+        self.working_set_size = working_set_size
+        self.object_encoder = nn.Linear(object_feature_dim, hidden_dim)
+        self.relation_encoder = nn.Linear(relation_feature_dim, hidden_dim)
+        self.event_encoder = nn.Linear(event_feature_dim, hidden_dim)
+        self.relevance_scorer = nn.Sequential(
+            nn.LayerNorm(hidden_dim * 2),
+            nn.Linear(hidden_dim * 2, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, 1),
+        )
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=hidden_dim,
+            nhead=num_heads,
+            dim_feedforward=hidden_dim * 4,
+            batch_first=True,
+            activation="gelu",
+        )
+        self.working_set_encoder = nn.TransformerEncoder(encoder_layer, num_layers=layers)
+        self.object_delta_head = nn.Linear(hidden_dim, object_feature_dim)
+        self.relation_head = nn.Linear(hidden_dim * 2 + relation_feature_dim, 1)
+        self.uncertainty_head = nn.Linear(hidden_dim, 1)
+        self.branch_head = nn.Linear(hidden_dim, 8)
+        self.last_working_set_stats: WorkingSetStats | None = None
+
+    def forward(
+        self,
+        batch: StateGraphBatch,
+        horizon: int = 1,
+        num_branches: int = 3,
+        route_branches: int | None = None,
+    ) -> StatePrediction:
+        del horizon
+        del route_branches
+        hidden = self.object_encoder(batch.object_features)
+        event_hidden = self.event_encoder(batch.event_features)
+        relevance_logits = self._relevance_logits(hidden, event_hidden, batch.object_mask)
+        selected_indices, selected_mask = self._select_indices(batch, relevance_logits)
+
+        gathered = _batched_gather(hidden, selected_indices)
+        gathered = self.working_set_encoder(gathered, src_key_padding_mask=~selected_mask)
+        gathered = gathered.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
+
+        object_delta = torch.zeros_like(batch.object_features)
+        selected_delta = self.object_delta_head(gathered).masked_fill(~selected_mask.unsqueeze(-1), 0.0)
+        object_delta.scatter_add_(1, selected_indices.unsqueeze(-1).expand(-1, -1, selected_delta.size(-1)), selected_delta)
+
+        uncertainty = torch.zeros((*batch.object_features.shape[:2], 1), device=batch.object_features.device)
+        selected_uncertainty = torch.sigmoid(self.uncertainty_head(gathered)).masked_fill(~selected_mask.unsqueeze(-1), 0.0)
+        uncertainty.scatter_add_(1, selected_indices.unsqueeze(-1), selected_uncertainty)
+
+        pooled = self._pool_working_set(gathered, selected_mask, relevance_logits, selected_indices)
+        branch_logits = self.branch_head(pooled)[:, :num_branches]
+        selected_counts = selected_mask.sum(dim=1)
+        self.last_working_set_stats = WorkingSetStats(
+            mean_selected=float(selected_counts.float().mean().detach().cpu().item()),
+            max_selected=int(selected_counts.max().detach().cpu().item()),
+        )
+        return StatePrediction(
+            object_delta=object_delta,
+            relation_logits=self._relation_logits(hidden, gathered, selected_indices, batch),
+            uncertainty=uncertainty,
+            branch_logits=branch_logits,
+            branch_probabilities=F.softmax(branch_logits, dim=-1),
+            selected_paths=[ExecutionPath.SPARSE for _ in range(batch.object_features.size(0))],
+        )
+
+    def _relevance_logits(
+        self,
+        hidden: torch.Tensor,
+        event_hidden: torch.Tensor,
+        object_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        event_expanded = event_hidden.unsqueeze(1).expand_as(hidden)
+        logits = self.relevance_scorer(torch.cat([hidden, event_expanded], dim=-1)).squeeze(-1)
+        return logits.masked_fill(~object_mask, float("-inf"))
+
+    def _select_indices(
+        self,
+        batch: StateGraphBatch,
+        relevance_logits: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        if self.selector == "learned":
+            indices = torch.topk(relevance_logits, k=min(self.working_set_size, relevance_logits.size(1)), dim=1).indices
+            mask = torch.isfinite(torch.gather(relevance_logits, 1, indices))
+            return _pad_indices(indices, mask, self.working_set_size)
+
+        rows: list[list[int]] = []
+        for batch_index in range(batch.object_features.size(0)):
+            target = int(batch.target_indices[batch_index].item())
+            if self.selector == "target":
+                chosen = [target]
+            elif self.selector == "frontier":
+                chosen = self._frontier_indices(batch, batch_index, target)
+            else:
+                chosen = self._oracle_indices(batch, batch_index, target)
+            rows.append(chosen[: self.working_set_size])
+        return _rows_to_index_tensor(rows, self.working_set_size, batch.object_features.device)
+
+    def _frontier_indices(self, batch: StateGraphBatch, batch_index: int, target: int) -> list[int]:
+        chosen = {target}
+        valid_edges = batch.relation_mask[batch_index].nonzero(as_tuple=False).flatten()
+        for edge_index in valid_edges.tolist():
+            src = int(batch.relation_indices[batch_index, edge_index, 0].item())
+            dst = int(batch.relation_indices[batch_index, edge_index, 1].item())
+            if src in chosen or dst in chosen:
+                chosen.add(src)
+                chosen.add(dst)
+        return sorted(chosen)
+
+    def _oracle_indices(self, batch: StateGraphBatch, batch_index: int, target: int) -> list[int]:
+        if batch.object_ids is None:
+            return self._frontier_indices(batch, batch_index, target)
+        causal_prefixes = ("cup_", "table_", "hand_", "edge_", "catcher_", "obstacle_")
+        chosen = [
+            index
+            for index, object_id in enumerate(batch.object_ids[batch_index])
+            if object_id.startswith(causal_prefixes)
+        ]
+        if target not in chosen:
+            chosen.insert(0, target)
+        return chosen
+
+    def _pool_working_set(
+        self,
+        gathered: torch.Tensor,
+        selected_mask: torch.Tensor,
+        relevance_logits: torch.Tensor,
+        selected_indices: torch.Tensor,
+    ) -> torch.Tensor:
+        gathered_scores = torch.gather(relevance_logits, 1, selected_indices).masked_fill(~selected_mask, float("-inf"))
+        weights = torch.softmax(gathered_scores, dim=1).unsqueeze(-1)
+        weights = torch.nan_to_num(weights, nan=0.0)
+        return (gathered * weights).sum(dim=1)
+
+    def _relation_logits(
+        self,
+        hidden: torch.Tensor,
+        gathered: torch.Tensor,
+        selected_indices: torch.Tensor,
+        batch: StateGraphBatch,
+    ) -> torch.Tensor:
+        del gathered
+        relation_logits = torch.zeros((hidden.size(0), batch.relation_indices.size(1), 1), device=hidden.device)
+        selected_sets = [set(row.tolist()) for row in selected_indices.detach().cpu()]
+        for batch_index in range(hidden.size(0)):
+            valid_edges = batch.relation_mask[batch_index].nonzero(as_tuple=False).flatten()
+            for edge_index in valid_edges.tolist():
+                src = int(batch.relation_indices[batch_index, edge_index, 0].item())
+                dst = int(batch.relation_indices[batch_index, edge_index, 1].item())
+                if src not in selected_sets[batch_index] and dst not in selected_sets[batch_index]:
+                    continue
+                relation_logits[batch_index, edge_index] = self.relation_head(
+                    torch.cat([hidden[batch_index, src], hidden[batch_index, dst], batch.relation_features[batch_index, edge_index]])
+                )
+        return relation_logits
+
+
+def _batched_gather(values: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
+    expanded = indices.unsqueeze(-1).expand(-1, -1, values.size(-1))
+    return torch.gather(values, 1, expanded)
+
+
+def _pad_indices(
+    indices: torch.Tensor,
+    mask: torch.Tensor,
+    target_size: int,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    if indices.size(1) == target_size:
+        return indices, mask
+    pad_width = target_size - indices.size(1)
+    pad_values = indices[:, :1].expand(-1, pad_width)
+    pad_mask = torch.zeros((indices.size(0), pad_width), dtype=torch.bool, device=indices.device)
+    return torch.cat([indices, pad_values], dim=1), torch.cat([mask, pad_mask], dim=1)
+
+
+def _rows_to_index_tensor(
+    rows: list[list[int]],
+    target_size: int,
+    device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    indices = torch.zeros((len(rows), target_size), dtype=torch.long, device=device)
+    mask = torch.zeros((len(rows), target_size), dtype=torch.bool, device=device)
+    for row_index, row in enumerate(rows):
+        if not row:
+            row = [0]
+        width = min(len(row), target_size)
+        indices[row_index, :width] = torch.tensor(row[:width], dtype=torch.long, device=device)
+        if width < target_size:
+            indices[row_index, width:] = row[0]
+        mask[row_index, :width] = True
+    return indices, mask

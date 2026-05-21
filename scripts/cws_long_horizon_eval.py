@@ -22,6 +22,7 @@ def main() -> None:
     parser.add_argument("--layers", type=int, default=1)
     parser.add_argument("--num-heads", type=int, default=4)
     parser.add_argument("--working-set-size", type=int, default=8)
+    parser.add_argument("--checkpoint-dir", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=101)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--output", type=Path, default=Path("artifacts/cws_long_horizon/long_horizon.csv"))
@@ -45,6 +46,7 @@ def _evaluate_model(model_name: str, args: argparse.Namespace) -> dict[str, obje
         num_heads=args.num_heads,
         working_set_size=args.working_set_size,
     ).to(device)
+    checkpoint = _load_matching_checkpoint(model, model_name, args, device)
     model.eval()
 
     total_predictions = 0
@@ -87,6 +89,7 @@ def _evaluate_model(model_name: str, args: argparse.Namespace) -> dict[str, obje
     return {
         "model": model_name,
         "params": _count_parameters(model),
+        "checkpoint": checkpoint,
         "total_objects_n": args.background_objects + args.causal_obstacles + 4,
         "causal_k": args.causal_obstacles + 4,
         "horizon": args.horizon,
@@ -108,6 +111,25 @@ def _move_batch(batch, device: torch.device):
     batch.target_indices = batch.target_indices.to(device)
     batch.time_features = batch.time_features.to(device)
     return batch
+
+
+def _load_matching_checkpoint(
+    model: torch.nn.Module,
+    model_name: str,
+    args: argparse.Namespace,
+    device: torch.device,
+) -> str:
+    if args.checkpoint_dir is None:
+        return ""
+    total_n = args.background_objects + args.causal_obstacles + 4
+    causal_k = args.causal_obstacles + 4
+    pattern = f"{model_name}_N{total_n}_K{causal_k}_D0_seed*.pt"
+    matches = sorted(args.checkpoint_dir.glob(pattern))
+    if not matches:
+        return ""
+    checkpoint = torch.load(matches[0], map_location=device)
+    model.load_state_dict(checkpoint["state_dict"])
+    return matches[0].as_posix()
 
 
 def _count_parameters(model: torch.nn.Module) -> int:

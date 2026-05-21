@@ -104,6 +104,7 @@ python scripts/cws_long_horizon_eval.py \
   --num-heads 8 \
   --layers 2 \
   --working-set-size 16 \
+  --checkpoint-dir artifacts/causal_working_set_v2/checkpoints \
   --device cuda \
   --output artifacts/causal_working_set_v2_long_horizon/long_horizon.csv
 ```
@@ -148,6 +149,7 @@ python scripts/causal_working_set_experiment.py \
   --runtime-repeats 30 \
   --seeds 11 13 17 19 23 \
   --selector-loss-weight 0.1 \
+  --save-checkpoints \
   --out-dir artifacts/causal_working_set_v2
 ```
 

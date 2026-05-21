@@ -46,10 +46,13 @@ def main() -> None:
     parser.add_argument("--seeds", type=int, nargs="+", default=None)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--runtime-repeats", type=int, default=20)
+    parser.add_argument("--save-checkpoints", action="store_true")
     parser.add_argument("--out-dir", type=Path, default=Path("artifacts/causal_working_set_v1"))
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
+    if args.save_checkpoints:
+        (args.out_dir / "checkpoints").mkdir(parents=True, exist_ok=True)
     seeds = args.seeds or [args.seed]
     rows: list[dict[str, object]] = []
     for model_name in args.models:
@@ -145,6 +148,9 @@ def _run_condition(
 
     eval_metrics = _evaluate(model, background_objects, causal_obstacles, adversarial_distractors, seed, args, device)
     runtime_metrics = _profile_runtime(model, background_objects, causal_obstacles, adversarial_distractors, seed, args, device)
+    checkpoint_path = ""
+    if args.save_checkpoints:
+        checkpoint_path = _save_checkpoint(model, model_name, background_objects, causal_obstacles, adversarial_distractors, seed, args)
     return {
         "status": "ok",
         "model": model_name,
@@ -157,6 +163,7 @@ def _run_condition(
         "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
         "train_loss": round(last_loss, 6),
+        "checkpoint": checkpoint_path,
         **eval_metrics,
         **runtime_metrics,
     }
@@ -304,6 +311,36 @@ def _failed_row(
 
 def _count_parameters(model: torch.nn.Module) -> int:
     return sum(parameter.numel() for parameter in model.parameters() if parameter.requires_grad)
+
+
+def _save_checkpoint(
+    model: torch.nn.Module,
+    model_name: str,
+    background_objects: int,
+    causal_obstacles: int,
+    adversarial_distractors: int,
+    seed: int,
+    args: argparse.Namespace,
+) -> str:
+    safe_model = model_name.replace("/", "_")
+    total_n = _total_objects(background_objects, causal_obstacles, adversarial_distractors)
+    path = args.out_dir / "checkpoints" / f"{safe_model}_N{total_n}_K{4 + causal_obstacles}_D{adversarial_distractors}_seed{seed}.pt"
+    torch.save(
+        {
+            "model": model_name,
+            "state_dict": model.state_dict(),
+            "hidden_dim": args.hidden_dim,
+            "layers": args.layers,
+            "num_heads": args.num_heads,
+            "working_set_size": args.working_set_size,
+            "total_objects_n": total_n,
+            "causal_k": 4 + causal_obstacles,
+            "adversarial_distractors": adversarial_distractors,
+            "seed": seed,
+        },
+        path,
+    )
+    return path.as_posix()
 
 
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:

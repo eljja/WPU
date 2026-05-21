@@ -10,6 +10,8 @@ Use these reports for paper-level claims:
 
 - `causal_working_set_v2_plan.md`: next large-`N` comparison plan that separates
   total world size `N` from event-conditioned causal working set size `K`.
+- `causal_working_set_8m_gpu_protocol.md`: CUDA protocol for the 8M-class
+  parameter-matched WPU/token/graph comparison.
 - `causal_working_set_v2_results.md`: generated summary for the current CWS
   sweep, when available.
 - `robust_v1_results.md`: 5-seed baseline comparison, confidence intervals,

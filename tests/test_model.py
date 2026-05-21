@@ -71,3 +71,13 @@ def test_causal_working_set_selector_loss_backward() -> None:
 
     assert loss.item() > 0.0
     assert any(param.grad is not None for param in model.relevance_scorer.parameters())
+
+
+def test_working_set_dataset_can_balance_branch_labels() -> None:
+    dataset = WorkingSetPhysicsDataset(size=9, seed=3, balanced_labels=True)
+
+    labels = [dataset[index].branch_label for index in range(len(dataset))]
+
+    assert labels.count(0) == 3
+    assert labels.count(1) == 3
+    assert labels.count(2) == 3

@@ -41,6 +41,7 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--selector-loss-weight", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--seeds", type=int, nargs="+", default=None)
@@ -61,20 +62,27 @@ def main() -> None:
             for seed in seeds:
                 try:
                     total_n = _total_objects(background_objects, causal_obstacles, adversarial_distractors)
-                    print(f"run model={model_name} seed={seed} N={total_n} K={4 + causal_obstacles} distractors={adversarial_distractors}")
+                    print(
+                        f"run model={model_name} seed={seed} N={total_n} "
+                        f"K={4 + causal_obstacles} distractors={adversarial_distractors}",
+                        flush=True,
+                    )
                     rows.append(_run_condition(model_name, background_objects, causal_obstacles, adversarial_distractors, seed, args))
+                    _write_csv(args.out_dir / f"{args.mode}.csv", rows)
                 except torch.cuda.OutOfMemoryError as error:
                     torch.cuda.empty_cache()
                     rows.append(_failed_row(model_name, background_objects, causal_obstacles, adversarial_distractors, seed, args, f"cuda_oom: {error}"))
+                    _write_csv(args.out_dir / f"{args.mode}.csv", rows)
                 except RuntimeError as error:
                     if "out of memory" in str(error).lower():
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
                         rows.append(_failed_row(model_name, background_objects, causal_obstacles, adversarial_distractors, seed, args, f"oom: {error}"))
+                        _write_csv(args.out_dir / f"{args.mode}.csv", rows)
                     else:
                         raise
     _write_csv(args.out_dir / f"{args.mode}.csv", rows)
-    print(f"wrote={args.out_dir / f'{args.mode}.csv'}")
+    print(f"wrote={args.out_dir / f'{args.mode}.csv'}", flush=True)
 
 
 def _sweep_values(args: argparse.Namespace) -> list[int]:
@@ -125,6 +133,7 @@ def _run_condition(
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
         adversarial_distractors=adversarial_distractors,
+        balanced_labels=args.balanced_labels,
     )
     loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=collate_working_set_samples)
     class_weights = _class_weights(train_dataset).to(device) if args.class_weights else None
@@ -162,6 +171,7 @@ def _run_condition(
         "causal_k": 4 + causal_obstacles,
         "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
+        "balanced_labels": args.balanced_labels,
         "train_loss": round(last_loss, 6),
         "checkpoint": checkpoint_path,
         **eval_metrics,
@@ -184,6 +194,7 @@ def _evaluate(
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
         adversarial_distractors=adversarial_distractors,
+        balanced_labels=args.balanced_labels,
     )
     loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=collate_working_set_samples)
     model.eval()
@@ -233,6 +244,7 @@ def _profile_runtime(
         background_objects=background_objects,
         causal_obstacles=causal_obstacles,
         adversarial_distractors=adversarial_distractors,
+        balanced_labels=args.balanced_labels,
     )
     batch, _, _, _ = collate_working_set_samples([dataset[index] for index in range(args.batch_size)])
     batch = _move_batch(batch, device)
@@ -305,6 +317,7 @@ def _failed_row(
         "causal_k": 4 + causal_obstacles,
         "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
+        "balanced_labels": args.balanced_labels,
         "error": error[:500],
     }
 

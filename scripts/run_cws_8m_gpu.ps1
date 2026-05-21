@@ -7,7 +7,8 @@ param(
     [int]$Samples = 512,
     [int]$BatchSize = 8,
     [int]$RuntimeRepeats = 30,
-    [double]$SelectorLossWeight = 0.1
+    [double]$SelectorLossWeight = 0.1,
+    [bool]$BalancedLabels = $true
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,6 +30,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $nArgs = $NValues | ForEach-Object { "$_" }
 $seedArgs = $Seeds | ForEach-Object { "$_" }
+$balancedArgs = if ($BalancedLabels) { @("--balanced-labels") } else { @("--no-balanced-labels") }
 
 & $Python scripts/causal_working_set_experiment.py `
     --models wpu-cws-frontier wpu-cws-oracle wpu-cws-learned serialized-token graph-transformer `
@@ -44,6 +46,8 @@ $seedArgs = $Seeds | ForEach-Object { "$_" }
     --runtime-repeats $RuntimeRepeats `
     --seeds $seedArgs `
     --selector-loss-weight $SelectorLossWeight `
+    $balancedArgs `
+    --save-checkpoints `
     --device cuda `
     --out-dir $OutDir
 if ($LASTEXITCODE -ne 0) {

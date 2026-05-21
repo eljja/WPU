@@ -119,17 +119,28 @@ class WorkingSetPhysicsDataset(Dataset):
         background_objects: int = 512,
         causal_obstacles: int = 0,
         adversarial_distractors: int = 0,
+        balanced_labels: bool = False,
     ) -> None:
         self.size = size
         self.seed = seed
         self.background_objects = background_objects
         self.causal_obstacles = causal_obstacles
         self.adversarial_distractors = adversarial_distractors
+        self.balanced_labels = balanced_labels
 
     def __len__(self) -> int:
         return self.size
 
     def __getitem__(self, index: int) -> WorkingSetPhysicsSample:
+        if self.balanced_labels:
+            target_label = index % len(BRANCH_LABELS)
+            for attempt in range(256):
+                sample = self._make_sample(index * 997 + attempt)
+                if sample.branch_label == target_label:
+                    return sample
+        return self._make_sample(index)
+
+    def _make_sample(self, index: int) -> WorkingSetPhysicsSample:
         rng = random.Random(self.seed + index)
         cup_x = rng.uniform(0.45, 0.98)
         hand_x = rng.uniform(0.2, 0.8)

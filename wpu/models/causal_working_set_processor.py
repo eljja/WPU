@@ -84,6 +84,7 @@ class CausalWorkingSetProcessor(nn.Module):
         selected_indices, selected_mask = self._select_indices(batch, relevance_logits)
 
         gathered = _batched_gather(hidden, selected_indices)
+        gathered = gathered + event_hidden.unsqueeze(1)
         gathered = self.working_set_encoder(gathered, src_key_padding_mask=~selected_mask)
         gathered = gathered.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
 

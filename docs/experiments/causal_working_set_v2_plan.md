@@ -126,6 +126,7 @@ python scripts/causal_working_set_experiment.py \
   --batch-size 8 \
   --runtime-repeats 30 \
   --seeds 11 13 17 19 23 \
+  --selector-loss-weight 0.1 \
   --out-dir artifacts/causal_working_set_v2
 ```
 
@@ -147,6 +148,7 @@ python scripts/causal_working_set_experiment.py \
   --batch-size 8 \
   --runtime-repeats 30 \
   --seeds 11 13 17 19 23 \
+  --selector-loss-weight 0.1 \
   --out-dir artifacts/causal_working_set_v2_distractors
 ```
 
@@ -166,3 +168,7 @@ parameters, WPU has no demonstrated advantage in this regime.
 
 If learned/frontier selectors have low causal recall while oracle remains
 strong, selector learning is the primary research problem.
+
+The optional `--selector-loss-weight` flag adds synthetic relevance supervision
+for known causal objects. Use it to test whether learned selection can approach
+oracle selection before moving to less supervised settings.

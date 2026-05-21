@@ -41,6 +41,7 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--selector-loss-weight", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--seeds", type=int, nargs="+", default=None)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -133,6 +134,8 @@ def _run_condition(
         prediction = model(batch, num_branches=3, route_branches=3)
         loss = F.mse_loss(prediction.object_delta, target_delta)
         loss = loss + F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
+        if args.selector_loss_weight > 0.0 and hasattr(model, "selector_loss"):
+            loss = loss + args.selector_loss_weight * model.selector_loss()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()

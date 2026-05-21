@@ -58,3 +58,16 @@ def test_causal_working_set_training_smoke_backward() -> None:
     loss.backward()
 
     assert any(param.grad is not None for param in model.parameters())
+
+
+def test_causal_working_set_selector_loss_backward() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, background_objects=32, causal_obstacles=2)
+    batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = CausalWorkingSetProcessor(hidden_dim=32, num_heads=4, working_set_size=8, selector="learned")
+    model(batch, num_branches=3)
+
+    loss = model.selector_loss()
+    loss.backward()
+
+    assert loss.item() > 0.0
+    assert any(param.grad is not None for param in model.relevance_scorer.parameters())

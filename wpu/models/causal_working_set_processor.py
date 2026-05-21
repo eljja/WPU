@@ -64,6 +64,8 @@ class CausalWorkingSetProcessor(nn.Module):
         self.uncertainty_head = nn.Linear(hidden_dim, 1)
         self.branch_head = nn.Linear(hidden_dim, 8)
         self.last_working_set_stats: WorkingSetStats | None = None
+        self._last_relevance_logits: torch.Tensor | None = None
+        self._last_batch: StateGraphBatch | None = None
 
     def forward(
         self,
@@ -77,6 +79,8 @@ class CausalWorkingSetProcessor(nn.Module):
         hidden = self.object_encoder(batch.object_features)
         event_hidden = self.event_encoder(batch.event_features)
         relevance_logits = self._relevance_logits(hidden, event_hidden, batch.object_mask)
+        self._last_relevance_logits = relevance_logits
+        self._last_batch = batch
         selected_indices, selected_mask = self._select_indices(batch, relevance_logits)
 
         gathered = _batched_gather(hidden, selected_indices)
@@ -107,6 +111,32 @@ class CausalWorkingSetProcessor(nn.Module):
             branch_probabilities=F.softmax(branch_logits, dim=-1),
             selected_paths=[ExecutionPath.SPARSE for _ in range(batch.object_features.size(0))],
         )
+
+    def selector_loss(self) -> torch.Tensor:
+        """Binary relevance supervision for causal object selection.
+
+        The loss is optional and only available when `batch.object_ids` exists.
+        It is designed for synthetic CWS experiments where the causal core is
+        known, letting us distinguish selector failure from WPU-core failure.
+        """
+
+        if self._last_relevance_logits is None or self._last_batch is None:
+            raise RuntimeError("selector_loss() requires a forward pass first")
+        batch = self._last_batch
+        logits = self._last_relevance_logits
+        if batch.object_ids is None:
+            return logits.sum() * 0.0
+        targets = torch.zeros_like(logits)
+        for batch_index, object_ids in enumerate(batch.object_ids):
+            for object_index, object_id in enumerate(object_ids):
+                if _is_causal_object_id(object_id):
+                    targets[batch_index, object_index] = 1.0
+        valid = batch.object_mask
+        positives = targets[valid].sum().clamp_min(1.0)
+        negatives = (1.0 - targets[valid]).sum().clamp_min(1.0)
+        pos_weight = negatives / positives
+        per_object = F.binary_cross_entropy_with_logits(logits, targets, pos_weight=pos_weight, reduction="none")
+        return per_object.masked_select(valid).mean()
 
     def _relevance_logits(
         self,

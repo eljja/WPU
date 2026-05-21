@@ -91,6 +91,27 @@ fake cups / fake hands / fake edges / noisy relations increase
 - calibration, once the basic comparison is stable
 - long-horizon branch consistency, in a later phase
 
+Long-horizon smoke path:
+
+```bash
+python scripts/cws_long_horizon_eval.py \
+  --models wpu-cws-oracle wpu-cws-learned serialized-token graph-transformer \
+  --background-objects 2040 \
+  --causal-obstacles 4 \
+  --horizon 50 \
+  --samples 256 \
+  --hidden-dim 512 \
+  --num-heads 8 \
+  --layers 2 \
+  --working-set-size 16 \
+  --device cuda \
+  --output artifacts/causal_working_set_v2_long_horizon/long_horizon.csv
+```
+
+This evaluator records branch accuracy, branch flip rate, mean delta MSE, and
+causal recall. It is a stability diagnostic, not a replacement for training a
+long-horizon model.
+
 ## Example Smoke Run
 
 ```bash

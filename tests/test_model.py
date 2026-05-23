@@ -2,6 +2,7 @@ import torch
 
 from wpu.data.object_physics import ObjectPhysicsDataset, collate_physics_samples, create_robot_cup_state, create_touch_event
 from wpu.data.working_set_physics import WorkingSetPhysicsDataset, collate_working_set_samples
+from wpu.models.factory import create_model
 from wpu.models.batch import StateGraphBatch
 from wpu.models.causal_working_set_processor import CausalWorkingSetProcessor
 from wpu.models.world_state_processor import WorldStateProcessor
@@ -81,3 +82,23 @@ def test_working_set_dataset_can_balance_branch_labels() -> None:
     assert labels.count(0) == 3
     assert labels.count(1) == 3
     assert labels.count(2) == 3
+
+
+def test_indexed_cws_model_uses_relation_frontier() -> None:
+    dataset = WorkingSetPhysicsDataset(size=1, seed=5, background_objects=64, causal_obstacles=4)
+    batch, target_delta, _, _ = collate_working_set_samples([dataset[0]])
+    model = create_model("wpu-cws-indexed", hidden_dim=32, num_heads=4, layers=1, working_set_size=8)
+
+    prediction = model(batch, num_branches=3)
+
+    assert prediction.object_delta.shape == target_delta.shape
+    assert model.last_working_set_stats is not None
+    assert model.last_working_set_stats.max_selected <= 8
+    assert model.last_working_set_stats.mean_causal_recall > 0.0
+
+
+def test_indexed_sparse_cws_model_disables_local_dense_block() -> None:
+    model = create_model("wpu-cws-indexed-sparse", hidden_dim=32, num_heads=4, layers=1, working_set_size=8)
+
+    assert isinstance(model, CausalWorkingSetProcessor)
+    assert model.local_dense is False

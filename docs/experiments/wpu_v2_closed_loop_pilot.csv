@@ -1,0 +1,6 @@
+branch_entropy_mean,branch_switch_rate,causal_k,causal_recall_mean,changed_objects_per_step,constraint_violations_per_step,delta_norm_per_step,horizon,model,total_objects_n
+1.003518,0.0,8,1.0,8.0,0.0,108.686544,50,wpu-cws-oracle,4096
+0.996755,0.163265,8,0.075,16.0,0.0,107.279759,50,wpu-cws-learned,4096
+1.003518,0.0,8,1.0,8.0,0.0,108.686544,50,wpu-cws-indexed,4096
+0.161038,0.040816,8,1.0,8.0,10.88,1252323.732146,50,wpu-cws-indexed-sparse,4096
+1.003518,0.0,8,1.0,8.0,0.0,108.686544,50,wpu-cws-indexed-local-dense,4096

@@ -6,6 +6,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+from wpu.core.causal_index import CausalIndex, CausalIndexQuery
 from wpu.engines.scheduler import ExecutionPath
 from wpu.models.batch import EVENT_FEATURE_DIM, OBJECT_FEATURE_DIM, RELATION_FEATURE_DIM, StateGraphBatch
 from wpu.models.world_state_processor import StatePrediction
@@ -36,12 +37,14 @@ class CausalWorkingSetProcessor(nn.Module):
         layers: int = 2,
         working_set_size: int = 16,
         selector: str = "learned",
+        local_dense: bool = True,
     ) -> None:
         super().__init__()
-        if selector not in {"learned", "target", "frontier", "oracle"}:
+        if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
             raise ValueError(f"unknown selector: {selector}")
         self.selector = selector
         self.working_set_size = working_set_size
+        self.local_dense = local_dense
         self.object_encoder = nn.Linear(object_feature_dim, hidden_dim)
         self.relation_encoder = nn.Linear(relation_feature_dim, hidden_dim)
         self.event_encoder = nn.Linear(event_feature_dim, hidden_dim)
@@ -58,7 +61,7 @@ class CausalWorkingSetProcessor(nn.Module):
             batch_first=True,
             activation="gelu",
         )
-        self.working_set_encoder = nn.TransformerEncoder(encoder_layer, num_layers=layers)
+        self.working_set_encoder = nn.TransformerEncoder(encoder_layer, num_layers=layers) if local_dense else nn.Identity()
         self.object_delta_head = nn.Linear(hidden_dim, object_feature_dim)
         self.relation_head = nn.Linear(hidden_dim * 2 + relation_feature_dim, 1)
         self.uncertainty_head = nn.Linear(hidden_dim, 1)
@@ -85,7 +88,10 @@ class CausalWorkingSetProcessor(nn.Module):
 
         gathered = _batched_gather(hidden, selected_indices)
         gathered = gathered + event_hidden.unsqueeze(1)
-        gathered = self.working_set_encoder(gathered, src_key_padding_mask=~selected_mask)
+        if self.local_dense:
+            gathered = self.working_set_encoder(gathered, src_key_padding_mask=~selected_mask)
+        else:
+            gathered = self.working_set_encoder(gathered)
         gathered = gathered.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
 
         object_delta = torch.zeros_like(batch.object_features)
@@ -166,10 +172,19 @@ class CausalWorkingSetProcessor(nn.Module):
                 chosen = [target]
             elif self.selector == "frontier":
                 chosen = self._frontier_indices(batch, batch_index, target)
+            elif self.selector == "indexed":
+                chosen = self._indexed_indices(batch, batch_index, target)
             else:
                 chosen = self._oracle_indices(batch, batch_index, target)
             rows.append(chosen[: self.working_set_size])
         return _rows_to_index_tensor(rows, self.working_set_size, batch.object_features.device)
+
+    def _indexed_indices(self, batch: StateGraphBatch, batch_index: int, target: int) -> list[int]:
+        index = CausalIndex(batch.relation_indices, batch.relation_mask, batch.object_mask)
+        return index.query(
+            batch_index,
+            CausalIndexQuery(target_index=target, max_nodes=self.working_set_size, max_depth=1),
+        )
 
     def _frontier_indices(self, batch: StateGraphBatch, batch_index: int, target: int) -> list[int]:
         chosen = {target}

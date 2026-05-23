@@ -102,28 +102,27 @@ foreach ($item in $Suite) {
                 -Models @("wpu-cws-oracle", "wpu-cws-learned", "serialized-token", "graph-transformer") `
                 -ExtraArgs @("--mode", "n-sweep", "--n-values", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "--fixed-k", "8")
         }
-        "long-horizon" {
+        "closed-loop" {
             $target = Join-Path $OutDir "long_horizon"
             New-Item -ItemType Directory -Force -Path $target | Out-Null
-            Write-Host "Running WPU v2 suite: long-horizon"
-            & $Python scripts/cws_long_horizon_eval.py `
-                --models wpu-cws-oracle wpu-cws-learned serialized-token graph-transformer `
+            Write-Host "Running WPU v2 suite: closed-loop"
+            & $Python scripts/cws_closed_loop_rollout.py `
+                --models wpu-cws-oracle wpu-cws-learned wpu-cws-indexed `
                 --background-objects 4088 `
                 --causal-obstacles 4 `
                 --horizon 50 `
-                --samples $Samples `
                 --hidden-dim $HiddenDim `
                 --num-heads $NumHeads `
                 --layers $Layers `
                 --working-set-size $WorkingSetSize `
                 --device cuda `
-                --output (Join-Path $target "long_horizon.csv")
+                --output (Join-Path $target "closed_loop.csv")
             if ($LASTEXITCODE -ne 0) {
                 exit $LASTEXITCODE
             }
         }
         default {
-            throw "Unknown suite '$item'. Use selector-gap, k-sweep, distractor-sweep, dense-n, or long-horizon."
+            throw "Unknown suite '$item'. Use selector-gap, k-sweep, distractor-sweep, dense-n, or closed-loop."
         }
     }
 }

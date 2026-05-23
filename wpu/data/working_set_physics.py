@@ -193,10 +193,81 @@ def collate_working_set_samples(
     return batch, targets, labels, causal_k
 
 
+def collate_indexed_working_set_samples(
+    samples: list[WorkingSetPhysicsSample],
+    *,
+    max_nodes: int = 16,
+    max_depth: int = 1,
+) -> tuple[StateGraphBatch, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Collate only the indexed event-local subgraph before tensorization.
+
+    This is the v2 pre-tensor retrieval path. It avoids building tensors for
+    every background object and instead projects each `WorldState` to the
+    event-target relation frontier first.
+    """
+
+    projected_states: list[WorldState] = []
+    projected_targets: list[torch.Tensor] = []
+    for sample in samples:
+        original_ids = list(sample.state.objects)
+        selected_ids = _indexed_object_ids(sample.state, sample.event, max_nodes=max_nodes, max_depth=max_depth)
+        projected_states.append(_project_state(sample.state, selected_ids))
+        selected_target = torch.zeros((len(selected_ids), OBJECT_FEATURE_DIM), dtype=torch.float32)
+        original_index = {object_id: index for index, object_id in enumerate(original_ids)}
+        for selected_index, object_id in enumerate(selected_ids):
+            source_index = original_index.get(object_id)
+            if source_index is not None and source_index < sample.target_object_delta.size(0):
+                selected_target[selected_index] = sample.target_object_delta[source_index]
+        projected_targets.append(selected_target)
+
+    batch = StateGraphBatch.from_world_states(projected_states, [sample.event for sample in samples])
+    max_objects = batch.object_features.size(1)
+    targets = torch.zeros((len(samples), max_objects, OBJECT_FEATURE_DIM), dtype=torch.float32)
+    labels = torch.tensor([sample.branch_label for sample in samples], dtype=torch.long)
+    causal_k = torch.tensor([sample.causal_working_set_size for sample in samples], dtype=torch.long)
+    for index, target in enumerate(projected_targets):
+        targets[index, : target.size(0)] = target
+    return batch, targets, labels, causal_k
+
+
+def _indexed_object_ids(state: WorldState, event: Event, *, max_nodes: int, max_depth: int) -> list[str]:
+    if event.target not in state.objects:
+        return list(state.objects)[:max_nodes]
+    selected = [event.target]
+    visited = {event.target}
+    frontier = [(event.target, 0)]
+    while frontier and len(selected) < max_nodes:
+        object_id, depth = frontier.pop(0)
+        if depth >= max_depth:
+            continue
+        for relation in state.relations_for(object_id):
+            other = relation.other(object_id)
+            if other is None or other in visited or other not in state.objects:
+                continue
+            visited.add(other)
+            selected.append(other)
+            if len(selected) >= max_nodes:
+                break
+            frontier.append((other, depth + 1))
+    return selected
+
+
+def _project_state(state: WorldState, object_ids: list[str]) -> WorldState:
+    selected = set(object_ids)
+    projected = WorldState(time=state.time, metadata={**state.metadata, "pre_tensor_indexed": True})
+    for object_id in object_ids:
+        projected.add_object(state.objects[object_id])
+    for relation in state.relations:
+        if relation.src in selected and relation.dst in selected:
+            projected.add_relation(relation)
+    return projected
+
+
 __all__ = [
     "BRANCH_LABELS",
     "WorkingSetPhysicsDataset",
     "WorkingSetPhysicsSample",
+    "collate_indexed_working_set_samples",
     "collate_working_set_samples",
     "create_causal_working_set_state",
 ]

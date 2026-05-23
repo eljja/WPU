@@ -10,7 +10,11 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from wpu.data.working_set_physics import WorkingSetPhysicsDataset, collate_working_set_samples
+from wpu.data.working_set_physics import (
+    WorkingSetPhysicsDataset,
+    collate_indexed_working_set_samples,
+    collate_working_set_samples,
+)
 from wpu.models.causal_working_set_processor import CausalWorkingSetProcessor
 from wpu.models.factory import create_model
 
@@ -42,6 +46,8 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--selector-loss-weight", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--seeds", type=int, nargs="+", default=None)
@@ -135,7 +141,7 @@ def _run_condition(
         adversarial_distractors=adversarial_distractors,
         balanced_labels=args.balanced_labels,
     )
-    loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=collate_working_set_samples)
+    loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args))
     class_weights = _class_weights(train_dataset).to(device) if args.class_weights else None
     model.train()
     last_loss = 0.0
@@ -172,6 +178,8 @@ def _run_condition(
         "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
         "balanced_labels": args.balanced_labels,
+        "pre_tensor_indexed": args.pre_tensor_indexed,
+        "index_depth": args.index_depth,
         "train_loss": round(last_loss, 6),
         "checkpoint": checkpoint_path,
         **eval_metrics,
@@ -196,7 +204,7 @@ def _evaluate(
         adversarial_distractors=adversarial_distractors,
         balanced_labels=args.balanced_labels,
     )
-    loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=collate_working_set_samples)
+    loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args))
     model.eval()
     total = 0
     correct = 0
@@ -246,7 +254,7 @@ def _profile_runtime(
         adversarial_distractors=adversarial_distractors,
         balanced_labels=args.balanced_labels,
     )
-    batch, _, _, _ = collate_working_set_samples([dataset[index] for index in range(args.batch_size)])
+    batch, _, _, _ = _collate_fn(args)([dataset[index] for index in range(args.batch_size)])
     batch = _move_batch(batch, device)
     model.eval()
     if device.type == "cuda":
@@ -318,8 +326,24 @@ def _failed_row(
         "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
         "balanced_labels": args.balanced_labels,
+        "pre_tensor_indexed": args.pre_tensor_indexed,
+        "index_depth": args.index_depth,
         "error": error[:500],
     }
+
+
+def _collate_fn(args: argparse.Namespace):
+    if not args.pre_tensor_indexed:
+        return collate_working_set_samples
+
+    def collate(samples):
+        return collate_indexed_working_set_samples(
+            samples,
+            max_nodes=args.working_set_size,
+            max_depth=args.index_depth,
+        )
+
+    return collate
 
 
 def _count_parameters(model: torch.nn.Module) -> int:

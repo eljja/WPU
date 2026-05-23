@@ -49,6 +49,11 @@ It contains:
 The v2 implementation should expose this memory through retrieval APIs rather
 than forcing every model call to scan every object.
 
+Implementation status: v2 now includes a pre-tensor indexed path that projects
+`WorldState` to the event-local subgraph before `StateGraphBatch`
+construction. This is the required direction for WPU; full-state tensorization
+followed by masking is only a research fallback.
+
 ## 2. Causal Index
 
 The causal index is the main missing system component in v1. It should support
@@ -76,6 +81,12 @@ selector cost ~= O(N)
 
 This is the core difference between WPU as an architecture and a graph neural
 network that simply masks objects after scanning them all.
+
+Current prototype:
+
+- `wpu.core.causal_index.CausalIndex`
+- `collate_indexed_working_set_samples`
+- `--pre-tensor-indexed` in `scripts/causal_working_set_experiment.py`
 
 ## 3. Event-Conditioned Causal Retriever
 
@@ -242,4 +253,3 @@ V2 should be considered meaningfully better than v1 if it shows:
 - Better robustness under adversarial distractors.
 - Better long-horizon branch/delta stability.
 - Evidence that indexed retrieval reduces selector cost from O(N)-like behavior.
-

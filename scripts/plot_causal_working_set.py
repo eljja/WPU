@@ -10,11 +10,23 @@ from statistics import mean, stdev
 import matplotlib.pyplot as plt
 
 
-MODELS = ["wpu-cws-frontier", "wpu-cws-oracle", "wpu-cws-learned", "serialized-token", "graph-transformer"]
+MODELS = [
+    "wpu-cws-frontier",
+    "wpu-cws-oracle",
+    "wpu-cws-learned",
+    "wpu-cws-indexed",
+    "wpu-cws-indexed-sparse",
+    "wpu-cws-indexed-local-dense",
+    "serialized-token",
+    "graph-transformer",
+]
 COLORS = {
     "wpu-cws-frontier": "#0f766e",
     "wpu-cws-oracle": "#15803d",
     "wpu-cws-learned": "#14b8a6",
+    "wpu-cws-indexed": "#2563eb",
+    "wpu-cws-indexed-sparse": "#9333ea",
+    "wpu-cws-indexed-local-dense": "#0891b2",
     "serialized-token": "#dc2626",
     "graph-transformer": "#7c3aed",
 }
@@ -81,7 +93,14 @@ def _plot_recall(rows: list[dict[str, str]], output: Path) -> None:
     ns = _n_values(rows)
     fig, axis = plt.subplots(figsize=(9.0, 4.8))
     plotted = False
-    for model in ["wpu-cws-frontier", "wpu-cws-oracle", "wpu-cws-learned"]:
+    for model in [
+        "wpu-cws-frontier",
+        "wpu-cws-oracle",
+        "wpu-cws-learned",
+        "wpu-cws-indexed",
+        "wpu-cws-indexed-sparse",
+        "wpu-cws-indexed-local-dense",
+    ]:
         xs, ys, errs = _series(grouped, model, ns)
         if xs:
             plotted = True

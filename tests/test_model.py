@@ -1,7 +1,11 @@
 import torch
 
 from wpu.data.object_physics import ObjectPhysicsDataset, collate_physics_samples, create_robot_cup_state, create_touch_event
-from wpu.data.working_set_physics import WorkingSetPhysicsDataset, collate_working_set_samples
+from wpu.data.working_set_physics import (
+    WorkingSetPhysicsDataset,
+    collate_indexed_working_set_samples,
+    collate_working_set_samples,
+)
 from wpu.models.factory import create_model
 from wpu.models.batch import StateGraphBatch
 from wpu.models.causal_working_set_processor import CausalWorkingSetProcessor
@@ -102,3 +106,20 @@ def test_indexed_sparse_cws_model_disables_local_dense_block() -> None:
 
     assert isinstance(model, CausalWorkingSetProcessor)
     assert model.local_dense is False
+
+
+def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:
+    dataset = WorkingSetPhysicsDataset(size=1, seed=7, background_objects=128, causal_obstacles=4)
+
+    batch, target_delta, labels, causal_k = collate_indexed_working_set_samples(
+        [dataset[0]],
+        max_nodes=8,
+        max_depth=1,
+    )
+
+    assert batch.object_features.shape[1] == 8
+    assert target_delta.shape[1] == batch.object_features.shape[1]
+    assert labels.tolist() in ([0], [1], [2])
+    assert causal_k.tolist() == [8]
+    assert batch.object_ids is not None
+    assert "context_00000" not in batch.object_ids[0]

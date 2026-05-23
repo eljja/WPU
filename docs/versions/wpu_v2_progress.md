@@ -118,21 +118,49 @@ consistency, not only next-step branch accuracy.
 
 ### Priority 5: Indexed Selector
 
-Implemented but not complete.
+Implemented and now supported by a pre-tensor indexed N-sweep.
 
-The current indexed selector proves the API and retrieval semantics. It does
-not yet prove sublinear runtime because tensorization still happens before
-indexing. The next implementation milestone is:
+Output:
+
+- `docs/experiments/wpu_v2_pre_tensor_indexed_n_sweep.csv`
+- `docs/experiments/wpu_v2_pre_tensor_indexed_n_sweep_results.md`
+
+The v2 code now supports:
 
 ```text
 WorldState -> CausalIndex query -> selected objects/relations -> tensorization
 ```
 
-instead of:
+instead of only:
 
 ```text
 WorldState -> full tensorization -> index/mask selected objects
 ```
+
+Result:
+
+| N | pre-tensor indexed accuracy | pre-tensor indexed ms/sample | token ms/sample | graph ms/sample |
+| --- | --- | --- | --- | --- |
+| 64 | 0.6775 | 1.077 | 0.187 | 2.563 |
+| 128 | 0.6775 | 1.112 | 0.344 | 3.745 |
+| 256 | 0.6775 | 1.300 | 0.432 | 3.550 |
+| 512 | 0.6775 | 1.210 | 0.727 | 3.831 |
+| 1024 | 0.6775 | 1.497 | 1.412 | 3.660 |
+| 2048 | 0.6775 | 1.553 | 3.063 | 6.386 |
+| 4096 | 0.6775 | 1.513 | 7.728 | 9.958 |
+| 8192 | 0.6775 | 1.840 | 24.803 | 27.096 |
+
+This is the strongest v2-positive signal so far. It directly supports the
+architectural claim that WPU should index into world state before neural
+tensorization. Once the model receives only the selected causal subgraph,
+latency grows weakly with total N while token and dense graph baselines grow
+rapidly.
+
+Remaining limitation:
+
+The current pre-tensor indexed path is still a synthetic relation-frontier
+index. It must be extended with spatial buckets, uncertainty hot sets, and
+harder distractor cases before being treated as a final result.
 
 ### Priority 6: Local Dense Hybrid
 
@@ -177,7 +205,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > causal retrieval, adaptive local propagation, and delta-based closed-loop
 > rollout. Early pilots show that one-step accuracy is insufficient; rollout
 > consistency and pre-tensor indexed retrieval are necessary to widen the WPU
-> advantage region.
+> advantage region. The pre-tensor indexed N-sweep is the first evidence that
+> WPU latency can be made weakly dependent on total world size N when K is
+> retrieved before tensorization.
 
 ## Next Required Work
 
@@ -190,4 +220,3 @@ Before claiming v2 as a strong experimental result:
 - Train branch heads from delta candidates and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or
   newly initialized models.
-

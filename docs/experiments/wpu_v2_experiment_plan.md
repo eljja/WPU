@@ -188,6 +188,18 @@ Success criterion:
 Selector time should grow much more slowly than N, ideally close to local
 fanout plus selected K.
 
+Current v2 status:
+
+The first pre-tensor indexed path is implemented. It projects `WorldState` to
+the event-local indexed subgraph before tensorization. Initial N-sweep evidence
+is stored in:
+
+- `docs/experiments/wpu_v2_pre_tensor_indexed_n_sweep.csv`
+- `docs/experiments/wpu_v2_pre_tensor_indexed_n_sweep_results.md`
+
+The next indexed-selector experiment should make the index harder by adding
+spatial distractors and hidden multi-hop support relations.
+
 ## Priority 6: Local Dense Hybrid
 
 Question:
@@ -249,4 +261,3 @@ H benefits from delta overlays
 
 This framing is stronger than universal superiority because it is falsifiable
 and explains where WPU should lose.
-

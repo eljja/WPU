@@ -182,7 +182,22 @@ def test_interaction_hybrid_uses_state_geometry_for_route() -> None:
     assert prediction.branch_probabilities.shape == (1, 3)
     assert model.last_working_set_stats is not None
     assert 0.0 <= model.last_working_set_stats.local_dense_ratio <= 1.0
+    assert model.last_working_set_stats.dense_compute_ratio == 1.0
     assert model.last_working_set_stats.sparse_ratio < 1.0
+
+
+def test_geometry_hybrid_adds_state_geometry_without_dense_compute() -> None:
+    dataset = WorkingSetPhysicsDataset(size=1, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0]])
+    model = create_model("wpu-cws-indexed-geometry-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=12)
+
+    prediction = model(batch, num_branches=3)
+
+    assert prediction.branch_probabilities.shape == (1, 3)
+    assert model.last_working_set_stats is not None
+    assert model.last_working_set_stats.local_dense_ratio == 0.0
+    assert model.last_working_set_stats.dense_compute_ratio == 0.0
+    assert model.last_working_set_stats.sparse_ratio == 1.0
 
 
 def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:

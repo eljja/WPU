@@ -160,6 +160,9 @@ Current implementation status:
   working set.
 - Reported metrics: sparse ratio, local-dense ratio, selector confidence, and
   selected execution path.
+- Compute-aware metric: `dense_compute_ratio` reports whether the local dense
+  block was actually executed. This is distinct from `local_dense_ratio`, which
+  reports representation mixing.
 - Not yet complete: learned K expansion, violation-triggered frontier growth,
   compute-regularized gating, and calibrated route probabilities.
 
@@ -190,6 +193,14 @@ Current experimental stressors:
 - `interaction_mode=pairwise`: branch labels depend on pairwise obstacle
   spacing inside the causal working set, creating a direct test for when local
   dense recompute helps.
+
+Current lesson:
+
+State-local interaction structure improves accuracy in the pairwise stress
+test, but dense recompute is only a valid WPU advantage if it is selectively
+executed. A low dense mixing ratio is not enough. The architecture therefore
+needs either conditional dense execution or relation-typed pairwise propagation
+that keeps the update sparse while modeling interactions.
 
 ## 6. Delta/Branch Engine
 
@@ -289,6 +300,7 @@ Implemented model names:
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
 - `wpu-cws-indexed-interaction-hybrid`
+- `wpu-cws-indexed-geometry-hybrid`
 
 ## V2 Success Criteria
 
@@ -300,3 +312,5 @@ V2 should be considered meaningfully better than v1 if it shows:
 - Better robustness under adversarial distractors.
 - Better long-horizon branch/delta stability.
 - Evidence that indexed retrieval reduces selector cost from O(N)-like behavior.
+- Evidence that adaptive dense fallback reduces actual dense execution cost,
+  not only dense-output mixing.

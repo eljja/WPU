@@ -100,6 +100,7 @@ def _condition_rows(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "causal_recall": row.get("causal_recall_mean", ""),
                 "sparse_ratio": row.get("sparse_ratio", ""),
                 "local_dense_ratio": row.get("local_dense_ratio", ""),
+                "dense_compute_ratio": row.get("dense_compute_ratio", ""),
                 "ms/sample": row.get("ms_per_sample_forward", ""),
                 "cuda_mb": row.get("cuda_peak_mb", ""),
             }
@@ -129,6 +130,7 @@ def _aggregate(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         causal_recall = [_num(row.get("causal_recall_mean")) for row in group]
         sparse_ratio = [_num(row.get("sparse_ratio")) for row in group if row.get("sparse_ratio", "") != ""]
         local_dense_ratio = [_num(row.get("local_dense_ratio")) for row in group if row.get("local_dense_ratio", "") != ""]
+        dense_compute_ratio = [_num(row.get("dense_compute_ratio")) for row in group if row.get("dense_compute_ratio", "") != ""]
         selector_confidence = [_num(row.get("selector_confidence_mean")) for row in group if row.get("selector_confidence_mean", "") != ""]
         output.append(
             {
@@ -148,6 +150,7 @@ def _aggregate(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "causal_recall_mean": round(mean(causal_recall), 6),
                 "sparse_ratio_mean": round(mean(sparse_ratio), 6) if sparse_ratio else "",
                 "local_dense_ratio_mean": round(mean(local_dense_ratio), 6) if local_dense_ratio else "",
+                "dense_compute_ratio_mean": round(mean(dense_compute_ratio), 6) if dense_compute_ratio else "",
                 "selector_confidence_mean": round(mean(selector_confidence), 6) if selector_confidence else "",
                 "ms_per_sample_mean": round(mean(latency), 6),
                 "ms_per_sample_ci95": round(_ci95(latency), 6),

@@ -17,6 +17,8 @@ Unless otherwise stated:
 - Primary metric: branch accuracy
 - Secondary metrics: latency, peak CUDA memory, delta MSE, causal recall,
   selected K, calibration/entropy where available
+- Compute-routing metrics: `local_dense_ratio` for representation mixing and
+  `dense_compute_ratio` for actual dense block execution
 
 ## Priority 1: Oracle vs Learned Selector Gap
 
@@ -238,6 +240,8 @@ Evidence needed:
 - Accuracy improvement over sparse WPU.
 - Latency relative to token/graph.
 - Expansion/fallback frequency.
+- Actual dense execution frequency through `dense_compute_ratio`, not only
+  local dense mixing.
 
 Success criterion:
 
@@ -289,6 +293,21 @@ accuracy at K=8, K=16, and K=32, and uses only about 15-18% local-dense mixing.
 This gives a more realistic v2 hypothesis: dense fallback should be triggered
 by measured interaction structure inside the causal working set, not by total
 world size N or fixed K thresholds alone.
+
+Compute-aware correction:
+
+The 15-18% number is a mixing ratio, not a compute ratio. The dense transformer
+is still executed for every sample in `wpu-cws-indexed-interaction-hybrid`.
+The new required metric is `dense_compute_ratio`.
+
+Follow-up implementation target:
+
+- `wpu-cws-indexed-geometry-hybrid` proves that state-local pairwise geometry
+  can be used without dense execution, but current accuracy is lower.
+- The next hybrid must conditionally execute the dense block only for selected
+  samples or replace dense recompute with relation-typed pairwise propagation.
+- Success requires preserving most of the interaction-hybrid accuracy while
+  driving `dense_compute_ratio` materially below 1.0.
 
 ## Combined V2 Regime Diagram
 

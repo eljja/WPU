@@ -22,6 +22,7 @@ MODEL_NAMES = [
     "wpu-cws-indexed-adaptive-hybrid",
     "wpu-cws-indexed-learned-hybrid",
     "wpu-cws-indexed-interaction-hybrid",
+    "wpu-cws-indexed-geometry-hybrid",
     "wpu-cws-oracle",
     "dense-graph",
     "graph-transformer",
@@ -45,6 +46,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         "wpu-cws-indexed-adaptive-hybrid",
         "wpu-cws-indexed-learned-hybrid",
         "wpu-cws-indexed-interaction-hybrid",
+        "wpu-cws-indexed-geometry-hybrid",
     }:
         working_set_size = int(kwargs.get("working_set_size", 16))
         layers = int(kwargs.get("layers", 2))
@@ -61,6 +63,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
                 "wpu-cws-indexed-adaptive-hybrid",
                 "wpu-cws-indexed-learned-hybrid",
                 "wpu-cws-indexed-interaction-hybrid",
+                "wpu-cws-indexed-geometry-hybrid",
             },
             adaptive_route=_adaptive_route(name),
         )
@@ -99,4 +102,6 @@ def _adaptive_route(name: str) -> str:
         return "learned"
     if name == "wpu-cws-indexed-interaction-hybrid":
         return "interaction"
+    if name == "wpu-cws-indexed-geometry-hybrid":
+        return "geometry"
     return "hard"

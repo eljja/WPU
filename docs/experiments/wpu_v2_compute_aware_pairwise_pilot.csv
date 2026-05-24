@@ -1,0 +1,13 @@
+adversarial_distractors,background_objects,balanced_labels,branch_accuracy,causal_k,causal_recall_mean,checkpoint,cuda_peak_mb,dense_compute_ratio,hidden_dim,index_depth,interaction_mode,layers,local_dense_ratio,majority_accuracy,model,ms_per_sample_forward,mse,params,pre_tensor_indexed,seed,selected_k_mean,selector_confidence_mean,sparse_ratio,status,total_objects_n,train_loss
+0,2040,True,0.566667,8,1.0,,22.066895,1.0,128,1,pairwise,1,0.147149,0.333333,wpu-cws-indexed-interaction-hybrid,2.027757,0.027641,248366,True,11,8.0,0.512132,0.852851,ok,2048,1.077449
+0,2040,True,0.555556,8,1.0,,22.066895,1.0,128,1,pairwise,1,0.148887,0.333333,wpu-cws-indexed-interaction-hybrid,1.947697,0.023883,248366,True,13,8.0,0.40786,0.851113,ok,2048,0.929582
+0,2032,True,0.6,16,1.0,,22.238281,1.0,128,1,pairwise,1,0.163102,0.333333,wpu-cws-indexed-interaction-hybrid,2.416403,0.018769,248366,True,11,16.0,0.460723,0.836898,ok,2048,0.653527
+0,2032,True,0.588889,16,1.0,,22.238281,1.0,128,1,pairwise,1,0.164876,0.333333,wpu-cws-indexed-interaction-hybrid,2.320587,0.021311,248366,True,13,16.0,0.397854,0.835124,ok,2048,0.720618
+0,2016,True,0.755556,32,1.0,,23.05127,1.0,128,1,pairwise,1,0.176722,0.333333,wpu-cws-indexed-interaction-hybrid,8.276697,0.017097,248366,True,11,32.0,0.505305,0.823278,ok,2048,0.90218
+0,2016,True,0.688889,32,1.0,,23.05127,1.0,128,1,pairwise,1,0.175591,0.333333,wpu-cws-indexed-interaction-hybrid,7.195993,0.009402,248366,True,13,32.0,0.246744,0.824409,ok,2048,0.941839
+0,2040,True,0.488889,8,1.0,,19.518555,0.0,128,1,pairwise,1,0.0,0.333333,wpu-cws-indexed-geometry-hybrid,1.79119,0.012552,248366,True,11,8.0,0.436104,1.0,ok,2048,1.067731
+0,2040,True,0.444444,8,1.0,,19.518555,0.0,128,1,pairwise,1,0.0,0.333333,wpu-cws-indexed-geometry-hybrid,1.904287,0.01271,248366,True,13,8.0,0.459579,1.0,ok,2048,1.090731
+0,2032,True,0.455556,16,1.0,,19.692871,0.0,128,1,pairwise,1,0.0,0.333333,wpu-cws-indexed-geometry-hybrid,3.92291,0.009926,248366,True,11,16.0,0.234462,1.0,ok,2048,0.772447
+0,2032,True,0.588889,16,1.0,,19.692871,0.0,128,1,pairwise,1,0.0,0.333333,wpu-cws-indexed-geometry-hybrid,3.462303,0.013888,248366,True,13,16.0,0.34068,1.0,ok,2048,0.937014
+0,2016,True,0.466667,32,1.0,,20.325195,0.0,128,1,pairwise,1,0.0,0.333333,wpu-cws-indexed-geometry-hybrid,6.508123,0.010713,248366,True,11,32.0,0.213053,1.0,ok,2048,0.951381
+0,2016,True,0.5,32,1.0,,20.325195,0.0,128,1,pairwise,1,0.0,0.333333,wpu-cws-indexed-geometry-hybrid,6.795653,0.015294,248366,True,13,32.0,0.242733,1.0,ok,2048,1.108231

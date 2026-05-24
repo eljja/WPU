@@ -19,6 +19,7 @@ class WorkingSetStats:
     mean_causal_recall: float
     sparse_ratio: float = 1.0
     local_dense_ratio: float = 0.0
+    dense_compute_ratio: float = 0.0
     mean_selector_confidence: float = 0.0
 
 
@@ -49,7 +50,7 @@ class CausalWorkingSetProcessor(nn.Module):
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
             raise ValueError(f"unknown selector: {selector}")
-        if adaptive_route not in {"hard", "learned", "interaction"}:
+        if adaptive_route not in {"hard", "learned", "interaction", "geometry"}:
             raise ValueError(f"unknown adaptive route: {adaptive_route}")
         self.selector = selector
         self.working_set_size = working_set_size
@@ -91,6 +92,11 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.GELU(),
             nn.Linear(max(hidden_dim // 2, 1), 1),
         )
+        self.geometry_context_encoder = nn.Sequential(
+            nn.LayerNorm(1),
+            nn.Linear(1, hidden_dim),
+            nn.GELU(),
+        )
         self.branch_head = nn.Linear(hidden_dim * 2, 8)
         self.last_working_set_stats: WorkingSetStats | None = None
         self._last_relevance_logits: torch.Tensor | None = None
@@ -117,10 +123,18 @@ class CausalWorkingSetProcessor(nn.Module):
 
         sparse_gathered = _batched_gather(hidden, selected_indices)
         sparse_gathered = sparse_gathered + event_hidden.unsqueeze(1)
-        if self.local_dense or self.adaptive_hybrid:
+        selected_object_features = _batched_gather(batch.object_features, selected_indices)
+        interaction_density = _interaction_density(selected_object_features, selected_mask)
+
+        if self.adaptive_hybrid and self.adaptive_route == "geometry":
+            dense_gathered = sparse_gathered
+            dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif self.local_dense or self.adaptive_hybrid:
             dense_gathered = self.working_set_encoder(sparse_gathered, src_key_padding_mask=~selected_mask)
+            dense_compute_weight = torch.ones_like(selector_confidence)
         else:
             dense_gathered = self.working_set_encoder(sparse_gathered)
+            dense_compute_weight = torch.zeros_like(selector_confidence)
 
         if self.adaptive_hybrid and self.adaptive_route == "learned":
             dense_weight = self._learned_dense_weight(
@@ -131,9 +145,12 @@ class CausalWorkingSetProcessor(nn.Module):
             )
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
         elif self.adaptive_hybrid and self.adaptive_route == "interaction":
-            selected_object_features = _batched_gather(batch.object_features, selected_indices)
-            dense_weight = self._interaction_dense_weight(selected_object_features, selected_mask)
+            dense_weight = self._interaction_dense_weight(interaction_density)
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
+        elif self.adaptive_hybrid and self.adaptive_route == "geometry":
+            dense_weight = torch.zeros_like(selector_confidence)
+            geometry_context = self.geometry_context_encoder(interaction_density.unsqueeze(-1))
+            gathered = sparse_gathered + geometry_context.unsqueeze(1)
         elif self.adaptive_hybrid:
             dense_mask = self._adaptive_dense_mask(selected_counts, selector_confidence)
             dense_weight = dense_mask.to(sparse_gathered.dtype)
@@ -167,6 +184,7 @@ class CausalWorkingSetProcessor(nn.Module):
             mean_causal_recall=self._causal_recall(batch, selected_indices, selected_mask),
             sparse_ratio=float((1.0 - dense_weight).mean().detach().cpu().item()),
             local_dense_ratio=float(dense_weight.mean().detach().cpu().item()),
+            dense_compute_ratio=float(dense_compute_weight.mean().detach().cpu().item()),
             mean_selector_confidence=float(selector_confidence.mean().detach().cpu().item()),
         )
         return StatePrediction(
@@ -330,18 +348,8 @@ class CausalWorkingSetProcessor(nn.Module):
 
     def _interaction_dense_weight(
         self,
-        selected_object_features: torch.Tensor,
-        selected_mask: torch.Tensor,
+        interaction_density: torch.Tensor,
     ) -> torch.Tensor:
-        positions = selected_object_features[..., 1:3]
-        pair_delta = positions.unsqueeze(2) - positions.unsqueeze(1)
-        pair_distance = pair_delta.square().sum(dim=-1).sqrt()
-        pair_mask = selected_mask.unsqueeze(2) & selected_mask.unsqueeze(1)
-        diagonal = torch.eye(selected_mask.size(1), dtype=torch.bool, device=selected_mask.device).unsqueeze(0)
-        pair_mask = pair_mask & ~diagonal
-        close_affinity = torch.exp(-pair_distance / 0.08).masked_fill(~pair_mask, 0.0)
-        pair_count = pair_mask.sum(dim=(1, 2)).clamp_min(1).to(close_affinity.dtype)
-        interaction_density = close_affinity.sum(dim=(1, 2)) / pair_count
         return torch.sigmoid((interaction_density - 0.35) * 10.0)
 
     def _pool_working_set(
@@ -389,6 +397,18 @@ def _masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     total = (values * weights).sum(dim=1)
     count = weights.sum(dim=1).clamp_min(1.0)
     return total / count
+
+
+def _interaction_density(selected_object_features: torch.Tensor, selected_mask: torch.Tensor) -> torch.Tensor:
+    positions = selected_object_features[..., 1:3]
+    pair_delta = positions.unsqueeze(2) - positions.unsqueeze(1)
+    pair_distance = pair_delta.square().sum(dim=-1).sqrt()
+    pair_mask = selected_mask.unsqueeze(2) & selected_mask.unsqueeze(1)
+    diagonal = torch.eye(selected_mask.size(1), dtype=torch.bool, device=selected_mask.device).unsqueeze(0)
+    pair_mask = pair_mask & ~diagonal
+    close_affinity = torch.exp(-pair_distance / 0.08).masked_fill(~pair_mask, 0.0)
+    pair_count = pair_mask.sum(dim=(1, 2)).clamp_min(1).to(close_affinity.dtype)
+    return close_affinity.sum(dim=(1, 2)) / pair_count
 
 
 def _pad_indices(

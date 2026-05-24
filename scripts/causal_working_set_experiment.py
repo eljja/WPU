@@ -218,6 +218,7 @@ def _evaluate(
     causal_recall_values: list[float] = []
     sparse_ratio_values: list[float] = []
     local_dense_ratio_values: list[float] = []
+    dense_compute_ratio_values: list[float] = []
     selector_confidence_values: list[float] = []
     with torch.no_grad():
         for batch, target_delta, labels, causal_k in loader:
@@ -231,11 +232,12 @@ def _evaluate(
             label_counts.update(int(label) for label in labels.detach().cpu().tolist())
             correct += int((predicted == labels).sum().item())
             mse_total += float(F.mse_loss(prediction.object_delta, target_delta).item()) * batch_total
-            selected_k, causal_recall, sparse_ratio, local_dense_ratio, selector_confidence = _working_set_stats(model, causal_k)
+            selected_k, causal_recall, sparse_ratio, local_dense_ratio, dense_compute_ratio, selector_confidence = _working_set_stats(model, causal_k)
             selected_k_values.append(selected_k)
             causal_recall_values.append(causal_recall)
             sparse_ratio_values.append(sparse_ratio)
             local_dense_ratio_values.append(local_dense_ratio)
+            dense_compute_ratio_values.append(dense_compute_ratio)
             selector_confidence_values.append(selector_confidence)
     model.train()
     return {
@@ -246,6 +248,7 @@ def _evaluate(
         "causal_recall_mean": round(sum(causal_recall_values) / max(len(causal_recall_values), 1), 6),
         "sparse_ratio": round(sum(sparse_ratio_values) / max(len(sparse_ratio_values), 1), 6),
         "local_dense_ratio": round(sum(local_dense_ratio_values) / max(len(local_dense_ratio_values), 1), 6),
+        "dense_compute_ratio": round(sum(dense_compute_ratio_values) / max(len(dense_compute_ratio_values), 1), 6),
         "selector_confidence_mean": round(sum(selector_confidence_values) / max(len(selector_confidence_values), 1), 6),
     }
 
@@ -304,7 +307,7 @@ def _move_batch(batch, device: torch.device):
     return batch
 
 
-def _working_set_stats(model: torch.nn.Module, causal_k: torch.Tensor) -> tuple[float, float, float, float, float]:
+def _working_set_stats(model: torch.nn.Module, causal_k: torch.Tensor) -> tuple[float, float, float, float, float, float]:
     if isinstance(model, CausalWorkingSetProcessor) and model.last_working_set_stats is not None:
         stats = model.last_working_set_stats
         return (
@@ -312,9 +315,10 @@ def _working_set_stats(model: torch.nn.Module, causal_k: torch.Tensor) -> tuple[
             stats.mean_causal_recall,
             stats.sparse_ratio,
             stats.local_dense_ratio,
+            stats.dense_compute_ratio,
             stats.mean_selector_confidence,
         )
-    return float(causal_k.float().mean().item()), 1.0, 0.0, 1.0, 1.0
+    return float(causal_k.float().mean().item()), 1.0, 0.0, 1.0, 1.0, 1.0
 
 
 def _class_weights(dataset: WorkingSetPhysicsDataset) -> torch.Tensor:

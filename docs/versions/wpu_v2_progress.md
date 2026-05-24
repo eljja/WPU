@@ -28,6 +28,7 @@ Added model names:
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
 - `wpu-cws-indexed-interaction-hybrid`
+- `wpu-cws-indexed-geometry-hybrid`
 
 These support priority 5 and 6:
 
@@ -37,6 +38,8 @@ These support priority 5 and 6:
 - hard adaptive routing between sparse and local-dense propagation
 - learned differentiable routing between sparse and local-dense propagation
 - interaction-aware routing from state-local pairwise geometry
+- geometry-only local interaction features without executing the local dense
+  transformer block
 
 ### Closed-Loop Rollout
 
@@ -103,7 +106,36 @@ local-dense recompute to mix into the sparse representation. It is not a token
 fallback and does not scan global state; the route decision is made from the
 already indexed causal state.
 
+Added `wpu-cws-indexed-geometry-hybrid`.
+
+This model tests the stricter compute claim. It uses pairwise state geometry as
+an explicit local feature, but it does not execute the local dense transformer.
+It separates two quantities that were previously conflated:
+
+```text
+local_dense_ratio = how much dense-style representation is mixed into output
+dense_compute_ratio = whether the dense transformer block was actually run
+```
+
 ## Completed V2 Priority Experiments
+
+### Compute-Aware Metric Fix
+
+Output:
+
+- `docs/experiments/wpu_v2_compute_aware_pairwise_pilot.csv`
+- `docs/experiments/wpu_v2_compute_aware_pairwise_pilot_results.md`
+
+Finding:
+
+The previous `local_dense_ratio` metric was not enough. For
+`wpu-cws-indexed-interaction-hybrid`, it measured the amount of dense result
+mixed into the output, but the dense transformer block was still executed for
+every sample. Therefore low `local_dense_ratio` is not evidence of low dense
+compute cost.
+
+The code now reports `dense_compute_ratio` separately. This is the metric that
+must be used for compute-cost claims.
 
 ### Priority 1: Selector Gap
 
@@ -329,7 +361,7 @@ Finding:
 Local-dense propagation improves over sparse at K=8 and K=16, but sparse wins
 again at K=32 in this short pilot:
 
-| K | sparse accuracy | local-dense accuracy | learned-hybrid accuracy | interaction-hybrid accuracy | interaction dense ratio |
+| K | sparse accuracy | local-dense accuracy | learned-hybrid accuracy | interaction-hybrid accuracy | interaction local-dense mix |
 | --- | --- | --- | --- | --- | --- |
 | 8 | 0.450 | 0.489 | 0.483 | 0.550 | 0.148 |
 | 16 | 0.506 | 0.544 | 0.522 | 0.578 | 0.164 |
@@ -338,11 +370,52 @@ again at K=32 in this short pilot:
 Interpretation:
 
 This is the first evidence in the repo that dense local recompute can help in
-an explicitly interaction-heavy state task. More importantly, the
-interaction-aware route outperforms both always-sparse and always-local-dense
-while using only a small fraction of dense mixing. This supports a sharper v2
-claim: WPU should not choose dense fallback from K alone; it should choose it
-from state-local interaction structure.
+an explicitly interaction-heavy state task. However, after adding
+`dense_compute_ratio`, the interpretation is stricter: the interaction-aware
+route improves accuracy, but the current implementation still executes the
+dense block for every sample. It is therefore an accuracy result, not yet a
+compute-efficiency result.
+
+### Priority 6c: Compute-Aware Pairwise Hybrid Check
+
+Output:
+
+- `docs/experiments/wpu_v2_compute_aware_pairwise_pilot.csv`
+- `docs/experiments/wpu_v2_compute_aware_pairwise_pilot_results.md`
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13
+- Hidden dim = 128
+- Interaction mode = pairwise
+- Pre-tensor indexed input enabled
+
+Result:
+
+| K | geometry-hybrid accuracy | geometry dense compute | interaction-hybrid accuracy | interaction dense compute |
+| --- | --- | --- | --- | --- |
+| 8 | 0.467 | 0.000 | 0.561 | 1.000 |
+| 16 | 0.522 | 0.000 | 0.594 | 1.000 |
+| 32 | 0.483 | 0.000 | 0.722 | 1.000 |
+
+Interpretation:
+
+The compute-realistic geometry-hybrid proves that pairwise state geometry can
+be injected without dense execution, but it does not recover the accuracy of
+the dense interaction-hybrid. Conversely, the interaction-hybrid is the best
+accuracy result in this stress test, but it is not yet sparse in actual compute.
+
+This narrows the next v2 objective:
+
+```text
+learn or implement selective dense execution, not merely selective dense mixing
+```
+
+The practical route is to execute local dense only for samples whose
+interaction-density, branch entropy, or constraint-violation signals exceed a
+threshold, while using geometry-enhanced sparse propagation for the rest.
 
 ## Updated V2 Direction
 
@@ -381,8 +454,11 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > unnecessary dense recompute, not dense recompute as a universal local upgrade.
 > The pairwise-interaction pilot gives a more realistic stress case where
 > local-dense recompute can help, but only in specific K regimes. The
-> interaction-aware route is the strongest v2 scheduler result so far because
-> it improves pairwise stress accuracy without using dense recompute by default.
+> interaction-aware route is the strongest v2 scheduler result so far for
+> accuracy, but compute-aware measurement shows that it still executes dense
+> recompute in the current implementation. The next claim must be earned by
+> selective dense execution or relation-typed sparse propagation that preserves
+> the accuracy gain without paying dense cost for every sample.
 
 ## Next Required Work
 
@@ -392,8 +468,8 @@ Before claiming v2 as a strong experimental result:
 - Rerun distractor sweep with harder false-positive distractors and five seeds.
 - Rerun pairwise local-interaction stress with five seeds and stronger
   baselines.
-- Extend the interaction-aware route with compute regularization and
-  violation-triggered K expansion.
+- Extend the interaction-aware route with actual selective dense execution,
+  compute regularization, and violation-triggered K expansion.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

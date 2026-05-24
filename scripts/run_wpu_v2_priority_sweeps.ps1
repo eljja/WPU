@@ -127,8 +127,14 @@ foreach ($item in $Suite) {
                 -Models @("wpu-cws-indexed-sparse", "wpu-cws-indexed-local-dense", "wpu-cws-indexed-adaptive-hybrid", "wpu-cws-indexed-learned-hybrid", "serialized-token", "graph-transformer") `
                 -ExtraArgs @("--mode", "k-sweep", "--n-values", "4096", "--k-values", "4", "8", "16", "32", "64", "--pre-tensor-indexed")
         }
+        "pairwise-interaction" {
+            Invoke-CwsExperiment `
+                -Name "pairwise_interaction" `
+                -Models @("wpu-cws-indexed-sparse", "wpu-cws-indexed-local-dense", "wpu-cws-indexed-learned-hybrid", "wpu-cws-indexed-interaction-hybrid", "serialized-token", "graph-transformer") `
+                -ExtraArgs @("--mode", "k-sweep", "--n-values", "4096", "--k-values", "8", "16", "32", "--interaction-mode", "pairwise", "--pre-tensor-indexed")
+        }
         default {
-            throw "Unknown suite '$item'. Use selector-gap, k-sweep, distractor-sweep, dense-n, closed-loop, or adaptive-hybrid."
+            throw "Unknown suite '$item'. Use selector-gap, k-sweep, distractor-sweep, dense-n, closed-loop, adaptive-hybrid, or pairwise-interaction."
         }
     }
 }

@@ -26,6 +26,8 @@ Added model names:
 - `wpu-cws-indexed-sparse`
 - `wpu-cws-indexed-local-dense`
 - `wpu-cws-indexed-adaptive-hybrid`
+- `wpu-cws-indexed-learned-hybrid`
+- `wpu-cws-indexed-interaction-hybrid`
 
 These support priority 5 and 6:
 
@@ -33,6 +35,8 @@ These support priority 5 and 6:
 - local sparse propagation
 - local dense propagation within the selected state subset
 - hard adaptive routing between sparse and local-dense propagation
+- learned differentiable routing between sparse and local-dense propagation
+- interaction-aware routing from state-local pairwise geometry
 
 ### Closed-Loop Rollout
 
@@ -90,6 +94,14 @@ learned gate -> convex mixture -> delta and branch heads
 The gate is trained through the same delta and branch losses. It does not
 serialize the world or use global token attention; it learns whether local
 dense recompute is useful inside the already selected causal state.
+
+Added `wpu-cws-indexed-interaction-hybrid`.
+
+This model computes a state-local interaction density from pairwise distances
+inside the selected working set and uses that signal to choose how much
+local-dense recompute to mix into the sparse representation. It is not a token
+fallback and does not scan global state; the route decision is made from the
+already indexed causal state.
 
 ## Completed V2 Priority Experiments
 
@@ -286,6 +298,52 @@ The useful v2 behavior is therefore not "always use dense locally"; it is
 propagation is sufficient." This strengthens the WPU claim because the model
 can preserve state-local compute instead of paying dense cost by default.
 
+### Priority 6b: Pairwise Local-Interaction Stress
+
+Added `interaction_mode=pairwise` to the CWS dataset and experiment runner.
+
+This mode keeps the WPU premise intact: the model still receives explicit
+objects and relations, and the indexed working set is still selected before
+tensorization. The difference is that the branch label depends on pairwise
+spacing among causal obstacles, making the task less reducible to independent
+object updates.
+
+Output:
+
+- `docs/experiments/wpu_v2_pairwise_interaction_pilot.csv`
+- `docs/experiments/wpu_v2_pairwise_interaction_pilot_results.md`
+- `docs/experiments/wpu_v2_interaction_hybrid_pilot.csv`
+- `docs/experiments/wpu_v2_interaction_hybrid_pilot_results.md`
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13
+- Hidden dim = 128
+- Interaction mode = pairwise
+- Pre-tensor indexed input enabled
+
+Finding:
+
+Local-dense propagation improves over sparse at K=8 and K=16, but sparse wins
+again at K=32 in this short pilot:
+
+| K | sparse accuracy | local-dense accuracy | learned-hybrid accuracy | interaction-hybrid accuracy | interaction dense ratio |
+| --- | --- | --- | --- | --- | --- |
+| 8 | 0.450 | 0.489 | 0.483 | 0.550 | 0.148 |
+| 16 | 0.506 | 0.544 | 0.522 | 0.578 | 0.164 |
+| 32 | 0.550 | 0.517 | 0.478 | 0.711 | 0.176 |
+
+Interpretation:
+
+This is the first evidence in the repo that dense local recompute can help in
+an explicitly interaction-heavy state task. More importantly, the
+interaction-aware route outperforms both always-sparse and always-local-dense
+while using only a small fraction of dense mixing. This supports a sharper v2
+claim: WPU should not choose dense fallback from K alone; it should choose it
+from state-local interaction structure.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -297,7 +355,8 @@ clearer:
 3. Event-Conditioned Retriever: make learned retrieval compete with indexed and
    oracle retrieval under distractors.
 4. Adaptive K Scheduler: expose K growth as a controlled decision, not a fixed
-   hyperparameter; hard and learned local-route variants now exist.
+   hyperparameter; hard, learned, and interaction-aware local-route variants
+   now exist.
 5. Local Propagation Core: support both sparse and local dense updates.
 6. Delta/Branch Engine: implemented the first delta-conditioned branch scorer;
    the next step is full branch-specific delta trajectories.
@@ -320,6 +379,10 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > instrumentation but not yet a final scheduler. The learned-hybrid pilot
 > suggests the correct default may be sparse-first with learned suppression of
 > unnecessary dense recompute, not dense recompute as a universal local upgrade.
+> The pairwise-interaction pilot gives a more realistic stress case where
+> local-dense recompute can help, but only in specific K regimes. The
+> interaction-aware route is the strongest v2 scheduler result so far because
+> it improves pairwise stress accuracy without using dense recompute by default.
 
 ## Next Required Work
 
@@ -327,8 +390,10 @@ Before claiming v2 as a strong experimental result:
 
 - Rerun K sweep with five seeds and baselines.
 - Rerun distractor sweep with harder false-positive distractors and five seeds.
-- Extend the learned route with explicit compute regularization and
-  violation-triggered dense recompute.
+- Rerun pairwise local-interaction stress with five seeds and stronger
+  baselines.
+- Extend the interaction-aware route with compute regularization and
+  violation-triggered K expansion.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

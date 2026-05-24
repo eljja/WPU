@@ -90,6 +90,7 @@ def _condition_rows(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "N": row["total_objects_n"],
                 "K": row["causal_k"],
                 "distractors": row.get("adversarial_distractors", "0"),
+                "interaction": row.get("interaction_mode", "standard"),
                 "params": row.get("params", ""),
                 "accuracy": row.get("branch_accuracy", ""),
                 "majority": row.get("majority_accuracy", ""),
@@ -107,11 +108,19 @@ def _condition_rows(rows: list[dict[str, str]]) -> list[dict[str, object]]:
 
 
 def _aggregate(rows: list[dict[str, str]]) -> list[dict[str, object]]:
-    grouped: dict[tuple[str, str, str, str], list[dict[str, str]]] = defaultdict(list)
+    grouped: dict[tuple[str, str, str, str, str], list[dict[str, str]]] = defaultdict(list)
     for row in rows:
-        grouped[(row["model"], row["total_objects_n"], row["causal_k"], row.get("adversarial_distractors", "0"))].append(row)
+        grouped[
+            (
+                row["model"],
+                row["total_objects_n"],
+                row["causal_k"],
+                row.get("adversarial_distractors", "0"),
+                row.get("interaction_mode", "standard"),
+            )
+        ].append(row)
     output = []
-    for (model, n_value, k_value, distractors), group in sorted(grouped.items(), key=lambda item: (int(float(item[0][1])), int(float(item[0][3])), item[0][0])):
+    for (model, n_value, k_value, distractors, interaction), group in sorted(grouped.items(), key=lambda item: (int(float(item[0][1])), int(float(item[0][3])), item[0][4], item[0][0])):
         accuracy = [_num(row.get("branch_accuracy")) for row in group]
         majority = [_num(row.get("majority_accuracy")) for row in group]
         mse = [_num(row.get("mse")) for row in group]
@@ -127,6 +136,7 @@ def _aggregate(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "N": n_value,
                 "K": k_value,
                 "distractors": distractors,
+                "interaction": interaction,
                 "seeds": len(group),
                 "params": group[0].get("params", ""),
                 "accuracy_mean": round(mean(accuracy), 6),

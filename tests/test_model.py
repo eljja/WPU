@@ -101,6 +101,16 @@ def test_working_set_dataset_can_balance_branch_labels() -> None:
     assert labels.count(2) == 3
 
 
+def test_pairwise_interaction_mode_requires_causal_obstacles() -> None:
+    dataset = WorkingSetPhysicsDataset(size=12, seed=9, causal_obstacles=8, balanced_labels=True, interaction_mode="pairwise")
+
+    labels = [dataset[index].branch_label for index in range(len(dataset))]
+
+    assert labels.count(0) == 4
+    assert labels.count(1) == 4
+    assert labels.count(2) == 4
+
+
 def test_indexed_cws_model_uses_relation_frontier() -> None:
     dataset = WorkingSetPhysicsDataset(size=1, seed=5, background_objects=64, causal_obstacles=4)
     batch, target_delta, _, _ = collate_working_set_samples([dataset[0]])
@@ -160,6 +170,19 @@ def test_learned_hybrid_gate_is_trainable() -> None:
     assert 0.0 < model.last_working_set_stats.local_dense_ratio < 1.0
     assert model.route_gate[-1].weight.grad is not None
     assert model.route_gate[-1].weight.grad.norm().item() > 0.0
+
+
+def test_interaction_hybrid_uses_state_geometry_for_route() -> None:
+    dataset = WorkingSetPhysicsDataset(size=1, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0]])
+    model = create_model("wpu-cws-indexed-interaction-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=12)
+
+    prediction = model(batch, num_branches=3)
+
+    assert prediction.branch_probabilities.shape == (1, 3)
+    assert model.last_working_set_stats is not None
+    assert 0.0 <= model.last_working_set_stats.local_dense_ratio <= 1.0
+    assert model.last_working_set_stats.sparse_ratio < 1.0
 
 
 def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:

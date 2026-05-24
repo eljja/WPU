@@ -153,7 +153,11 @@ Current implementation status:
   `wpu-cws-indexed-adaptive-hybrid`.
 - Implemented: differentiable sparse/local-dense gating in
   `wpu-cws-indexed-learned-hybrid`.
+- Implemented: interaction-aware sparse/local-dense routing in
+  `wpu-cws-indexed-interaction-hybrid`.
 - Route signal: selected K pressure and selector confidence.
+- Interaction route signal: pairwise spatial density inside the indexed
+  working set.
 - Reported metrics: sparse ratio, local-dense ratio, selector confidence, and
   selected execution path.
 - Not yet complete: learned K expansion, violation-triggered frontier growth,
@@ -179,6 +183,13 @@ Relation types should have different update priors:
 - `on/supports`: stability and gravity-relevant propagation.
 - `holding/attached`: constrained motion propagation.
 - `inside/contains`: containment and collision propagation.
+
+Current experimental stressors:
+
+- `interaction_mode=standard`: mostly sparse-solvable object physics.
+- `interaction_mode=pairwise`: branch labels depend on pairwise obstacle
+  spacing inside the causal working set, creating a direct test for when local
+  dense recompute helps.
 
 ## 6. Delta/Branch Engine
 
@@ -277,6 +288,7 @@ Implemented model names:
 - `wpu-cws-indexed-local-dense`
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
+- `wpu-cws-indexed-interaction-hybrid`
 
 ## V2 Success Criteria
 

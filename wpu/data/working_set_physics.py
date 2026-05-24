@@ -20,6 +20,7 @@ def create_causal_working_set_state(
     background_objects: int,
     causal_obstacles: int = 0,
     adversarial_distractors: int = 0,
+    obstacle_offsets: list[tuple[float, float]] | None = None,
 ) -> WorldState:
     """Create a world with a fixed causal core and scalable distractor state."""
 
@@ -62,12 +63,18 @@ def create_causal_working_set_state(
 
     for index in range(causal_obstacles):
         obstacle_id = f"obstacle_{index:03d}"
-        obstacle_x = cup_x + 0.03 * ((index % 3) - 1)
+        if obstacle_offsets is None:
+            obstacle_x = cup_x + 0.03 * ((index % 3) - 1)
+            obstacle_y = 0.04 * index
+        else:
+            offset_x, offset_y = obstacle_offsets[index]
+            obstacle_x = cup_x + offset_x
+            obstacle_y = offset_y
         state.add_object(
             WorldObject(
                 id=obstacle_id,
                 type="obstacle",
-                attributes={"position": [obstacle_x, 0.04 * index, 0.82], "velocity": [0.0, 0.0, 0.0]},
+                attributes={"position": [obstacle_x, obstacle_y, 0.82], "velocity": [0.0, 0.0, 0.0]},
                 confidence=0.9,
             )
         )
@@ -120,13 +127,17 @@ class WorkingSetPhysicsDataset(Dataset):
         causal_obstacles: int = 0,
         adversarial_distractors: int = 0,
         balanced_labels: bool = False,
+        interaction_mode: str = "standard",
     ) -> None:
+        if interaction_mode not in {"standard", "pairwise"}:
+            raise ValueError(f"unknown interaction mode: {interaction_mode}")
         self.size = size
         self.seed = seed
         self.background_objects = background_objects
         self.causal_obstacles = causal_obstacles
         self.adversarial_distractors = adversarial_distractors
         self.balanced_labels = balanced_labels
+        self.interaction_mode = interaction_mode
 
     def __len__(self) -> int:
         return self.size
@@ -146,6 +157,12 @@ class WorkingSetPhysicsDataset(Dataset):
         hand_x = rng.uniform(0.2, 0.8)
         force = rng.uniform(0.05, 1.2)
         fall_risk = rng.uniform(0.0, 0.35)
+        obstacle_offsets = None
+        if self.interaction_mode == "pairwise":
+            obstacle_offsets = [
+                (rng.uniform(-0.16, 0.16), rng.uniform(-0.14, 0.14))
+                for _ in range(self.causal_obstacles)
+            ]
         state = create_causal_working_set_state(
             cup_x=cup_x,
             hand_x=hand_x,
@@ -153,18 +170,27 @@ class WorkingSetPhysicsDataset(Dataset):
             background_objects=self.background_objects,
             causal_obstacles=self.causal_obstacles,
             adversarial_distractors=self.adversarial_distractors,
+            obstacle_offsets=obstacle_offsets,
         )
         event = create_touch_event(force=force)
-        obstacle_penalty = min(0.25, self.causal_obstacles * 0.015)
-        edge_distance = max(0.0, 1.0 - cup_x)
-        fall_score = force * 0.65 + fall_risk + obstacle_penalty - edge_distance
-        catch_score = max(0.0, force - 0.55) * max(0.0, 0.85 - abs(hand_x - cup_x) - obstacle_penalty)
-        if fall_score > 0.45 and catch_score < 0.18:
-            label = 1
-        elif fall_score > 0.35 and catch_score >= 0.18:
-            label = 2
+        if self.interaction_mode == "pairwise":
+            label, interaction_pressure = _pairwise_interaction_label(
+                obstacle_offsets or [],
+                force=force,
+                hand_distance=abs(hand_x - cup_x),
+            )
         else:
-            label = 0
+            obstacle_penalty = min(0.25, self.causal_obstacles * 0.015)
+            edge_distance = max(0.0, 1.0 - cup_x)
+            fall_score = force * 0.65 + fall_risk + obstacle_penalty - edge_distance
+            catch_score = max(0.0, force - 0.55) * max(0.0, 0.85 - abs(hand_x - cup_x) - obstacle_penalty)
+            interaction_pressure = obstacle_penalty
+            if fall_score > 0.45 and catch_score < 0.18:
+                label = 1
+            elif fall_score > 0.35 and catch_score >= 0.18:
+                label = 2
+            else:
+                label = 0
 
         target = torch.zeros((len(state.objects), OBJECT_FEATURE_DIM), dtype=torch.float32)
         target[0, 1] = force * 0.08
@@ -172,7 +198,7 @@ class WorkingSetPhysicsDataset(Dataset):
         for offset in range(self.causal_obstacles):
             object_index = 4 + offset
             if object_index < target.size(0):
-                target[object_index, 1] = force * 0.01
+                target[object_index, 1] = force * (0.01 + 0.01 * interaction_pressure)
         causal_k = 4 + self.causal_obstacles
         return WorkingSetPhysicsSample(state, event, target, label, causal_k)
 
@@ -261,6 +287,31 @@ def _project_state(state: WorldState, object_ids: list[str]) -> WorldState:
         if relation.src in selected and relation.dst in selected:
             projected.add_relation(relation)
     return projected
+
+
+def _pairwise_interaction_label(
+    obstacle_offsets: list[tuple[float, float]],
+    *,
+    force: float,
+    hand_distance: float,
+) -> tuple[int, float]:
+    if len(obstacle_offsets) < 2:
+        return 0, 0.0
+    close_pairs = 0
+    near_axis_balance = 0
+    for left_index, (left_x, left_y) in enumerate(obstacle_offsets):
+        near_axis_balance += 1 if abs(left_x) < 0.05 else 0
+        for right_x, right_y in obstacle_offsets[left_index + 1 :]:
+            distance = ((left_x - right_x) ** 2 + (left_y - right_y) ** 2) ** 0.5
+            if distance < 0.075:
+                close_pairs += 1
+    possible_pairs = max(len(obstacle_offsets) * (len(obstacle_offsets) - 1) / 2.0, 1.0)
+    pressure = close_pairs / possible_pairs
+    if pressure > 0.17 and force > 0.55:
+        return 1, pressure
+    if pressure <= 0.14 and near_axis_balance >= 1 and force > 0.35 and hand_distance < 0.55:
+        return 2, pressure
+    return 0, pressure
 
 
 __all__ = [

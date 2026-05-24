@@ -49,7 +49,7 @@ class CausalWorkingSetProcessor(nn.Module):
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
             raise ValueError(f"unknown selector: {selector}")
-        if adaptive_route not in {"hard", "learned"}:
+        if adaptive_route not in {"hard", "learned", "interaction"}:
             raise ValueError(f"unknown adaptive route: {adaptive_route}")
         self.selector = selector
         self.working_set_size = working_set_size
@@ -129,6 +129,10 @@ class CausalWorkingSetProcessor(nn.Module):
                 selected_counts,
                 selector_confidence,
             )
+            gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
+        elif self.adaptive_hybrid and self.adaptive_route == "interaction":
+            selected_object_features = _batched_gather(batch.object_features, selected_indices)
+            dense_weight = self._interaction_dense_weight(selected_object_features, selected_mask)
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
         elif self.adaptive_hybrid:
             dense_mask = self._adaptive_dense_mask(selected_counts, selector_confidence)
@@ -323,6 +327,22 @@ class CausalWorkingSetProcessor(nn.Module):
         confidence = selector_confidence.unsqueeze(-1).to(sparse_summary.dtype)
         gate_input = torch.cat([sparse_summary, k_pressure, confidence], dim=-1)
         return torch.sigmoid(self.route_gate(gate_input)).squeeze(-1)
+
+    def _interaction_dense_weight(
+        self,
+        selected_object_features: torch.Tensor,
+        selected_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        positions = selected_object_features[..., 1:3]
+        pair_delta = positions.unsqueeze(2) - positions.unsqueeze(1)
+        pair_distance = pair_delta.square().sum(dim=-1).sqrt()
+        pair_mask = selected_mask.unsqueeze(2) & selected_mask.unsqueeze(1)
+        diagonal = torch.eye(selected_mask.size(1), dtype=torch.bool, device=selected_mask.device).unsqueeze(0)
+        pair_mask = pair_mask & ~diagonal
+        close_affinity = torch.exp(-pair_distance / 0.08).masked_fill(~pair_mask, 0.0)
+        pair_count = pair_mask.sum(dim=(1, 2)).clamp_min(1).to(close_affinity.dtype)
+        interaction_density = close_affinity.sum(dim=(1, 2)) / pair_count
+        return torch.sigmoid((interaction_density - 0.35) * 10.0)
 
     def _pool_working_set(
         self,

@@ -224,6 +224,7 @@ Experiment:
 - `wpu-cws-indexed-local-dense`
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
+- `wpu-cws-indexed-interaction-hybrid`
 - token and graph baselines
 
 Sweep:
@@ -268,6 +269,26 @@ usage almost completely. That is not a failure by itself: it indicates the
 current task is mostly sparse-solvable and that WPU should learn when dense
 local recompute is worth its cost. The next experiment should add cases where
 local dense consistency is genuinely required.
+
+Pairwise local-interaction stress:
+
+- `docs/experiments/wpu_v2_pairwise_interaction_pilot.csv`
+- `docs/experiments/wpu_v2_pairwise_interaction_pilot_results.md`
+- `docs/experiments/wpu_v2_interaction_hybrid_pilot.csv`
+- `docs/experiments/wpu_v2_interaction_hybrid_pilot_results.md`
+
+This stress mode makes branch labels depend on pairwise obstacle spacing inside
+the causal working set. The short pilot shows local-dense gains at K=8 and
+K=16, but not K=32. This is the right kind of evidence: it identifies a
+conditional dense-recompute regime instead of claiming dense local propagation
+is universally better.
+
+The interaction-aware hybrid is the current best scheduler variant on this
+stress test. It routes from state-local pairwise geometry, reaches the best
+accuracy at K=8, K=16, and K=32, and uses only about 15-18% local-dense mixing.
+This gives a more realistic v2 hypothesis: dense fallback should be triggered
+by measured interaction structure inside the causal working set, not by total
+world size N or fixed K thresholds alone.
 
 ## Combined V2 Regime Diagram
 

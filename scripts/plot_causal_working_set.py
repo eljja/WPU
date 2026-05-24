@@ -19,6 +19,7 @@ MODELS = [
     "wpu-cws-indexed-local-dense",
     "wpu-cws-indexed-adaptive-hybrid",
     "wpu-cws-indexed-learned-hybrid",
+    "wpu-cws-indexed-interaction-hybrid",
     "serialized-token",
     "graph-transformer",
 ]
@@ -31,6 +32,7 @@ COLORS = {
     "wpu-cws-indexed-local-dense": "#0891b2",
     "wpu-cws-indexed-adaptive-hybrid": "#ea580c",
     "wpu-cws-indexed-learned-hybrid": "#be123c",
+    "wpu-cws-indexed-interaction-hybrid": "#16a34a",
     "serialized-token": "#dc2626",
     "graph-transformer": "#7c3aed",
 }
@@ -106,6 +108,7 @@ def _plot_recall(rows: list[dict[str, str]], output: Path) -> None:
         "wpu-cws-indexed-local-dense",
         "wpu-cws-indexed-adaptive-hybrid",
         "wpu-cws-indexed-learned-hybrid",
+        "wpu-cws-indexed-interaction-hybrid",
     ]:
         xs, ys, errs = _series(grouped, model, ns)
         if xs:

@@ -46,6 +46,7 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--interaction-mode", choices=["standard", "pairwise"], default="standard")
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--selector-loss-weight", type=float, default=0.0)
@@ -140,6 +141,7 @@ def _run_condition(
         causal_obstacles=causal_obstacles,
         adversarial_distractors=adversarial_distractors,
         balanced_labels=args.balanced_labels,
+        interaction_mode=args.interaction_mode,
     )
     loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args))
     class_weights = _class_weights(train_dataset).to(device) if args.class_weights else None
@@ -178,6 +180,7 @@ def _run_condition(
         "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
         "balanced_labels": args.balanced_labels,
+        "interaction_mode": args.interaction_mode,
         "pre_tensor_indexed": args.pre_tensor_indexed,
         "index_depth": args.index_depth,
         "train_loss": round(last_loss, 6),
@@ -203,6 +206,7 @@ def _evaluate(
         causal_obstacles=causal_obstacles,
         adversarial_distractors=adversarial_distractors,
         balanced_labels=args.balanced_labels,
+        interaction_mode=args.interaction_mode,
     )
     loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args))
     model.eval()
@@ -262,6 +266,7 @@ def _profile_runtime(
         causal_obstacles=causal_obstacles,
         adversarial_distractors=adversarial_distractors,
         balanced_labels=args.balanced_labels,
+        interaction_mode=args.interaction_mode,
     )
     batch, _, _, _ = _collate_fn(args)([dataset[index] for index in range(args.batch_size)])
     batch = _move_batch(batch, device)
@@ -342,6 +347,7 @@ def _failed_row(
         "adversarial_distractors": adversarial_distractors,
         "background_objects": background_objects,
         "balanced_labels": args.balanced_labels,
+        "interaction_mode": args.interaction_mode,
         "pre_tensor_indexed": args.pre_tensor_indexed,
         "index_depth": args.index_depth,
         "error": error[:500],

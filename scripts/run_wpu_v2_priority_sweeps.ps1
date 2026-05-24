@@ -130,7 +130,7 @@ foreach ($item in $Suite) {
         "pairwise-interaction" {
             Invoke-CwsExperiment `
                 -Name "pairwise_interaction" `
-                -Models @("wpu-cws-indexed-sparse", "wpu-cws-indexed-local-dense", "wpu-cws-indexed-learned-hybrid", "wpu-cws-indexed-interaction-hybrid", "wpu-cws-indexed-geometry-hybrid", "serialized-token", "graph-transformer") `
+                -Models @("wpu-cws-indexed-sparse", "wpu-cws-indexed-local-dense", "wpu-cws-indexed-learned-hybrid", "wpu-cws-indexed-interaction-hybrid", "wpu-cws-indexed-selective-interaction-hybrid", "wpu-cws-indexed-geometry-hybrid", "serialized-token", "graph-transformer") `
                 -ExtraArgs @("--mode", "k-sweep", "--n-values", "4096", "--k-values", "8", "16", "32", "--interaction-mode", "pairwise", "--pre-tensor-indexed")
         }
         default {

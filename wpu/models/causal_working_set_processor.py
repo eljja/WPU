@@ -46,11 +46,12 @@ class CausalWorkingSetProcessor(nn.Module):
         adaptive_route: str = "hard",
         adaptive_confidence_threshold: float = 0.45,
         adaptive_k_threshold: int | None = None,
+        interaction_dense_threshold: float = 0.15,
     ) -> None:
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
             raise ValueError(f"unknown selector: {selector}")
-        if adaptive_route not in {"hard", "learned", "interaction", "geometry"}:
+        if adaptive_route not in {"hard", "learned", "interaction", "selective_interaction", "geometry"}:
             raise ValueError(f"unknown adaptive route: {adaptive_route}")
         self.selector = selector
         self.working_set_size = working_set_size
@@ -59,6 +60,7 @@ class CausalWorkingSetProcessor(nn.Module):
         self.adaptive_route = adaptive_route
         self.adaptive_confidence_threshold = adaptive_confidence_threshold
         self.adaptive_k_threshold = adaptive_k_threshold or max(4, int(working_set_size * 0.75))
+        self.interaction_dense_threshold = interaction_dense_threshold
         self.object_encoder = nn.Linear(object_feature_dim, hidden_dim)
         self.relation_encoder = nn.Linear(relation_feature_dim, hidden_dim)
         self.event_encoder = nn.Linear(event_feature_dim, hidden_dim)
@@ -129,6 +131,16 @@ class CausalWorkingSetProcessor(nn.Module):
         if self.adaptive_hybrid and self.adaptive_route == "geometry":
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif self.adaptive_hybrid and self.adaptive_route == "selective_interaction":
+            interaction_dense_score = self._interaction_dense_weight(interaction_density)
+            dense_sample_mask = interaction_dense_score >= self.interaction_dense_threshold
+            dense_gathered = sparse_gathered.clone()
+            dense_compute_weight = dense_sample_mask.to(selector_confidence.dtype)
+            if bool(dense_sample_mask.any().detach().cpu().item()):
+                dense_gathered[dense_sample_mask] = self.working_set_encoder(
+                    sparse_gathered[dense_sample_mask],
+                    src_key_padding_mask=~selected_mask[dense_sample_mask],
+                )
         elif self.local_dense or self.adaptive_hybrid:
             dense_gathered = self.working_set_encoder(sparse_gathered, src_key_padding_mask=~selected_mask)
             dense_compute_weight = torch.ones_like(selector_confidence)
@@ -146,6 +158,9 @@ class CausalWorkingSetProcessor(nn.Module):
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
         elif self.adaptive_hybrid and self.adaptive_route == "interaction":
             dense_weight = self._interaction_dense_weight(interaction_density)
+            gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
+        elif self.adaptive_hybrid and self.adaptive_route == "selective_interaction":
+            dense_weight = self._interaction_dense_weight(interaction_density) * dense_compute_weight
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
         elif self.adaptive_hybrid and self.adaptive_route == "geometry":
             dense_weight = torch.zeros_like(selector_confidence)

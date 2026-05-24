@@ -186,6 +186,25 @@ def test_interaction_hybrid_uses_state_geometry_for_route() -> None:
     assert model.last_working_set_stats.sparse_ratio < 1.0
 
 
+def test_selective_interaction_hybrid_reports_actual_dense_compute() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = create_model(
+        "wpu-cws-indexed-selective-interaction-hybrid",
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+    )
+
+    prediction = model(batch, num_branches=3)
+
+    assert prediction.branch_probabilities.shape == (2, 3)
+    assert model.last_working_set_stats is not None
+    assert 0.0 <= model.last_working_set_stats.dense_compute_ratio <= 1.0
+    assert 0.0 <= model.last_working_set_stats.local_dense_ratio <= model.last_working_set_stats.dense_compute_ratio
+
+
 def test_geometry_hybrid_adds_state_geometry_without_dense_compute() -> None:
     dataset = WorkingSetPhysicsDataset(size=1, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
     batch, _, _, _ = collate_working_set_samples([dataset[0]])

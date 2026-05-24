@@ -227,6 +227,7 @@ Experiment:
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
 - `wpu-cws-indexed-interaction-hybrid`
+- `wpu-cws-indexed-selective-interaction-hybrid`
 - token and graph baselines
 
 Sweep:
@@ -308,6 +309,25 @@ Follow-up implementation target:
   samples or replace dense recompute with relation-typed pairwise propagation.
 - Success requires preserving most of the interaction-hybrid accuracy while
   driving `dense_compute_ratio` materially below 1.0.
+
+Current selective-execution pilot:
+
+- `docs/experiments/wpu_v2_selective_interaction_pairwise_pilot.csv`
+- `docs/experiments/wpu_v2_selective_compute_pairwise_comparison_results.md`
+
+The first selective interaction model preserves almost all of the
+interaction-hybrid accuracy while reducing actual dense execution in the
+pairwise stress pilot:
+
+| K | interaction acc | interaction dense compute | selective acc | selective dense compute |
+| --- | --- | --- | --- | --- |
+| 8 | 0.561 | 1.000 | 0.556 | 0.367 |
+| 16 | 0.594 | 1.000 | 0.611 | 0.572 |
+| 32 | 0.722 | 1.000 | 0.711 | 0.817 |
+
+This should now be promoted to a five-seed threshold sweep. The key falsifiable
+question is whether there is a stable Pareto frontier where selective WPU keeps
+accuracy close to interaction-hybrid while reducing dense execution and latency.
 
 ## Combined V2 Regime Diagram
 

@@ -155,6 +155,9 @@ Current implementation status:
   `wpu-cws-indexed-learned-hybrid`.
 - Implemented: interaction-aware sparse/local-dense routing in
   `wpu-cws-indexed-interaction-hybrid`.
+- Implemented: selective interaction-aware execution in
+  `wpu-cws-indexed-selective-interaction-hybrid`, which executes local dense
+  only for samples above an interaction threshold.
 - Route signal: selected K pressure and selector confidence.
 - Interaction route signal: pairwise spatial density inside the indexed
   working set.
@@ -198,9 +201,11 @@ Current lesson:
 
 State-local interaction structure improves accuracy in the pairwise stress
 test, but dense recompute is only a valid WPU advantage if it is selectively
-executed. A low dense mixing ratio is not enough. The architecture therefore
-needs either conditional dense execution or relation-typed pairwise propagation
-that keeps the update sparse while modeling interactions.
+executed. A low dense mixing ratio is not enough. The first selective
+interaction prototype now executes dense only for high-interaction samples,
+preserving most of the interaction-hybrid accuracy in a two-seed pilot while
+reducing `dense_compute_ratio`. The remaining architecture need is learned or
+calibrated routing rather than a fixed threshold.
 
 ## 6. Delta/Branch Engine
 
@@ -300,6 +305,7 @@ Implemented model names:
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
 - `wpu-cws-indexed-interaction-hybrid`
+- `wpu-cws-indexed-selective-interaction-hybrid`
 - `wpu-cws-indexed-geometry-hybrid`
 
 ## V2 Success Criteria

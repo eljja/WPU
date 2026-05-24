@@ -28,6 +28,7 @@ Added model names:
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
 - `wpu-cws-indexed-interaction-hybrid`
+- `wpu-cws-indexed-selective-interaction-hybrid`
 - `wpu-cws-indexed-geometry-hybrid`
 
 These support priority 5 and 6:
@@ -38,6 +39,8 @@ These support priority 5 and 6:
 - hard adaptive routing between sparse and local-dense propagation
 - learned differentiable routing between sparse and local-dense propagation
 - interaction-aware routing from state-local pairwise geometry
+- selective interaction-aware execution that runs local dense only for samples
+  whose state-local interaction score exceeds a threshold
 - geometry-only local interaction features without executing the local dense
   transformer block
 
@@ -115,6 +118,17 @@ It separates two quantities that were previously conflated:
 ```text
 local_dense_ratio = how much dense-style representation is mixed into output
 dense_compute_ratio = whether the dense transformer block was actually run
+```
+
+Added `wpu-cws-indexed-selective-interaction-hybrid`.
+
+This model keeps the interaction-aware soft mixing score, but only executes the
+local dense transformer for samples whose interaction score exceeds a threshold.
+This is the first v2 implementation that directly targets the compute-aware
+claim:
+
+```text
+preserve interaction accuracy while reducing actual dense execution
 ```
 
 ## Completed V2 Priority Experiments
@@ -417,6 +431,45 @@ The practical route is to execute local dense only for samples whose
 interaction-density, branch entropy, or constraint-violation signals exceed a
 threshold, while using geometry-enhanced sparse propagation for the rest.
 
+### Priority 6d: Selective Dense Execution
+
+Output:
+
+- `docs/experiments/wpu_v2_selective_interaction_pairwise_pilot.csv`
+- `docs/experiments/wpu_v2_selective_compute_pairwise_comparison.csv`
+- `docs/experiments/wpu_v2_selective_compute_pairwise_comparison_results.md`
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13
+- Hidden dim = 128
+- Interaction mode = pairwise
+- Pre-tensor indexed input enabled
+
+Result:
+
+| K | interaction accuracy | interaction dense compute | selective accuracy | selective dense compute | selective ms/sample |
+| --- | --- | --- | --- | --- | --- |
+| 8 | 0.561 | 1.000 | 0.556 | 0.367 | 1.786 |
+| 16 | 0.594 | 1.000 | 0.611 | 0.572 | 3.098 |
+| 32 | 0.722 | 1.000 | 0.711 | 0.817 | 5.083 |
+
+Interpretation:
+
+This is the first positive compute-aware hybrid result. The selective model
+preserves nearly all interaction-hybrid accuracy at K=8 and K=32, slightly
+improves K=16 in this two-seed pilot, and lowers actual dense execution from
+1.0 to 0.37-0.82 depending on K. At K=32, latency also drops from 7.74 to 5.08
+ms/sample.
+
+The result is not final proof. Dense execution still rises with K, the run uses
+only two seeds, and the threshold is fixed rather than learned. But the
+direction is now technically correct: WPU can distinguish dense-output mixing
+from dense execution and can make dense fallback conditional on state-local
+interaction structure.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -469,7 +522,9 @@ Before claiming v2 as a strong experimental result:
 - Rerun pairwise local-interaction stress with five seeds and stronger
   baselines.
 - Extend the interaction-aware route with actual selective dense execution,
-  compute regularization, and violation-triggered K expansion.
+  compute regularization, and violation-triggered K expansion. The first
+  selective dense execution prototype now exists, but it needs threshold
+  sweeps, five-seed validation, and learned/calibrated routing.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

@@ -470,6 +470,61 @@ direction is now technically correct: WPU can distinguish dense-output mixing
 from dense execution and can make dense fallback conditional on state-local
 interaction structure.
 
+### Priority 6e: Selective Threshold Sweep
+
+Output:
+
+- `docs/experiments/wpu_v2_selective_threshold_sweep.csv`
+- `docs/experiments/wpu_v2_selective_threshold_summary.csv`
+- `docs/experiments/wpu_v2_selective_threshold_comparison.csv`
+- `docs/experiments/wpu_v2_selective_threshold_comparison_results.md`
+- `docs/figures/wpu_v2_selective_threshold_pareto.png`
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Thresholds = 0.05, 0.10, 0.15, 0.20, 0.30
+- Seeds = 11, 13
+- Hidden dim = 128
+- Interaction mode = pairwise
+- Pre-tensor indexed input enabled
+
+Result:
+
+| K | threshold | accuracy | dense compute | dense mix |
+| --- | --- | --- | --- | --- |
+| 8 | 0.05 | 0.561 | 1.000 | 0.148 |
+| 8 | 0.10 | 0.556 | 0.756 | 0.127 |
+| 8 | 0.15 | 0.556 | 0.367 | 0.079 |
+| 8 | 0.20 | 0.494 | 0.167 | 0.044 |
+| 8 | 0.30 | 0.467 | 0.039 | 0.014 |
+| 16 | 0.05 | 0.594 | 1.000 | 0.164 |
+| 16 | 0.10 | 0.617 | 0.989 | 0.163 |
+| 16 | 0.15 | 0.611 | 0.572 | 0.108 |
+| 16 | 0.20 | 0.567 | 0.167 | 0.038 |
+| 16 | 0.30 | 0.517 | 0.006 | 0.002 |
+| 32 | 0.05 | 0.722 | 1.000 | 0.176 |
+| 32 | 0.10 | 0.722 | 1.000 | 0.176 |
+| 32 | 0.15 | 0.711 | 0.822 | 0.151 |
+| 32 | 0.20 | 0.578 | 0.206 | 0.044 |
+| 32 | 0.30 | 0.472 | 0.000 | 0.000 |
+
+Interpretation:
+
+The threshold sweep exposes a real accuracy-compute frontier rather than a
+single cherry-picked point. The current best practical threshold is 0.15: it
+keeps accuracy close to full interaction routing while materially reducing
+actual dense execution at K=8 and K=16, and still reduces dense execution at
+K=32 with only a small accuracy loss.
+
+This result also shows where the current approach is weak. At K=32, aggressive
+thresholds collapse accuracy, so large causal working sets require either more
+dense execution or a better sparse interaction operator. Latency should be
+treated cautiously in this pilot because boolean-indexed dense execution and
+small batch profiling add noise; the primary compute metric is
+`dense_compute_ratio`.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now

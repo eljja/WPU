@@ -329,6 +329,27 @@ This should now be promoted to a five-seed threshold sweep. The key falsifiable
 question is whether there is a stable Pareto frontier where selective WPU keeps
 accuracy close to interaction-hybrid while reducing dense execution and latency.
 
+Threshold sweep pilot:
+
+- `docs/experiments/wpu_v2_selective_threshold_sweep.csv`
+- `docs/experiments/wpu_v2_selective_threshold_summary.csv`
+- `docs/figures/wpu_v2_selective_threshold_pareto.png`
+
+The two-seed threshold sweep confirms that the selective model has an
+accuracy-compute frontier. Threshold 0.15 is the current best fixed operating
+point:
+
+| K | t=0.15 accuracy | t=0.15 dense compute | full interaction accuracy |
+| --- | --- | --- | --- |
+| 8 | 0.556 | 0.367 | 0.561 |
+| 16 | 0.611 | 0.572 | 0.594 |
+| 32 | 0.711 | 0.822 | 0.722 |
+
+The next experiment should not just rerun this threshold. It should test
+whether a learned or calibrated router can choose per-sample dense execution
+better than a fixed threshold, especially for K=32 where aggressive sparsity
+causes a sharp accuracy drop.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

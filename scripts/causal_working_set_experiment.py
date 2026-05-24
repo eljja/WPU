@@ -47,6 +47,7 @@ def main() -> None:
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--interaction-mode", choices=["standard", "pairwise"], default="standard")
+    parser.add_argument("--interaction-dense-threshold", type=float, default=0.15)
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--selector-loss-weight", type=float, default=0.0)
@@ -132,6 +133,7 @@ def _run_condition(
         layers=args.layers,
         num_heads=args.num_heads,
         working_set_size=args.working_set_size,
+        interaction_dense_threshold=args.interaction_dense_threshold,
     ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     train_dataset = WorkingSetPhysicsDataset(
@@ -181,6 +183,7 @@ def _run_condition(
         "background_objects": background_objects,
         "balanced_labels": args.balanced_labels,
         "interaction_mode": args.interaction_mode,
+        "interaction_dense_threshold": args.interaction_dense_threshold,
         "pre_tensor_indexed": args.pre_tensor_indexed,
         "index_depth": args.index_depth,
         "train_loss": round(last_loss, 6),
@@ -352,6 +355,7 @@ def _failed_row(
         "background_objects": background_objects,
         "balanced_labels": args.balanced_labels,
         "interaction_mode": args.interaction_mode,
+        "interaction_dense_threshold": args.interaction_dense_threshold,
         "pre_tensor_indexed": args.pre_tensor_indexed,
         "index_depth": args.index_depth,
         "error": error[:500],
@@ -396,6 +400,7 @@ def _save_checkpoint(
             "layers": args.layers,
             "num_heads": args.num_heads,
             "working_set_size": args.working_set_size,
+            "interaction_dense_threshold": args.interaction_dense_threshold,
             "total_objects_n": total_n,
             "causal_k": 4 + causal_obstacles,
             "adversarial_distractors": adversarial_distractors,

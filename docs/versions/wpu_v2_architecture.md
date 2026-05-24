@@ -204,8 +204,10 @@ test, but dense recompute is only a valid WPU advantage if it is selectively
 executed. A low dense mixing ratio is not enough. The first selective
 interaction prototype now executes dense only for high-interaction samples,
 preserving most of the interaction-hybrid accuracy in a two-seed pilot while
-reducing `dense_compute_ratio`. The remaining architecture need is learned or
-calibrated routing rather than a fixed threshold.
+reducing `dense_compute_ratio`. A threshold sweep shows a real
+accuracy-compute frontier, with threshold 0.15 as the current fixed operating
+point. The remaining architecture need is learned or calibrated routing rather
+than a fixed threshold.
 
 ## 6. Delta/Branch Engine
 

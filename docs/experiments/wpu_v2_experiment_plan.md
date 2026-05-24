@@ -350,6 +350,26 @@ whether a learned or calibrated router can choose per-sample dense execution
 better than a fixed threshold, especially for K=32 where aggressive sparsity
 causes a sharp accuracy drop.
 
+Five-seed validation:
+
+- `docs/experiments/wpu_v2_selective_5seed_validation.csv`
+- `docs/experiments/wpu_v2_selective_5seed_validation_results.md`
+- `docs/experiments/wpu_v2_selective_5seed_summary.csv`
+- `docs/figures/wpu_v2_selective_5seed_validation.png`
+
+The fixed threshold remains meaningful over five seeds, but the conclusion is
+Pareto-style rather than dominance:
+
+| K | full interaction acc | selective acc | selective dense compute |
+| --- | --- | --- | --- |
+| 8 | 0.580 +/- 0.029 | 0.558 +/- 0.031 | 0.402 |
+| 16 | 0.589 +/- 0.056 | 0.604 +/- 0.015 | 0.576 |
+| 32 | 0.691 +/- 0.034 | 0.678 +/- 0.036 | 0.833 |
+
+The next router experiment should optimize this frontier directly: minimize
+dense execution subject to an accuracy or calibration constraint, instead of
+claiming universal accuracy improvement.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

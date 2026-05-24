@@ -206,8 +206,10 @@ interaction prototype now executes dense only for high-interaction samples,
 preserving most of the interaction-hybrid accuracy in a two-seed pilot while
 reducing `dense_compute_ratio`. A threshold sweep shows a real
 accuracy-compute frontier, with threshold 0.15 as the current fixed operating
-point. The remaining architecture need is learned or calibrated routing rather
-than a fixed threshold.
+point. A five-seed validation supports the Pareto claim: selective execution
+keeps accuracy within the full interaction confidence intervals while reducing
+actual dense execution, especially at K=8 and K=16. The remaining architecture
+need is learned or calibrated routing rather than a fixed threshold.
 
 ## 6. Delta/Branch Engine
 

@@ -525,6 +525,51 @@ treated cautiously in this pilot because boolean-indexed dense execution and
 small batch profiling add noise; the primary compute metric is
 `dense_compute_ratio`.
 
+### Priority 6f: Five-Seed Selective Validation
+
+Output:
+
+- `docs/experiments/wpu_v2_selective_5seed_validation.csv`
+- `docs/experiments/wpu_v2_selective_5seed_validation_results.md`
+- `docs/experiments/wpu_v2_selective_5seed_summary.csv`
+- `docs/figures/wpu_v2_selective_5seed_validation.png`
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13, 17, 19, 23
+- Selective threshold = 0.15
+- Hidden dim = 128
+- Interaction mode = pairwise
+- Pre-tensor indexed input enabled
+
+Result:
+
+| K | full interaction accuracy | full interaction CI95 | selective accuracy | selective CI95 | selective dense compute |
+| --- | --- | --- | --- | --- | --- |
+| 8 | 0.580 | 0.029 | 0.558 | 0.031 | 0.402 |
+| 16 | 0.589 | 0.056 | 0.604 | 0.015 | 0.576 |
+| 32 | 0.691 | 0.034 | 0.678 | 0.036 | 0.833 |
+
+Interpretation:
+
+The five-seed validation supports the more cautious v2 claim. Selective WPU
+does not universally beat full interaction routing, but it preserves comparable
+accuracy within confidence intervals while reducing actual dense execution. The
+effect is strongest at K=8 and K=16. At K=32, dense execution remains high and
+accuracy is slightly lower, so larger working sets still need either better
+sparse interaction propagation or a learned router.
+
+This result is academically useful because it turns the WPU claim into a
+measurable Pareto statement:
+
+```text
+WPU is not simply "more accurate"; it can trade a small amount of interaction
+accuracy for a measurable reduction in actual dense execution inside an
+explicit state-processing regime.
+```
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now

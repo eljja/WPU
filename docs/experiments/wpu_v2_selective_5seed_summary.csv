@@ -1,0 +1,7 @@
+K,model,accuracy,accuracy_ci95,dense_compute,dense_mix,ms
+8,wpu-cws-indexed-interaction-hybrid,0.58,0.028727,1.0,0.149875,1.844262
+8,wpu-cws-indexed-selective-interaction-hybrid,0.557778,0.031105,0.402222,0.084861,1.784547
+16,wpu-cws-indexed-interaction-hybrid,0.588889,0.056371,1.0,0.165778,3.077529
+16,wpu-cws-indexed-selective-interaction-hybrid,0.604444,0.01477,0.575556,0.110515,3.034991
+32,wpu-cws-indexed-interaction-hybrid,0.691111,0.034018,1.0,0.177807,4.949788
+32,wpu-cws-indexed-selective-interaction-hybrid,0.677778,0.036441,0.833333,0.154108,5.331107

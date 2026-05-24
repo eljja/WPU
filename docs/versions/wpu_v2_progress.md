@@ -40,6 +40,22 @@ predicted `DeltaState` overlays back to `WorldState` at each step. This makes
 branch entropy, branch switching, changed-object count, delta norm, and
 constraint violations visible over time.
 
+### Delta-Conditioned Branch Head
+
+Updated `CausalWorkingSetProcessor` so branch logits are conditioned on the
+candidate object delta predicted for the selected working set. Branch loss now
+backpropagates into the delta head, making the implementation closer to the v2
+claim:
+
+```text
+Branch = BaseState + DeltaState trajectory + probability + uncertainty
+```
+
+This replaces the earlier detached pooled-state classifier for the CWS model.
+It is still a compact one-step branch scorer, not a full multi-step branch
+generator, but the model now couples branch probabilities to predicted state
+patches.
+
 ## Completed V2 Priority Experiments
 
 ### Priority 1: Selector Gap
@@ -179,6 +195,12 @@ use local dense only when needed
 expand K only when local dense is insufficient
 ```
 
+Additional implementation update:
+
+`CausalWorkingSetProcessor` now scores branches from selected working-set
+deltas rather than only from a pooled embedding. The added regression test
+verifies that branch loss trains the delta head.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -192,8 +214,8 @@ clearer:
 4. Adaptive K Scheduler: expose K growth as a controlled decision, not a fixed
    hyperparameter.
 5. Local Propagation Core: support both sparse and local dense updates.
-6. Delta/Branch Engine: score branches from candidate deltas, not a detached
-   pooled classifier.
+6. Delta/Branch Engine: implemented the first delta-conditioned branch scorer;
+   the next step is full branch-specific delta trajectories.
 7. Consistency/Uncertainty Manager: make closed-loop violations trigger K
    expansion or local dense fallback.
 
@@ -215,8 +237,8 @@ Before claiming v2 as a strong experimental result:
 
 - Rerun K sweep with five seeds and baselines.
 - Rerun distractor sweep with harder false-positive distractors and five seeds.
-- Implement pre-tensor indexed tensorization.
 - Add adaptive sparse/local-dense fallback.
-- Train branch heads from delta candidates and calibration losses.
+- Extend delta-conditioned branch scoring into branch-specific delta
+  trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or
   newly initialized models.

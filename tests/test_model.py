@@ -65,6 +65,19 @@ def test_causal_working_set_training_smoke_backward() -> None:
     assert any(param.grad is not None for param in model.parameters())
 
 
+def test_causal_working_set_branch_loss_trains_delta_head() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, background_objects=32, causal_obstacles=2)
+    batch, _, labels, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = CausalWorkingSetProcessor(hidden_dim=32, num_heads=4, working_set_size=8, selector="oracle")
+    prediction = model(batch, num_branches=3)
+
+    loss = torch.nn.functional.cross_entropy(prediction.branch_logits, labels)
+    loss.backward()
+
+    assert model.object_delta_head.weight.grad is not None
+    assert model.object_delta_head.weight.grad.norm().item() > 0.0
+
+
 def test_causal_working_set_selector_loss_backward() -> None:
     dataset = WorkingSetPhysicsDataset(size=2, background_objects=32, causal_obstacles=2)
     batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])

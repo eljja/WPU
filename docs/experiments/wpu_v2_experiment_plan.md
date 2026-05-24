@@ -125,8 +125,10 @@ Does WPU preserve state consistency better than token/dense baselines over time?
 
 Current status:
 
-`scripts/cws_long_horizon_eval.py` is a diagnostic evaluator, not a full
-closed-loop state overlay rollout. V2 needs a true closed-loop version.
+`scripts/cws_closed_loop_rollout.py` now applies predicted `DeltaState`
+overlays back onto branch-local states. The earlier
+`scripts/cws_long_horizon_eval.py` remains a diagnostic one-step stability
+evaluator.
 
 Run:
 
@@ -142,10 +144,10 @@ Evidence needed:
 - Branch probability entropy over time.
 - Runtime per step.
 
-V2 implementation requirement:
+Remaining v2 requirement:
 
-The evaluator must apply predicted `DeltaState` back onto branch-local
-overlays, not sample independent one-step datasets.
+Run closed-loop evaluation on trained checkpoints and include constraint
+violation metrics in the main v2 evidence table.
 
 ## Priority 5: Indexed Selector
 
@@ -213,7 +215,8 @@ V2 implementation:
 - Retrieve K using causal index or learned selector.
 - Run relation-typed propagation.
 - Run a local dense block only over selected K.
-- Predict deltas and branch probabilities.
+- Predict deltas.
+- Score branches from candidate deltas rather than only pooled embeddings.
 
 Experiment:
 
@@ -238,6 +241,12 @@ Success criterion:
 
 Local dense WPU should close the accuracy gap without matching the latency
 growth of global token or dense graph baselines.
+
+Current v2 status:
+
+`CausalWorkingSetProcessor` now includes a delta-conditioned branch head. The
+local dense/sparse variants are implemented, but adaptive switching between
+them is still pending.
 
 ## Combined V2 Regime Diagram
 

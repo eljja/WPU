@@ -65,7 +65,12 @@ class CausalWorkingSetProcessor(nn.Module):
         self.object_delta_head = nn.Linear(hidden_dim, object_feature_dim)
         self.relation_head = nn.Linear(hidden_dim * 2 + relation_feature_dim, 1)
         self.uncertainty_head = nn.Linear(hidden_dim, 1)
-        self.branch_head = nn.Linear(hidden_dim, 8)
+        self.delta_branch_encoder = nn.Sequential(
+            nn.LayerNorm(object_feature_dim),
+            nn.Linear(object_feature_dim, hidden_dim),
+            nn.GELU(),
+        )
+        self.branch_head = nn.Linear(hidden_dim * 2, 8)
         self.last_working_set_stats: WorkingSetStats | None = None
         self._last_relevance_logits: torch.Tensor | None = None
         self._last_batch: StateGraphBatch | None = None
@@ -103,7 +108,9 @@ class CausalWorkingSetProcessor(nn.Module):
         uncertainty.scatter_add_(1, selected_indices.unsqueeze(-1), selected_uncertainty)
 
         pooled = self._pool_working_set(gathered, selected_mask, relevance_logits, selected_indices)
-        branch_logits = self.branch_head(pooled)[:, :num_branches]
+        delta_summary = _masked_mean(selected_delta, selected_mask)
+        delta_branch_hidden = self.delta_branch_encoder(delta_summary)
+        branch_logits = self.branch_head(torch.cat([pooled, delta_branch_hidden], dim=-1))[:, :num_branches]
         selected_counts = selected_mask.sum(dim=1)
         self.last_working_set_stats = WorkingSetStats(
             mean_selected=float(selected_counts.float().mean().detach().cpu().item()),
@@ -271,6 +278,13 @@ class CausalWorkingSetProcessor(nn.Module):
 def _batched_gather(values: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
     expanded = indices.unsqueeze(-1).expand(-1, -1, values.size(-1))
     return torch.gather(values, 1, expanded)
+
+
+def _masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    weights = mask.unsqueeze(-1).to(values.dtype)
+    total = (values * weights).sum(dim=1)
+    count = weights.sum(dim=1).clamp_min(1.0)
+    return total / count
 
 
 def _pad_indices(

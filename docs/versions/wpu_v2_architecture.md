@@ -170,8 +170,10 @@ Relation types should have different update priors:
 
 ## 6. Delta/Branch Engine
 
-V2 should treat branch prediction as future delta generation, not as a detached
-classification head.
+V2 treats branch prediction as future delta generation, not as a detached
+classification head. The current CWS implementation now conditions branch
+logits on the predicted selected-object delta summary, so branch supervision
+trains the delta path instead of only a pooled classifier.
 
 A branch is:
 
@@ -190,6 +192,13 @@ The branch engine should predict:
 This is where WPU should differentiate strongly from token models. The model
 does not reserialize a whole world for every possible future; it overlays
 branch-specific deltas on the same base state.
+
+Current implementation status:
+
+- Implemented: one-step delta-conditioned branch scoring in
+  `CausalWorkingSetProcessor`.
+- Not yet complete: branch-specific multi-step delta trajectories, branch
+  merge/prune operators, and calibration-aware branch uncertainty.
 
 ## 7. Consistency and Uncertainty Manager
 

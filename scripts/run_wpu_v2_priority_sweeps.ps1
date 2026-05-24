@@ -121,8 +121,14 @@ foreach ($item in $Suite) {
                 exit $LASTEXITCODE
             }
         }
+        "adaptive-hybrid" {
+            Invoke-CwsExperiment `
+                -Name "adaptive_hybrid" `
+                -Models @("wpu-cws-indexed-sparse", "wpu-cws-indexed-local-dense", "wpu-cws-indexed-adaptive-hybrid", "serialized-token", "graph-transformer") `
+                -ExtraArgs @("--mode", "k-sweep", "--n-values", "4096", "--k-values", "4", "8", "16", "32", "64", "--pre-tensor-indexed")
+        }
         default {
-            throw "Unknown suite '$item'. Use selector-gap, k-sweep, distractor-sweep, dense-n, or closed-loop."
+            throw "Unknown suite '$item'. Use selector-gap, k-sweep, distractor-sweep, dense-n, closed-loop, or adaptive-hybrid."
         }
     }
 }

@@ -147,6 +147,16 @@ EXPAND(K grows by frontier)
 FALLBACK(global or large subgraph only when unavoidable)
 ```
 
+Current implementation status:
+
+- Implemented: hard sparse/local-dense routing in
+  `wpu-cws-indexed-adaptive-hybrid`.
+- Route signal: selected K pressure and selector confidence.
+- Reported metrics: sparse ratio, local-dense ratio, selector confidence, and
+  selected execution path.
+- Not yet complete: learned K expansion, violation-triggered frontier growth,
+  and calibrated route probabilities.
+
 ## 5. Local Propagation Core
 
 The propagation core should not be a global attention block. It should operate
@@ -225,6 +235,12 @@ If consistency fails, it requests:
 This mechanism is how v2 should widen WPU's useful regime without falling back
 to token-like global processing.
 
+Current implementation status:
+
+- Implemented: confidence/K-triggered sparse-to-local-dense fallback.
+- Not yet complete: closed-loop constraint violation feedback into K expansion,
+  branch split, or uncertainty growth.
+
 ## V2 Public Interfaces
 
 Planned APIs:
@@ -251,6 +267,13 @@ The model should report:
 - Branch entropy.
 - Consistency failures.
 - Expansion count.
+
+Implemented model names:
+
+- `wpu-cws-indexed`
+- `wpu-cws-indexed-sparse`
+- `wpu-cws-indexed-local-dense`
+- `wpu-cws-indexed-adaptive-hybrid`
 
 ## V2 Success Criteria
 

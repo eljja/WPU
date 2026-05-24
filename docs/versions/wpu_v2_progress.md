@@ -13,9 +13,10 @@ primitive. It retrieves the event target and bounded relation frontier from
 state graph structure rather than relying only on learned global scoring.
 
 Current limitation: the PyTorch model still encodes the full object tensor
-before applying indexed selection. This is acceptable for v2-prototype
-semantics, but not yet a true sublinear implementation. The next step is to
-move indexing before tensorization.
+before applying indexed selection unless the experiment uses
+`--pre-tensor-indexed`. The v2 code now contains both paths: full-tensor
+selection for controlled ablations and pre-tensor indexing for the actual WPU
+systems claim.
 
 ### Indexed WPU Models
 
@@ -24,12 +25,14 @@ Added model names:
 - `wpu-cws-indexed`
 - `wpu-cws-indexed-sparse`
 - `wpu-cws-indexed-local-dense`
+- `wpu-cws-indexed-adaptive-hybrid`
 
 These support priority 5 and 6:
 
 - indexed retrieval
 - local sparse propagation
 - local dense propagation within the selected state subset
+- hard adaptive routing between sparse and local-dense propagation
 
 ### Closed-Loop Rollout
 
@@ -55,6 +58,23 @@ This replaces the earlier detached pooled-state classifier for the CWS model.
 It is still a compact one-step branch scorer, not a full multi-step branch
 generator, but the model now couples branch probabilities to predicted state
 patches.
+
+### Adaptive Sparse/Local-Dense Route
+
+Added `wpu-cws-indexed-adaptive-hybrid`.
+
+This model starts from the indexed working set and selects a sparse or
+local-dense propagation path per sample. The first policy is deliberately hard
+and inspectable:
+
+```text
+use local dense if selected K is large or selector confidence is low
+otherwise use sparse propagation
+```
+
+The model reports `sparse_ratio`, `local_dense_ratio`, and
+`mean_selector_confidence` through `WorkingSetStats`, and returns `SPARSE` or
+`HYBRID` in `StatePrediction.selected_paths`.
 
 ## Completed V2 Priority Experiments
 
@@ -180,7 +200,11 @@ harder distractor cases before being treated as a final result.
 
 ### Priority 6: Local Dense Hybrid
 
-Implemented as `wpu-cws-indexed-local-dense`.
+Implemented as:
+
+- `wpu-cws-indexed-sparse`
+- `wpu-cws-indexed-local-dense`
+- `wpu-cws-indexed-adaptive-hybrid`
 
 Current finding:
 
@@ -201,6 +225,31 @@ Additional implementation update:
 deltas rather than only from a pooled embedding. The added regression test
 verifies that branch loss trains the delta head.
 
+The adaptive variant now performs hard sparse/local-dense routing per sample.
+This is not yet a learned scheduler, but it makes the v2 consistency/fallback
+claim executable and measurable.
+
+Adaptive pilot output:
+
+- `docs/experiments/wpu_v2_adaptive_hybrid_pilot.csv`
+- `docs/experiments/wpu_v2_adaptive_hybrid_pilot_results.md`
+
+Setup:
+
+- N = 4096
+- K = 4, 8, 16, 32, 64
+- Seeds = 11, 13
+- Hidden dim = 256
+- Pre-tensor indexed input enabled
+
+Finding:
+
+The hard adaptive route is measurable but does not yet dominate sparse or
+local-dense variants. It can reduce local-dense usage at intermediate K, but
+the current confidence/K rule is not calibrated enough to reliably choose the
+best path. This is a useful v2 result: adaptive fallback should be learned or
+calibrated from rollout/constraint metrics, not hand-tuned from K alone.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -212,12 +261,12 @@ clearer:
 3. Event-Conditioned Retriever: make learned retrieval compete with indexed and
    oracle retrieval under distractors.
 4. Adaptive K Scheduler: expose K growth as a controlled decision, not a fixed
-   hyperparameter.
+   hyperparameter; the first hard route now switches sparse/local-dense paths.
 5. Local Propagation Core: support both sparse and local dense updates.
 6. Delta/Branch Engine: implemented the first delta-conditioned branch scorer;
    the next step is full branch-specific delta trajectories.
-7. Consistency/Uncertainty Manager: make closed-loop violations trigger K
-   expansion or local dense fallback.
+7. Consistency/Uncertainty Manager: the first confidence/K fallback route is
+   implemented; closed-loop violation-triggered expansion remains open.
 
 ## What V2 Should Claim Now
 
@@ -229,7 +278,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > consistency and pre-tensor indexed retrieval are necessary to widen the WPU
 > advantage region. The pre-tensor indexed N-sweep is the first evidence that
 > WPU latency can be made weakly dependent on total world size N when K is
-> retrieved before tensorization.
+> retrieved before tensorization. The adaptive-hybrid pilot shows that fallback
+> decisions must be trained or calibrated; hard K/confidence rules are useful
+> instrumentation but not yet a final scheduler.
 
 ## Next Required Work
 
@@ -237,7 +288,7 @@ Before claiming v2 as a strong experimental result:
 
 - Rerun K sweep with five seeds and baselines.
 - Rerun distractor sweep with harder false-positive distractors and five seeds.
-- Add adaptive sparse/local-dense fallback.
+- Replace the hard adaptive route with a learned or calibrated scheduler.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

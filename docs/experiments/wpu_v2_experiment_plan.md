@@ -220,9 +220,9 @@ V2 implementation:
 
 Experiment:
 
-- `wpu-cws-sparse`
-- `wpu-cws-local-dense`
-- `wpu-cws-adaptive-hybrid`
+- `wpu-cws-indexed-sparse`
+- `wpu-cws-indexed-local-dense`
+- `wpu-cws-indexed-adaptive-hybrid`
 - token and graph baselines
 
 Sweep:
@@ -245,8 +245,20 @@ growth of global token or dense graph baselines.
 Current v2 status:
 
 `CausalWorkingSetProcessor` now includes a delta-conditioned branch head. The
-local dense/sparse variants are implemented, but adaptive switching between
-them is still pending.
+local dense/sparse variants and a first hard adaptive switch are implemented.
+The adaptive switch routes to local dense when selected K is large or selector
+confidence is low; the next experiment should measure whether this expands the
+favorable WPU regime without reintroducing global attention cost.
+
+Pilot evidence:
+
+- `docs/experiments/wpu_v2_adaptive_hybrid_pilot.csv`
+- `docs/experiments/wpu_v2_adaptive_hybrid_pilot_results.md`
+
+The hard route is not yet reliably better than always-sparse or
+always-local-dense. The next version should train or calibrate the route from
+closed-loop consistency failures, branch entropy, and delta magnitude rather
+than treating K/confidence thresholds as final.
 
 ## Combined V2 Regime Diagram
 

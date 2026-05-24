@@ -121,6 +121,31 @@ def test_indexed_sparse_cws_model_disables_local_dense_block() -> None:
     assert model.local_dense is False
 
 
+def test_adaptive_hybrid_routes_by_working_set_pressure() -> None:
+    dataset = WorkingSetPhysicsDataset(size=1, seed=5, background_objects=64, causal_obstacles=4)
+    batch, _, _, _ = collate_working_set_samples([dataset[0]])
+    sparse_model = CausalWorkingSetProcessor(
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=8,
+        selector="target",
+        adaptive_hybrid=True,
+        adaptive_confidence_threshold=-1.0,
+    )
+    dense_model = create_model("wpu-cws-indexed-adaptive-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=8)
+
+    sparse_prediction = sparse_model(batch, num_branches=3)
+    dense_prediction = dense_model(batch, num_branches=3)
+
+    assert sparse_model.last_working_set_stats is not None
+    assert dense_model.last_working_set_stats is not None
+    assert sparse_model.last_working_set_stats.sparse_ratio == 1.0
+    assert dense_model.last_working_set_stats.local_dense_ratio == 1.0
+    assert sparse_prediction.selected_paths[0].name == "SPARSE"
+    assert dense_prediction.selected_paths[0].name == "HYBRID"
+
+
 def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:
     dataset = WorkingSetPhysicsDataset(size=1, seed=7, background_objects=128, causal_obstacles=4)
 

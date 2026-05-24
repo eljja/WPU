@@ -19,6 +19,7 @@ MODEL_NAMES = [
     "wpu-cws-indexed",
     "wpu-cws-indexed-sparse",
     "wpu-cws-indexed-local-dense",
+    "wpu-cws-indexed-adaptive-hybrid",
     "wpu-cws-oracle",
     "dense-graph",
     "graph-transformer",
@@ -35,7 +36,12 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         return WorldStateProcessor(hidden_dim=hidden_dim, forced_path=ExecutionPath.HYBRID)
     if name == "wpu-dense":
         return WorldStateProcessor(hidden_dim=hidden_dim, forced_path=ExecutionPath.DENSE)
-    if name in {"wpu-cws-indexed", "wpu-cws-indexed-sparse", "wpu-cws-indexed-local-dense"}:
+    if name in {
+        "wpu-cws-indexed",
+        "wpu-cws-indexed-sparse",
+        "wpu-cws-indexed-local-dense",
+        "wpu-cws-indexed-adaptive-hybrid",
+    }:
         working_set_size = int(kwargs.get("working_set_size", 16))
         layers = int(kwargs.get("layers", 2))
         num_heads = int(kwargs.get("num_heads", 8 if hidden_dim % 8 == 0 else 4))
@@ -45,7 +51,8 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
             layers=layers,
             working_set_size=working_set_size,
             selector="indexed",
-            local_dense=name != "wpu-cws-indexed-sparse",
+            local_dense=name in {"wpu-cws-indexed", "wpu-cws-indexed-local-dense"},
+            adaptive_hybrid=name == "wpu-cws-indexed-adaptive-hybrid",
         )
     if name.startswith("wpu-cws-"):
         selector = name.removeprefix("wpu-cws-")

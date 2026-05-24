@@ -124,7 +124,7 @@ foreach ($item in $Suite) {
         "adaptive-hybrid" {
             Invoke-CwsExperiment `
                 -Name "adaptive_hybrid" `
-                -Models @("wpu-cws-indexed-sparse", "wpu-cws-indexed-local-dense", "wpu-cws-indexed-adaptive-hybrid", "serialized-token", "graph-transformer") `
+                -Models @("wpu-cws-indexed-sparse", "wpu-cws-indexed-local-dense", "wpu-cws-indexed-adaptive-hybrid", "wpu-cws-indexed-learned-hybrid", "serialized-token", "graph-transformer") `
                 -ExtraArgs @("--mode", "k-sweep", "--n-values", "4096", "--k-values", "4", "8", "16", "32", "64", "--pre-tensor-indexed")
         }
         default {

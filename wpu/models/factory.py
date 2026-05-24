@@ -20,6 +20,7 @@ MODEL_NAMES = [
     "wpu-cws-indexed-sparse",
     "wpu-cws-indexed-local-dense",
     "wpu-cws-indexed-adaptive-hybrid",
+    "wpu-cws-indexed-learned-hybrid",
     "wpu-cws-oracle",
     "dense-graph",
     "graph-transformer",
@@ -41,6 +42,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         "wpu-cws-indexed-sparse",
         "wpu-cws-indexed-local-dense",
         "wpu-cws-indexed-adaptive-hybrid",
+        "wpu-cws-indexed-learned-hybrid",
     }:
         working_set_size = int(kwargs.get("working_set_size", 16))
         layers = int(kwargs.get("layers", 2))
@@ -52,7 +54,8 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
             working_set_size=working_set_size,
             selector="indexed",
             local_dense=name in {"wpu-cws-indexed", "wpu-cws-indexed-local-dense"},
-            adaptive_hybrid=name == "wpu-cws-indexed-adaptive-hybrid",
+            adaptive_hybrid=name in {"wpu-cws-indexed-adaptive-hybrid", "wpu-cws-indexed-learned-hybrid"},
+            adaptive_route="learned" if name == "wpu-cws-indexed-learned-hybrid" else "hard",
         )
     if name.startswith("wpu-cws-"):
         selector = name.removeprefix("wpu-cws-")

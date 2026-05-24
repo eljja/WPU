@@ -146,6 +146,22 @@ def test_adaptive_hybrid_routes_by_working_set_pressure() -> None:
     assert dense_prediction.selected_paths[0].name == "HYBRID"
 
 
+def test_learned_hybrid_gate_is_trainable() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, background_objects=32, causal_obstacles=4)
+    batch, target_delta, labels, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = create_model("wpu-cws-indexed-learned-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=8)
+    prediction = model(batch, num_branches=3)
+
+    loss = torch.nn.functional.mse_loss(prediction.object_delta, target_delta)
+    loss = loss + torch.nn.functional.cross_entropy(prediction.branch_logits, labels)
+    loss.backward()
+
+    assert model.last_working_set_stats is not None
+    assert 0.0 < model.last_working_set_stats.local_dense_ratio < 1.0
+    assert model.route_gate[-1].weight.grad is not None
+    assert model.route_gate[-1].weight.grad.norm().item() > 0.0
+
+
 def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:
     dataset = WorkingSetPhysicsDataset(size=1, seed=7, background_objects=128, causal_obstacles=4)
 

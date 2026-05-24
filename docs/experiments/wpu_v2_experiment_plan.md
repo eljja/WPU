@@ -223,6 +223,7 @@ Experiment:
 - `wpu-cws-indexed-sparse`
 - `wpu-cws-indexed-local-dense`
 - `wpu-cws-indexed-adaptive-hybrid`
+- `wpu-cws-indexed-learned-hybrid`
 - token and graph baselines
 
 Sweep:
@@ -254,11 +255,19 @@ Pilot evidence:
 
 - `docs/experiments/wpu_v2_adaptive_hybrid_pilot.csv`
 - `docs/experiments/wpu_v2_adaptive_hybrid_pilot_results.md`
+- `docs/experiments/wpu_v2_learned_hybrid_pilot.csv`
+- `docs/experiments/wpu_v2_learned_hybrid_pilot_results.md`
 
 The hard route is not yet reliably better than always-sparse or
 always-local-dense. The next version should train or calibrate the route from
 closed-loop consistency failures, branch entropy, and delta magnitude rather
 than treating K/confidence thresholds as final.
+
+The first learned route improves accuracy in this pilot but suppresses dense
+usage almost completely. That is not a failure by itself: it indicates the
+current task is mostly sparse-solvable and that WPU should learn when dense
+local recompute is worth its cost. The next experiment should add cases where
+local dense consistency is genuinely required.
 
 ## Combined V2 Regime Diagram
 

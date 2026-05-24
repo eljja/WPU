@@ -76,6 +76,21 @@ The model reports `sparse_ratio`, `local_dense_ratio`, and
 `mean_selector_confidence` through `WorkingSetStats`, and returns `SPARSE` or
 `HYBRID` in `StatePrediction.selected_paths`.
 
+Added `wpu-cws-indexed-learned-hybrid`.
+
+This model keeps the same pre-tensor indexed working set, but replaces the
+hand threshold with a differentiable gate:
+
+```text
+state-local sparse representation
+state-local dense representation
+learned gate -> convex mixture -> delta and branch heads
+```
+
+The gate is trained through the same delta and branch losses. It does not
+serialize the world or use global token attention; it learns whether local
+dense recompute is useful inside the already selected causal state.
+
 ## Completed V2 Priority Experiments
 
 ### Priority 1: Selector Gap
@@ -233,6 +248,8 @@ Adaptive pilot output:
 
 - `docs/experiments/wpu_v2_adaptive_hybrid_pilot.csv`
 - `docs/experiments/wpu_v2_adaptive_hybrid_pilot_results.md`
+- `docs/experiments/wpu_v2_learned_hybrid_pilot.csv`
+- `docs/experiments/wpu_v2_learned_hybrid_pilot_results.md`
 
 Setup:
 
@@ -250,6 +267,25 @@ the current confidence/K rule is not calibrated enough to reliably choose the
 best path. This is a useful v2 result: adaptive fallback should be learned or
 calibrated from rollout/constraint metrics, not hand-tuned from K alone.
 
+The learned hybrid improves the pilot accuracy at larger K while routing almost
+entirely to the sparse representation:
+
+| K | learned-hybrid accuracy | learned local-dense ratio |
+| --- | --- | --- |
+| 4 | 0.725 | 0.013 |
+| 8 | 0.750 | 0.015 |
+| 16 | 0.771 | 0.028 |
+| 32 | 0.833 | 0.002 |
+| 64 | 0.833 | 0.007 |
+
+Interpretation:
+
+The current synthetic CWS task does not require frequent local dense recompute.
+The useful v2 behavior is therefore not "always use dense locally"; it is
+"make dense recompute available, but learn to suppress it when sparse causal
+propagation is sufficient." This strengthens the WPU claim because the model
+can preserve state-local compute instead of paying dense cost by default.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -261,12 +297,13 @@ clearer:
 3. Event-Conditioned Retriever: make learned retrieval compete with indexed and
    oracle retrieval under distractors.
 4. Adaptive K Scheduler: expose K growth as a controlled decision, not a fixed
-   hyperparameter; the first hard route now switches sparse/local-dense paths.
+   hyperparameter; hard and learned local-route variants now exist.
 5. Local Propagation Core: support both sparse and local dense updates.
 6. Delta/Branch Engine: implemented the first delta-conditioned branch scorer;
    the next step is full branch-specific delta trajectories.
-7. Consistency/Uncertainty Manager: the first confidence/K fallback route is
-   implemented; closed-loop violation-triggered expansion remains open.
+7. Consistency/Uncertainty Manager: confidence/K fallback and learned local
+   route are implemented; closed-loop violation-triggered expansion remains
+   open.
 
 ## What V2 Should Claim Now
 
@@ -280,7 +317,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > WPU latency can be made weakly dependent on total world size N when K is
 > retrieved before tensorization. The adaptive-hybrid pilot shows that fallback
 > decisions must be trained or calibrated; hard K/confidence rules are useful
-> instrumentation but not yet a final scheduler.
+> instrumentation but not yet a final scheduler. The learned-hybrid pilot
+> suggests the correct default may be sparse-first with learned suppression of
+> unnecessary dense recompute, not dense recompute as a universal local upgrade.
 
 ## Next Required Work
 
@@ -288,7 +327,8 @@ Before claiming v2 as a strong experimental result:
 
 - Rerun K sweep with five seeds and baselines.
 - Rerun distractor sweep with harder false-positive distractors and five seeds.
-- Replace the hard adaptive route with a learned or calibrated scheduler.
+- Extend the learned route with explicit compute regularization and
+  violation-triggered dense recompute.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

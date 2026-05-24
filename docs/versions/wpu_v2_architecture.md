@@ -151,11 +151,13 @@ Current implementation status:
 
 - Implemented: hard sparse/local-dense routing in
   `wpu-cws-indexed-adaptive-hybrid`.
+- Implemented: differentiable sparse/local-dense gating in
+  `wpu-cws-indexed-learned-hybrid`.
 - Route signal: selected K pressure and selector confidence.
 - Reported metrics: sparse ratio, local-dense ratio, selector confidence, and
   selected execution path.
 - Not yet complete: learned K expansion, violation-triggered frontier growth,
-  and calibrated route probabilities.
+  compute-regularized gating, and calibrated route probabilities.
 
 ## 5. Local Propagation Core
 
@@ -274,6 +276,7 @@ Implemented model names:
 - `wpu-cws-indexed-sparse`
 - `wpu-cws-indexed-local-dense`
 - `wpu-cws-indexed-adaptive-hybrid`
+- `wpu-cws-indexed-learned-hybrid`
 
 ## V2 Success Criteria
 

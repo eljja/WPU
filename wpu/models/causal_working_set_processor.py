@@ -42,16 +42,20 @@ class CausalWorkingSetProcessor(nn.Module):
         selector: str = "learned",
         local_dense: bool = True,
         adaptive_hybrid: bool = False,
+        adaptive_route: str = "hard",
         adaptive_confidence_threshold: float = 0.45,
         adaptive_k_threshold: int | None = None,
     ) -> None:
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
             raise ValueError(f"unknown selector: {selector}")
+        if adaptive_route not in {"hard", "learned"}:
+            raise ValueError(f"unknown adaptive route: {adaptive_route}")
         self.selector = selector
         self.working_set_size = working_set_size
         self.local_dense = local_dense
         self.adaptive_hybrid = adaptive_hybrid
+        self.adaptive_route = adaptive_route
         self.adaptive_confidence_threshold = adaptive_confidence_threshold
         self.adaptive_k_threshold = adaptive_k_threshold or max(4, int(working_set_size * 0.75))
         self.object_encoder = nn.Linear(object_feature_dim, hidden_dim)
@@ -80,6 +84,12 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.LayerNorm(object_feature_dim),
             nn.Linear(object_feature_dim, hidden_dim),
             nn.GELU(),
+        )
+        self.route_gate = nn.Sequential(
+            nn.LayerNorm(hidden_dim + 2),
+            nn.Linear(hidden_dim + 2, max(hidden_dim // 2, 1)),
+            nn.GELU(),
+            nn.Linear(max(hidden_dim // 2, 1), 1),
         )
         self.branch_head = nn.Linear(hidden_dim * 2, 8)
         self.last_working_set_stats: WorkingSetStats | None = None
@@ -112,15 +122,27 @@ class CausalWorkingSetProcessor(nn.Module):
         else:
             dense_gathered = self.working_set_encoder(sparse_gathered)
 
-        if self.adaptive_hybrid:
+        if self.adaptive_hybrid and self.adaptive_route == "learned":
+            dense_weight = self._learned_dense_weight(
+                sparse_gathered,
+                selected_mask,
+                selected_counts,
+                selector_confidence,
+            )
+            gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
+        elif self.adaptive_hybrid:
             dense_mask = self._adaptive_dense_mask(selected_counts, selector_confidence)
+            dense_weight = dense_mask.to(sparse_gathered.dtype)
             gathered = torch.where(dense_mask.view(-1, 1, 1), dense_gathered, sparse_gathered)
         elif self.local_dense:
             dense_mask = torch.ones_like(selected_counts, dtype=torch.bool)
+            dense_weight = dense_mask.to(sparse_gathered.dtype)
             gathered = dense_gathered
         else:
             dense_mask = torch.zeros_like(selected_counts, dtype=torch.bool)
+            dense_weight = dense_mask.to(sparse_gathered.dtype)
             gathered = sparse_gathered
+        dense_mask = dense_weight >= 0.5
         gathered = gathered.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
 
         object_delta = torch.zeros_like(batch.object_features)
@@ -139,8 +161,8 @@ class CausalWorkingSetProcessor(nn.Module):
             mean_selected=float(selected_counts.float().mean().detach().cpu().item()),
             max_selected=int(selected_counts.max().detach().cpu().item()),
             mean_causal_recall=self._causal_recall(batch, selected_indices, selected_mask),
-            sparse_ratio=float((~dense_mask).float().mean().detach().cpu().item()),
-            local_dense_ratio=float(dense_mask.float().mean().detach().cpu().item()),
+            sparse_ratio=float((1.0 - dense_weight).mean().detach().cpu().item()),
+            local_dense_ratio=float(dense_weight.mean().detach().cpu().item()),
             mean_selector_confidence=float(selector_confidence.mean().detach().cpu().item()),
         )
         return StatePrediction(
@@ -288,6 +310,19 @@ class CausalWorkingSetProcessor(nn.Module):
         large_working_set = selected_counts >= self.adaptive_k_threshold
         uncertain_selection = selector_confidence < self.adaptive_confidence_threshold
         return large_working_set | uncertain_selection
+
+    def _learned_dense_weight(
+        self,
+        sparse_gathered: torch.Tensor,
+        selected_mask: torch.Tensor,
+        selected_counts: torch.Tensor,
+        selector_confidence: torch.Tensor,
+    ) -> torch.Tensor:
+        sparse_summary = _masked_mean(sparse_gathered, selected_mask)
+        k_pressure = selected_counts.to(sparse_summary.dtype).unsqueeze(-1) / max(float(self.working_set_size), 1.0)
+        confidence = selector_confidence.unsqueeze(-1).to(sparse_summary.dtype)
+        gate_input = torch.cat([sparse_summary, k_pressure, confidence], dim=-1)
+        return torch.sigmoid(self.route_gate(gate_input)).squeeze(-1)
 
     def _pool_working_set(
         self,

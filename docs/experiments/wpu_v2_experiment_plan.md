@@ -508,6 +508,31 @@ train sparse/dense propagation -> train regret head on counterfactual losses
 
 This is the more falsifiable route to an operational WPU scheduler.
 
+Staged internal regret-head pilot:
+
+- `scripts/staged_regret_hybrid.py`
+- `docs/experiments/wpu_v2_staged_regret_hybrid_pilot.csv`
+- `docs/experiments/wpu_v2_staged_regret_hybrid_pilot_results.md`
+
+The staged version trains sparse and local-dense propagation first, then freezes
+the propagation core and trains only the route-regret head on counterfactual
+losses. A held-out validation split calibrates the route threshold before test
+evaluation. This removes the previous always-sparse collapse and produces a
+bounded selective-dense policy:
+
+| K | sparse acc | routed acc | sparse loss | routed loss | dense compute | routed loss delta |
+| --- | --- | --- | --- | --- | --- | --- |
+| 8 | 0.490 | 0.490 | 0.977 | 0.953 | 0.133 | -0.024 |
+| 16 | 0.500 | 0.500 | 0.958 | 0.912 | 0.272 | -0.047 |
+| 32 | 0.483 | 0.500 | 1.019 | 0.989 | 0.272 | -0.030 |
+
+This should be treated as partial support, not a final win. The correct v2
+claim is that internal cost-sensitive routing can reduce expected loss with
+less than full dense recompute. The remaining open problem is the oracle gap:
+the routed loss is still about 0.05 above the per-sample best sparse/dense
+choice. The next scheduler experiment should train calibration and compute cost
+end-to-end, then repeat across five seeds and a denser N/K/D grid.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

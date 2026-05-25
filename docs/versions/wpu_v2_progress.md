@@ -920,6 +920,63 @@ The next version should train regret in stages:
 This prevents claiming solved routing prematurely and gives a concrete path to
 make the positive post-hoc result operational.
 
+### Priority 6m: Staged Regret-Head Routing
+
+Output:
+
+- `scripts/staged_regret_hybrid.py`
+- `docs/experiments/wpu_v2_staged_regret_hybrid_pilot.csv`
+- `docs/experiments/wpu_v2_staged_regret_hybrid_pilot_results.md`
+
+Question:
+
+```text
+Can the internal route-regret head become useful if propagation and routing are
+trained in separated stages and the dense threshold is calibrated on held-out
+validation samples?
+```
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13
+- Hidden dim = 128
+- Propagation steps = 40
+- Regret-head steps = 80
+- Validation samples = 90 per seed
+- Test samples = 90 per seed
+- Interaction mode = pairwise
+- Compute cost = 0.05
+
+Result:
+
+| K | sparse acc | routed acc | sparse loss | routed loss | dense compute | routed loss delta | oracle excess |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 8 | 0.490 | 0.490 | 0.977 | 0.953 | 0.133 | -0.024 | 0.050 |
+| 16 | 0.500 | 0.500 | 0.958 | 0.912 | 0.272 | -0.047 | 0.054 |
+| 32 | 0.483 | 0.500 | 1.019 | 0.989 | 0.272 | -0.030 | 0.048 |
+
+Interpretation:
+
+This fixes the previous always-sparse collapse. The staged route head selects
+dense recompute for a minority of samples and reduces cross-entropy loss
+relative to always-sparse across all tested K values. The result is still not a
+strong accuracy win: accuracy is tied at K=8 and K=16 and only slightly better
+at K=32. It is also still well above the oracle selective-routing loss. The
+scientific claim should therefore be narrow:
+
+```text
+WPU v2 now has an operational cost-sensitive selective-dense mechanism that can
+reduce expected prediction loss at bounded dense compute, but it has not yet
+closed the route-regret oracle gap or established broad accuracy superiority.
+```
+
+This is a better result than binary dense-needed routing because it optimizes
+the quantity that matters for a WPU scheduler: expected loss under an explicit
+compute penalty. The next work should improve regret calibration, train the
+threshold or compute cost end-to-end, and evaluate five-seed N/K/D sweeps.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -937,8 +994,9 @@ clearer:
 6. Delta/Branch Engine: implemented the first delta-conditioned branch scorer;
    the next step is full branch-specific delta trajectories.
 7. Consistency/Uncertainty Manager: confidence/K fallback and learned local
-   route are implemented; regret-style route supervision and closed-loop
-   violation-triggered expansion remain open.
+   route are implemented; staged regret-style route supervision now works as a
+   bounded selective-dense pilot, while closed-loop violation-triggered
+   expansion remains open.
 
 ## What V2 Should Claim Now
 
@@ -959,9 +1017,11 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > local-dense recompute can help, but only in specific K regimes. The
 > interaction-aware route is the strongest v2 scheduler result so far for
 > accuracy, but compute-aware measurement shows that it still executes dense
-> recompute in the current implementation. The next claim must be earned by
-> selective dense execution or relation-typed sparse propagation that preserves
-> the accuracy gain without paying dense cost for every sample.
+> recompute in the current implementation. Staged regret routing gives the first
+> internal selective-dense result that reduces loss with bounded dense compute,
+> but the remaining oracle gap means the next claim must still be earned by
+> better calibration, relation-typed sparse propagation, or closed-loop
+> expansion.
 
 ## Next Required Work
 
@@ -974,7 +1034,8 @@ Before claiming v2 as a strong experimental result:
 - Extend the interaction-aware route with actual selective dense execution,
   compute regularization, and violation-triggered K expansion. The first
   selective dense execution prototype now exists, but it needs threshold
-  sweeps, five-seed validation, and learned/calibrated routing.
+  sweeps, five-seed validation, and learned/calibrated routing. Staged regret
+  routing is now the best current candidate for this path.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

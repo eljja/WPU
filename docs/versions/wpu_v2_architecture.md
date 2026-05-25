@@ -258,6 +258,14 @@ The architecture should therefore treat regret routing as a staged optimization
 problem rather than a single auxiliary loss attached to an unstable propagation
 core.
 
+The staged route-regret pilot supports this design change. Training sparse and
+local-dense propagation first, then freezing the propagation core and fitting a
+calibrated route-regret head, reduces held-out prediction loss relative to
+always-sparse while executing dense recompute on only a minority of samples.
+This does not yet prove accuracy superiority, but it makes the scheduler
+operational: dense fallback is now a cost-sensitive decision over state
+representations, not a fixed heuristic or an unconditional dense path.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached
@@ -359,6 +367,7 @@ Implemented model names:
 - `wpu-cws-indexed-interaction-hybrid`
 - `wpu-cws-indexed-selective-interaction-hybrid`
 - `wpu-cws-indexed-geometry-hybrid`
+- `wpu-cws-indexed-regret-hybrid`
 
 ## V2 Success Criteria
 
@@ -372,3 +381,5 @@ V2 should be considered meaningfully better than v1 if it shows:
 - Evidence that indexed retrieval reduces selector cost from O(N)-like behavior.
 - Evidence that adaptive dense fallback reduces actual dense execution cost,
   not only dense-output mixing.
+- Evidence that the route-regret oracle gap shrinks under staged calibration,
+  not only that dense fallback sometimes helps.

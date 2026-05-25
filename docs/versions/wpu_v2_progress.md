@@ -1261,6 +1261,44 @@ regret over hidden local propagation evidence. The v2 scheduler should
 therefore combine hidden propagation evidence with explicit state verification,
 not replace hidden evidence with a tiny scalar state vector.
 
+### Priority 6u: Structured Verifier Probe
+
+Output:
+
+- `scripts/structured_verifier_probe.py`
+- `docs/experiments/wpu_v2_structured_verifier_probe.csv`
+- `docs/experiments/wpu_v2_structured_verifier_probe_summary.csv`
+- `docs/experiments/wpu_v2_structured_verifier_probe_results.md`
+
+Question:
+
+```text
+Can physical state and sparse diagnostics help as a structured verifier around
+the staged regret route, rather than as scalar MLP inputs?
+```
+
+Result:
+
+| policy | expansion cost | trigger rate | loss | loss delta | oracle excess | accuracy |
+| --- | --- | --- | --- | --- | --- | --- |
+| calibrated regret route | 0.00 | 0.000 | 0.974 | -0.015 | 0.055 | 0.485 |
+| structured verifier gate | 0.00 | 0.187 | 0.968 | -0.020 | 0.050 | 0.488 |
+| physical verifier gate | 0.00 | 0.218 | 0.971 | -0.017 | 0.053 | 0.487 |
+| structured expansion upper bound, budget 25% | 0.02 | 0.159 | 0.970 | -0.018 | 0.052 | 0.503 |
+| physical expansion upper bound, budget 25% | 0.02 | 0.174 | 0.967 | -0.021 | 0.049 | 0.500 |
+| structured expansion upper bound, budget 50% | 0.02 | 0.482 | 0.955 | -0.033 | 0.037 | 0.521 |
+| physical expansion upper bound, budget 50% | 0.02 | 0.446 | 0.954 | -0.034 | 0.036 | 0.523 |
+
+Interpretation:
+
+This is the first positive evidence for the verifier framing. The deployable
+gate gives a modest leave-one-seed-out gain over calibrated regret routing.
+The budgeted expansion rows are upper bounds, not deployed results, but they
+show that remaining error mass is compatible with verification-triggered K
+expansion. The next implementation target is therefore not another scalar
+router. It is a real sparse propagation -> regret estimate -> structured
+verification -> K expansion or local dense path.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1312,7 +1350,10 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > state-router variant test further shows that state evidence must be
 > represented as structured verification or constraints; simply concatenating
 > scalar physical features, or replacing hidden route evidence with them, is not
-> enough.
+> enough. The structured verifier probe gives the first small positive result
+> for that framing: verifier-gated dense execution improves loss modestly, and
+> budgeted expansion upper bounds indicate that selective K expansion is worth
+> implementing.
 
 ## Next Required Work
 
@@ -1326,7 +1367,8 @@ Before claiming v2 as a strong experimental result:
   compute regularization, and violation-triggered K expansion. The first
   selective dense execution prototype now exists, but it needs threshold
   sweeps, five-seed validation, and learned/calibrated routing. Staged regret
-  routing is now the best current candidate for this path.
+  routing plus structured verification is now the best current candidate for
+  this path.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

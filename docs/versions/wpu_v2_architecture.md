@@ -412,6 +412,9 @@ to token-like global processing.
 Current implementation status:
 
 - Implemented: confidence/K-triggered sparse-to-local-dense fallback.
+- Implemented experimentally: structured verifier probes over staged regret
+  context, including deployable dense gates and budgeted K-expansion upper
+  bounds.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 
@@ -477,3 +480,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   evidence instead of relying on a single global validation threshold.
 - Evidence that state-native route context improves through structured
   verification, not merely through scalar feature concatenation.
+- Evidence that verification-triggered K expansion improves deployed loss, not
+  only oracle upper-bound loss.

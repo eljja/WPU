@@ -684,6 +684,28 @@ Therefore v2 should treat state context as structured verification and
 constraint evidence, not as a small scalar replacement for local propagation
 evidence.
 
+Structured verifier probe:
+
+- `scripts/structured_verifier_probe.py`
+- `docs/experiments/wpu_v2_structured_verifier_probe_results.md`
+
+The first structured-verifier test is modest but positive. A deployable verifier
+gate improves the calibrated staged regret route under leave-one-seed-out
+evaluation, while budgeted expansion upper bounds show that K expansion is
+worth implementing if the expansion engine can recover the better local choice:
+
+| policy | expansion cost | trigger rate | policy loss | loss delta | oracle excess |
+| --- | --- | --- | --- | --- | --- |
+| calibrated regret route | 0.00 | 0.000 | 0.974 | -0.015 | 0.055 |
+| structured verifier gate | 0.00 | 0.187 | 0.968 | -0.020 | 0.050 |
+| physical verifier gate | 0.00 | 0.218 | 0.971 | -0.017 | 0.053 |
+| physical expansion upper bound, budget 25% | 0.02 | 0.174 | 0.967 | -0.021 | 0.049 |
+| physical expansion upper bound, budget 50% | 0.02 | 0.446 | 0.954 | -0.034 | 0.036 |
+
+This does not prove deployed K expansion yet. It narrows the next implementation
+target to a concrete mechanism: sparse propagation, staged regret estimate,
+structured verifier, then local dense or K expansion.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

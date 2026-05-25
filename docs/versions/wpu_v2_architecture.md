@@ -226,6 +226,19 @@ train-calibrated thresholds do not transfer reliably. The next router needs
 calibrated model-internal route representations and counterfactual dense-needed
 supervision, not only hand-built scalar diagnostics.
 
+The shared-model counterfactual probe further tightens this requirement. When
+sparse and local-dense paths share parameters and are both trained, dense
+recompute is still not a default improvement. It can fix sparse failures, but
+it can also break sparse-correct predictions. The scheduler should therefore
+estimate route regret:
+
+```text
+route_regret = dense_loss - sparse_loss + compute_cost
+```
+
+Dense fallback should be executed only when expected regret is negative, not
+merely when local interaction density is high.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached

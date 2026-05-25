@@ -441,6 +441,31 @@ should include:
 - Training-time sparse/dense disagreement labels.
 - Cost-sensitive route objective evaluated by hard selective execution.
 
+Shared-model counterfactual check:
+
+- `docs/experiments/wpu_v2_shared_route_counterfactual.csv`
+- `docs/experiments/wpu_v2_shared_route_counterfactual_summary.csv`
+
+The first shared-model sparse/dense counterfactual removes a major confound in
+the previous labels. Sparse and dense paths are trained inside one
+`wpu-cws-indexed-local-dense` model and then forced at evaluation time on the
+same samples. The result is stricter than the separate-model diagnostic:
+dense-beneficial samples exist, but dense also breaks sparse-correct samples
+more often than it fixes sparse failures in this pilot.
+
+The next router should therefore predict dense regret, not only dense need:
+
+```text
+regret = dense_loss - sparse_loss
+execute dense when expected regret + compute_cost < 0
+```
+
+This converts routing into a cost-sensitive correction problem. It also gives a
+clear failure mode: if expected regret cannot be predicted under seed/domain
+shift, WPU should keep sparse propagation and expand the causal working set or
+invoke a different relation-typed operator rather than blindly using dense
+recompute.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

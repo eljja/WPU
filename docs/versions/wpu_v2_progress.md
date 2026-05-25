@@ -728,6 +728,68 @@ A useful router likely needs calibrated model-internal route representations,
 counterfactual dense-needed supervision, branch-correctness costs,
 constraint-violation signals, and hard selective-execution evaluation.
 
+### Priority 6j: Shared-Model Sparse/Dense Counterfactual
+
+Output:
+
+- `scripts/shared_route_counterfactual.py`
+- `scripts/summarize_shared_route_counterfactual.py`
+- `docs/experiments/wpu_v2_shared_route_counterfactual.csv`
+- `docs/experiments/wpu_v2_shared_route_counterfactual_summary.csv`
+
+Question:
+
+```text
+Is the dense-needed signal still present when sparse and dense paths share the
+same model parameters?
+```
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13
+- Hidden dim = 128
+- Steps = 40
+- Samples = 90 per seed
+- Interaction mode = pairwise
+- Pre-tensor indexed working set
+- Train one `wpu-cws-indexed-local-dense` model with both forced sparse and
+  forced local-dense losses, then evaluate both paths on the same samples.
+
+Result:
+
+| K | sparse accuracy | dense accuracy | dense-needed rate | dense fix rate | dense break rate | branch disagreement |
+| --- | --- | --- | --- | --- | --- | --- |
+| 8 | 0.489 | 0.467 | 0.167 | 0.050 | 0.072 | 0.172 |
+| 16 | 0.556 | 0.433 | 0.233 | 0.083 | 0.206 | 0.367 |
+| 32 | 0.494 | 0.422 | 0.200 | 0.106 | 0.178 | 0.400 |
+
+Interpretation:
+
+This resolves an important ambiguity in the previous counterfactual labels.
+The earlier sparse-vs-dense comparison used separately trained models, so route
+labels could be contaminated by model-instance differences. The shared-model
+probe still finds dense-beneficial samples, but it also shows that dense breaks
+sparse-correct samples more often than it fixes sparse mistakes in this short
+pilot.
+
+The v2 conclusion should therefore be stricter:
+
+```text
+local dense recompute is an available correction operator, not a default
+improvement operator
+```
+
+A useful WPU router must predict both sides of the decision: when dense can fix
+a sparse failure and when dense is likely to damage an already-correct sparse
+state update. This points toward regret-style route supervision:
+
+```text
+route_target = dense_loss - sparse_loss
+execute dense only when expected regret is negative enough to justify cost
+```
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -739,14 +801,14 @@ clearer:
 3. Event-Conditioned Retriever: make learned retrieval compete with indexed and
    oracle retrieval under distractors.
 4. Adaptive K Scheduler: expose K growth as a controlled decision, not a fixed
-   hyperparameter; hard, learned, and interaction-aware local-route variants
-   now exist.
+   hyperparameter; hard, learned, interaction-aware, and forced counterfactual
+   route variants now exist.
 5. Local Propagation Core: support both sparse and local dense updates.
 6. Delta/Branch Engine: implemented the first delta-conditioned branch scorer;
    the next step is full branch-specific delta trajectories.
 7. Consistency/Uncertainty Manager: confidence/K fallback and learned local
-   route are implemented; closed-loop violation-triggered expansion remains
-   open.
+   route are implemented; regret-style route supervision and closed-loop
+   violation-triggered expansion remain open.
 
 ## What V2 Should Claim Now
 

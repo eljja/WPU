@@ -264,6 +264,25 @@ def test_geometry_hybrid_adds_state_geometry_without_dense_compute() -> None:
     assert model.last_working_set_stats.sparse_ratio == 1.0
 
 
+def test_causal_working_set_can_force_counterfactual_routes() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = create_model("wpu-cws-indexed-local-dense", hidden_dim=32, num_heads=4, layers=1, working_set_size=12)
+
+    sparse_prediction = model(batch, num_branches=3, force_route="sparse")
+    sparse_stats = model.last_working_set_stats
+    dense_prediction = model(batch, num_branches=3, force_route="local_dense")
+    dense_stats = model.last_working_set_stats
+
+    assert sparse_prediction.branch_probabilities.shape == dense_prediction.branch_probabilities.shape
+    assert sparse_stats is not None
+    assert dense_stats is not None
+    assert sparse_stats.dense_compute_ratio == 0.0
+    assert sparse_stats.local_dense_ratio == 0.0
+    assert dense_stats.dense_compute_ratio == 1.0
+    assert dense_stats.local_dense_ratio == 1.0
+
+
 def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:
     dataset = WorkingSetPhysicsDataset(size=1, seed=7, background_objects=128, causal_obstacles=4)
 

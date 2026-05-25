@@ -118,9 +118,12 @@ class CausalWorkingSetProcessor(nn.Module):
         horizon: int = 1,
         num_branches: int = 3,
         route_branches: int | None = None,
+        force_route: str | None = None,
     ) -> StatePrediction:
         del horizon
         del route_branches
+        if force_route not in {None, "sparse", "local_dense"}:
+            raise ValueError(f"unknown forced route: {force_route}")
         hidden = self.object_encoder(batch.object_features)
         event_hidden = self.event_encoder(batch.event_features)
         relevance_logits = self._relevance_logits(hidden, event_hidden, batch.object_mask)
@@ -181,7 +184,15 @@ class CausalWorkingSetProcessor(nn.Module):
             dense_gathered = self.working_set_encoder(sparse_gathered)
             dense_compute_weight = torch.zeros_like(selector_confidence)
 
-        if self.adaptive_hybrid and self.adaptive_route == "learned":
+        if force_route == "sparse":
+            dense_weight = torch.zeros_like(selector_confidence)
+            dense_compute_weight = torch.zeros_like(selector_confidence)
+            gathered = sparse_gathered
+        elif force_route == "local_dense":
+            dense_weight = torch.ones_like(selector_confidence)
+            dense_compute_weight = torch.ones_like(selector_confidence)
+            gathered = dense_gathered
+        elif self.adaptive_hybrid and self.adaptive_route == "learned":
             dense_weight = self._learned_dense_weight(
                 sparse_gathered,
                 selected_mask,

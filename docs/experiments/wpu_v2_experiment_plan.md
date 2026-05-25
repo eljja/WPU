@@ -623,6 +623,25 @@ This means the next scheduler should not blindly concatenate diagnostics. It
 should use physical state evidence as the base margin signal and constrain
 diagnostic adjustments.
 
+Clipped diagnostic adjustment probe:
+
+- `scripts/clipped_diagnostic_probe.py`
+- `docs/experiments/wpu_v2_clipped_diagnostic_probe_summary.csv`
+- `docs/experiments/wpu_v2_clipped_diagnostic_probe_results.md`
+
+The constrained residual test also rejects direct diagnostic adjustment. At
+compute cost 0.05, the physical-state base predictor is best:
+
+| residual clip | policy loss | loss delta | dense rate | oracle excess |
+| --- | --- | --- | --- | --- |
+| 0.00 | 0.968 | -0.020 | 0.294 | 0.050 |
+| 0.01 | 0.969 | -0.019 | 0.300 | 0.051 |
+| 0.05 | 0.973 | -0.016 | 0.329 | 0.054 |
+| 0.10 | 0.978 | -0.010 | 0.356 | 0.060 |
+
+Diagnostics should therefore be evaluated as safety/abstention signals before
+being used as direct regret residuals.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

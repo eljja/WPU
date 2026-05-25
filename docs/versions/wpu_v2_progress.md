@@ -1157,6 +1157,41 @@ should therefore not blindly concatenate every internal diagnostic. It should
 use invariant physical state evidence as the base route signal and only allow
 diagnostics to make constrained, calibrated adjustments.
 
+### Priority 6r: Clipped Diagnostic Adjustment Probe
+
+Output:
+
+- `scripts/clipped_diagnostic_probe.py`
+- `docs/experiments/wpu_v2_clipped_diagnostic_probe.csv`
+- `docs/experiments/wpu_v2_clipped_diagnostic_probe_summary.csv`
+- `docs/experiments/wpu_v2_clipped_diagnostic_probe_results.md`
+
+Question:
+
+```text
+Can route diagnostics help if they are only allowed to make clipped residual
+adjustments to a physical-state regret predictor?
+```
+
+Result at compute cost 0.05:
+
+| residual clip | regret pearson | regret R2 | dense rate | policy loss | loss delta | oracle excess |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0.00 | 0.402 | 0.105 | 0.294 | 0.968 | -0.020 | 0.050 |
+| 0.01 | 0.399 | 0.099 | 0.300 | 0.969 | -0.019 | 0.051 |
+| 0.02 | 0.395 | 0.091 | 0.299 | 0.969 | -0.019 | 0.051 |
+| 0.05 | 0.380 | 0.054 | 0.329 | 0.973 | -0.016 | 0.054 |
+| 0.10 | 0.351 | -0.029 | 0.356 | 0.978 | -0.010 | 0.060 |
+
+Interpretation:
+
+The clipped residual does not help. Diagnostics should not yet adjust the
+regret estimate directly. For v2, diagnostics are better treated as safety
+signals: abstain, expand K, increase uncertainty, or trigger a consistency
+check. The route/margin decision itself should remain grounded in physical
+state evidence until diagnostic calibration is demonstrated under stronger
+distribution shifts.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1201,8 +1236,8 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > internal selective-dense result that reduces loss with bounded dense compute,
 > and the five-seed audit shows that the loss reduction repeats. The remaining
 > oracle gap, threshold sensitivity, the failure of K-only margin selection, and
-> the overfitting of raw route diagnostics mean the next claim must still be
-> earned by invariant state-conditioned margins, relation-typed sparse
+> the failure of diagnostic residual adjustment mean the next claim must still
+> be earned by invariant state-conditioned margins, relation-typed sparse
 > propagation, or closed-loop expansion.
 
 ## Next Required Work

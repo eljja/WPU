@@ -324,6 +324,19 @@ This prevents unstable diagnostics from dominating the route decision while
 still allowing uncertainty and rollout evidence to modify a state-grounded
 margin.
 
+The clipped residual probe shows that even constrained diagnostic adjustment is
+not yet beneficial in the current setting. The architecture should therefore
+split routing and safety:
+
+```text
+route decision: physical-state regret / margin model
+safety decision: diagnostics trigger abstain, K expansion, uncertainty growth,
+                 or consistency checks
+```
+
+Diagnostics can become part of the route value only after they demonstrate
+seed-stable calibration.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached

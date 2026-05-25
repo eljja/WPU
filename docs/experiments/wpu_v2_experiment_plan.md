@@ -389,6 +389,22 @@ train the route as a cost-sensitive classifier
 evaluate with hard selective execution
 ```
 
+Counterfactual label pilot:
+
+- `docs/experiments/wpu_v2_counterfactual_route_labels_summary.csv`
+
+The first counterfactual diagnostic shows that dense is not uniformly better:
+
+| K | dense fix rate | dense break rate | dense-needed rate |
+| --- | --- | --- | --- |
+| 8 | 0.083 | 0.072 | 0.272 |
+| 16 | 0.094 | 0.122 | 0.311 |
+| 32 | 0.083 | 0.156 | 0.200 |
+
+This should become the next supervised-router dataset. The route label should
+not be "interaction density is high"; it should be "dense improves this
+sample's outcome enough to justify cost."
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

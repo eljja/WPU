@@ -215,8 +215,10 @@ actual dense execution, especially at K=8 and K=16. The remaining architecture
 need is learned or calibrated routing rather than a fixed threshold. The first
 learned-selective prototype is a negative result: downstream loss, route cost,
 and simple distillation are not enough to reproduce the fixed interaction
-frontier. Future routing needs stronger supervision from branch correctness,
-uncertainty, and constraint-failure signals.
+frontier. Counterfactual sparse-vs-dense diagnostics show why: dense fixes some
+sparse mistakes but also breaks some sparse-correct cases. Future routing needs
+stronger supervision from branch correctness, uncertainty, and
+constraint-failure signals.
 
 ## 6. Delta/Branch Engine
 

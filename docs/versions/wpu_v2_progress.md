@@ -621,6 +621,52 @@ branch correctness, uncertainty, and constraint failure, not only MSE
 distillation to a soft interaction score.
 ```
 
+### Priority 6h: Counterfactual Dense-Needed Labels
+
+Output:
+
+- `scripts/counterfactual_route_labels.py`
+- `docs/experiments/wpu_v2_counterfactual_route_labels.csv`
+- `docs/experiments/wpu_v2_counterfactual_route_labels_summary.csv`
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13
+- Hidden dim = 128
+- Interaction mode = pairwise
+- Pre-tensor indexed input enabled
+- Compare separately trained sparse and local-dense WPU on the same held-out
+  samples.
+
+Result:
+
+| K | sparse acc | dense acc | dense-needed rate | dense fix rate | dense break rate | dense lower-loss rate |
+| --- | --- | --- | --- | --- | --- | --- |
+| 8 | 0.456 | 0.467 | 0.272 | 0.083 | 0.072 | 0.483 |
+| 16 | 0.539 | 0.511 | 0.311 | 0.094 | 0.122 | 0.650 |
+| 32 | 0.456 | 0.383 | 0.200 | 0.083 | 0.156 | 0.439 |
+
+Interpretation:
+
+This explains why the naive learned router failed. Dense is not uniformly
+better. It fixes some sparse mistakes, but it also breaks some sparse-correct
+samples, especially at K=16 and K=32. A router trained only from branch loss,
+compute penalty, or analytic interaction density does not know which individual
+samples are dense-beneficial.
+
+The next router should be trained from counterfactual labels:
+
+```text
+dense_needed = dense fixes sparse branch error
+            or dense materially reduces branch/constraint loss
+```
+
+This makes the WPU claim more precise. Selective dense execution is valuable
+only if route supervision identifies the samples where dense recompute improves
+state prediction enough to justify its cost.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now

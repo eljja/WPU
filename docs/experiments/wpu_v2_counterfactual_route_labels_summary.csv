@@ -1,0 +1,4 @@
+K,seeds,sparse_accuracy,dense_accuracy,dense_needed_rate,dense_needed_ci95,dense_fix_rate,dense_break_rate,dense_lower_loss_rate,both_correct_rate,both_wrong_rate
+8,2,0.455556,0.466666,0.272223,0.032666,0.083333,0.072222,0.483333,0.383333,0.461111
+16,2,0.538889,0.511111,0.311111,0.043555,0.094445,0.122223,0.65,0.416666,0.366667
+32,2,0.455556,0.383333,0.2,0.08711,0.083334,0.155556,0.438889,0.3,0.461112

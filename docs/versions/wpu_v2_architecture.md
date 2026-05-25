@@ -220,7 +220,9 @@ sparse mistakes but also breaks some sparse-correct cases. Future routing needs
 stronger supervision from branch correctness, uncertainty, and
 constraint-failure signals. A seed-heldout route-label probe confirms that
 interaction density alone is not enough to identify dense-needed samples; the
-router needs richer state and prediction diagnostics.
+first scalar sparse-diagnostic probe also fails to generalize. The next router
+needs calibrated model-internal route representations and counterfactual
+dense-needed supervision, not only hand-built scalar diagnostics.
 
 ## 6. Delta/Branch Engine
 

@@ -680,15 +680,17 @@ Output:
 Question:
 
 ```text
-Are dense-needed labels identifiable from state-only features?
+Are dense-needed labels identifiable from state-only and sparse-diagnostic features?
 ```
 
 Setup:
 
 - Use the counterfactual route examples from N=2048, K=8/16/32, seeds 11 and
   13.
-- Train a small state-feature MLP on one seed and evaluate on the held-out
-  seed.
+- Train small MLP probes on one seed and evaluate on the held-out seed.
+- Compare state-only features against sparse-output diagnostics: branch
+  entropy, branch margin, top-branch confidence, object-delta norm, and mean
+  uncertainty.
 - Compare against raw interaction-density threshold heuristics.
 
 Result:
@@ -697,18 +699,27 @@ Result:
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | interaction density | 0.15 | 0.261 | 0.839 | 0.488 | 0.256 | 0.822 | 0.390 |
 | interaction density | 0.20 | 0.261 | 0.294 | 0.477 | 0.223 | 0.263 | 0.241 |
-| MLP state probe | 0.20 | 0.261 | 0.554 | 0.580 | 0.317 | 0.672 | 0.431 |
-| MLP state probe | 0.30 | 0.261 | 0.485 | 0.560 | 0.309 | 0.575 | 0.402 |
-| MLP state probe | 0.50 | 0.261 | 0.374 | 0.546 | 0.307 | 0.442 | 0.362 |
+| MLP state probe | 0.10 | 0.261 | 0.650 | 0.557 | 0.296 | 0.735 | 0.422 |
+| MLP state probe | 0.15 | 0.261 | 0.600 | 0.567 | 0.305 | 0.699 | 0.425 |
+| MLP state probe | 0.20 | 0.261 | 0.556 | 0.568 | 0.309 | 0.656 | 0.420 |
+| MLP sparse diagnostics | 0.02 | 0.261 | 0.006 | 0.505 | 0.333 | 0.013 | 0.026 |
+| MLP sparse diagnostics | 0.05 | 0.261 | 0.000 | 0.500 | 0.000 | 0.000 | 0.000 |
 
 Interpretation:
 
-Interaction density alone does not identify dense-needed samples. The simple
-MLP improves balanced accuracy above chance, but only weakly. This strengthens
-the negative learned-router result: the route decision is not yet captured by
-the current state features. A useful router likely needs richer signals such as
-branch entropy, sparse/dense disagreement during training, constraint
-violations, and uncertainty growth.
+Interaction density alone does not identify dense-needed samples. The
+state-only MLP improves balanced accuracy above chance, but only weakly. Adding
+scalar sparse diagnostics does not solve the problem; in the seed-heldout probe
+it collapses to almost never selecting dense execution. This is likely a
+calibration and model-instance shift problem: entropy, margin, delta norm, and
+uncertainty are not yet stable route signals across separately trained sparse
+models.
+
+This strengthens the negative learned-router result. The route decision is not
+captured by simple state heuristics or by post-hoc scalar sparse diagnostics.
+A useful router likely needs calibrated model-internal route representations,
+counterfactual dense-needed supervision, branch-correctness costs,
+constraint-violation signals, and hard selective-execution evaluation.
 
 ## Updated V2 Direction
 

@@ -413,7 +413,20 @@ Route-label identifiability probe:
 Dense-needed labels are only weakly predictable from the current state-only
 features. Interaction density alone is near chance balanced accuracy. A small
 MLP improves to roughly 0.58 balanced accuracy, but this is not enough for a
-reliable router. The next supervised router should include richer features:
+reliable router.
+
+Sparse-output diagnostics have now been added to the probe: branch entropy,
+branch margin, top-branch confidence, object-delta norm, and mean uncertainty.
+They do not improve the route decision under seed-heldout evaluation. The probe
+collapses to almost never selecting dense execution, which suggests that
+post-hoc scalar diagnostics are poorly calibrated across independently trained
+sparse models.
+
+The next supervised router should therefore not only append more scalar
+features. It should train a route head on model-internal state representations
+with counterfactual dense-needed labels, calibration losses, seed/domain
+augmentation, and hard selective-execution evaluation. Useful route evidence
+should include:
 
 - Sparse branch entropy and margin.
 - Local constraint violation scores.

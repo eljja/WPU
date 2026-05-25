@@ -10,7 +10,7 @@ from torch import nn
 import torch.nn.functional as F
 
 
-FEATURES = [
+STATE_FEATURES = [
     "causal_k",
     "interaction_density",
     "min_pair_distance",
@@ -18,6 +18,14 @@ FEATURES = [
     "target_x",
     "target_y",
     "event_norm",
+]
+
+SPARSE_DIAGNOSTIC_FEATURES = STATE_FEATURES + [
+    "sparse_entropy",
+    "sparse_margin",
+    "sparse_confidence",
+    "sparse_delta_norm",
+    "sparse_uncertainty_mean",
 ]
 
 
@@ -37,7 +45,9 @@ def main() -> None:
     for test_seed in seeds:
         train_rows = [row for row in rows if int(row["seed"]) != test_seed]
         test_rows = [row for row in rows if int(row["seed"]) == test_seed]
-        output.extend(_run_split(train_rows, test_rows, test_seed, args))
+        output.extend(_run_split(train_rows, test_rows, test_seed, args, STATE_FEATURES, "mlp_state"))
+        if rows and all(feature in rows[0] for feature in SPARSE_DIAGNOSTIC_FEATURES):
+            output.extend(_run_split(train_rows, test_rows, test_seed, args, SPARSE_DIAGNOSTIC_FEATURES, "mlp_sparse_diagnostics"))
     args.out.parent.mkdir(parents=True, exist_ok=True)
     _write_csv(args.out, output)
     print(f"wrote={args.out}", flush=True)
@@ -48,10 +58,12 @@ def _run_split(
     test_rows: list[dict[str, str]],
     test_seed: int,
     args: argparse.Namespace,
+    features: list[str],
+    model_name: str,
 ) -> list[dict[str, object]]:
     device = torch.device(args.device)
-    train_x, train_y = _tensorize(train_rows, device)
-    test_x, test_y = _tensorize(test_rows, device)
+    train_x, train_y = _tensorize(train_rows, features, device)
+    test_x, test_y = _tensorize(test_rows, features, device)
     mean_x = train_x.mean(dim=0, keepdim=True)
     std_x = train_x.std(dim=0, keepdim=True).clamp_min(1e-6)
     train_x = (train_x - mean_x) / std_x
@@ -76,13 +88,14 @@ def _run_split(
     with torch.no_grad():
         probabilities = torch.sigmoid(model(test_x).squeeze(-1))
     outputs = []
-    for threshold in [0.2, 0.3, 0.4, 0.5]:
+    for threshold in [0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5]:
         predictions = probabilities >= threshold
-        outputs.append(_metrics(test_seed, test_y, predictions, probabilities, threshold, "mlp"))
-    heuristic_scores = _heuristic_scores(test_rows, device)
-    for threshold in [0.05, 0.10, 0.15, 0.20, 0.30]:
-        predictions = heuristic_scores >= threshold
-        outputs.append(_metrics(test_seed, test_y, predictions, heuristic_scores, threshold, "interaction_density"))
+        outputs.append(_metrics(test_seed, test_y, predictions, probabilities, threshold, model_name, len(features)))
+    if model_name == "mlp_state":
+        heuristic_scores = _heuristic_scores(test_rows, device)
+        for threshold in [0.05, 0.10, 0.15, 0.20, 0.30]:
+            predictions = heuristic_scores >= threshold
+            outputs.append(_metrics(test_seed, test_y, predictions, heuristic_scores, threshold, "interaction_density", 1))
     return outputs
 
 
@@ -93,6 +106,7 @@ def _metrics(
     scores: torch.Tensor,
     threshold: float,
     model_name: str,
+    feature_count: int,
 ) -> dict[str, object]:
     labels_bool = labels.bool()
     true_positive = int((predictions & labels_bool).sum().item())
@@ -111,6 +125,7 @@ def _metrics(
         "test_seed": test_seed,
         "threshold": threshold,
         "samples": total,
+        "feature_count": feature_count,
         "label_rate": round(float(labels.mean().detach().cpu().item()), 6),
         "predicted_dense_rate": round(float(predictions.float().mean().detach().cpu().item()), 6),
         "accuracy": round((true_positive + true_negative) / total, 6),
@@ -122,24 +137,19 @@ def _metrics(
     }
 
 
-def _tensorize(rows: list[dict[str, str]], device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
-    features = []
+def _tensorize(rows: list[dict[str, str]], feature_names: list[str], device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
+    feature_rows = []
     labels = []
     for row in rows:
-        causal_k = float(row["causal_k"]) / 32.0
-        features.append(
-            [
-                causal_k,
-                float(row["interaction_density"]),
-                float(row["min_pair_distance"]),
-                float(row["mean_pair_distance"]),
-                float(row["target_x"]),
-                float(row["target_y"]),
-                float(row["event_norm"]),
-            ]
-        )
+        feature_values = []
+        for feature in feature_names:
+            if feature == "causal_k":
+                feature_values.append(float(row[feature]) / 32.0)
+            else:
+                feature_values.append(float(row[feature]))
+        feature_rows.append(feature_values)
         labels.append(float(row["dense_needed"]))
-    return torch.tensor(features, dtype=torch.float32, device=device), torch.tensor(labels, dtype=torch.float32, device=device)
+    return torch.tensor(feature_rows, dtype=torch.float32, device=device), torch.tensor(labels, dtype=torch.float32, device=device)
 
 
 def _heuristic_scores(rows: list[dict[str, str]], device: torch.device) -> torch.Tensor:

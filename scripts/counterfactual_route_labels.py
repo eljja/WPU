@@ -165,6 +165,7 @@ def _evaluate_pair(
             dense_is_better = dense_loss + 1e-6 < sparse_loss
             dense_needed = (~sparse_is_correct & dense_is_correct) | (dense_is_better & ~sparse_is_correct)
             route_features = _route_features(batch)
+            sparse_features = _prediction_features(sparse_prediction)
 
             total += int(labels.numel())
             sparse_correct += int(sparse_is_correct.sum().item())
@@ -189,6 +190,11 @@ def _evaluate_pair(
                         "target_x": round(float(route_features["target_x"][row_index].detach().cpu().item()), 8),
                         "target_y": round(float(route_features["target_y"][row_index].detach().cpu().item()), 8),
                         "event_norm": round(float(route_features["event_norm"][row_index].detach().cpu().item()), 8),
+                        "sparse_entropy": round(float(sparse_features["entropy"][row_index].detach().cpu().item()), 8),
+                        "sparse_margin": round(float(sparse_features["margin"][row_index].detach().cpu().item()), 8),
+                        "sparse_confidence": round(float(sparse_features["confidence"][row_index].detach().cpu().item()), 8),
+                        "sparse_delta_norm": round(float(sparse_features["delta_norm"][row_index].detach().cpu().item()), 8),
+                        "sparse_uncertainty_mean": round(float(sparse_features["uncertainty_mean"][row_index].detach().cpu().item()), 8),
                         "sparse_correct": int(sparse_is_correct[row_index].detach().cpu().item()),
                         "dense_correct": int(dense_is_correct[row_index].detach().cpu().item()),
                         "dense_needed": int(dense_needed[row_index].detach().cpu().item()),
@@ -218,6 +224,22 @@ def _evaluate_pair(
         "both_correct_rate": round(both_correct / max(total, 1), 6),
         "both_wrong_rate": round(both_wrong / max(total, 1), 6),
         "dense_lower_loss_rate": round(dense_lower_loss / max(total, 1), 6),
+    }
+
+
+def _prediction_features(prediction) -> dict[str, torch.Tensor]:
+    probabilities = prediction.branch_probabilities
+    sorted_probabilities = torch.sort(probabilities, dim=-1, descending=True).values
+    entropy = -(probabilities.clamp_min(1e-8) * probabilities.clamp_min(1e-8).log()).sum(dim=-1)
+    margin = sorted_probabilities[:, 0] - sorted_probabilities[:, 1]
+    delta_norm = prediction.object_delta.square().sum(dim=-1).sqrt().mean(dim=-1)
+    uncertainty_mean = prediction.uncertainty.mean(dim=(1, 2))
+    return {
+        "entropy": entropy,
+        "margin": margin,
+        "confidence": sorted_probabilities[:, 0],
+        "delta_norm": delta_norm,
+        "uncertainty_mean": uncertainty_mean,
     }
 
 

@@ -21,6 +21,7 @@ MODEL_NAMES = [
     "wpu-cws-indexed-local-dense",
     "wpu-cws-indexed-adaptive-hybrid",
     "wpu-cws-indexed-learned-hybrid",
+    "wpu-cws-indexed-learned-selective-hybrid",
     "wpu-cws-indexed-interaction-hybrid",
     "wpu-cws-indexed-selective-interaction-hybrid",
     "wpu-cws-indexed-geometry-hybrid",
@@ -46,6 +47,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         "wpu-cws-indexed-local-dense",
         "wpu-cws-indexed-adaptive-hybrid",
         "wpu-cws-indexed-learned-hybrid",
+        "wpu-cws-indexed-learned-selective-hybrid",
         "wpu-cws-indexed-interaction-hybrid",
         "wpu-cws-indexed-selective-interaction-hybrid",
         "wpu-cws-indexed-geometry-hybrid",
@@ -65,6 +67,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
             in {
                 "wpu-cws-indexed-adaptive-hybrid",
                 "wpu-cws-indexed-learned-hybrid",
+                "wpu-cws-indexed-learned-selective-hybrid",
                 "wpu-cws-indexed-interaction-hybrid",
                 "wpu-cws-indexed-selective-interaction-hybrid",
                 "wpu-cws-indexed-geometry-hybrid",
@@ -105,6 +108,8 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
 def _adaptive_route(name: str) -> str:
     if name == "wpu-cws-indexed-learned-hybrid":
         return "learned"
+    if name == "wpu-cws-indexed-learned-selective-hybrid":
+        return "learned_selective"
     if name == "wpu-cws-indexed-interaction-hybrid":
         return "interaction"
     if name == "wpu-cws-indexed-selective-interaction-hybrid":

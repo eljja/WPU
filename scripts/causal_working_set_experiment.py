@@ -51,6 +51,8 @@ def main() -> None:
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--selector-loss-weight", type=float, default=0.0)
+    parser.add_argument("--route-compute-loss-weight", type=float, default=0.0)
+    parser.add_argument("--route-distill-loss-weight", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--seeds", type=int, nargs="+", default=None)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -158,6 +160,10 @@ def _run_condition(
         loss = loss + F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
         if args.selector_loss_weight > 0.0 and hasattr(model, "selector_loss"):
             loss = loss + args.selector_loss_weight * model.selector_loss()
+        if args.route_compute_loss_weight > 0.0 and hasattr(model, "route_compute_loss"):
+            loss = loss + args.route_compute_loss_weight * model.route_compute_loss()
+        if args.route_distill_loss_weight > 0.0 and hasattr(model, "route_distillation_loss"):
+            loss = loss + args.route_distill_loss_weight * model.route_distillation_loss()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -184,6 +190,8 @@ def _run_condition(
         "balanced_labels": args.balanced_labels,
         "interaction_mode": args.interaction_mode,
         "interaction_dense_threshold": args.interaction_dense_threshold,
+        "route_compute_loss_weight": args.route_compute_loss_weight,
+        "route_distill_loss_weight": args.route_distill_loss_weight,
         "pre_tensor_indexed": args.pre_tensor_indexed,
         "index_depth": args.index_depth,
         "train_loss": round(last_loss, 6),
@@ -356,6 +364,8 @@ def _failed_row(
         "balanced_labels": args.balanced_labels,
         "interaction_mode": args.interaction_mode,
         "interaction_dense_threshold": args.interaction_dense_threshold,
+        "route_compute_loss_weight": args.route_compute_loss_weight,
+        "route_distill_loss_weight": args.route_distill_loss_weight,
         "pre_tensor_indexed": args.pre_tensor_indexed,
         "index_depth": args.index_depth,
         "error": error[:500],
@@ -401,6 +411,8 @@ def _save_checkpoint(
             "num_heads": args.num_heads,
             "working_set_size": args.working_set_size,
             "interaction_dense_threshold": args.interaction_dense_threshold,
+            "route_compute_loss_weight": args.route_compute_loss_weight,
+            "route_distill_loss_weight": args.route_distill_loss_weight,
             "total_objects_n": total_n,
             "causal_k": 4 + causal_obstacles,
             "adversarial_distractors": adversarial_distractors,

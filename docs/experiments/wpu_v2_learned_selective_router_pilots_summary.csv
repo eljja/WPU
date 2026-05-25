@@ -1,0 +1,10 @@
+source,K,threshold,route_compute_loss_weight,route_distill_loss_weight,accuracy,dense_compute,dense_mix,ms
+wpu_v2_distilled_selective_pilot.csv,8,0.15,0.0,1.0,0.427778,0.0,0.0,1.813055
+wpu_v2_distilled_selective_pilot.csv,16,0.15,0.0,1.0,0.466667,0.161111,0.02508,4.158679
+wpu_v2_distilled_selective_pilot.csv,32,0.15,0.0,1.0,0.405556,0.061111,0.009484,6.603483
+wpu_v2_learned_selective_pilot.csv,8,0.5,0.01,,0.433334,0.0,0.0,2.03788
+wpu_v2_learned_selective_pilot.csv,16,0.5,0.01,,0.455556,0.0,0.0,3.11679
+wpu_v2_learned_selective_pilot.csv,32,0.5,0.01,,0.416666,0.0,0.0,5.77375
+wpu_v2_learned_selective_t015_pilot.csv,8,0.15,0.01,,0.433334,0.0,0.0,2.399198
+wpu_v2_learned_selective_t015_pilot.csv,16,0.15,0.01,,0.45,0.133333,0.021301,4.960232
+wpu_v2_learned_selective_t015_pilot.csv,32,0.15,0.01,,0.416666,0.0,0.0,6.114815

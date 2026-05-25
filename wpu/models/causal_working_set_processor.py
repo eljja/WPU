@@ -51,7 +51,7 @@ class CausalWorkingSetProcessor(nn.Module):
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
             raise ValueError(f"unknown selector: {selector}")
-        if adaptive_route not in {"hard", "learned", "interaction", "selective_interaction", "geometry"}:
+        if adaptive_route not in {"hard", "learned", "learned_selective", "interaction", "selective_interaction", "geometry"}:
             raise ValueError(f"unknown adaptive route: {adaptive_route}")
         self.selector = selector
         self.working_set_size = working_set_size
@@ -94,6 +94,12 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.GELU(),
             nn.Linear(max(hidden_dim // 2, 1), 1),
         )
+        self.interaction_route_gate = nn.Sequential(
+            nn.LayerNorm(hidden_dim + 3),
+            nn.Linear(hidden_dim + 3, max(hidden_dim // 2, 1)),
+            nn.GELU(),
+            nn.Linear(max(hidden_dim // 2, 1), 1),
+        )
         self.geometry_context_encoder = nn.Sequential(
             nn.LayerNorm(1),
             nn.Linear(1, hidden_dim),
@@ -103,6 +109,8 @@ class CausalWorkingSetProcessor(nn.Module):
         self.last_working_set_stats: WorkingSetStats | None = None
         self._last_relevance_logits: torch.Tensor | None = None
         self._last_batch: StateGraphBatch | None = None
+        self._last_route_dense_weight: torch.Tensor | None = None
+        self._last_route_target_weight: torch.Tensor | None = None
 
     def forward(
         self,
@@ -127,13 +135,38 @@ class CausalWorkingSetProcessor(nn.Module):
         sparse_gathered = sparse_gathered + event_hidden.unsqueeze(1)
         selected_object_features = _batched_gather(batch.object_features, selected_indices)
         interaction_density = _interaction_density(selected_object_features, selected_mask)
+        interaction_dense_teacher = self._interaction_dense_weight(interaction_density)
+        self._last_route_target_weight = interaction_dense_teacher.detach()
+
+        learned_selective_weight: torch.Tensor | None = None
+        if self.adaptive_hybrid and self.adaptive_route == "learned_selective":
+            learned_selective_weight = self._learned_interaction_dense_weight(
+                sparse_gathered,
+                selected_mask,
+                selected_counts,
+                selector_confidence,
+                interaction_density,
+            )
 
         if self.adaptive_hybrid and self.adaptive_route == "geometry":
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif self.adaptive_hybrid and self.adaptive_route == "learned_selective":
+            if self.training:
+                dense_gathered = self.working_set_encoder(sparse_gathered, src_key_padding_mask=~selected_mask)
+                dense_compute_weight = torch.ones_like(selector_confidence)
+            else:
+                assert learned_selective_weight is not None
+                dense_sample_mask = learned_selective_weight >= self.interaction_dense_threshold
+                dense_gathered = sparse_gathered.clone()
+                dense_compute_weight = dense_sample_mask.to(selector_confidence.dtype)
+                if bool(dense_sample_mask.any().detach().cpu().item()):
+                    dense_gathered[dense_sample_mask] = self.working_set_encoder(
+                        sparse_gathered[dense_sample_mask],
+                        src_key_padding_mask=~selected_mask[dense_sample_mask],
+                    )
         elif self.adaptive_hybrid and self.adaptive_route == "selective_interaction":
-            interaction_dense_score = self._interaction_dense_weight(interaction_density)
-            dense_sample_mask = interaction_dense_score >= self.interaction_dense_threshold
+            dense_sample_mask = interaction_dense_teacher >= self.interaction_dense_threshold
             dense_gathered = sparse_gathered.clone()
             dense_compute_weight = dense_sample_mask.to(selector_confidence.dtype)
             if bool(dense_sample_mask.any().detach().cpu().item()):
@@ -156,11 +189,15 @@ class CausalWorkingSetProcessor(nn.Module):
                 selector_confidence,
             )
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
+        elif self.adaptive_hybrid and self.adaptive_route == "learned_selective":
+            assert learned_selective_weight is not None
+            dense_weight = learned_selective_weight * dense_compute_weight
+            gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
         elif self.adaptive_hybrid and self.adaptive_route == "interaction":
-            dense_weight = self._interaction_dense_weight(interaction_density)
+            dense_weight = interaction_dense_teacher
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
         elif self.adaptive_hybrid and self.adaptive_route == "selective_interaction":
-            dense_weight = self._interaction_dense_weight(interaction_density) * dense_compute_weight
+            dense_weight = interaction_dense_teacher * dense_compute_weight
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
         elif self.adaptive_hybrid and self.adaptive_route == "geometry":
             dense_weight = torch.zeros_like(selector_confidence)
@@ -179,6 +216,7 @@ class CausalWorkingSetProcessor(nn.Module):
             dense_weight = dense_mask.to(sparse_gathered.dtype)
             gathered = sparse_gathered
         dense_mask = dense_weight >= 0.5
+        self._last_route_dense_weight = dense_weight
         gathered = gathered.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
 
         object_delta = torch.zeros_like(batch.object_features)
@@ -213,6 +251,25 @@ class CausalWorkingSetProcessor(nn.Module):
                 for use_dense in dense_mask.detach().cpu().tolist()
             ],
         )
+
+    def route_compute_loss(self) -> torch.Tensor:
+        """Differentiable proxy for dense routing cost.
+
+        Selective routes may use hard execution at evaluation time, but this
+        soft cost lets training penalize dense probability before the hard
+        route is applied.
+        """
+
+        if self._last_route_dense_weight is None:
+            return torch.tensor(0.0, device=next(self.parameters()).device)
+        return self._last_route_dense_weight.mean()
+
+    def route_distillation_loss(self) -> torch.Tensor:
+        """Match the learned router to the analytic interaction teacher."""
+
+        if self._last_route_dense_weight is None or self._last_route_target_weight is None:
+            return torch.tensor(0.0, device=next(self.parameters()).device)
+        return F.mse_loss(self._last_route_dense_weight, self._last_route_target_weight)
 
     def selector_loss(self) -> torch.Tensor:
         """Binary relevance supervision for causal object selection.
@@ -360,6 +417,21 @@ class CausalWorkingSetProcessor(nn.Module):
         confidence = selector_confidence.unsqueeze(-1).to(sparse_summary.dtype)
         gate_input = torch.cat([sparse_summary, k_pressure, confidence], dim=-1)
         return torch.sigmoid(self.route_gate(gate_input)).squeeze(-1)
+
+    def _learned_interaction_dense_weight(
+        self,
+        sparse_gathered: torch.Tensor,
+        selected_mask: torch.Tensor,
+        selected_counts: torch.Tensor,
+        selector_confidence: torch.Tensor,
+        interaction_density: torch.Tensor,
+    ) -> torch.Tensor:
+        sparse_summary = _masked_mean(sparse_gathered, selected_mask)
+        k_pressure = selected_counts.to(sparse_summary.dtype).unsqueeze(-1) / max(float(self.working_set_size), 1.0)
+        confidence = selector_confidence.unsqueeze(-1).to(sparse_summary.dtype)
+        interaction = interaction_density.unsqueeze(-1).to(sparse_summary.dtype)
+        gate_input = torch.cat([sparse_summary, k_pressure, confidence, interaction], dim=-1)
+        return torch.sigmoid(self.interaction_route_gate(gate_input)).squeeze(-1)
 
     def _interaction_dense_weight(
         self,

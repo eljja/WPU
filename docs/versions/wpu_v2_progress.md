@@ -27,6 +27,7 @@ Added model names:
 - `wpu-cws-indexed-local-dense`
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
+- `wpu-cws-indexed-learned-selective-hybrid`
 - `wpu-cws-indexed-interaction-hybrid`
 - `wpu-cws-indexed-selective-interaction-hybrid`
 - `wpu-cws-indexed-geometry-hybrid`
@@ -38,6 +39,8 @@ These support priority 5 and 6:
 - local dense propagation within the selected state subset
 - hard adaptive routing between sparse and local-dense propagation
 - learned differentiable routing between sparse and local-dense propagation
+- learned selective routing with a differentiable route cost and optional
+  distillation to the analytic interaction route
 - interaction-aware routing from state-local pairwise geometry
 - selective interaction-aware execution that runs local dense only for samples
   whose state-local interaction score exceeds a threshold
@@ -568,6 +571,54 @@ measurable Pareto statement:
 WPU is not simply "more accurate"; it can trade a small amount of interaction
 accuracy for a measurable reduction in actual dense execution inside an
 explicit state-processing regime.
+```
+
+### Priority 6g: Learned Selective Router Attempt
+
+Output:
+
+- `docs/experiments/wpu_v2_learned_selective_pilot.csv`
+- `docs/experiments/wpu_v2_learned_selective_t015_pilot.csv`
+- `docs/experiments/wpu_v2_distilled_selective_pilot.csv`
+- `docs/experiments/wpu_v2_learned_selective_router_pilots.csv`
+- `docs/experiments/wpu_v2_learned_selective_router_pilots_summary.csv`
+
+Implemented:
+
+- `wpu-cws-indexed-learned-selective-hybrid`
+- `route_compute_loss()`
+- `route_distillation_loss()`
+- `--route-compute-loss-weight`
+- `--route-distill-loss-weight`
+
+Result:
+
+| router variant | K | accuracy | dense compute |
+| --- | --- | --- | --- |
+| learned selective, t=0.50, compute loss 0.01 | 8 | 0.433 | 0.000 |
+| learned selective, t=0.50, compute loss 0.01 | 16 | 0.456 | 0.000 |
+| learned selective, t=0.50, compute loss 0.01 | 32 | 0.417 | 0.000 |
+| learned selective, t=0.15, compute loss 0.01 | 8 | 0.433 | 0.000 |
+| learned selective, t=0.15, compute loss 0.01 | 16 | 0.450 | 0.133 |
+| learned selective, t=0.15, compute loss 0.01 | 32 | 0.417 | 0.000 |
+| distilled selective, t=0.15, distill loss 1.0 | 8 | 0.428 | 0.000 |
+| distilled selective, t=0.15, distill loss 1.0 | 16 | 0.467 | 0.161 |
+| distilled selective, t=0.15, distill loss 1.0 | 32 | 0.406 | 0.061 |
+
+Interpretation:
+
+This is an important negative result. A naive learned router does not recover
+the fixed interaction threshold frontier. Even with interaction density as an
+input and distillation to the analytic interaction teacher, the learned route
+collapses toward too little dense execution and loses accuracy.
+
+The next router should therefore not be presented as solved. The required
+research problem is calibrated routing:
+
+```text
+learn when dense execution is worth its cost, with explicit supervision for
+branch correctness, uncertainty, and constraint failure, not only MSE
+distillation to a soft interaction score.
 ```
 
 ## Updated V2 Direction

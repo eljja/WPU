@@ -226,6 +226,7 @@ Experiment:
 - `wpu-cws-indexed-local-dense`
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
+- `wpu-cws-indexed-learned-selective-hybrid`
 - `wpu-cws-indexed-interaction-hybrid`
 - `wpu-cws-indexed-selective-interaction-hybrid`
 - token and graph baselines
@@ -369,6 +370,24 @@ Pareto-style rather than dominance:
 The next router experiment should optimize this frontier directly: minimize
 dense execution subject to an accuracy or calibration constraint, instead of
 claiming universal accuracy improvement.
+
+Learned-router negative result:
+
+- `docs/experiments/wpu_v2_learned_selective_router_pilots_summary.csv`
+
+The first learned-selective router did not reproduce the fixed threshold
+frontier. It collapsed toward too little dense execution and lost branch
+accuracy, even with a simple distillation loss against the analytic interaction
+teacher. The next router experiment should add explicit route supervision from
+counterfactual dense-vs-sparse correctness:
+
+```text
+run sparse and dense local paths during training
+label dense-needed when dense fixes a sparse branch error or reduces
+constraint/uncertainty loss
+train the route as a cost-sensitive classifier
+evaluate with hard selective execution
+```
 
 ## Combined V2 Regime Diagram
 

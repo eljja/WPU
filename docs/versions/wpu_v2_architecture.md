@@ -153,6 +153,9 @@ Current implementation status:
   `wpu-cws-indexed-adaptive-hybrid`.
 - Implemented: differentiable sparse/local-dense gating in
   `wpu-cws-indexed-learned-hybrid`.
+- Implemented: learned selective routing prototype in
+  `wpu-cws-indexed-learned-selective-hybrid`, with route compute and
+  distillation losses.
 - Implemented: interaction-aware sparse/local-dense routing in
   `wpu-cws-indexed-interaction-hybrid`.
 - Implemented: selective interaction-aware execution in
@@ -209,7 +212,11 @@ accuracy-compute frontier, with threshold 0.15 as the current fixed operating
 point. A five-seed validation supports the Pareto claim: selective execution
 keeps accuracy within the full interaction confidence intervals while reducing
 actual dense execution, especially at K=8 and K=16. The remaining architecture
-need is learned or calibrated routing rather than a fixed threshold.
+need is learned or calibrated routing rather than a fixed threshold. The first
+learned-selective prototype is a negative result: downstream loss, route cost,
+and simple distillation are not enough to reproduce the fixed interaction
+frontier. Future routing needs stronger supervision from branch correctness,
+uncertainty, and constraint-failure signals.
 
 ## 6. Delta/Branch Engine
 
@@ -308,6 +315,7 @@ Implemented model names:
 - `wpu-cws-indexed-local-dense`
 - `wpu-cws-indexed-adaptive-hybrid`
 - `wpu-cws-indexed-learned-hybrid`
+- `wpu-cws-indexed-learned-selective-hybrid`
 - `wpu-cws-indexed-interaction-hybrid`
 - `wpu-cws-indexed-selective-interaction-hybrid`
 - `wpu-cws-indexed-geometry-hybrid`

@@ -309,6 +309,21 @@ route_context = {
 }
 ```
 
+The first context probe shows that this context cannot be used naively. Under
+seed-heldout evaluation, physical state features generalize better than raw
+model diagnostics or the model's own predicted regret scalar. The scheduler
+should therefore be structured as:
+
+```text
+base_margin = f(physical_state)
+adjustment = clipped_g(model_diagnostics, rollout_drift)
+execute_dense if predicted_regret < -(base_margin + adjustment)
+```
+
+This prevents unstable diagnostics from dominating the route decision while
+still allowing uncertainty and rollout evidence to modify a state-grounded
+margin.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached

@@ -29,6 +29,24 @@ SPARSE_DIAGNOSTIC_FEATURES = STATE_FEATURES + [
     "sparse_uncertainty_mean",
 ]
 
+STATE_SELECTOR_FEATURES = STATE_FEATURES + [
+    "selector_confidence",
+    "selected_fraction",
+]
+
+STATE_REGRET_SCALAR_FEATURES = STATE_FEATURES + [
+    "predicted_regret",
+    "regret_abs",
+]
+
+ROUTE_CONTEXT_FEATURES = SPARSE_DIAGNOSTIC_FEATURES + [
+    "selector_confidence",
+    "selected_fraction",
+    "predicted_regret",
+    "regret_abs",
+    "sparse_dense_disagreement",
+]
+
 SUMMARY_METRICS = [
     "target_mean",
     "prediction_mean",
@@ -82,6 +100,39 @@ def main() -> None:
                     args,
                     SPARSE_DIAGNOSTIC_FEATURES,
                     "mlp_sparse_diagnostics_regret",
+                )
+            )
+        if rows and all(feature in rows[0] for feature in STATE_SELECTOR_FEATURES):
+            output.extend(
+                _run_split(
+                    train_rows,
+                    test_rows,
+                    test_seed,
+                    args,
+                    STATE_SELECTOR_FEATURES,
+                    "mlp_state_selector_regret",
+                )
+            )
+        if rows and all(feature in rows[0] for feature in STATE_REGRET_SCALAR_FEATURES):
+            output.extend(
+                _run_split(
+                    train_rows,
+                    test_rows,
+                    test_seed,
+                    args,
+                    STATE_REGRET_SCALAR_FEATURES,
+                    "mlp_state_regret_scalar",
+                )
+            )
+        if rows and all(feature in rows[0] for feature in ROUTE_CONTEXT_FEATURES):
+            output.extend(
+                _run_split(
+                    train_rows,
+                    test_rows,
+                    test_seed,
+                    args,
+                    ROUTE_CONTEXT_FEATURES,
+                    "mlp_route_context_regret",
                 )
             )
 

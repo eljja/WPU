@@ -1112,6 +1112,51 @@ next scheduler must use richer state evidence: selector confidence,
 interaction density, regret uncertainty, sparse entropy, rollout drift, and
 compute budget.
 
+### Priority 6q: State-Evidence Route Context Probe
+
+Output:
+
+- `scripts/staged_regret_context_export.py`
+- `docs/experiments/wpu_v2_staged_regret_context_samples.csv`
+- `docs/experiments/wpu_v2_staged_regret_context_probe.csv`
+- `docs/experiments/wpu_v2_staged_regret_context_probe_summary.csv`
+- `docs/experiments/wpu_v2_staged_regret_context_probe_results.md`
+
+Question:
+
+```text
+If K alone is insufficient, do richer state and model-diagnostic features
+improve seed-heldout dense-vs-sparse regret prediction?
+```
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13, 17, 19, 23
+- Samples = 1350 total
+- Probe split = leave-one-seed-out
+- Probe target = dense_loss - sparse_loss
+
+Result at compute cost 0.05:
+
+| feature set | regret pearson | regret R2 | dense rate | policy loss | loss delta | oracle excess |
+| --- | --- | --- | --- | --- | --- | --- |
+| state only | 0.400 | 0.103 | 0.293 | 0.970 | -0.019 | 0.051 |
+| state + regret scalar | 0.371 | 0.066 | 0.303 | 0.973 | -0.015 | 0.055 |
+| state + selector | 0.344 | 0.012 | 0.324 | 0.976 | -0.012 | 0.058 |
+| sparse diagnostics | 0.312 | -0.405 | 0.366 | 0.984 | -0.005 | 0.065 |
+| all route context | 0.195 | -1.961 | 0.350 | 0.996 | 0.008 | 0.078 |
+
+Interpretation:
+
+This is another useful negative/positive split. Physical state features are the
+best seed-heldout regret predictor. Adding raw model diagnostics or the model's
+own predicted regret hurts generalization in this small regime. The scheduler
+should therefore not blindly concatenate every internal diagnostic. It should
+use invariant physical state evidence as the base route signal and only allow
+diagnostics to make constrained, calibrated adjustments.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1155,9 +1200,10 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > recompute in the current implementation. Staged regret routing gives the first
 > internal selective-dense result that reduces loss with bounded dense compute,
 > and the five-seed audit shows that the loss reduction repeats. The remaining
-> oracle gap, threshold sensitivity, and the failure of K-only margin selection
-> mean the next claim must still be earned by state-conditioned margins,
-> relation-typed sparse propagation, or closed-loop expansion.
+> oracle gap, threshold sensitivity, the failure of K-only margin selection, and
+> the overfitting of raw route diagnostics mean the next claim must still be
+> earned by invariant state-conditioned margins, relation-typed sparse
+> propagation, or closed-loop expansion.
 
 ## Next Required Work
 

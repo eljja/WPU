@@ -601,6 +601,28 @@ margin = f(K, selector_confidence, interaction_density, regret_uncertainty,
            sparse_entropy, rollout_drift, compute_budget)
 ```
 
+State-evidence route context probe:
+
+- `scripts/staged_regret_context_export.py`
+- `docs/experiments/wpu_v2_staged_regret_context_samples.csv`
+- `docs/experiments/wpu_v2_staged_regret_context_probe_summary.csv`
+- `docs/experiments/wpu_v2_staged_regret_context_probe_results.md`
+
+The first richer-context probe gives a sharper constraint. Under seed-heldout
+evaluation, physical state features predict dense-vs-sparse regret better than
+raw internal diagnostics:
+
+| feature set | regret pearson | regret R2 | policy loss | loss delta | oracle excess |
+| --- | --- | --- | --- | --- | --- |
+| state only | 0.400 | 0.103 | 0.970 | -0.019 | 0.051 |
+| state + selector | 0.344 | 0.012 | 0.976 | -0.012 | 0.058 |
+| sparse diagnostics | 0.312 | -0.405 | 0.984 | -0.005 | 0.065 |
+| all route context | 0.195 | -1.961 | 0.996 | 0.008 | 0.078 |
+
+This means the next scheduler should not blindly concatenate diagnostics. It
+should use physical state evidence as the base margin signal and constrain
+diagnostic adjustments.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

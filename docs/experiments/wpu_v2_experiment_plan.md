@@ -472,6 +472,24 @@ shift, WPU should keep sparse propagation and expand the causal working set or
 invoke a different relation-typed operator rather than blindly using dense
 recompute.
 
+Continuous regret probe:
+
+- `docs/experiments/wpu_v2_shared_route_regret_probe.csv`
+- `docs/experiments/wpu_v2_shared_route_regret_probe_summary.csv`
+
+The first continuous regret probe is more encouraging than binary dense-needed
+classification. A small state-feature regressor predicts enough
+`dense_loss - sparse_loss` structure to reduce average loss versus always
+sparse under moderate compute costs, while using dense on only part of the
+batch. This does not yet solve routing: R2 is low, oracle excess remains, and
+post-hoc sparse diagnostic features over-route to dense. But it gives a more
+academically defensible next target:
+
+```text
+train a model-internal regret head and optimize routed expected loss, not only
+binary dense-needed accuracy
+```
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

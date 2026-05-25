@@ -814,6 +814,52 @@ the expected loss/regret of executing dense recompute. This gives a smoother
 and more identifiable training signal while still allowing hard execution at
 evaluation time.
 
+### Priority 6k: Continuous Regret Routing Probe
+
+Output:
+
+- `scripts/route_regret_probe.py`
+- `docs/experiments/wpu_v2_shared_route_regret_probe.csv`
+- `docs/experiments/wpu_v2_shared_route_regret_probe_summary.csv`
+
+Question:
+
+```text
+Can a small router predict dense-vs-sparse regret well enough to reduce actual
+loss under a compute cost?
+```
+
+Setup:
+
+- Input: shared-route sample examples from Priority 6j.
+- Target: continuous `dense_regret = dense_loss - sparse_loss`.
+- Split: leave-one-seed-out.
+- Policies: execute dense when `predicted_regret + compute_cost < 0`.
+- Compute costs: 0.00, 0.02, 0.05, 0.10, 0.20.
+
+Result:
+
+| probe | compute cost | dense rate | policy loss | sparse loss | dense loss | delta vs sparse | excess over oracle | policy accuracy |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MLP state regret | 0.00 | 0.448 | 0.941 | 0.985 | 0.979 | -0.044 | 0.059 | 0.502 |
+| MLP state regret | 0.05 | 0.313 | 0.959 | 0.985 | 1.029 | -0.026 | 0.052 | 0.502 |
+| MLP state regret | 0.10 | 0.248 | 0.972 | 0.985 | 1.079 | -0.013 | 0.043 | 0.502 |
+| MLP sparse diagnostics regret | 0.05 | 0.674 | 1.027 | 0.985 | 1.029 | 0.042 | 0.120 | 0.463 |
+
+Interpretation:
+
+This is the first positive result for learned routing in v2. A small
+state-feature regret regressor does not substantially improve branch accuracy,
+but it learns enough regret structure to reduce average cross-entropy loss
+relative to always-sparse while using dense on only a subset of samples. The
+effect persists under moderate compute costs.
+
+The result is still far from solved. The R2 is low and excess loss over the
+oracle policy remains non-trivial. Sparse diagnostic features are actively
+harmful in this probe, producing over-dense routing and worse loss. The
+practical next step is a model-internal regret head trained jointly with the WPU
+propagation model, not a post-hoc scalar diagnostic router.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now

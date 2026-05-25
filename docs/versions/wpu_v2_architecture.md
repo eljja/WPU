@@ -246,6 +246,12 @@ should therefore move from binary dense-needed classification toward
 cost-sensitive regret estimation while preserving hard sparse/dense execution
 at inference time.
 
+The continuous regret probe gives the first positive learned-routing signal:
+state features can reduce expected loss relative to always-sparse under a
+moderate dense compute cost. This suggests the architectural target should be a
+jointly trained route-regret head. Post-hoc scalar sparse diagnostics are not
+enough; they over-route to dense and increase loss in the current probe.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached

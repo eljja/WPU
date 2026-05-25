@@ -533,6 +533,26 @@ the routed loss is still about 0.05 above the per-sample best sparse/dense
 choice. The next scheduler experiment should train calibration and compute cost
 end-to-end, then repeat across five seeds and a denser N/K/D grid.
 
+Five-seed regret-routing audit:
+
+- `docs/experiments/wpu_v2_staged_regret_hybrid_5seed.csv`
+- `docs/experiments/wpu_v2_staged_regret_hybrid_5seed_results.md`
+
+The five-seed audit confirms the narrower result and rejects the stronger one.
+Selective regret routing repeatedly reduces expected loss versus always-sparse,
+but it does not yet produce broad accuracy gains and it does not close the
+oracle selective-routing gap.
+
+| K | sparse loss | routed loss | zero-threshold loss | dense compute | regret corr | oracle excess |
+| --- | --- | --- | --- | --- | --- | --- |
+| 8 | 0.991 | 0.960 | 0.972 | 0.204 | 0.377 | 0.042 |
+| 16 | 0.967 | 0.949 | 0.949 | 0.204 | 0.289 | 0.049 |
+| 32 | 1.008 | 0.979 | 1.001 | 0.302 | 0.388 | 0.043 |
+
+The experiment plan should therefore prioritize threshold-free or
+threshold-stable scheduling before larger model scaling. Otherwise a larger WPU
+may only amplify an unstable routing boundary.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

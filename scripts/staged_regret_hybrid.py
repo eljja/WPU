@@ -166,13 +166,19 @@ def _evaluate(
     sparse_correct = 0
     dense_correct = 0
     routed_correct = 0
+    zero_threshold_correct = 0
     sparse_loss_total = 0.0
     dense_loss_total = 0.0
     routed_loss_total = 0.0
+    zero_threshold_loss_total = 0.0
     oracle_loss_total = 0.0
     dense_compute_values: list[float] = []
+    zero_threshold_dense_compute_values: list[float] = []
+    oracle_dense_compute_values: list[float] = []
     regret_values: list[float] = []
     negative_values: list[float] = []
+    regret_prediction_values: list[torch.Tensor] = []
+    realized_regret_values: list[torch.Tensor] = []
     with torch.no_grad():
         for batch, _, labels, _ in loader:
             batch = _move_batch(batch, device)
@@ -181,27 +187,43 @@ def _evaluate(
             dense_prediction = model(batch, num_branches=3, force_route="local_dense")
             sparse_loss = F.cross_entropy(sparse_prediction.branch_logits, labels, reduction="none")
             dense_loss = F.cross_entropy(dense_prediction.branch_logits, labels, reduction="none") + args.compute_cost
-            route_dense = model.route_regret_prediction() < route_threshold
+            regret_prediction = model.route_regret_prediction()
+            route_dense = regret_prediction < route_threshold
+            zero_threshold_dense = regret_prediction < 0.0
             routed_loss = torch.where(route_dense, dense_loss, sparse_loss)
+            zero_threshold_loss = torch.where(zero_threshold_dense, dense_loss, sparse_loss)
             oracle_loss = torch.minimum(sparse_loss, dense_loss)
+            oracle_dense = dense_loss < sparse_loss
 
             sparse_pred = sparse_prediction.branch_probabilities.argmax(dim=-1)
             dense_pred = dense_prediction.branch_probabilities.argmax(dim=-1)
             routed_logits = torch.where(route_dense.view(-1, 1), dense_prediction.branch_logits, sparse_prediction.branch_logits)
             routed_pred = routed_logits.argmax(dim=-1)
+            zero_threshold_logits = torch.where(
+                zero_threshold_dense.view(-1, 1),
+                dense_prediction.branch_logits,
+                sparse_prediction.branch_logits,
+            )
+            zero_threshold_pred = zero_threshold_logits.argmax(dim=-1)
             total += int(labels.numel())
             sparse_correct += int((sparse_pred == labels).sum().item())
             dense_correct += int((dense_pred == labels).sum().item())
             routed_correct += int((routed_pred == labels).sum().item())
+            zero_threshold_correct += int((zero_threshold_pred == labels).sum().item())
             sparse_loss_total += float(sparse_loss.sum().item())
             dense_loss_total += float(dense_loss.sum().item())
             routed_loss_total += float(routed_loss.sum().item())
+            zero_threshold_loss_total += float(zero_threshold_loss.sum().item())
             oracle_loss_total += float(oracle_loss.sum().item())
             dense_compute_values.append(float(route_dense.float().mean().detach().cpu().item()))
-            regret_prediction = model.route_regret_prediction()
+            zero_threshold_dense_compute_values.append(float(zero_threshold_dense.float().mean().detach().cpu().item()))
+            oracle_dense_compute_values.append(float(oracle_dense.float().mean().detach().cpu().item()))
             if regret_prediction.numel() > 0:
                 regret_values.append(float(regret_prediction.mean().detach().cpu().item()))
                 negative_values.append(float((regret_prediction < 0.0).float().mean().detach().cpu().item()))
+                regret_prediction_values.append(regret_prediction.detach().cpu())
+                realized_regret_values.append((dense_loss - sparse_loss).detach().cpu())
+    regret_corr, regret_mse = _regret_fit_metrics(regret_prediction_values, realized_regret_values)
     return {
         "status": "ok",
         "seed": seed,
@@ -219,15 +241,26 @@ def _evaluate(
         "sparse_accuracy": round(sparse_correct / max(total, 1), 6),
         "dense_accuracy": round(dense_correct / max(total, 1), 6),
         "routed_accuracy": round(routed_correct / max(total, 1), 6),
+        "zero_threshold_accuracy": round(zero_threshold_correct / max(total, 1), 6),
         "sparse_loss": round(sparse_loss_total / max(total, 1), 6),
         "dense_loss": round(dense_loss_total / max(total, 1), 6),
         "routed_loss": round(routed_loss_total / max(total, 1), 6),
+        "zero_threshold_loss": round(zero_threshold_loss_total / max(total, 1), 6),
         "oracle_loss": round(oracle_loss_total / max(total, 1), 6),
         "routed_delta_vs_sparse": round((routed_loss_total - sparse_loss_total) / max(total, 1), 6),
+        "zero_threshold_delta_vs_sparse": round((zero_threshold_loss_total - sparse_loss_total) / max(total, 1), 6),
+        "calibration_gain_vs_zero": round((zero_threshold_loss_total - routed_loss_total) / max(total, 1), 6),
         "routed_excess_over_oracle": round((routed_loss_total - oracle_loss_total) / max(total, 1), 6),
         "dense_compute_ratio": round(sum(dense_compute_values) / max(len(dense_compute_values), 1), 6),
+        "zero_threshold_dense_compute_ratio": round(
+            sum(zero_threshold_dense_compute_values) / max(len(zero_threshold_dense_compute_values), 1),
+            6,
+        ),
+        "oracle_dense_compute_ratio": round(sum(oracle_dense_compute_values) / max(len(oracle_dense_compute_values), 1), 6),
         "route_regret_mean": round(sum(regret_values) / max(len(regret_values), 1), 6),
         "route_regret_negative_ratio": round(sum(negative_values) / max(len(negative_values), 1), 6),
+        "route_regret_eval_corr": round(regret_corr, 6),
+        "route_regret_eval_mse": round(regret_mse, 6),
     }
 
 
@@ -288,6 +321,21 @@ def _counterfactual_regret_target(model: torch.nn.Module, batch, labels: torch.T
         sparse_loss = F.cross_entropy(sparse_prediction.branch_logits, labels, reduction="none")
         dense_loss = F.cross_entropy(dense_prediction.branch_logits, labels, reduction="none")
     return (dense_loss - sparse_loss + compute_cost).detach()
+
+
+def _regret_fit_metrics(predictions: list[torch.Tensor], targets: list[torch.Tensor]) -> tuple[float, float]:
+    if not predictions or not targets:
+        return 0.0, 0.0
+    prediction = torch.cat(predictions).float()
+    target = torch.cat(targets).float()
+    mse = F.mse_loss(prediction, target).item()
+    prediction_centered = prediction - prediction.mean()
+    target_centered = target - target.mean()
+    denominator = prediction_centered.norm() * target_centered.norm()
+    if float(denominator.item()) == 0.0:
+        return 0.0, float(mse)
+    corr = torch.dot(prediction_centered, target_centered) / denominator
+    return float(corr.item()), float(mse)
 
 
 def _prediction_loss(prediction, target_delta: torch.Tensor, labels: torch.Tensor, class_weights: torch.Tensor | None) -> torch.Tensor:

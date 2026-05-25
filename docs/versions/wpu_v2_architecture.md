@@ -266,6 +266,18 @@ This does not yet prove accuracy superiority, but it makes the scheduler
 operational: dense fallback is now a cost-sensitive decision over state
 representations, not a fixed heuristic or an unconditional dense path.
 
+The five-seed audit narrows the requirement further. The route-regret head has
+a repeatable positive ranking signal, but validation threshold calibration is
+not uniformly stable. The scheduler should therefore evolve from a fixed scalar
+threshold to a cost-conditioned utility decision with a sparse-favoring margin:
+
+```text
+execute_dense if E[dense_loss - sparse_loss + compute_cost] < -margin
+```
+
+Near-tie samples should remain sparse because dense recompute consumes work and
+can overwrite a correct sparse prediction.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached
@@ -383,3 +395,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   not only dense-output mixing.
 - Evidence that the route-regret oracle gap shrinks under staged calibration,
   not only that dense fallback sometimes helps.
+- Evidence that the scheduler is stable under fixed thresholds, held-out seeds,
+  or explicit cost-conditioned margins.

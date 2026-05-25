@@ -977,6 +977,54 @@ the quantity that matters for a WPU scheduler: expected loss under an explicit
 compute penalty. The next work should improve regret calibration, train the
 threshold or compute cost end-to-end, and evaluate five-seed N/K/D sweeps.
 
+### Priority 6n: Five-Seed Regret-Routing Audit
+
+Output:
+
+- `docs/experiments/wpu_v2_staged_regret_hybrid_5seed.csv`
+- `docs/experiments/wpu_v2_staged_regret_hybrid_5seed_results.md`
+
+Question:
+
+```text
+Does the staged route-regret result survive five seeds, and is the benefit from
+the regret ranking itself or from unstable validation-threshold tuning?
+```
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13, 17, 19, 23
+- Hidden dim = 128
+- Propagation steps = 40
+- Regret-head steps = 80
+- Validation/test samples = 90 per seed
+- Interaction mode = pairwise
+- Compute cost = 0.05
+
+Result:
+
+| K | sparse acc | routed acc | sparse loss | routed loss | zero loss | dense compute | routed delta | regret corr |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 8 | 0.482 | 0.482 | 0.991 | 0.960 | 0.972 | 0.204 | -0.031 | 0.377 |
+| 16 | 0.504 | 0.504 | 0.967 | 0.949 | 0.949 | 0.204 | -0.017 | 0.289 |
+| 32 | 0.478 | 0.493 | 1.008 | 0.979 | 1.001 | 0.302 | -0.028 | 0.388 |
+
+Interpretation:
+
+The loss improvement survives five seeds, so the selective-dense direction is
+not a one-seed artifact. However, the result also limits the claim. Accuracy is
+mostly unchanged, oracle excess remains about 0.04-0.05, and validation
+threshold calibration is not uniformly better than a fixed zero threshold. The
+route-regret head has a positive ranking signal, but the scheduler decision
+boundary is still brittle.
+
+The next v2 scheduler should therefore avoid claiming solved calibration. It
+should either learn a cost-conditioned route probability, add a margin that
+keeps near-tie samples sparse, or use violation/rollout evidence to make the
+dense decision less dependent on a scalar threshold.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1019,8 +1067,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > accuracy, but compute-aware measurement shows that it still executes dense
 > recompute in the current implementation. Staged regret routing gives the first
 > internal selective-dense result that reduces loss with bounded dense compute,
-> but the remaining oracle gap means the next claim must still be earned by
-> better calibration, relation-typed sparse propagation, or closed-loop
+> and the five-seed audit shows that the loss reduction repeats. The remaining
+> oracle gap and threshold sensitivity mean the next claim must still be earned
+> by better calibration, relation-typed sparse propagation, or closed-loop
 > expansion.
 
 ## Next Required Work

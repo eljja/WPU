@@ -278,6 +278,19 @@ execute_dense if E[dense_loss - sparse_loss + compute_cost] < -margin
 Near-tie samples should remain sparse because dense recompute consumes work and
 can overwrite a correct sparse prediction.
 
+The fixed-margin sweep supports this architecture but shows that the margin
+should not be globally constant forever. A global margin of 0.05 preserves a
+useful loss gain with much lower dense compute than calibrated routing, but the
+best margin changes with K. The scheduler should therefore make margin a
+regime-conditioned control variable:
+
+```text
+margin = f(K, selector_confidence, interaction_density, rollout_drift, compute_budget)
+```
+
+This is a state-native scheduling rule. It does not return to token processing;
+it decides whether a local state patch deserves dense recompute.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached
@@ -397,3 +410,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   not only that dense fallback sometimes helps.
 - Evidence that the scheduler is stable under fixed thresholds, held-out seeds,
   or explicit cost-conditioned margins.
+- Evidence that margin selection adapts to K and uncertainty instead of relying
+  on a single global validation threshold.

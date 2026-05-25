@@ -1025,6 +1025,51 @@ should either learn a cost-conditioned route probability, add a margin that
 keeps near-tie samples sparse, or use violation/rollout evidence to make the
 dense decision less dependent on a scalar threshold.
 
+### Priority 6o: Fixed-Margin Regret Scheduler Sweep
+
+Output:
+
+- `scripts/staged_regret_margin_sweep.py`
+- `docs/experiments/wpu_v2_staged_regret_margin_sweep.csv`
+- `docs/experiments/wpu_v2_staged_regret_margin_sweep_results.md`
+
+Question:
+
+```text
+Can a fixed sparse-favoring margin reduce validation-threshold dependence while
+preserving the selective-dense loss gain?
+```
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13, 17, 19, 23
+- Margins = 0, 0.02, 0.05, 0.1, 0.2
+- Same staged propagation/regret training as Priority 6n
+
+Overall result:
+
+| policy | routed loss | sparse loss | loss delta | dense compute | routed acc | oracle excess |
+| --- | --- | --- | --- | --- | --- | --- |
+| calibrated | 0.960 | 0.990 | -0.030 | 0.240 | 0.490 | 0.040 |
+| margin 0.02 | 0.970 | 0.990 | -0.020 | 0.209 | 0.487 | 0.054 |
+| margin 0.05 | 0.972 | 0.990 | -0.018 | 0.127 | 0.487 | 0.054 |
+| margin 0.10 | 0.975 | 0.990 | -0.013 | 0.063 | 0.488 | 0.057 |
+
+Interpretation:
+
+No fixed margin beats calibrated routing. However, fixed margins do preserve a
+real part of the loss gain without validation-specific threshold selection. The
+most practical global candidate is margin 0.05: it gives lower loss than
+always-sparse while using dense recompute on only about 13% of samples.
+
+The important new finding is K-dependence. K=8 prefers margin 0.02, K=16
+prefers margin 0, and K=32 prefers margin 0.1. This implies a global scalar
+threshold is not the right v2 scheduler abstraction. The next scheduler should
+predict or set a margin conditioned on K, selector confidence, interaction
+density, rollout drift, and compute budget.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1068,9 +1113,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > recompute in the current implementation. Staged regret routing gives the first
 > internal selective-dense result that reduces loss with bounded dense compute,
 > and the five-seed audit shows that the loss reduction repeats. The remaining
-> oracle gap and threshold sensitivity mean the next claim must still be earned
-> by better calibration, relation-typed sparse propagation, or closed-loop
-> expansion.
+> oracle gap, threshold sensitivity, and K-dependent margin preference mean the
+> next claim must still be earned by regime-conditioned margins, relation-typed
+> sparse propagation, or closed-loop expansion.
 
 ## Next Required Work
 

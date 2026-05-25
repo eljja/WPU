@@ -553,6 +553,31 @@ The experiment plan should therefore prioritize threshold-free or
 threshold-stable scheduling before larger model scaling. Otherwise a larger WPU
 may only amplify an unstable routing boundary.
 
+Fixed-margin regret scheduler sweep:
+
+- `scripts/staged_regret_margin_sweep.py`
+- `docs/experiments/wpu_v2_staged_regret_margin_sweep.csv`
+- `docs/experiments/wpu_v2_staged_regret_margin_sweep_results.md`
+
+The fixed-margin sweep gives a more deployable scheduler direction. A fixed
+sparse-favoring margin does not match validation-calibrated routing, but it
+does preserve part of the loss gain without seed-specific threshold selection.
+
+| policy | routed loss | loss delta | dense compute | oracle excess |
+| --- | --- | --- | --- | --- |
+| calibrated | 0.960 | -0.030 | 0.240 | 0.040 |
+| margin 0.02 | 0.970 | -0.020 | 0.209 | 0.054 |
+| margin 0.05 | 0.972 | -0.018 | 0.127 | 0.054 |
+| margin 0.10 | 0.975 | -0.013 | 0.063 | 0.057 |
+
+This suggests the scheduler should expose margin as a compute-quality tradeoff
+rather than hide it as an opaque validation threshold. The next experiment
+should learn or analytically set:
+
+```text
+margin = f(K, confidence, interaction_density, rollout_drift, compute_budget)
+```
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

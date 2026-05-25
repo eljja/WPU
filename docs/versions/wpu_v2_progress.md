@@ -1299,6 +1299,42 @@ expansion. The next implementation target is therefore not another scalar
 router. It is a real sparse propagation -> regret estimate -> structured
 verification -> K expansion or local dense path.
 
+### Priority 6v: Deployed Staged Verifier Pipeline
+
+Output:
+
+- `scripts/staged_verifier_hybrid.py`
+- `docs/experiments/wpu_v2_staged_verifier_hybrid_5seed.csv`
+- `docs/experiments/wpu_v2_staged_verifier_hybrid_safe_5seed.csv`
+- `docs/experiments/wpu_v2_staged_verifier_hybrid_results.md`
+
+Question:
+
+```text
+Does the structured verifier still help when each model selects verifier rules
+on a validation split and evaluates them on a separate test split?
+```
+
+Result:
+
+| policy | loss | loss delta | oracle excess | dense compute | trigger rate | accuracy |
+| --- | --- | --- | --- | --- | --- | --- |
+| calibrated regret route | 0.965 | -0.023 | 0.047 | 0.258 | 0.000 | 0.495 |
+| structured verifier gate | 0.967 | -0.021 | 0.049 | 0.213 | 0.385 | 0.491 |
+| physical verifier gate | 0.968 | -0.021 | 0.050 | 0.217 | 0.329 | 0.491 |
+| conservative structured verifier | 0.966 | -0.022 | 0.048 | 0.222 | 0.090 | 0.491 |
+| conservative physical verifier | 0.966 | -0.023 | 0.047 | 0.236 | 0.042 | 0.492 |
+
+Interpretation:
+
+The deployed result is mostly negative. The post-hoc verifier gain does not
+transfer to per-condition validation. Conservative physical verification is
+nearly loss-neutral while reducing dense compute from `0.258` to `0.236`, so
+it is useful as a compute-saving safety filter, not as a loss-improving
+scheduler. The next mechanism should be verification-triggered K expansion,
+because threshold-only dense suppression cannot realize the upper-bound
+headroom.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1353,7 +1389,10 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > enough. The structured verifier probe gives the first small positive result
 > for that framing: verifier-gated dense execution improves loss modestly, and
 > budgeted expansion upper bounds indicate that selective K expansion is worth
-> implementing.
+> implementing. The stricter deployed verifier pipeline then shows that
+> threshold-only verifier gates do not reliably improve loss; their current
+> value is near-loss-neutral compute reduction. The next claim must come from
+> actual verification-triggered K expansion.
 
 ## Next Required Work
 

@@ -13,6 +13,8 @@ Use these reports for paper-level claims:
   current v2 model.
 - `wpu_v2_structured_verifier_probe_results.md`: evaluates state/diagnostic
   verifier gates and K-expansion upper bounds after staged regret routing.
+- `wpu_v2_staged_verifier_hybrid_results.md`: stricter deployed verifier test
+  with validation-selected rules and held-out test evaluation.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.

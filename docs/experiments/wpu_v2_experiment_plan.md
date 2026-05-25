@@ -706,6 +706,26 @@ This does not prove deployed K expansion yet. It narrows the next implementation
 target to a concrete mechanism: sparse propagation, staged regret estimate,
 structured verifier, then local dense or K expansion.
 
+Deployed staged verifier pipeline:
+
+- `scripts/staged_verifier_hybrid.py`
+- `docs/experiments/wpu_v2_staged_verifier_hybrid_results.md`
+
+The stricter deployed test does not reproduce the post-hoc verifier gain.
+Verifier rules selected on each condition's validation split reduce dense
+compute but do not improve held-out loss:
+
+| policy | policy loss | loss delta | dense compute | trigger rate |
+| --- | --- | --- | --- | --- |
+| calibrated regret route | 0.965 | -0.023 | 0.258 | 0.000 |
+| structured verifier gate | 0.967 | -0.021 | 0.213 | 0.385 |
+| physical verifier gate | 0.968 | -0.021 | 0.217 | 0.329 |
+| conservative physical verifier | 0.966 | -0.023 | 0.236 | 0.042 |
+
+This changes the next step: threshold-only verifier gates should be treated as
+compute-saving filters, not as the main accuracy mechanism. The real v2 target
+is verification-triggered K expansion.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

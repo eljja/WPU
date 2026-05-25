@@ -415,6 +415,9 @@ Current implementation status:
 - Implemented experimentally: structured verifier probes over staged regret
   context, including deployable dense gates and budgeted K-expansion upper
   bounds.
+- Implemented experimentally: validation-calibrated staged verifier pipeline;
+  current threshold gates reduce compute nearly loss-neutrally but do not
+  improve loss.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 

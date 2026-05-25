@@ -218,7 +218,9 @@ and simple distillation are not enough to reproduce the fixed interaction
 frontier. Counterfactual sparse-vs-dense diagnostics show why: dense fixes some
 sparse mistakes but also breaks some sparse-correct cases. Future routing needs
 stronger supervision from branch correctness, uncertainty, and
-constraint-failure signals.
+constraint-failure signals. A seed-heldout route-label probe confirms that
+interaction density alone is not enough to identify dense-needed samples; the
+router needs richer state and prediction diagnostics.
 
 ## 6. Delta/Branch Engine
 

@@ -405,6 +405,22 @@ This should become the next supervised-router dataset. The route label should
 not be "interaction density is high"; it should be "dense improves this
 sample's outcome enough to justify cost."
 
+Route-label identifiability probe:
+
+- `docs/experiments/wpu_v2_counterfactual_route_examples.csv`
+- `docs/experiments/wpu_v2_route_label_probe_summary.csv`
+
+Dense-needed labels are only weakly predictable from the current state-only
+features. Interaction density alone is near chance balanced accuracy. A small
+MLP improves to roughly 0.58 balanced accuracy, but this is not enough for a
+reliable router. The next supervised router should include richer features:
+
+- Sparse branch entropy and margin.
+- Local constraint violation scores.
+- Delta magnitude and uncertainty growth.
+- Training-time sparse/dense disagreement labels.
+- Cost-sensitive route objective evaluated by hard selective execution.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

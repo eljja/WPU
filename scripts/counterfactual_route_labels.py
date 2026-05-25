@@ -37,20 +37,30 @@ def main() -> None:
     parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--out", type=Path, default=Path("artifacts/counterfactual_route_labels.csv"))
+    parser.add_argument("--examples-out", type=Path, default=None)
     args = parser.parse_args()
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    if args.examples_out is not None:
+        args.examples_out.parent.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, object]] = []
+    example_rows: list[dict[str, object]] = []
     for n_value in args.n_values:
         for k_value in args.k_values:
             causal_obstacles = max(0, k_value - 4)
             background_objects = max(0, n_value - 4 - causal_obstacles)
             for seed in args.seeds:
                 print(f"counterfactual seed={seed} N={n_value} K={k_value}", flush=True)
-                rows.append(_run_condition(background_objects, causal_obstacles, seed, args))
+                rows.append(_run_condition(background_objects, causal_obstacles, seed, args, example_rows))
                 _write_csv(args.out, rows)
+                if args.examples_out is not None:
+                    _write_csv(args.examples_out, example_rows)
     _write_csv(args.out, rows)
+    if args.examples_out is not None:
+        _write_csv(args.examples_out, example_rows)
     print(f"wrote={args.out}", flush=True)
+    if args.examples_out is not None:
+        print(f"examples={args.examples_out}", flush=True)
 
 
 def _run_condition(
@@ -58,11 +68,12 @@ def _run_condition(
     causal_obstacles: int,
     seed: int,
     args: argparse.Namespace,
+    example_rows: list[dict[str, object]],
 ) -> dict[str, object]:
     device = torch.device(args.device)
     sparse_model = _train_model("wpu-cws-indexed-sparse", background_objects, causal_obstacles, seed, args, device)
     dense_model = _train_model("wpu-cws-indexed-local-dense", background_objects, causal_obstacles, seed, args, device)
-    return _evaluate_pair(sparse_model, dense_model, background_objects, causal_obstacles, seed, args, device)
+    return _evaluate_pair(sparse_model, dense_model, background_objects, causal_obstacles, seed, args, device, example_rows)
 
 
 def _train_model(
@@ -116,6 +127,7 @@ def _evaluate_pair(
     seed: int,
     args: argparse.Namespace,
     device: torch.device,
+    example_rows: list[dict[str, object]],
 ) -> dict[str, object]:
     dataset = WorkingSetPhysicsDataset(
         size=args.samples,
@@ -138,6 +150,7 @@ def _evaluate_pair(
     dense_lower_loss = 0
     dense_needed_labels = 0
     with torch.no_grad():
+        sample_offset = 0
         for batch, _, labels, _ in loader:
             batch = _move_batch(batch, device)
             labels = labels.to(device)
@@ -151,6 +164,7 @@ def _evaluate_pair(
             dense_loss = F.cross_entropy(dense_prediction.branch_logits, labels, reduction="none")
             dense_is_better = dense_loss + 1e-6 < sparse_loss
             dense_needed = (~sparse_is_correct & dense_is_correct) | (dense_is_better & ~sparse_is_correct)
+            route_features = _route_features(batch)
 
             total += int(labels.numel())
             sparse_correct += int(sparse_is_correct.sum().item())
@@ -161,6 +175,30 @@ def _evaluate_pair(
             both_wrong += int((~sparse_is_correct & ~dense_is_correct).sum().item())
             dense_lower_loss += int(dense_is_better.sum().item())
             dense_needed_labels += int(dense_needed.sum().item())
+            for row_index in range(int(labels.numel())):
+                example_rows.append(
+                    {
+                        "seed": seed,
+                        "sample_index": sample_offset + row_index,
+                        "total_objects_n": background_objects + 4 + causal_obstacles,
+                        "causal_k": 4 + causal_obstacles,
+                        "interaction_mode": args.interaction_mode,
+                        "interaction_density": round(float(route_features["interaction_density"][row_index].detach().cpu().item()), 8),
+                        "min_pair_distance": round(float(route_features["min_pair_distance"][row_index].detach().cpu().item()), 8),
+                        "mean_pair_distance": round(float(route_features["mean_pair_distance"][row_index].detach().cpu().item()), 8),
+                        "target_x": round(float(route_features["target_x"][row_index].detach().cpu().item()), 8),
+                        "target_y": round(float(route_features["target_y"][row_index].detach().cpu().item()), 8),
+                        "event_norm": round(float(route_features["event_norm"][row_index].detach().cpu().item()), 8),
+                        "sparse_correct": int(sparse_is_correct[row_index].detach().cpu().item()),
+                        "dense_correct": int(dense_is_correct[row_index].detach().cpu().item()),
+                        "dense_needed": int(dense_needed[row_index].detach().cpu().item()),
+                        "dense_fixes_sparse": int((~sparse_is_correct[row_index] & dense_is_correct[row_index]).detach().cpu().item()),
+                        "dense_breaks_sparse": int((sparse_is_correct[row_index] & ~dense_is_correct[row_index]).detach().cpu().item()),
+                        "sparse_loss": round(float(sparse_loss[row_index].detach().cpu().item()), 8),
+                        "dense_loss": round(float(dense_loss[row_index].detach().cpu().item()), 8),
+                    }
+                )
+            sample_offset += int(labels.numel())
 
     return {
         "status": "ok",
@@ -180,6 +218,31 @@ def _evaluate_pair(
         "both_correct_rate": round(both_correct / max(total, 1), 6),
         "both_wrong_rate": round(both_wrong / max(total, 1), 6),
         "dense_lower_loss_rate": round(dense_lower_loss / max(total, 1), 6),
+    }
+
+
+def _route_features(batch) -> dict[str, torch.Tensor]:
+    positions = batch.object_features[..., 1:3]
+    pair_delta = positions.unsqueeze(2) - positions.unsqueeze(1)
+    pair_distance = pair_delta.square().sum(dim=-1).sqrt()
+    pair_mask = batch.object_mask.unsqueeze(2) & batch.object_mask.unsqueeze(1)
+    diagonal = torch.eye(batch.object_mask.size(1), dtype=torch.bool, device=batch.object_mask.device).unsqueeze(0)
+    pair_mask = pair_mask & ~diagonal
+    close_affinity = torch.exp(-pair_distance / 0.08).masked_fill(~pair_mask, 0.0)
+    pair_count = pair_mask.sum(dim=(1, 2)).clamp_min(1).to(close_affinity.dtype)
+    masked_distance = pair_distance.masked_fill(~pair_mask, 0.0)
+    min_distance = pair_distance.masked_fill(~pair_mask, float("inf")).amin(dim=(1, 2))
+    min_distance = torch.where(torch.isfinite(min_distance), min_distance, torch.zeros_like(min_distance))
+    mean_distance = masked_distance.sum(dim=(1, 2)) / pair_count
+    target_indices = batch.target_indices.clamp_min(0)
+    target_positions = torch.gather(positions, 1, target_indices.view(-1, 1, 1).expand(-1, 1, 2)).squeeze(1)
+    return {
+        "interaction_density": close_affinity.sum(dim=(1, 2)) / pair_count,
+        "min_pair_distance": min_distance,
+        "mean_pair_distance": mean_distance,
+        "target_x": target_positions[:, 0],
+        "target_y": target_positions[:, 1],
+        "event_norm": batch.event_features.norm(dim=-1),
     }
 
 

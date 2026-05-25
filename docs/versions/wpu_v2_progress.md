@@ -667,6 +667,49 @@ This makes the WPU claim more precise. Selective dense execution is valuable
 only if route supervision identifies the samples where dense recompute improves
 state prediction enough to justify its cost.
 
+### Priority 6i: Dense-Needed Route Label Probe
+
+Output:
+
+- `docs/experiments/wpu_v2_counterfactual_route_examples.csv`
+- `docs/experiments/wpu_v2_counterfactual_route_labels_with_examples.csv`
+- `docs/experiments/wpu_v2_route_label_probe.csv`
+- `docs/experiments/wpu_v2_route_label_probe_summary.csv`
+- `scripts/route_label_probe.py`
+
+Question:
+
+```text
+Are dense-needed labels identifiable from state-only features?
+```
+
+Setup:
+
+- Use the counterfactual route examples from N=2048, K=8/16/32, seeds 11 and
+  13.
+- Train a small state-feature MLP on one seed and evaluate on the held-out
+  seed.
+- Compare against raw interaction-density threshold heuristics.
+
+Result:
+
+| probe | threshold | dense label rate | predicted dense rate | balanced accuracy | precision | recall | F1 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| interaction density | 0.15 | 0.261 | 0.839 | 0.488 | 0.256 | 0.822 | 0.390 |
+| interaction density | 0.20 | 0.261 | 0.294 | 0.477 | 0.223 | 0.263 | 0.241 |
+| MLP state probe | 0.20 | 0.261 | 0.554 | 0.580 | 0.317 | 0.672 | 0.431 |
+| MLP state probe | 0.30 | 0.261 | 0.485 | 0.560 | 0.309 | 0.575 | 0.402 |
+| MLP state probe | 0.50 | 0.261 | 0.374 | 0.546 | 0.307 | 0.442 | 0.362 |
+
+Interpretation:
+
+Interaction density alone does not identify dense-needed samples. The simple
+MLP improves balanced accuracy above chance, but only weakly. This strengthens
+the negative learned-router result: the route decision is not yet captured by
+the current state features. A useful router likely needs richer signals such as
+branch entropy, sparse/dense disagreement during training, constraint
+violations, and uncertainty growth.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now

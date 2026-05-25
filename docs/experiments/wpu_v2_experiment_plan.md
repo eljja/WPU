@@ -726,6 +726,29 @@ This changes the next step: threshold-only verifier gates should be treated as
 compute-saving filters, not as the main accuracy mechanism. The real v2 target
 is verification-triggered K expansion.
 
+Deployed K-expansion pipeline:
+
+- `scripts/staged_k_expansion_hybrid.py`
+- `docs/experiments/wpu_v2_staged_k_expansion_hybrid_results.md`
+
+The first actual expansion experiment gives a narrow positive result. When the
+initial working set is `4` and the expanded working set is `32`, sparse
+expansion improves loss and accuracy modestly. When the initial budget is `8`,
+the gain is nearly neutral. Universal expansion and dense expansion are both
+bad:
+
+| initial budget | policy | loss | expansion rate | total compute | accuracy |
+| --- | --- | --- | --- | --- | --- |
+| 8 | initial calibrated regret | 0.961 | 0.000 | 0.179 | 0.491 |
+| 8 | physical sparse expansion | 0.960 | 0.020 | 0.199 | 0.494 |
+| 4 | initial calibrated regret | 0.968 | 0.000 | 0.215 | 0.493 |
+| 4 | physical sparse expansion | 0.964 | 0.041 | 0.251 | 0.500 |
+| 4 | always expand dense | 1.067 | 1.000 | 1.000 | 0.465 |
+
+The next implementation should focus on sparse relation-frontier expansion and
+better verifier triggers. Dense recompute over the expanded subgraph is not the
+right default.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

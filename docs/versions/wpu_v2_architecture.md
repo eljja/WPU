@@ -418,6 +418,10 @@ Current implementation status:
 - Implemented experimentally: validation-calibrated staged verifier pipeline;
   current threshold gates reduce compute nearly loss-neutrally but do not
   improve loss.
+- Implemented experimentally: deployed verifier-triggered K expansion with
+  separate sparse and dense expansion paths. Sparse expansion has a narrow
+  positive regime when initial K is under-complete; dense expansion is not a
+  good default.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 
@@ -485,3 +489,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   verification, not merely through scalar feature concatenation.
 - Evidence that verification-triggered K expansion improves deployed loss, not
   only oracle upper-bound loss.
+- Evidence that expanded sparse propagation remains stable as K grows, because
+  expanded dense recompute currently degrades on the synthetic CWS task.

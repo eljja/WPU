@@ -1335,6 +1335,46 @@ scheduler. The next mechanism should be verification-triggered K expansion,
 because threshold-only dense suppression cannot realize the upper-bound
 headroom.
 
+### Priority 6w: Deployed K-Expansion Pipeline
+
+Output:
+
+- `scripts/staged_k_expansion_hybrid.py`
+- `docs/experiments/wpu_v2_staged_k_expansion_hybrid_5seed.csv`
+- `docs/experiments/wpu_v2_staged_k_expansion_hybrid_initial4_5seed.csv`
+- `docs/experiments/wpu_v2_staged_k_expansion_hybrid_results.md`
+
+Question:
+
+```text
+Can verification-triggered K expansion improve deployed performance when the
+initial event-local working set is under-complete?
+```
+
+Result:
+
+| initial budget | policy | loss | loss delta | expansion rate | total compute | accuracy |
+| --- | --- | --- | --- | --- | --- | --- |
+| 8 | initial calibrated regret | 0.961 | -0.028 | 0.000 | 0.179 | 0.491 |
+| 8 | physical sparse expansion | 0.960 | -0.029 | 0.020 | 0.199 | 0.494 |
+| 8 | always expand sparse | 1.008 | 0.019 | 1.000 | 1.000 | 0.488 |
+| 8 | always expand dense | 1.067 | 0.078 | 1.000 | 1.000 | 0.465 |
+| 4 | initial calibrated regret | 0.968 | -0.032 | 0.000 | 0.215 | 0.493 |
+| 4 | physical sparse expansion | 0.964 | -0.035 | 0.041 | 0.251 | 0.500 |
+| 4 | structured sparse expansion | 0.966 | -0.034 | 0.050 | 0.259 | 0.499 |
+| 4 | always expand sparse | 1.008 | 0.009 | 1.000 | 1.000 | 0.488 |
+| 4 | always expand dense | 1.067 | 0.067 | 1.000 | 1.000 | 0.465 |
+
+Interpretation:
+
+This is the first deployed K-expansion result with a positive regime. The gain
+is small but meaningful because it appears only under the theoretically expected
+condition: initial K is under-complete and expansion is selective. The result
+also rejects two bad variants. Always expanding is strongly worse, and dense
+expansion over a larger subgraph is worse than sparse expansion. The next WPU
+mechanism should therefore be selective sparse K expansion followed by local
+propagation, not larger local attention.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1392,7 +1432,10 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > implementing. The stricter deployed verifier pipeline then shows that
 > threshold-only verifier gates do not reliably improve loss; their current
 > value is near-loss-neutral compute reduction. The next claim must come from
-> actual verification-triggered K expansion.
+> actual verification-triggered K expansion. The first deployed K-expansion
+> experiment supports this direction only in a narrow regime: sparse expansion
+> helps when the initial working set is under-complete, while dense or universal
+> expansion hurts.
 
 ## Next Required Work
 

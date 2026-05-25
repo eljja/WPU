@@ -662,6 +662,28 @@ The test-oracle result shows diagnostics contain safety information, but the
 threshold does not transfer. The next step should be explicit verification
 rather than a single deployed diagnostic gate.
 
+Internal state-native regret router variants:
+
+- `wpu-cws-indexed-physics-regret-hybrid`
+- `wpu-cws-indexed-state-regret-hybrid`
+- `scripts/compare_regret_router_variants.py`
+- `docs/experiments/wpu_v2_regret_router_variant_results.md`
+
+The embedded router experiment rejects a simple transfer of the post-hoc state
+probe into the model. Adding scalar physical features to the hidden regret head
+is neutral overall, while replacing the hidden summary with a state-only scalar
+MLP is worse:
+
+| router | routed loss | loss delta | oracle excess | dense compute |
+| --- | --- | --- | --- | --- |
+| internal hidden regret | 0.963 | -0.025 | 0.045 | 0.237 |
+| physics + hidden regret | 0.963 | -0.022 | 0.049 | 0.240 |
+| state-only regret | 0.983 | 0.001 | 0.074 | 0.297 |
+
+Therefore v2 should treat state context as structured verification and
+constraint evidence, not as a small scalar replacement for local propagation
+evidence.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

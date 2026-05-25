@@ -15,6 +15,7 @@ from wpu.models.factory import create_model
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train WPU regret routing in separated propagation and route-head stages.")
+    parser.add_argument("--model-name", default="wpu-cws-indexed-regret-hybrid")
     parser.add_argument("--n-values", type=int, nargs="+", default=[2048])
     parser.add_argument("--k-values", type=int, nargs="+", default=[8, 16, 32])
     parser.add_argument("--seeds", type=int, nargs="+", default=[11, 13])
@@ -52,7 +53,7 @@ def main() -> None:
             causal_obstacles = max(0, k_value - 4)
             background_objects = max(0, n_value - 4 - causal_obstacles)
             for seed in args.seeds:
-                print(f"staged-regret seed={seed} N={n_value} K={k_value}", flush=True)
+                print(f"staged-regret model={args.model_name} seed={seed} N={n_value} K={k_value}", flush=True)
                 rows.append(_run_condition(background_objects, causal_obstacles, seed, args))
                 _write_csv(args.out, rows)
     _write_csv(args.out, rows)
@@ -63,7 +64,7 @@ def _run_condition(background_objects: int, causal_obstacles: int, seed: int, ar
     device = torch.device(args.device)
     torch.manual_seed(seed)
     model = create_model(
-        "wpu-cws-indexed-regret-hybrid",
+        args.model_name,
         hidden_dim=args.hidden_dim,
         layers=args.layers,
         num_heads=args.num_heads,
@@ -226,6 +227,7 @@ def _evaluate(
     regret_corr, regret_mse = _regret_fit_metrics(regret_prediction_values, realized_regret_values)
     return {
         "status": "ok",
+        "model": args.model_name,
         "seed": seed,
         "total_objects_n": background_objects + 4 + causal_obstacles,
         "causal_k": 4 + causal_obstacles,

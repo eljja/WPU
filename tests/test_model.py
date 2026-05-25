@@ -331,6 +331,52 @@ def test_regret_hybrid_head_trains_from_counterfactual_losses() -> None:
     assert 0.0 <= model.last_working_set_stats.dense_compute_ratio <= 1.0
 
 
+def test_physics_regret_hybrid_head_uses_state_context() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, target_delta, labels, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = create_model("wpu-cws-indexed-physics-regret-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=12)
+
+    sparse_prediction = model(batch, num_branches=3, force_route="sparse")
+    sparse_loss = torch.nn.functional.cross_entropy(sparse_prediction.branch_logits, labels, reduction="none")
+    dense_prediction = model(batch, num_branches=3, force_route="local_dense")
+    dense_loss = torch.nn.functional.cross_entropy(dense_prediction.branch_logits, labels, reduction="none")
+    target_regret = (dense_loss - sparse_loss).detach()
+    routed_prediction = model(batch, num_branches=3)
+
+    loss = torch.nn.functional.mse_loss(routed_prediction.object_delta, target_delta)
+    loss = loss + torch.nn.functional.cross_entropy(routed_prediction.branch_logits, labels)
+    loss = loss + model.route_regret_loss(target_regret)
+    loss.backward()
+
+    assert model.route_regret_prediction().shape == labels.shape
+    assert model.route_regret_head[0].normalized_shape == (40,)
+    assert model.route_regret_head[-1].weight.grad is not None
+    assert model.route_regret_head[-1].weight.grad.norm().item() > 0.0
+
+
+def test_state_regret_hybrid_head_excludes_hidden_summary() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, target_delta, labels, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = create_model("wpu-cws-indexed-state-regret-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=12)
+
+    sparse_prediction = model(batch, num_branches=3, force_route="sparse")
+    sparse_loss = torch.nn.functional.cross_entropy(sparse_prediction.branch_logits, labels, reduction="none")
+    dense_prediction = model(batch, num_branches=3, force_route="local_dense")
+    dense_loss = torch.nn.functional.cross_entropy(dense_prediction.branch_logits, labels, reduction="none")
+    target_regret = (dense_loss - sparse_loss).detach()
+    routed_prediction = model(batch, num_branches=3)
+
+    loss = torch.nn.functional.mse_loss(routed_prediction.object_delta, target_delta)
+    loss = loss + torch.nn.functional.cross_entropy(routed_prediction.branch_logits, labels)
+    loss = loss + model.route_regret_loss(target_regret)
+    loss.backward()
+
+    assert model.route_regret_prediction().shape == labels.shape
+    assert model.route_regret_head[0].normalized_shape == (7,)
+    assert model.route_regret_head[-1].weight.grad is not None
+    assert model.route_regret_head[-1].weight.grad.norm().item() > 0.0
+
+
 def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:
     dataset = WorkingSetPhysicsDataset(size=1, seed=7, background_objects=128, causal_obstacles=4)
 

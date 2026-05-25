@@ -454,6 +454,8 @@ Implemented model names:
 - `wpu-cws-indexed-selective-interaction-hybrid`
 - `wpu-cws-indexed-geometry-hybrid`
 - `wpu-cws-indexed-regret-hybrid`
+- `wpu-cws-indexed-physics-regret-hybrid`
+- `wpu-cws-indexed-state-regret-hybrid`
 
 ## V2 Success Criteria
 
@@ -473,3 +475,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   or explicit cost-conditioned margins.
 - Evidence that margin selection adapts to K plus state uncertainty and rollout
   evidence instead of relying on a single global validation threshold.
+- Evidence that state-native route context improves through structured
+  verification, not merely through scalar feature concatenation.

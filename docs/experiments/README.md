@@ -8,6 +8,14 @@ universally superior to token or graph baselines.
 
 Use these reports for paper-level claims:
 
+- `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
+  and state-only regret routers; rejects scalar state-only routing for the
+  current v2 model.
+- `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
+  safety gates contain oracle signal but do not yet transfer as deployed
+  thresholds.
+- `wpu_v2_staged_regret_hybrid_5seed_results.md`: five-seed audit of staged
+  internal regret routing with bounded selective dense compute.
 - `causal_working_set_v2_plan.md`: next large-`N` comparison plan that separates
   total world size `N` from event-conditioned causal working set size `K`.
 - `causal_working_set_8m_gpu_protocol.md`: CUDA protocol for the 8M-class

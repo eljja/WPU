@@ -51,7 +51,17 @@ class CausalWorkingSetProcessor(nn.Module):
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
             raise ValueError(f"unknown selector: {selector}")
-        if adaptive_route not in {"hard", "learned", "learned_selective", "interaction", "selective_interaction", "geometry", "regret"}:
+        if adaptive_route not in {
+            "hard",
+            "learned",
+            "learned_selective",
+            "interaction",
+            "selective_interaction",
+            "geometry",
+            "regret",
+            "physics_regret",
+            "state_regret",
+        }:
             raise ValueError(f"unknown adaptive route: {adaptive_route}")
         self.selector = selector
         self.working_set_size = working_set_size
@@ -100,9 +110,14 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.GELU(),
             nn.Linear(max(hidden_dim // 2, 1), 1),
         )
+        route_regret_input_dim = hidden_dim + 3
+        if adaptive_route == "state_regret":
+            route_regret_input_dim = 7
+        elif adaptive_route == "physics_regret":
+            route_regret_input_dim += 5
         self.route_regret_head = nn.Sequential(
-            nn.LayerNorm(hidden_dim + 3),
-            nn.Linear(hidden_dim + 3, max(hidden_dim // 2, 1)),
+            nn.LayerNorm(route_regret_input_dim),
+            nn.Linear(route_regret_input_dim, max(hidden_dim // 2, 1)),
             nn.GELU(),
             nn.Linear(max(hidden_dim // 2, 1), 1),
         )
@@ -158,13 +173,16 @@ class CausalWorkingSetProcessor(nn.Module):
                 selector_confidence,
                 interaction_density,
             )
-        if self.adaptive_hybrid and self.adaptive_route == "regret":
+        if self.adaptive_hybrid and self.adaptive_route in {"regret", "physics_regret", "state_regret"}:
             regret_prediction = self._route_regret_prediction(
                 sparse_gathered,
                 selected_mask,
                 selected_counts,
                 selector_confidence,
                 interaction_density,
+                self._route_physics_features(batch, selected_object_features, selected_mask)
+                if self.adaptive_route in {"physics_regret", "state_regret"}
+                else None,
             )
         self._last_route_regret_prediction = regret_prediction
 
@@ -200,7 +218,7 @@ class CausalWorkingSetProcessor(nn.Module):
                     sparse_gathered[dense_sample_mask],
                     src_key_padding_mask=~selected_mask[dense_sample_mask],
                 )
-        elif self.adaptive_hybrid and self.adaptive_route == "regret":
+        elif self.adaptive_hybrid and self.adaptive_route in {"regret", "physics_regret", "state_regret"}:
             assert regret_prediction is not None
             dense_sample_mask = regret_prediction < 0.0
             dense_gathered = sparse_gathered.clone()
@@ -243,7 +261,7 @@ class CausalWorkingSetProcessor(nn.Module):
         elif self.adaptive_hybrid and self.adaptive_route == "selective_interaction":
             dense_weight = interaction_dense_teacher * dense_compute_weight
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
-        elif self.adaptive_hybrid and self.adaptive_route == "regret":
+        elif self.adaptive_hybrid and self.adaptive_route in {"regret", "physics_regret", "state_regret"}:
             dense_weight = dense_compute_weight
             gathered = torch.where(dense_compute_weight.view(-1, 1, 1).bool(), dense_gathered, sparse_gathered)
         elif self.adaptive_hybrid and self.adaptive_route == "geometry":
@@ -501,13 +519,38 @@ class CausalWorkingSetProcessor(nn.Module):
         selected_counts: torch.Tensor,
         selector_confidence: torch.Tensor,
         interaction_density: torch.Tensor,
+        physics_features: torch.Tensor | None = None,
     ) -> torch.Tensor:
         sparse_summary = _masked_mean(sparse_gathered, selected_mask)
         k_pressure = selected_counts.to(sparse_summary.dtype).unsqueeze(-1) / max(float(self.working_set_size), 1.0)
         confidence = selector_confidence.unsqueeze(-1).to(sparse_summary.dtype)
         interaction = interaction_density.unsqueeze(-1).to(sparse_summary.dtype)
-        route_input = torch.cat([sparse_summary, k_pressure, confidence, interaction], dim=-1)
+        if self.adaptive_route == "state_regret":
+            if physics_features is None:
+                raise RuntimeError("state_regret requires physics route features")
+            route_input = torch.cat([k_pressure, interaction, physics_features.to(sparse_summary.dtype)], dim=-1)
+            return self.route_regret_head(route_input).squeeze(-1)
+        route_parts = [sparse_summary, k_pressure, confidence, interaction]
+        if physics_features is not None:
+            route_parts.append(physics_features.to(sparse_summary.dtype))
+        route_input = torch.cat(route_parts, dim=-1)
         return self.route_regret_head(route_input).squeeze(-1)
+
+    def _route_physics_features(
+        self,
+        batch: StateGraphBatch,
+        selected_object_features: torch.Tensor,
+        selected_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        min_pair_distance, mean_pair_distance = _pair_distance_stats(selected_object_features, selected_mask)
+        target_features = torch.gather(
+            batch.object_features,
+            1,
+            batch.target_indices.view(-1, 1, 1).expand(-1, 1, batch.object_features.size(-1)),
+        ).squeeze(1)
+        target_xy = target_features[:, 1:3]
+        event_norm = batch.event_features.norm(dim=-1, keepdim=True)
+        return torch.cat([min_pair_distance, mean_pair_distance, target_xy, event_norm], dim=-1)
 
     def _interaction_dense_weight(
         self,
@@ -572,6 +615,21 @@ def _interaction_density(selected_object_features: torch.Tensor, selected_mask: 
     close_affinity = torch.exp(-pair_distance / 0.08).masked_fill(~pair_mask, 0.0)
     pair_count = pair_mask.sum(dim=(1, 2)).clamp_min(1).to(close_affinity.dtype)
     return close_affinity.sum(dim=(1, 2)) / pair_count
+
+
+def _pair_distance_stats(selected_object_features: torch.Tensor, selected_mask: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    positions = selected_object_features[..., 1:3]
+    pair_delta = positions.unsqueeze(2) - positions.unsqueeze(1)
+    pair_distance = pair_delta.square().sum(dim=-1).sqrt()
+    pair_mask = selected_mask.unsqueeze(2) & selected_mask.unsqueeze(1)
+    diagonal = torch.eye(selected_mask.size(1), dtype=torch.bool, device=selected_mask.device).unsqueeze(0)
+    pair_mask = pair_mask & ~diagonal
+    masked_distance = pair_distance.masked_fill(~pair_mask, float("inf"))
+    min_distance = masked_distance.amin(dim=(1, 2))
+    min_distance = torch.where(torch.isfinite(min_distance), min_distance, torch.zeros_like(min_distance))
+    pair_count = pair_mask.sum(dim=(1, 2)).clamp_min(1).to(pair_distance.dtype)
+    mean_distance = pair_distance.masked_fill(~pair_mask, 0.0).sum(dim=(1, 2)) / pair_count
+    return min_distance.unsqueeze(-1), mean_distance.unsqueeze(-1)
 
 
 def _pad_indices(

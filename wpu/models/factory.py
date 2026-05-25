@@ -26,6 +26,8 @@ MODEL_NAMES = [
     "wpu-cws-indexed-selective-interaction-hybrid",
     "wpu-cws-indexed-geometry-hybrid",
     "wpu-cws-indexed-regret-hybrid",
+    "wpu-cws-indexed-physics-regret-hybrid",
+    "wpu-cws-indexed-state-regret-hybrid",
     "wpu-cws-oracle",
     "dense-graph",
     "graph-transformer",
@@ -53,6 +55,8 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         "wpu-cws-indexed-selective-interaction-hybrid",
         "wpu-cws-indexed-geometry-hybrid",
         "wpu-cws-indexed-regret-hybrid",
+        "wpu-cws-indexed-physics-regret-hybrid",
+        "wpu-cws-indexed-state-regret-hybrid",
     }:
         working_set_size = int(kwargs.get("working_set_size", 16))
         layers = int(kwargs.get("layers", 2))
@@ -74,6 +78,8 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
                 "wpu-cws-indexed-selective-interaction-hybrid",
                 "wpu-cws-indexed-geometry-hybrid",
                 "wpu-cws-indexed-regret-hybrid",
+                "wpu-cws-indexed-physics-regret-hybrid",
+                "wpu-cws-indexed-state-regret-hybrid",
             },
             adaptive_route=_adaptive_route(name),
             interaction_dense_threshold=interaction_dense_threshold,
@@ -121,4 +127,8 @@ def _adaptive_route(name: str) -> str:
         return "geometry"
     if name == "wpu-cws-indexed-regret-hybrid":
         return "regret"
+    if name == "wpu-cws-indexed-physics-regret-hybrid":
+        return "physics_regret"
+    if name == "wpu-cws-indexed-state-regret-hybrid":
+        return "state_regret"
     return "hard"

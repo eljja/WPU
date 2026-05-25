@@ -1225,6 +1225,42 @@ across seeds. Diagnostics should therefore trigger explicit verification
 mechanisms such as K expansion, consistency checks, uncertainty increase, or
 abstention rather than acting as simple deployed threshold gates.
 
+### Priority 6t: Internal State-Native Regret Router Variants
+
+Output:
+
+- `scripts/compare_regret_router_variants.py`
+- `docs/experiments/wpu_v2_physics_regret_hybrid_5seed.csv`
+- `docs/experiments/wpu_v2_state_regret_hybrid_5seed.csv`
+- `docs/experiments/wpu_v2_regret_router_variant_summary.csv`
+- `docs/experiments/wpu_v2_regret_router_variant_paired.csv`
+- `docs/experiments/wpu_v2_regret_router_variant_results.md`
+
+Question:
+
+```text
+Does the post-hoc physical-state evidence improve the actual internal WPU
+regret router when embedded into the model?
+```
+
+Result:
+
+| router | routed loss | loss delta | oracle excess | dense compute | regret corr | accuracy |
+| --- | --- | --- | --- | --- | --- | --- |
+| internal hidden regret | 0.963 | -0.025 | 0.045 | 0.237 | 0.351 | 0.493 |
+| physics + hidden regret | 0.963 | -0.022 | 0.049 | 0.240 | 0.332 | 0.503 |
+| state-only regret | 0.983 | 0.001 | 0.074 | 0.297 | 0.161 | 0.495 |
+
+Interpretation:
+
+The result rejects two tempting simplifications. First, physical state scalars
+do not improve the internal route head by simple concatenation. Second, a
+state-only scalar MLP is too weak: it destroys regret correlation and gives up
+the loss reduction. The current best deployed router remains staged internal
+regret over hidden local propagation evidence. The v2 scheduler should
+therefore combine hidden propagation evidence with explicit state verification,
+not replace hidden evidence with a tiny scalar state vector.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1272,7 +1308,11 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > the failure of diagnostic residual adjustment, and the failure of deployable
 > diagnostic threshold gates mean the next claim must still be earned by
 > invariant state-conditioned margins, explicit verification mechanisms,
-> relation-typed sparse propagation, or closed-loop expansion.
+> relation-typed sparse propagation, or closed-loop expansion. The internal
+> state-router variant test further shows that state evidence must be
+> represented as structured verification or constraints; simply concatenating
+> scalar physical features, or replacing hidden route evidence with them, is not
+> enough.
 
 ## Next Required Work
 

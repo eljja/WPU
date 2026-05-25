@@ -578,6 +578,29 @@ should learn or analytically set:
 margin = f(K, confidence, interaction_density, rollout_drift, compute_budget)
 ```
 
+Leave-one-seed-out margin policy selection:
+
+- `scripts/analyze_regret_margin_sweep.py`
+- `docs/experiments/wpu_v2_staged_regret_margin_policy_summary.csv`
+- `docs/experiments/wpu_v2_staged_regret_margin_policy_results.md`
+
+The first stricter policy-selection test rejects a K-only scheduler. Choosing a
+margin per K on four seeds and evaluating on the held-out seed does not improve
+over a fixed global margin:
+
+| policy | routed loss | loss delta | dense compute | oracle excess |
+| --- | --- | --- | --- | --- |
+| fixed global margin | 0.972 | -0.016 | 0.127 | 0.054 |
+| LOSO K-conditioned margin | 0.973 | -0.015 | 0.147 | 0.055 |
+
+Therefore the next scheduler should not be `margin = f(K)` alone. It should use
+state-derived evidence:
+
+```text
+margin = f(K, selector_confidence, interaction_density, regret_uncertainty,
+           sparse_entropy, rollout_drift, compute_budget)
+```
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

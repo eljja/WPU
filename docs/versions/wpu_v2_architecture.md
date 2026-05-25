@@ -291,6 +291,24 @@ margin = f(K, selector_confidence, interaction_density, rollout_drift, compute_b
 This is a state-native scheduling rule. It does not return to token processing;
 it decides whether a local state patch deserves dense recompute.
 
+The leave-one-seed-out policy analysis shows that K alone is not enough to set
+this margin. K-conditioned margin selection does not beat a fixed global margin
+under held-out seed evaluation. The architecture should therefore treat K as one
+input to the scheduler, not as the scheduler itself. The route decision needs
+state evidence about uncertainty and local dynamics:
+
+```text
+route_context = {
+  K,
+  selector_confidence,
+  interaction_density,
+  regret_uncertainty,
+  sparse_branch_entropy,
+  rollout_drift,
+  compute_budget
+}
+```
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached
@@ -410,5 +428,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   not only that dense fallback sometimes helps.
 - Evidence that the scheduler is stable under fixed thresholds, held-out seeds,
   or explicit cost-conditioned margins.
-- Evidence that margin selection adapts to K and uncertainty instead of relying
-  on a single global validation threshold.
+- Evidence that margin selection adapts to K plus state uncertainty and rollout
+  evidence instead of relying on a single global validation threshold.

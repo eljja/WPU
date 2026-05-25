@@ -1070,6 +1070,48 @@ threshold is not the right v2 scheduler abstraction. The next scheduler should
 predict or set a margin conditioned on K, selector confidence, interaction
 density, rollout drift, and compute budget.
 
+### Priority 6p: Leave-One-Seed-Out Margin Policy Selection
+
+Output:
+
+- `scripts/analyze_regret_margin_sweep.py`
+- `docs/experiments/wpu_v2_staged_regret_margin_policy_rows.csv`
+- `docs/experiments/wpu_v2_staged_regret_margin_policy_summary.csv`
+- `docs/experiments/wpu_v2_staged_regret_margin_policy_results.md`
+
+Question:
+
+```text
+Is K alone enough to choose a better sparse-favoring margin under held-out
+seeds?
+```
+
+Method:
+
+- Use the existing margin sweep.
+- Select margins on four seeds.
+- Evaluate on the held-out seed.
+- Compare fixed global margin, leave-one-seed-out global margin, and
+  leave-one-seed-out K-conditioned margin.
+
+Overall result:
+
+| policy | routed loss | loss delta | dense compute | routed acc | oracle excess |
+| --- | --- | --- | --- | --- | --- |
+| validation calibrated | 0.963 | -0.025 | 0.237 | 0.493 | 0.045 |
+| fixed global margin | 0.972 | -0.016 | 0.127 | 0.487 | 0.054 |
+| LOSO global margin | 0.974 | -0.015 | 0.160 | 0.487 | 0.055 |
+| LOSO K-conditioned margin | 0.973 | -0.015 | 0.147 | 0.488 | 0.055 |
+
+Interpretation:
+
+This is a useful negative result. K-only margin conditioning does not beat the
+fixed global margin under leave-one-seed-out evaluation. K remains important as
+a regime variable, but it is not sufficient as the only scheduling signal. The
+next scheduler must use richer state evidence: selector confidence,
+interaction density, regret uncertainty, sparse entropy, rollout drift, and
+compute budget.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1113,9 +1155,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > recompute in the current implementation. Staged regret routing gives the first
 > internal selective-dense result that reduces loss with bounded dense compute,
 > and the five-seed audit shows that the loss reduction repeats. The remaining
-> oracle gap, threshold sensitivity, and K-dependent margin preference mean the
-> next claim must still be earned by regime-conditioned margins, relation-typed
-> sparse propagation, or closed-loop expansion.
+> oracle gap, threshold sensitivity, and the failure of K-only margin selection
+> mean the next claim must still be earned by state-conditioned margins,
+> relation-typed sparse propagation, or closed-loop expansion.
 
 ## Next Required Work
 

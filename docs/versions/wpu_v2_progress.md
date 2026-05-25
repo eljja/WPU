@@ -676,6 +676,7 @@ Output:
 - `docs/experiments/wpu_v2_route_label_probe.csv`
 - `docs/experiments/wpu_v2_route_label_probe_summary.csv`
 - `scripts/route_label_probe.py`
+- `scripts/summarize_route_label_probe.py`
 
 Question:
 
@@ -692,28 +693,34 @@ Setup:
   entropy, branch margin, top-branch confidence, object-delta norm, and mean
   uncertainty.
 - Compare against raw interaction-density threshold heuristics.
+- Report threshold metrics, train-calibrated threshold transfer, ROC-AUC,
+  average precision, Brier score, and expected calibration error.
 
 Result:
 
-| probe | threshold | dense label rate | predicted dense rate | balanced accuracy | precision | recall | F1 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| interaction density | 0.15 | 0.261 | 0.839 | 0.488 | 0.256 | 0.822 | 0.390 |
-| interaction density | 0.20 | 0.261 | 0.294 | 0.477 | 0.223 | 0.263 | 0.241 |
-| MLP state probe | 0.10 | 0.261 | 0.650 | 0.557 | 0.296 | 0.735 | 0.422 |
-| MLP state probe | 0.15 | 0.261 | 0.600 | 0.567 | 0.305 | 0.699 | 0.425 |
-| MLP state probe | 0.20 | 0.261 | 0.556 | 0.568 | 0.309 | 0.656 | 0.420 |
-| MLP sparse diagnostics | 0.02 | 0.261 | 0.006 | 0.505 | 0.333 | 0.013 | 0.026 |
-| MLP sparse diagnostics | 0.05 | 0.261 | 0.000 | 0.500 | 0.000 | 0.000 | 0.000 |
+| probe | threshold | dense label rate | predicted dense rate | balanced accuracy | F1 | ROC-AUC | AP | ECE |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| interaction density | 0.15 | 0.261 | 0.839 | 0.488 | 0.390 | 0.182 | 0.460 | 0.102 |
+| interaction density, train-calibrated | calibrated | 0.261 | 0.637 | 0.451 | 0.267 | 0.182 | 0.460 | 0.102 |
+| MLP state probe | 0.20 | 0.261 | 0.561 | 0.561 | 0.414 | 0.565 | 0.303 | 0.255 |
+| MLP state probe, train-calibrated | calibrated | 0.261 | 0.400 | 0.530 | 0.350 | 0.565 | 0.303 | 0.255 |
+| MLP sparse diagnostics | 0.50 | 0.261 | 0.050 | 0.481 | 0.036 | 0.482 | 0.255 | 0.284 |
+| MLP sparse diagnostics, train-calibrated | calibrated | 0.261 | 0.050 | 0.481 | 0.036 | 0.482 | 0.255 | 0.284 |
 
 Interpretation:
 
-Interaction density alone does not identify dense-needed samples. The
-state-only MLP improves balanced accuracy above chance, but only weakly. Adding
-scalar sparse diagnostics does not solve the problem; in the seed-heldout probe
-it collapses to almost never selecting dense execution. This is likely a
-calibration and model-instance shift problem: entropy, margin, delta norm, and
-uncertainty are not yet stable route signals across separately trained sparse
-models.
+Interaction density alone does not identify dense-needed samples. Its ROC-AUC
+is below chance, meaning dense-needed is not simply "more local interaction."
+The state-only MLP improves balanced accuracy above chance, but only weakly,
+and its ROC-AUC remains modest. Train-calibrated threshold selection does not
+transfer well to the held-out seed, so the failure is not just a fixed-threshold
+choice.
+
+Adding scalar sparse diagnostics does not solve the problem. The sparse
+diagnostic probe stays near chance AUC and collapses toward almost never
+selecting dense execution. This is likely a calibration and model-instance
+shift problem: entropy, margin, delta norm, and uncertainty are not yet stable
+route signals across separately trained sparse models.
 
 This strengthens the negative learned-router result. The route decision is not
 captured by simple state heuristics or by post-hoc scalar sparse diagnostics.

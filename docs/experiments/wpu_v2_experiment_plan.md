@@ -422,6 +422,13 @@ collapses to almost never selecting dense execution, which suggests that
 post-hoc scalar diagnostics are poorly calibrated across independently trained
 sparse models.
 
+The calibrated-threshold and rank-metric update makes the diagnosis stricter.
+Interaction density has below-chance ROC-AUC, so dense-needed is not equivalent
+to high local interaction density. The state-only probe has only weak rank
+signal, and train-selected thresholds do not transfer cleanly to the held-out
+seed. Therefore the immediate bottleneck is route-label identifiability under
+model/seed shift, not only threshold tuning.
+
 The next supervised router should therefore not only append more scalar
 features. It should train a route head on model-internal state representations
 with counterfactual dense-needed labels, calibration losses, seed/domain

@@ -151,7 +151,13 @@ class CausalWorkingSetProcessor(nn.Module):
                 interaction_density,
             )
 
-        if self.adaptive_hybrid and self.adaptive_route == "geometry":
+        if force_route == "sparse":
+            dense_gathered = sparse_gathered
+            dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif force_route == "local_dense":
+            dense_gathered = self.working_set_encoder(sparse_gathered, src_key_padding_mask=~selected_mask)
+            dense_compute_weight = torch.ones_like(selector_confidence)
+        elif self.adaptive_hybrid and self.adaptive_route == "geometry":
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "learned_selective":

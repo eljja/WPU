@@ -756,6 +756,9 @@ Setup:
 - Pre-tensor indexed working set
 - Train one `wpu-cws-indexed-local-dense` model with both forced sparse and
   forced local-dense losses, then evaluate both paths on the same samples.
+- `force_route="sparse"` now skips the local dense encoder instead of computing
+  it and discarding the result, so forced-route compute accounting matches the
+  executed path.
 
 Result:
 

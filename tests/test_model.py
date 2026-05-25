@@ -283,6 +283,30 @@ def test_causal_working_set_can_force_counterfactual_routes() -> None:
     assert dense_stats.local_dense_ratio == 1.0
 
 
+def test_forced_sparse_route_skips_dense_encoder_compute() -> None:
+    class CountingEncoder(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.calls = 0
+
+        def forward(self, values, *args, **kwargs):
+            del args, kwargs
+            self.calls += 1
+            return values + 1.0
+
+    dataset = WorkingSetPhysicsDataset(size=1, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0]])
+    model = create_model("wpu-cws-indexed-local-dense", hidden_dim=32, num_heads=4, layers=1, working_set_size=12)
+    encoder = CountingEncoder()
+    model.working_set_encoder = encoder
+
+    model(batch, num_branches=3, force_route="sparse")
+    assert encoder.calls == 0
+
+    model(batch, num_branches=3, force_route="local_dense")
+    assert encoder.calls == 1
+
+
 def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:
     dataset = WorkingSetPhysicsDataset(size=1, seed=7, background_objects=128, causal_obstacles=4)
 

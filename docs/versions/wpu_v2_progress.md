@@ -736,6 +736,11 @@ Output:
 - `scripts/summarize_shared_route_counterfactual.py`
 - `docs/experiments/wpu_v2_shared_route_counterfactual.csv`
 - `docs/experiments/wpu_v2_shared_route_counterfactual_summary.csv`
+- `docs/experiments/wpu_v2_shared_route_counterfactual_examples.csv`
+- `docs/experiments/wpu_v2_shared_route_needed_probe.csv`
+- `docs/experiments/wpu_v2_shared_route_needed_probe_summary.csv`
+- `docs/experiments/wpu_v2_shared_route_beneficial_probe.csv`
+- `docs/experiments/wpu_v2_shared_route_beneficial_probe_summary.csv`
 
 Question:
 
@@ -764,18 +769,18 @@ Result:
 
 | K | sparse accuracy | dense accuracy | dense-needed rate | dense fix rate | dense break rate | branch disagreement |
 | --- | --- | --- | --- | --- | --- | --- |
-| 8 | 0.489 | 0.467 | 0.167 | 0.050 | 0.072 | 0.172 |
-| 16 | 0.556 | 0.433 | 0.233 | 0.083 | 0.206 | 0.367 |
-| 32 | 0.494 | 0.422 | 0.200 | 0.106 | 0.178 | 0.400 |
+| 8 | 0.467 | 0.500 | 0.183 | 0.050 | 0.017 | 0.106 |
+| 16 | 0.511 | 0.417 | 0.306 | 0.139 | 0.233 | 0.450 |
+| 32 | 0.533 | 0.467 | 0.133 | 0.056 | 0.122 | 0.222 |
 
 Interpretation:
 
 This resolves an important ambiguity in the previous counterfactual labels.
 The earlier sparse-vs-dense comparison used separately trained models, so route
 labels could be contaminated by model-instance differences. The shared-model
-probe still finds dense-beneficial samples, but it also shows that dense breaks
-sparse-correct samples more often than it fixes sparse mistakes in this short
-pilot.
+probe still finds dense-beneficial samples. It also shows why routing cannot be
+a simple "use dense on high interaction" rule: at K=16 and K=32, dense breaks
+sparse-correct samples more often than it fixes sparse mistakes.
 
 The v2 conclusion should therefore be stricter:
 
@@ -792,6 +797,22 @@ state update. This points toward regret-style route supervision:
 route_target = dense_loss - sparse_loss
 execute dense only when expected regret is negative enough to justify cost
 ```
+
+Sample-level route probes:
+
+| label | best simple probe | label rate | balanced accuracy | F1 | ROC-AUC | AP |
+| --- | --- | --- | --- | --- | --- | --- |
+| dense-needed | MLP state, t=0.50 | 0.207 | 0.585 | 0.342 | 0.592 | 0.301 |
+| dense-needed | MLP sparse diagnostics, t=0.05 | 0.207 | 0.583 | 0.189 | 0.626 | 0.292 |
+| dense-beneficial | MLP state, t=0.50 | 0.539 | 0.632 | 0.641 | 0.653 | 0.714 |
+| dense-beneficial | MLP sparse diagnostics, t=0.20 | 0.539 | 0.542 | 0.681 | 0.529 | 0.575 |
+
+The regret-derived `dense_beneficial` label is more learnable than the stricter
+`dense_needed` fix label. This is academically important: the router should not
+only ask whether dense changes the top-1 branch correctness. It should learn
+the expected loss/regret of executing dense recompute. This gives a smoother
+and more identifiable training signal while still allowing hard execution at
+evaluation time.
 
 ## Updated V2 Direction
 

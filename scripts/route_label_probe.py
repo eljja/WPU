@@ -33,6 +33,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Probe whether dense-needed labels are identifiable from state features.")
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--out", type=Path, default=Path("artifacts/route_label_probe.csv"))
+    parser.add_argument("--target-column", default="dense_needed")
     parser.add_argument("--steps", type=int, default=400)
     parser.add_argument("--hidden-dim", type=int, default=16)
     parser.add_argument("--lr", type=float, default=3e-3)
@@ -48,6 +49,8 @@ def main() -> None:
     for test_seed in seeds:
         train_rows = [row for row in rows if int(row["seed"]) != test_seed]
         test_rows = [row for row in rows if int(row["seed"]) == test_seed]
+        if not train_rows or not test_rows:
+            continue
         output.extend(_run_split(train_rows, test_rows, test_seed, args, STATE_FEATURES, "mlp_state"))
         if rows and all(feature in rows[0] for feature in SPARSE_DIAGNOSTIC_FEATURES):
             output.extend(_run_split(train_rows, test_rows, test_seed, args, SPARSE_DIAGNOSTIC_FEATURES, "mlp_sparse_diagnostics"))
@@ -65,10 +68,10 @@ def _run_split(
     model_name: str,
 ) -> list[dict[str, object]]:
     device = torch.device(args.device)
-    train_x, train_y = _tensorize(train_rows, features, device)
-    test_x, test_y = _tensorize(test_rows, features, device)
+    train_x, train_y = _tensorize(train_rows, features, args.target_column, device)
+    test_x, test_y = _tensorize(test_rows, features, args.target_column, device)
     mean_x = train_x.mean(dim=0, keepdim=True)
-    std_x = train_x.std(dim=0, keepdim=True).clamp_min(1e-6)
+    std_x = train_x.std(dim=0, keepdim=True, unbiased=False).clamp_min(1e-6)
     train_x = (train_x - mean_x) / std_x
     test_x = (test_x - mean_x) / std_x
 
@@ -251,7 +254,12 @@ def _expected_calibration_error(labels: torch.Tensor, scores: torch.Tensor, bins
     return error
 
 
-def _tensorize(rows: list[dict[str, str]], feature_names: list[str], device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
+def _tensorize(
+    rows: list[dict[str, str]],
+    feature_names: list[str],
+    target_column: str,
+    device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor]:
     feature_rows = []
     labels = []
     for row in rows:
@@ -262,7 +270,7 @@ def _tensorize(rows: list[dict[str, str]], feature_names: list[str], device: tor
             else:
                 feature_values.append(float(row[feature]))
         feature_rows.append(feature_values)
-        labels.append(float(row["dense_needed"]))
+        labels.append(float(row[target_column]))
     return torch.tensor(feature_rows, dtype=torch.float32, device=device), torch.tensor(labels, dtype=torch.float32, device=device)
 
 

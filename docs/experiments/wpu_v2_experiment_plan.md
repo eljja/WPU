@@ -453,6 +453,12 @@ same samples. The result is stricter than the separate-model diagnostic:
 dense-beneficial samples exist, but dense also breaks sparse-correct samples
 more often than it fixes sparse failures in this pilot.
 
+The sample-level shared-route probes add an important distinction. The strict
+`dense_needed` label remains weakly identifiable, while the loss-based
+`dense_beneficial` label is more learnable from state features. This suggests
+that router supervision should use dense-vs-sparse regret as a continuous or
+cost-sensitive target rather than only a binary "dense fixed sparse" label.
+
 The next router should therefore predict dense regret, not only dense need:
 
 ```text

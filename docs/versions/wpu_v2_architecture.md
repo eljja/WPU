@@ -239,6 +239,13 @@ route_regret = dense_loss - sparse_loss + compute_cost
 Dense fallback should be executed only when expected regret is negative, not
 merely when local interaction density is high.
 
+The first shared-route sample probes support this direction. Binary
+dense-needed labels remain hard to identify, but the loss-based
+dense-beneficial signal is more predictable from state features. V2 routing
+should therefore move from binary dense-needed classification toward
+cost-sensitive regret estimation while preserving hard sparse/dense execution
+at inference time.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached

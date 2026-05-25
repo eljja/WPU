@@ -1192,6 +1192,39 @@ check. The route/margin decision itself should remain grounded in physical
 state evidence until diagnostic calibration is demonstrated under stronger
 distribution shifts.
 
+### Priority 6s: Diagnostic Safety Gate Probe
+
+Output:
+
+- `scripts/diagnostic_safety_gate_probe.py`
+- `docs/experiments/wpu_v2_diagnostic_safety_gate_probe.csv`
+- `docs/experiments/wpu_v2_diagnostic_safety_gate_probe_summary.csv`
+- `docs/experiments/wpu_v2_diagnostic_safety_gate_probe_results.md`
+
+Question:
+
+```text
+Can diagnostics help as safety gates that veto dense execution rather than as
+direct regret residuals?
+```
+
+Result:
+
+| policy | cost | dense rate | policy loss | loss delta | oracle excess |
+| --- | --- | --- | --- | --- | --- |
+| state route, no gate | 0.05 | 0.296 | 0.969 | -0.019 | 0.051 |
+| LOSO diagnostic gate | 0.05 | 0.254 | 0.972 | -0.017 | 0.053 |
+| test-oracle diagnostic gate | 0.05 | 0.202 | 0.963 | -0.025 | 0.045 |
+
+Interpretation:
+
+The deployable leave-one-seed-out diagnostic gate does not improve over the
+state route without a gate. The test-oracle gate is better, so diagnostics do
+contain useful safety information, but threshold selection does not transfer
+across seeds. Diagnostics should therefore trigger explicit verification
+mechanisms such as K expansion, consistency checks, uncertainty increase, or
+abstention rather than acting as simple deployed threshold gates.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1235,10 +1268,11 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > recompute in the current implementation. Staged regret routing gives the first
 > internal selective-dense result that reduces loss with bounded dense compute,
 > and the five-seed audit shows that the loss reduction repeats. The remaining
-> oracle gap, threshold sensitivity, the failure of K-only margin selection, and
-> the failure of diagnostic residual adjustment mean the next claim must still
-> be earned by invariant state-conditioned margins, relation-typed sparse
-> propagation, or closed-loop expansion.
+> oracle gap, threshold sensitivity, the failure of K-only margin selection,
+> the failure of diagnostic residual adjustment, and the failure of deployable
+> diagnostic threshold gates mean the next claim must still be earned by
+> invariant state-conditioned margins, explicit verification mechanisms,
+> relation-typed sparse propagation, or closed-loop expansion.
 
 ## Next Required Work
 

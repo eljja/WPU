@@ -642,6 +642,26 @@ compute cost 0.05, the physical-state base predictor is best:
 Diagnostics should therefore be evaluated as safety/abstention signals before
 being used as direct regret residuals.
 
+Diagnostic safety gate probe:
+
+- `scripts/diagnostic_safety_gate_probe.py`
+- `docs/experiments/wpu_v2_diagnostic_safety_gate_probe_summary.csv`
+- `docs/experiments/wpu_v2_diagnostic_safety_gate_probe_results.md`
+
+The first deployable safety-gate test is negative. A diagnostic threshold chosen
+on four seeds and evaluated on the held-out seed reduces dense compute but
+slightly worsens loss relative to the state route without a gate:
+
+| policy | cost | dense rate | policy loss | loss delta | oracle excess |
+| --- | --- | --- | --- | --- | --- |
+| state route, no gate | 0.05 | 0.296 | 0.969 | -0.019 | 0.051 |
+| LOSO diagnostic gate | 0.05 | 0.254 | 0.972 | -0.017 | 0.053 |
+| test-oracle diagnostic gate | 0.05 | 0.202 | 0.963 | -0.025 | 0.045 |
+
+The test-oracle result shows diagnostics contain safety information, but the
+threshold does not transfer. The next step should be explicit verification
+rather than a single deployed diagnostic gate.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

@@ -337,6 +337,21 @@ safety decision: diagnostics trigger abstain, K expansion, uncertainty growth,
 Diagnostics can become part of the route value only after they demonstrate
 seed-stable calibration.
 
+The diagnostic safety-gate probe shows that simple diagnostic thresholds also
+fail to transfer under held-out seeds, even though a test-oracle gate has upside.
+Therefore diagnostics should initially invoke explicit verification operators:
+
+```text
+if diagnostic_risk:
+  expand K
+  run consistency check
+  increase uncertainty
+  abstain from dense overwrite when verification fails
+```
+
+This keeps the architecture state-native while avoiding brittle threshold-only
+safety gates.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached

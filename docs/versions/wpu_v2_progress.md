@@ -860,6 +860,66 @@ harmful in this probe, producing over-dense routing and worse loss. The
 practical next step is a model-internal regret head trained jointly with the WPU
 propagation model, not a post-hoc scalar diagnostic router.
 
+### Priority 6l: Internal Regret-Head Attempt
+
+Output:
+
+- `wpu-cws-indexed-regret-hybrid`
+- `route_regret_head`
+- `route_regret_loss(target_regret)`
+- `--route-regret-loss-weight`
+- `--route-regret-compute-cost`
+- `docs/experiments/wpu_v2_internal_regret_hybrid_pilot/k-sweep.csv`
+
+Question:
+
+```text
+Does the post-hoc regret-routing signal survive when moved into the WPU model
+as a jointly trained route head?
+```
+
+Setup:
+
+- N = 2048
+- K = 8, 16, 32
+- Seeds = 11, 13
+- Hidden dim = 128
+- Steps = 40
+- Samples = 90 per seed
+- Interaction mode = pairwise
+- Pre-tensor indexed working set
+- Counterfactual target: `dense_loss - sparse_loss + 0.05`
+
+Result:
+
+| K | branch accuracy | dense compute | predicted regret mean | negative-regret route ratio |
+| --- | --- | --- | --- | --- |
+| 8 | 0.480 | 0.000 | 0.310 | 0.000 |
+| 16 | 0.530 | 0.000 | 0.330 | 0.000 |
+| 32 | 0.520 | 0.000 | 0.280 | 0.000 |
+
+Interpretation:
+
+This is a useful negative result. The post-hoc state-feature regret regressor
+can reduce loss, but a naive jointly trained internal regret head collapses to
+always-sparse in this short pilot. The failure is visible now because the
+experiment records `route_regret_mean` and `route_regret_negative_ratio`.
+
+The likely issue is not that regret routing is impossible; it is that the
+current internal head receives weak supervision while the propagation model is
+still changing, and the cost-shifted target biases early predictions positive.
+The next version should train regret in stages:
+
+```text
+1. train sparse and dense paths
+2. freeze or slow the propagation core
+3. train regret head on counterfactual losses
+4. unfreeze with a small routed-loss objective
+```
+
+This prevents claiming solved routing prematurely and gives a concrete path to
+make the positive post-hoc result operational.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now

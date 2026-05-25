@@ -51,7 +51,7 @@ class CausalWorkingSetProcessor(nn.Module):
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
             raise ValueError(f"unknown selector: {selector}")
-        if adaptive_route not in {"hard", "learned", "learned_selective", "interaction", "selective_interaction", "geometry"}:
+        if adaptive_route not in {"hard", "learned", "learned_selective", "interaction", "selective_interaction", "geometry", "regret"}:
             raise ValueError(f"unknown adaptive route: {adaptive_route}")
         self.selector = selector
         self.working_set_size = working_set_size
@@ -100,6 +100,12 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.GELU(),
             nn.Linear(max(hidden_dim // 2, 1), 1),
         )
+        self.route_regret_head = nn.Sequential(
+            nn.LayerNorm(hidden_dim + 3),
+            nn.Linear(hidden_dim + 3, max(hidden_dim // 2, 1)),
+            nn.GELU(),
+            nn.Linear(max(hidden_dim // 2, 1), 1),
+        )
         self.geometry_context_encoder = nn.Sequential(
             nn.LayerNorm(1),
             nn.Linear(1, hidden_dim),
@@ -111,6 +117,7 @@ class CausalWorkingSetProcessor(nn.Module):
         self._last_batch: StateGraphBatch | None = None
         self._last_route_dense_weight: torch.Tensor | None = None
         self._last_route_target_weight: torch.Tensor | None = None
+        self._last_route_regret_prediction: torch.Tensor | None = None
 
     def forward(
         self,
@@ -142,6 +149,7 @@ class CausalWorkingSetProcessor(nn.Module):
         self._last_route_target_weight = interaction_dense_teacher.detach()
 
         learned_selective_weight: torch.Tensor | None = None
+        regret_prediction: torch.Tensor | None = None
         if self.adaptive_hybrid and self.adaptive_route == "learned_selective":
             learned_selective_weight = self._learned_interaction_dense_weight(
                 sparse_gathered,
@@ -150,6 +158,15 @@ class CausalWorkingSetProcessor(nn.Module):
                 selector_confidence,
                 interaction_density,
             )
+        if self.adaptive_hybrid and self.adaptive_route == "regret":
+            regret_prediction = self._route_regret_prediction(
+                sparse_gathered,
+                selected_mask,
+                selected_counts,
+                selector_confidence,
+                interaction_density,
+            )
+        self._last_route_regret_prediction = regret_prediction
 
         if force_route == "sparse":
             dense_gathered = sparse_gathered
@@ -176,6 +193,16 @@ class CausalWorkingSetProcessor(nn.Module):
                     )
         elif self.adaptive_hybrid and self.adaptive_route == "selective_interaction":
             dense_sample_mask = interaction_dense_teacher >= self.interaction_dense_threshold
+            dense_gathered = sparse_gathered.clone()
+            dense_compute_weight = dense_sample_mask.to(selector_confidence.dtype)
+            if bool(dense_sample_mask.any().detach().cpu().item()):
+                dense_gathered[dense_sample_mask] = self.working_set_encoder(
+                    sparse_gathered[dense_sample_mask],
+                    src_key_padding_mask=~selected_mask[dense_sample_mask],
+                )
+        elif self.adaptive_hybrid and self.adaptive_route == "regret":
+            assert regret_prediction is not None
+            dense_sample_mask = regret_prediction < 0.0
             dense_gathered = sparse_gathered.clone()
             dense_compute_weight = dense_sample_mask.to(selector_confidence.dtype)
             if bool(dense_sample_mask.any().detach().cpu().item()):
@@ -216,6 +243,9 @@ class CausalWorkingSetProcessor(nn.Module):
         elif self.adaptive_hybrid and self.adaptive_route == "selective_interaction":
             dense_weight = interaction_dense_teacher * dense_compute_weight
             gathered = sparse_gathered * (1.0 - dense_weight.view(-1, 1, 1)) + dense_gathered * dense_weight.view(-1, 1, 1)
+        elif self.adaptive_hybrid and self.adaptive_route == "regret":
+            dense_weight = dense_compute_weight
+            gathered = torch.where(dense_compute_weight.view(-1, 1, 1).bool(), dense_gathered, sparse_gathered)
         elif self.adaptive_hybrid and self.adaptive_route == "geometry":
             dense_weight = torch.zeros_like(selector_confidence)
             geometry_context = self.geometry_context_encoder(interaction_density.unsqueeze(-1))
@@ -287,6 +317,20 @@ class CausalWorkingSetProcessor(nn.Module):
         if self._last_route_dense_weight is None or self._last_route_target_weight is None:
             return torch.tensor(0.0, device=next(self.parameters()).device)
         return F.mse_loss(self._last_route_dense_weight, self._last_route_target_weight)
+
+    def route_regret_prediction(self) -> torch.Tensor:
+        """Return the last predicted dense-vs-sparse regret."""
+
+        if self._last_route_regret_prediction is None:
+            return torch.empty(0, device=next(self.parameters()).device)
+        return self._last_route_regret_prediction
+
+    def route_regret_loss(self, target_regret: torch.Tensor) -> torch.Tensor:
+        """Train a route head to predict dense_loss - sparse_loss."""
+
+        if self._last_route_regret_prediction is None:
+            return torch.tensor(0.0, device=target_regret.device)
+        return F.mse_loss(self._last_route_regret_prediction, target_regret)
 
     def selector_loss(self) -> torch.Tensor:
         """Binary relevance supervision for causal object selection.
@@ -449,6 +493,21 @@ class CausalWorkingSetProcessor(nn.Module):
         interaction = interaction_density.unsqueeze(-1).to(sparse_summary.dtype)
         gate_input = torch.cat([sparse_summary, k_pressure, confidence, interaction], dim=-1)
         return torch.sigmoid(self.interaction_route_gate(gate_input)).squeeze(-1)
+
+    def _route_regret_prediction(
+        self,
+        sparse_gathered: torch.Tensor,
+        selected_mask: torch.Tensor,
+        selected_counts: torch.Tensor,
+        selector_confidence: torch.Tensor,
+        interaction_density: torch.Tensor,
+    ) -> torch.Tensor:
+        sparse_summary = _masked_mean(sparse_gathered, selected_mask)
+        k_pressure = selected_counts.to(sparse_summary.dtype).unsqueeze(-1) / max(float(self.working_set_size), 1.0)
+        confidence = selector_confidence.unsqueeze(-1).to(sparse_summary.dtype)
+        interaction = interaction_density.unsqueeze(-1).to(sparse_summary.dtype)
+        route_input = torch.cat([sparse_summary, k_pressure, confidence, interaction], dim=-1)
+        return self.route_regret_head(route_input).squeeze(-1)
 
     def _interaction_dense_weight(
         self,

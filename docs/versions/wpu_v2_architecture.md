@@ -252,6 +252,12 @@ moderate dense compute cost. This suggests the architectural target should be a
 jointly trained route-regret head. Post-hoc scalar sparse diagnostics are not
 enough; they over-route to dense and increase loss in the current probe.
 
+The first internal regret-head attempt shows that this target is non-trivial.
+A naive jointly trained head collapses to always-sparse in the current pilot.
+The architecture should therefore treat regret routing as a staged optimization
+problem rather than a single auxiliary loss attached to an unstable propagation
+core.
+
 ## 6. Delta/Branch Engine
 
 V2 treats branch prediction as future delta generation, not as a detached

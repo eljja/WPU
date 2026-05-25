@@ -490,6 +490,24 @@ train a model-internal regret head and optimize routed expected loss, not only
 binary dense-needed accuracy
 ```
 
+Internal regret-head attempt:
+
+- `docs/experiments/wpu_v2_internal_regret_hybrid_pilot/k-sweep.csv`
+
+The first internal regret-head implementation is a negative result. The
+post-hoc state-feature regressor can reduce loss, but the jointly trained
+`wpu-cws-indexed-regret-hybrid` collapses to always-sparse in a short pilot:
+predicted regret remains positive and the negative-regret route ratio is zero.
+This means the next experiment should not simply increase model size. It should
+separate optimization phases:
+
+```text
+train sparse/dense propagation -> train regret head on counterfactual losses
+-> fine-tune with routed expected loss and compute cost
+```
+
+This is the more falsifiable route to an operational WPU scheduler.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

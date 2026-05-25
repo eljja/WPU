@@ -53,6 +53,8 @@ def main() -> None:
     parser.add_argument("--selector-loss-weight", type=float, default=0.0)
     parser.add_argument("--route-compute-loss-weight", type=float, default=0.0)
     parser.add_argument("--route-distill-loss-weight", type=float, default=0.0)
+    parser.add_argument("--route-regret-loss-weight", type=float, default=0.0)
+    parser.add_argument("--route-regret-compute-cost", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--seeds", type=int, nargs="+", default=None)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -164,6 +166,10 @@ def _run_condition(
             loss = loss + args.route_compute_loss_weight * model.route_compute_loss()
         if args.route_distill_loss_weight > 0.0 and hasattr(model, "route_distillation_loss"):
             loss = loss + args.route_distill_loss_weight * model.route_distillation_loss()
+        if args.route_regret_loss_weight > 0.0 and hasattr(model, "route_regret_loss"):
+            target_regret = _counterfactual_regret_target(model, batch, labels, args.route_regret_compute_cost)
+            model(batch, num_branches=3, route_branches=3)
+            loss = loss + args.route_regret_loss_weight * model.route_regret_loss(target_regret)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -192,6 +198,8 @@ def _run_condition(
         "interaction_dense_threshold": args.interaction_dense_threshold,
         "route_compute_loss_weight": args.route_compute_loss_weight,
         "route_distill_loss_weight": args.route_distill_loss_weight,
+        "route_regret_loss_weight": args.route_regret_loss_weight,
+        "route_regret_compute_cost": args.route_regret_compute_cost,
         "pre_tensor_indexed": args.pre_tensor_indexed,
         "index_depth": args.index_depth,
         "train_loss": round(last_loss, 6),
@@ -231,6 +239,8 @@ def _evaluate(
     local_dense_ratio_values: list[float] = []
     dense_compute_ratio_values: list[float] = []
     selector_confidence_values: list[float] = []
+    route_regret_values: list[float] = []
+    route_regret_negative_values: list[float] = []
     with torch.no_grad():
         for batch, target_delta, labels, causal_k in loader:
             batch = _move_batch(batch, device)
@@ -250,6 +260,9 @@ def _evaluate(
             local_dense_ratio_values.append(local_dense_ratio)
             dense_compute_ratio_values.append(dense_compute_ratio)
             selector_confidence_values.append(selector_confidence)
+            route_regret, route_regret_negative = _route_regret_stats(model)
+            route_regret_values.append(route_regret)
+            route_regret_negative_values.append(route_regret_negative)
     model.train()
     return {
         "branch_accuracy": round(correct / max(total, 1), 6),
@@ -261,6 +274,8 @@ def _evaluate(
         "local_dense_ratio": round(sum(local_dense_ratio_values) / max(len(local_dense_ratio_values), 1), 6),
         "dense_compute_ratio": round(sum(dense_compute_ratio_values) / max(len(dense_compute_ratio_values), 1), 6),
         "selector_confidence_mean": round(sum(selector_confidence_values) / max(len(selector_confidence_values), 1), 6),
+        "route_regret_mean": round(sum(route_regret_values) / max(len(route_regret_values), 1), 6),
+        "route_regret_negative_ratio": round(sum(route_regret_negative_values) / max(len(route_regret_negative_values), 1), 6),
     }
 
 
@@ -332,6 +347,27 @@ def _working_set_stats(model: torch.nn.Module, causal_k: torch.Tensor) -> tuple[
     return float(causal_k.float().mean().item()), 1.0, 0.0, 1.0, 1.0, 1.0
 
 
+def _counterfactual_regret_target(model: torch.nn.Module, batch, labels: torch.Tensor, compute_cost: float) -> torch.Tensor:
+    with torch.no_grad():
+        sparse_prediction = model(batch, num_branches=3, route_branches=3, force_route="sparse")
+        dense_prediction = model(batch, num_branches=3, route_branches=3, force_route="local_dense")
+        sparse_loss = F.cross_entropy(sparse_prediction.branch_logits, labels, reduction="none")
+        dense_loss = F.cross_entropy(dense_prediction.branch_logits, labels, reduction="none")
+    return (dense_loss - sparse_loss + compute_cost).detach()
+
+
+def _route_regret_stats(model: torch.nn.Module) -> tuple[float, float]:
+    if not hasattr(model, "route_regret_prediction"):
+        return 0.0, 0.0
+    prediction = model.route_regret_prediction()
+    if prediction.numel() == 0:
+        return 0.0, 0.0
+    return (
+        float(prediction.mean().detach().cpu().item()),
+        float((prediction < 0.0).float().mean().detach().cpu().item()),
+    )
+
+
 def _class_weights(dataset: WorkingSetPhysicsDataset) -> torch.Tensor:
     label_counts = Counter(dataset[index].branch_label for index in range(len(dataset)))
     weights = torch.tensor([len(dataset) / max(1, label_counts.get(label, 0)) for label in range(3)], dtype=torch.float32)
@@ -366,6 +402,8 @@ def _failed_row(
         "interaction_dense_threshold": args.interaction_dense_threshold,
         "route_compute_loss_weight": args.route_compute_loss_weight,
         "route_distill_loss_weight": args.route_distill_loss_weight,
+        "route_regret_loss_weight": args.route_regret_loss_weight,
+        "route_regret_compute_cost": args.route_regret_compute_cost,
         "pre_tensor_indexed": args.pre_tensor_indexed,
         "index_depth": args.index_depth,
         "error": error[:500],
@@ -413,6 +451,8 @@ def _save_checkpoint(
             "interaction_dense_threshold": args.interaction_dense_threshold,
             "route_compute_loss_weight": args.route_compute_loss_weight,
             "route_distill_loss_weight": args.route_distill_loss_weight,
+            "route_regret_loss_weight": args.route_regret_loss_weight,
+            "route_regret_compute_cost": args.route_regret_compute_cost,
             "total_objects_n": total_n,
             "causal_k": 4 + causal_obstacles,
             "adversarial_distractors": adversarial_distractors,

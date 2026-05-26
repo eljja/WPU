@@ -50,6 +50,8 @@ global attention over all objects.
 Output:
 
 - `docs/experiments/wpu_v2_staged_k_expansion_interaction_initial4_5seed.csv`
+- `docs/experiments/wpu_v2_selection_composition.csv`
+- `docs/experiments/wpu_v2_selection_composition_results.md`
 
 ## Overall Result
 
@@ -97,6 +99,28 @@ initial working set but expansion is still not beneficial. This means the
 remaining bottleneck is no longer only retrieval order. The sparse propagation
 operator must better aggregate interaction evidence once the local causal set
 becomes large.
+
+## Mechanism Check
+
+The selection-composition diagnostic explains why interaction retrieval helps.
+At budget 4, indexed retrieval keeps the hand but admits no obstacles.
+Proximity retrieval admits obstacles but often drops the hand. Interaction
+retrieval keeps the hand and selects high-density obstacle pairs:
+
+| K | selection | selected obstacles | hand hit | selected obstacle-pair density |
+| --- | --- | --- | --- | --- |
+| 8 | indexed | 0.000 | 1.000 | 0.000 |
+| 8 | proximity | 2.246 | 0.398 | 0.254 |
+| 8 | interaction | 2.000 | 1.000 | 0.625 |
+| 16 | indexed | 0.000 | 1.000 | 0.000 |
+| 16 | proximity | 2.504 | 0.332 | 0.551 |
+| 16 | interaction | 2.000 | 1.000 | 0.812 |
+| 32 | indexed | 0.000 | 1.000 | 0.000 |
+| 32 | proximity | 2.590 | 0.301 | 0.799 |
+| 32 | interaction | 2.000 | 1.000 | 0.902 |
+
+This supports the mechanism-level claim: WPU needs retrieval that preserves
+the relevant state structure, not only a small K.
 
 ## Updated Direction
 

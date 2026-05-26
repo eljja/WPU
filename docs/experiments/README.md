@@ -24,6 +24,8 @@ Use these reports for paper-level claims:
 - `wpu_v2_interaction_retrieval_results.md`: interaction-density retrieval
   follow-up showing that state-native retrieval should rank local causal
   structure, not only relation order or target proximity.
+- `wpu_v2_selection_composition_results.md`: mechanism audit for indexed,
+  proximity, and interaction retrieval composition.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.

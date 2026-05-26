@@ -30,6 +30,7 @@ from scripts.structured_verifier_probe import (  # noqa: E402
 from wpu.data.working_set_physics import (  # noqa: E402
     WorkingSetPhysicsDataset,
     collate_indexed_working_set_samples,
+    collate_proximity_working_set_samples,
 )
 from wpu.models.factory import create_model  # noqa: E402
 
@@ -59,6 +60,7 @@ def main() -> None:
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--interaction-mode", choices=["standard", "pairwise"], default="pairwise")
     parser.add_argument("--index-depth", type=int, default=1)
+    parser.add_argument("--selection-mode", choices=["indexed", "proximity"], default="indexed")
     parser.add_argument("--quantiles", type=float, nargs="+", default=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--out", type=Path, default=Path("artifacts/staged_k_expansion_hybrid.csv"))
@@ -208,6 +210,7 @@ def _run_condition(
                 "total_objects_n": background_objects + 4 + causal_obstacles,
                 "causal_k": 4 + causal_obstacles,
                 "interaction_mode": args.interaction_mode,
+                "selection_mode": args.selection_mode,
                 "hidden_dim": args.hidden_dim,
                 "layers": args.layers,
                 "initial_working_set_size": args.initial_working_set_size,
@@ -417,12 +420,17 @@ def _mean_expansion_policy_loss(
 
 def _dual_collate(args: argparse.Namespace):
     def collate(samples):
-        initial_batch, _, labels, _ = collate_indexed_working_set_samples(
+        collate_fn = (
+            collate_proximity_working_set_samples
+            if args.selection_mode == "proximity"
+            else collate_indexed_working_set_samples
+        )
+        initial_batch, _, labels, _ = collate_fn(
             samples,
             max_nodes=args.initial_working_set_size,
             max_depth=args.index_depth,
         )
-        expanded_batch, _, expanded_labels, _ = collate_indexed_working_set_samples(
+        expanded_batch, _, expanded_labels, _ = collate_fn(
             samples,
             max_nodes=args.expanded_working_set_size,
             max_depth=args.index_depth,

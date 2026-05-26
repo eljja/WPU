@@ -86,7 +86,16 @@ Current prototype:
 
 - `wpu.core.causal_index.CausalIndex`
 - `collate_indexed_working_set_samples`
+- `collate_proximity_working_set_samples`
 - `--pre-tensor-indexed` in `scripts/causal_working_set_experiment.py`
+
+The proximity-ranked collate path is the first implementation of spatial
+priority inside pre-tensor retrieval. It keeps the same state interface as
+indexed retrieval, but ranks the event-local relation frontier by geometry
+before tensorization. The five-seed result is mixed: it improves the initial
+under-complete working set at K=16, but it does not solve K=32 or make
+expansion gates reliably beneficial. This means proximity should become one
+signal in the causal index, not the whole retriever.
 
 ## 3. Event-Conditioned Causal Retriever
 
@@ -422,6 +431,10 @@ Current implementation status:
   separate sparse and dense expansion paths. Sparse expansion has a narrow
   positive regime when initial K is under-complete; dense expansion is not a
   good default.
+- Implemented experimentally: proximity-ranked pre-tensor retrieval. It shows
+  that admitting physically relevant objects earlier can improve an
+  under-complete working set, but expansion still needs better triggers and
+  relation-typed frontier growth.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 
@@ -491,3 +504,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   only oracle upper-bound loss.
 - Evidence that expanded sparse propagation remains stable as K grows, because
   expanded dense recompute currently degrades on the synthetic CWS task.
+- Evidence that retrieval ranking is state-native and physically meaningful,
+  because insertion-ordered relation BFS and naive K growth are not sufficient.

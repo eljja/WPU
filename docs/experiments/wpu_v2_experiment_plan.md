@@ -749,6 +749,32 @@ The next implementation should focus on sparse relation-frontier expansion and
 better verifier triggers. Dense recompute over the expanded subgraph is not the
 right default.
 
+Proximity-ranked retrieval follow-up:
+
+- `collate_proximity_working_set_samples`
+- `--selection-mode proximity`
+- `docs/experiments/wpu_v2_proximity_expansion_results.md`
+
+The follow-up tests whether the missing piece is the expansion decision or the
+ordering of state admitted into the working set. With N=2048, K=8/16/32, five
+seeds, initial working set 4, and expanded working set 32, proximity improves
+the initial calibrated route at K=16 but does not improve the deployed expansion
+gate overall:
+
+| selection | policy | loss | total compute | accuracy |
+| --- | --- | --- | --- | --- |
+| indexed | initial calibrated regret | 0.968 | 0.215 | 0.493 |
+| indexed | physical sparse expansion | 0.964 | 0.251 | 0.500 |
+| proximity | initial calibrated regret | 0.965 | 0.256 | 0.498 |
+| proximity | physical sparse expansion | 0.967 | 0.265 | 0.496 |
+
+Interpretation:
+
+The next retriever should be state-native and ranked, not merely relation-order
+BFS. However, simple proximity is not enough. The next falsifiable experiment is
+a learned or relation-typed retriever that reports selected-object composition,
+top-k causal recall, and downstream loss under the same held-out seed protocol.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

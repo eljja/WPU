@@ -1375,6 +1375,47 @@ expansion over a larger subgraph is worse than sparse expansion. The next WPU
 mechanism should therefore be selective sparse K expansion followed by local
 propagation, not larger local attention.
 
+### Priority 6x: Proximity-Ranked Working-Set Retrieval
+
+Output:
+
+- `docs/experiments/wpu_v2_staged_k_expansion_proximity_initial4_5seed.csv`
+- `docs/experiments/wpu_v2_proximity_expansion_results.md`
+
+Question:
+
+```text
+Is the deployed expansion bottleneck the expansion decision, or the ordering of
+objects admitted into the initial working set?
+```
+
+Result:
+
+| selection | policy | loss | loss delta | total compute | accuracy |
+| --- | --- | --- | --- | --- | --- |
+| indexed | initial calibrated regret | 0.968 | -0.032 | 0.215 | 0.493 |
+| indexed | physical sparse expansion | 0.964 | -0.035 | 0.251 | 0.500 |
+| proximity | initial calibrated regret | 0.965 | -0.025 | 0.256 | 0.498 |
+| proximity | physical sparse expansion | 0.967 | -0.024 | 0.265 | 0.496 |
+
+K-specific finding:
+
+| K | indexed initial loss | proximity initial loss | indexed expansion loss | proximity expansion loss |
+| --- | --- | --- | --- | --- |
+| 8 | 0.965 | 0.963 | 0.966 | 0.965 |
+| 16 | 0.960 | 0.952 | 0.947 | 0.952 |
+| 32 | 0.978 | 0.981 | 0.980 | 0.983 |
+
+Interpretation:
+
+The result changes the v2 mechanism. Proximity-ranked retrieval improves the
+initial under-complete working set at K=16 because nearby causal obstacles enter
+before insertion-ordered frontier objects. However, it does not improve the
+deployed expansion gate, and it slightly worsens K=32 loss. Therefore the next
+step is not "expand more." It is better state-native retrieval ranking and
+relation-typed sparse propagation. Expansion should be triggered only when the
+initial state retriever exposes missing-interaction evidence.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1383,8 +1424,8 @@ clearer:
 1. State Store: keep BaseState + DeltaState as the core memory abstraction.
 2. Causal Index: move retrieval before tensorization; this is the biggest v2
    systems milestone.
-3. Event-Conditioned Retriever: make learned retrieval compete with indexed and
-   oracle retrieval under distractors.
+3. Event-Conditioned Retriever: make learned and proximity-ranked retrieval
+   compete with indexed and oracle retrieval under distractors.
 4. Adaptive K Scheduler: expose K growth as a controlled decision, not a fixed
    hyperparameter; hard, learned, interaction-aware, and forced counterfactual
    route variants now exist.
@@ -1435,7 +1476,11 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > actual verification-triggered K expansion. The first deployed K-expansion
 > experiment supports this direction only in a narrow regime: sparse expansion
 > helps when the initial working set is under-complete, while dense or universal
-> expansion hurts.
+> expansion hurts. The proximity-ranked retrieval follow-up shows that part of
+> the benefit can come from admitting physically relevant state earlier, not
+> from expansion itself. This narrows the v2 claim further: WPU needs a
+> state-native causal retriever and sparse propagation operator that preserve
+> the right local causal set before spending more K or dense compute.
 
 ## Next Required Work
 
@@ -1451,6 +1496,10 @@ Before claiming v2 as a strong experimental result:
   sweeps, five-seed validation, and learned/calibrated routing. Staged regret
   routing plus structured verification is now the best current candidate for
   this path.
+- Replace insertion-ordered relation frontier retrieval with spatial,
+  relation-typed, and learned state-native ranking. The proximity experiment
+  shows this can improve the initial working set, but simple geometry is not
+  enough at K=32.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

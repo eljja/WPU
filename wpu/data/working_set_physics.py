@@ -256,6 +256,33 @@ def collate_indexed_working_set_samples(
     return batch, targets, labels, causal_k
 
 
+def collate_proximity_working_set_samples(
+    samples: list[WorkingSetPhysicsSample],
+    *,
+    max_nodes: int = 16,
+    max_depth: int = 1,
+) -> tuple[StateGraphBatch, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Collate an event-local subgraph ranked by state geometry before tensorization.
+
+    The indexed path answers "which objects are reachable from the event target?"
+    but not "which reachable objects are physically most relevant?"  This variant
+    keeps the same sparse state interface and ranks the relation frontier by
+    distance to the event target with small type biases for contact-critical
+    objects.  It remains a deterministic state-native retrieval rule, not a
+    token fallback.
+    """
+
+    return _collate_projected_working_set_samples(
+        samples,
+        selector=lambda state, event: _proximity_object_ids(
+            state,
+            event,
+            max_nodes=max_nodes,
+            max_depth=max_depth,
+        ),
+    )
+
+
 def _indexed_object_ids(state: WorldState, event: Event, *, max_nodes: int, max_depth: int) -> list[str]:
     if event.target not in state.objects:
         return list(state.objects)[:max_nodes]
@@ -276,6 +303,98 @@ def _indexed_object_ids(state: WorldState, event: Event, *, max_nodes: int, max_
                 break
             frontier.append((other, depth + 1))
     return selected
+
+
+def _collate_projected_working_set_samples(
+    samples: list[WorkingSetPhysicsSample],
+    *,
+    selector,
+) -> tuple[StateGraphBatch, torch.Tensor, torch.Tensor, torch.Tensor]:
+    projected_states: list[WorldState] = []
+    projected_targets: list[torch.Tensor] = []
+    for sample in samples:
+        original_ids = list(sample.state.objects)
+        selected_ids = selector(sample.state, sample.event)
+        projected_states.append(_project_state(sample.state, selected_ids))
+        selected_target = torch.zeros((len(selected_ids), OBJECT_FEATURE_DIM), dtype=torch.float32)
+        original_index = {object_id: index for index, object_id in enumerate(original_ids)}
+        for selected_index, object_id in enumerate(selected_ids):
+            source_index = original_index.get(object_id)
+            if source_index is not None and source_index < sample.target_object_delta.size(0):
+                selected_target[selected_index] = sample.target_object_delta[source_index]
+        projected_targets.append(selected_target)
+
+    batch = StateGraphBatch.from_world_states(projected_states, [sample.event for sample in samples])
+    max_objects = batch.object_features.size(1)
+    targets = torch.zeros((len(samples), max_objects, OBJECT_FEATURE_DIM), dtype=torch.float32)
+    labels = torch.tensor([sample.branch_label for sample in samples], dtype=torch.long)
+    causal_k = torch.tensor([sample.causal_working_set_size for sample in samples], dtype=torch.long)
+    for index, target in enumerate(projected_targets):
+        targets[index, : target.size(0)] = target
+    return batch, targets, labels, causal_k
+
+
+def _proximity_object_ids(state: WorldState, event: Event, *, max_nodes: int, max_depth: int) -> list[str]:
+    if event.target not in state.objects:
+        return list(state.objects)[:max_nodes]
+    target_xy = _object_xy(state, event.target)
+    candidates = _relation_frontier_object_ids(state, event.target, max_depth=max_depth)
+    candidates = [object_id for object_id in candidates if object_id != event.target and object_id in state.objects]
+    ranked = sorted(
+        candidates,
+        key=lambda object_id: (
+            _proximity_score(state, object_id, target_xy),
+            object_id,
+        ),
+    )
+    selected = [event.target]
+    for object_id in ranked:
+        if object_id not in selected:
+            selected.append(object_id)
+        if len(selected) >= max_nodes:
+            break
+    return selected
+
+
+def _relation_frontier_object_ids(state: WorldState, target_id: str, *, max_depth: int) -> list[str]:
+    selected: list[str] = []
+    visited = {target_id}
+    frontier = [(target_id, 0)]
+    while frontier:
+        object_id, depth = frontier.pop(0)
+        if depth >= max_depth:
+            continue
+        for relation in state.relations_for(object_id):
+            other = relation.other(object_id)
+            if other is None or other in visited or other not in state.objects:
+                continue
+            visited.add(other)
+            selected.append(other)
+            frontier.append((other, depth + 1))
+    return selected
+
+
+def _proximity_score(state: WorldState, object_id: str, target_xy: tuple[float, float]) -> float:
+    obj = state.objects[object_id]
+    type_bias = {
+        "robot_hand": -0.05,
+        "table_edge": 0.0,
+        "obstacle": 0.02,
+        "table": 0.1,
+        "background_object": 1.0,
+    }.get(obj.type, 0.5)
+    return _distance_xy(_object_xy(state, object_id), target_xy) + type_bias
+
+
+def _object_xy(state: WorldState, object_id: str) -> tuple[float, float]:
+    position = state.objects[object_id].attributes.get("position", [0.0, 0.0, 0.0])
+    if not isinstance(position, (list, tuple)) or len(position) < 2:
+        return 0.0, 0.0
+    return float(position[0]), float(position[1])
+
+
+def _distance_xy(left: tuple[float, float], right: tuple[float, float]) -> float:
+    return ((left[0] - right[0]) ** 2 + (left[1] - right[1]) ** 2) ** 0.5
 
 
 def _project_state(state: WorldState, object_ids: list[str]) -> WorldState:
@@ -319,6 +438,7 @@ __all__ = [
     "WorkingSetPhysicsDataset",
     "WorkingSetPhysicsSample",
     "collate_indexed_working_set_samples",
+    "collate_proximity_working_set_samples",
     "collate_working_set_samples",
     "create_causal_working_set_state",
 ]

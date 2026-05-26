@@ -26,6 +26,9 @@ Use these reports for paper-level claims:
   structure, not only relation order or target proximity.
 - `wpu_v2_selection_composition_results.md`: mechanism audit for indexed,
   proximity, and interaction retrieval composition.
+- `wpu_v2_learned_retriever_probe_results.md`: tests whether the
+  interaction-density retriever can be reproduced by a small state-native MLP
+  under held-out seeds.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -71,6 +74,9 @@ Historical or preliminary reports:
 - Interaction-density retrieval is the current best v2 retrieval result: it
   improves the best deployed loss in the pairwise CWS task while staying
   state-native and pre-tensor.
+- A small learned state retriever can reproduce the interaction teacher's
+  composition with high held-out overlap, so the hand-built rule is not the
+  final mechanism.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

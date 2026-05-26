@@ -1455,6 +1455,38 @@ proximity. The result is still bounded: K=32 improves only slightly, and
 expansion still does not help there. The next bottleneck is relation-typed
 sparse propagation over a larger local causal set.
 
+### Priority 6z: Learned State-Native Retriever Probe
+
+Output:
+
+- `scripts/learned_retriever_probe.py`
+- `docs/experiments/wpu_v2_learned_retriever_probe.csv`
+- `docs/experiments/wpu_v2_learned_retriever_probe_results.md`
+
+Question:
+
+```text
+Can a small state-native MLP reproduce the interaction retriever's selected
+working-set composition under held-out seeds?
+```
+
+Result:
+
+| K | learned teacher overlap | learned hand hit | learned selected obstacles | learned pair density |
+| --- | --- | --- | --- | --- |
+| 8 | 0.953 | 1.000 | 2.000 | 0.559 |
+| 16 | 0.938 | 1.000 | 2.000 | 0.831 |
+| 32 | 0.912 | 1.000 | 2.000 | 0.878 |
+
+Interpretation:
+
+The hand-built interaction selector is not yet the final mechanism, but its
+state-local structure is learnable. A small MLP over explicit state features
+preserves the contact hand anchor and high-density obstacle-pair composition
+under held-out seeds. The next step is to integrate learned retrieval into the
+actual WPU training loop and train it from downstream regret, causal recall, and
+rollout consistency rather than only from the hand-built teacher.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1523,7 +1555,10 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > the right local causal set before spending more K or dense compute.
 > The interaction-density retrieval follow-up is the current best evidence for
 > this refinement: ranking state-local interaction structure improves deployed
-> loss while remaining sparse and pre-tensor.
+> loss while remaining sparse and pre-tensor. The learned-retriever probe then
+> shows that this retrieval structure can be approximated by a small
+> state-native MLP under held-out seeds, so v2 can move beyond hand-written
+> retrieval rules without returning to token serialization.
 
 ## Next Required Work
 
@@ -1546,6 +1581,8 @@ Before claiming v2 as a strong experimental result:
 - Turn interaction-density retrieval from a hand-built selector into either a
   learned state retriever or a relation-typed propagation operator, and report
   selected-object composition plus top-k causal recall.
+- Integrate the learned retriever probe into the WPU path and train it against
+  downstream regret, causal recall, and rollout consistency.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

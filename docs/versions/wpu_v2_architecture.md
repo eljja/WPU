@@ -105,6 +105,12 @@ far among indexed, proximity, and interaction retrieval. This strengthens the
 architectural claim that WPU retrieval should be structured over world state,
 not just sparse by object count.
 
+The learned retriever probe shows that this structured ranking can be
+approximated by a small MLP over explicit state features under held-out seeds.
+This is not yet an integrated WPU retriever, but it removes one weakness in the
+argument: the best current retrieval rule is hand-built, but its composition is
+learnable without token serialization.
+
 ## 3. Event-Conditioned Causal Retriever
 
 The retriever chooses the initial affected set. V1 shows that oracle CWS can
@@ -446,6 +452,9 @@ Current implementation status:
 - Implemented experimentally: interaction-density pre-tensor retrieval. It
   improves deployed loss in the pairwise CWS task by ranking local causal
   structure before propagation.
+- Implemented experimentally: learned retriever probe that distills the
+  interaction-density selector into a small state-native MLP and evaluates
+  selected working-set composition under held-out seeds.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 
@@ -519,3 +528,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   because insertion-ordered relation BFS and naive K growth are not sufficient.
 - Evidence that local interaction structure can be recovered by the retriever
   or propagation core, not only by larger dense recompute.
+- Evidence that state-native retrieval can be learned from supervision beyond
+  hand-written heuristics.

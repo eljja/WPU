@@ -32,7 +32,7 @@ Setup:
 - Test samples per seed = 160
 - Teacher = `collate_interaction_working_set_samples`
 - Student = small MLP over object type, target-relative geometry, relation
-  features, local obstacle density, and event force
+  features, local obstacle density, event force, and state-index fanout context
 
 The student is not a token model. It ranks explicit candidate objects from the
 event-local relation frontier.

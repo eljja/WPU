@@ -1526,6 +1526,37 @@ loss/compute. K=8 is weaker, so teacher distillation is not a final retriever.
 The next retriever should be trained from downstream regret and rollout
 consistency, not only from hand-built teacher labels.
 
+### Priority 6ab: Cross-K Learned Retriever Generalization
+
+Output:
+
+- `scripts/learned_retriever_cross_k_probe.py`
+- `docs/experiments/wpu_v2_learned_retriever_cross_k_probe.csv`
+- `docs/experiments/wpu_v2_learned_retriever_cross_k_results.md`
+
+Question:
+
+```text
+Does a learned state retriever generalize across causal working-set sizes, or
+does it need a separate retriever per K regime?
+```
+
+Result:
+
+| train K | test K=8 overlap | test K=16 overlap | test K=32 overlap |
+| --- | --- | --- | --- |
+| 16 | 0.878 | 0.939 | 0.475 |
+| 8,16,32 + fanout context | 0.968 | 0.958 | 0.955 |
+
+Interpretation:
+
+This experiment found and fixed a real generalization problem. A K=16-only
+retriever does not transfer to K=32. Naive mixed-K training also fails because
+large candidate frontiers dominate the objective. Adding explicit state-index
+fanout context and balancing the train-K loss makes the learned retriever
+generalize across K=8,16,32. This is a strong v2 design constraint: the
+retriever should receive frontier/fanout metadata from the state index.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1600,7 +1631,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > retrieval rules without returning to token serialization. The integrated
 > learned-retrieval run confirms that the learned retriever can be inserted into
 > the WPU propagation/regret pipeline while preserving most of the downstream
-> benefit.
+> benefit. The cross-K retrieval probe adds a further constraint: learned
+> retrieval generalizes across K only when it receives explicit state-index
+> fanout context and the training objective balances K regimes.
 
 ## Next Required Work
 
@@ -1627,6 +1660,8 @@ Before claiming v2 as a strong experimental result:
   downstream regret, causal recall, and rollout consistency.
 - Replace teacher-distilled retrieval with downstream-regret retrieval and
   report confidence/composition to the scheduler.
+- Make the integrated learned retriever mixed-K and fanout-aware instead of
+  training a separate retriever per K condition.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

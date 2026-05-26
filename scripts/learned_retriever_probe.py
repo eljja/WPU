@@ -21,7 +21,7 @@ from wpu.data.working_set_physics import (  # noqa: E402
 )
 
 
-FEATURE_DIM = 14
+FEATURE_DIM = 16
 
 
 def main() -> None:
@@ -189,6 +189,7 @@ def _candidate_features(state: WorldState, event: Event, object_id: str) -> torc
     dy = object_xy[1] - target_xy[1]
     distance = (dx * dx + dy * dy) ** 0.5
     obstacle_ids = [candidate for candidate in _candidate_ids(state, event) if state.objects[candidate].type == "obstacle"]
+    candidate_ids = _candidate_ids(state, event)
     local_density = _local_obstacle_density(state, object_id, obstacle_ids) if obj.type == "obstacle" else 0.0
     axis_alignment = 1.0 if abs(dx) < 0.05 else 0.0
     relation_strength, relation_confidence, relation_near, relation_support = _relation_features_to_target(state, event.target, object_id)
@@ -212,6 +213,8 @@ def _candidate_features(state: WorldState, event: Event, object_id: str) -> torc
             relation_near,
             relation_support,
             force,
+            len(candidate_ids) / 64.0,
+            len(obstacle_ids) / 64.0,
         ],
         dtype=torch.float32,
     )

@@ -116,6 +116,12 @@ tensorization in the staged WPU experiment. It preserves most of the
 interaction retriever's downstream loss gain, so learned state-native retrieval
 is now a concrete v2 path rather than only a diagnostic probe.
 
+The cross-K retriever probe adds an important constraint. A learned retriever
+trained in one K regime does not automatically transfer to larger K. Mixed-K
+training works only after adding explicit state-index fanout context and
+balancing the K regimes. The retriever should therefore consume metadata from
+the causal index, not only per-object features.
+
 ## 3. Event-Conditioned Causal Retriever
 
 The retriever chooses the initial affected set. V1 shows that oracle CWS can
@@ -462,6 +468,8 @@ Current implementation status:
   selected working-set composition under held-out seeds.
 - Implemented experimentally: integrated learned-interaction retrieval in the
   staged propagation/regret/K-expansion pipeline.
+- Implemented experimentally: cross-K learned retriever probe showing that
+  fanout/context features are required for K-regime generalization.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 
@@ -539,3 +547,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   hand-written heuristics.
 - Evidence that learned retrieval preserves downstream WPU loss, not only
   selected-object overlap.
+- Evidence that learned retrieval generalizes across K regimes with explicit
+  state-index context.

@@ -32,6 +32,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_learned_retriever_integrated_results.md`: inserts the learned
   retriever into the staged WPU propagation/regret/expansion pipeline and
   compares downstream loss.
+- `wpu_v2_learned_retriever_cross_k_results.md`: tests whether learned
+  retrieval generalizes across K regimes and identifies fanout context as a
+  required state-native input.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -83,6 +86,9 @@ Historical or preliminary reports:
 - Integrated learned retrieval preserves most of the interaction retriever's
   downstream advantage and is now the preferred direction over fixed
   hand-written retrieval rules.
+- Cross-K retrieval needs explicit state-index context. Mixed-K training with
+  fanout features generalizes across K=8,16,32; K=16-only training fails at
+  K=32.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

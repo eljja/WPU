@@ -87,6 +87,7 @@ Current prototype:
 - `wpu.core.causal_index.CausalIndex`
 - `collate_indexed_working_set_samples`
 - `collate_proximity_working_set_samples`
+- `collate_interaction_working_set_samples`
 - `--pre-tensor-indexed` in `scripts/causal_working_set_experiment.py`
 
 The proximity-ranked collate path is the first implementation of spatial
@@ -96,6 +97,13 @@ before tensorization. The five-seed result is mixed: it improves the initial
 under-complete working set at K=16, but it does not solve K=32 or make
 expansion gates reliably beneficial. This means proximity should become one
 signal in the causal index, not the whole retriever.
+
+The interaction-density collate path is the next retrieval operator. It ranks
+frontier obstacles by local obstacle-obstacle density while preserving contact
+anchors. In the five-seed pairwise CWS test, it gives the best deployed loss so
+far among indexed, proximity, and interaction retrieval. This strengthens the
+architectural claim that WPU retrieval should be structured over world state,
+not just sparse by object count.
 
 ## 3. Event-Conditioned Causal Retriever
 
@@ -435,6 +443,9 @@ Current implementation status:
   that admitting physically relevant objects earlier can improve an
   under-complete working set, but expansion still needs better triggers and
   relation-typed frontier growth.
+- Implemented experimentally: interaction-density pre-tensor retrieval. It
+  improves deployed loss in the pairwise CWS task by ranking local causal
+  structure before propagation.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 
@@ -506,3 +517,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   expanded dense recompute currently degrades on the synthetic CWS task.
 - Evidence that retrieval ranking is state-native and physically meaningful,
   because insertion-ordered relation BFS and naive K growth are not sufficient.
+- Evidence that local interaction structure can be recovered by the retriever
+  or propagation core, not only by larger dense recompute.

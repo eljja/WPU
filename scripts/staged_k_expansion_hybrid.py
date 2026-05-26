@@ -30,6 +30,7 @@ from scripts.structured_verifier_probe import (  # noqa: E402
 from wpu.data.working_set_physics import (  # noqa: E402
     WorkingSetPhysicsDataset,
     collate_indexed_working_set_samples,
+    collate_interaction_working_set_samples,
     collate_proximity_working_set_samples,
 )
 from wpu.models.factory import create_model  # noqa: E402
@@ -60,7 +61,7 @@ def main() -> None:
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--interaction-mode", choices=["standard", "pairwise"], default="pairwise")
     parser.add_argument("--index-depth", type=int, default=1)
-    parser.add_argument("--selection-mode", choices=["indexed", "proximity"], default="indexed")
+    parser.add_argument("--selection-mode", choices=["indexed", "proximity", "interaction"], default="indexed")
     parser.add_argument("--quantiles", type=float, nargs="+", default=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--out", type=Path, default=Path("artifacts/staged_k_expansion_hybrid.csv"))
@@ -420,11 +421,7 @@ def _mean_expansion_policy_loss(
 
 def _dual_collate(args: argparse.Namespace):
     def collate(samples):
-        collate_fn = (
-            collate_proximity_working_set_samples
-            if args.selection_mode == "proximity"
-            else collate_indexed_working_set_samples
-        )
+        collate_fn = _collate_for_selection(args.selection_mode)
         initial_batch, _, labels, _ = collate_fn(
             samples,
             max_nodes=args.initial_working_set_size,
@@ -440,6 +437,16 @@ def _dual_collate(args: argparse.Namespace):
         return initial_batch, expanded_batch, labels
 
     return collate
+
+
+def _collate_for_selection(selection_mode: str):
+    if selection_mode == "proximity":
+        return collate_proximity_working_set_samples
+    if selection_mode == "interaction":
+        return collate_interaction_working_set_samples
+    if selection_mode == "indexed":
+        return collate_indexed_working_set_samples
+    raise ValueError(f"unknown selection mode: {selection_mode}")
 
 
 def _as_regret_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:

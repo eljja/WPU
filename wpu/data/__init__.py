@@ -1,6 +1,7 @@
 from wpu.data.object_physics import ObjectPhysicsDataset, create_robot_cup_state
 from wpu.data.working_set_physics import (
     WorkingSetPhysicsDataset,
+    collate_interaction_working_set_samples,
     collate_proximity_working_set_samples,
     create_causal_working_set_state,
 )
@@ -8,6 +9,7 @@ from wpu.data.working_set_physics import (
 __all__ = [
     "ObjectPhysicsDataset",
     "WorkingSetPhysicsDataset",
+    "collate_interaction_working_set_samples",
     "collate_proximity_working_set_samples",
     "create_causal_working_set_state",
     "create_robot_cup_state",

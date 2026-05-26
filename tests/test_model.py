@@ -4,6 +4,7 @@ from wpu.data.object_physics import ObjectPhysicsDataset, collate_physics_sample
 from wpu.data.working_set_physics import (
     WorkingSetPhysicsDataset,
     collate_indexed_working_set_samples,
+    collate_interaction_working_set_samples,
     collate_proximity_working_set_samples,
     collate_working_set_samples,
 )
@@ -420,5 +421,34 @@ def test_pre_tensor_proximity_collate_prioritizes_physical_frontier() -> None:
     assert "context_00000" not in object_ids
 
     model = create_model("wpu-cws-indexed-regret-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=8)
+    prediction = model(batch, num_branches=3)
+    assert prediction.branch_probabilities.shape == (1, 3)
+
+
+def test_pre_tensor_interaction_collate_prioritizes_obstacle_pairs() -> None:
+    dataset = WorkingSetPhysicsDataset(
+        size=1,
+        seed=11,
+        background_objects=128,
+        causal_obstacles=16,
+        interaction_mode="pairwise",
+    )
+
+    batch, target_delta, labels, causal_k = collate_interaction_working_set_samples(
+        [dataset[0]],
+        max_nodes=4,
+        max_depth=1,
+    )
+    object_ids = batch.object_ids[0] if batch.object_ids is not None else []
+
+    assert batch.object_features.shape[1] == 4
+    assert target_delta.shape[1] == batch.object_features.shape[1]
+    assert labels.tolist() in ([0], [1], [2])
+    assert causal_k.tolist() == [20]
+    assert object_ids[0] == "cup_001"
+    assert "hand_001" in object_ids
+    assert sum(object_id.startswith("obstacle_") for object_id in object_ids) >= 2
+
+    model = create_model("wpu-cws-indexed-regret-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=4)
     prediction = model(batch, num_branches=3)
     assert prediction.branch_probabilities.shape == (1, 3)

@@ -283,6 +283,33 @@ def collate_proximity_working_set_samples(
     )
 
 
+def collate_interaction_working_set_samples(
+    samples: list[WorkingSetPhysicsSample],
+    *,
+    max_nodes: int = 16,
+    max_depth: int = 1,
+) -> tuple[StateGraphBatch, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Collate an event-local subgraph ranked by local interaction density.
+
+    Pairwise physical events are not always captured by distance to the event
+    target.  A cup may be affected by nearby obstacle pairs, contacts, or local
+    crowding.  This selector ranks candidate obstacle objects by their
+    state-local neighbor density while still keeping contact anchors such as
+    the hand.  It tests whether a WPU retriever can use structured state
+    relations beyond insertion order or target proximity.
+    """
+
+    return _collate_projected_working_set_samples(
+        samples,
+        selector=lambda state, event: _interaction_object_ids(
+            state,
+            event,
+            max_nodes=max_nodes,
+            max_depth=max_depth,
+        ),
+    )
+
+
 def _indexed_object_ids(state: WorldState, event: Event, *, max_nodes: int, max_depth: int) -> list[str]:
     if event.target not in state.objects:
         return list(state.objects)[:max_nodes]
@@ -356,6 +383,30 @@ def _proximity_object_ids(state: WorldState, event: Event, *, max_nodes: int, ma
     return selected
 
 
+def _interaction_object_ids(state: WorldState, event: Event, *, max_nodes: int, max_depth: int) -> list[str]:
+    if event.target not in state.objects:
+        return list(state.objects)[:max_nodes]
+    target_xy = _object_xy(state, event.target)
+    candidates = _relation_frontier_object_ids(state, event.target, max_depth=max_depth)
+    candidates = [object_id for object_id in candidates if object_id != event.target and object_id in state.objects]
+    obstacle_ids = [object_id for object_id in candidates if state.objects[object_id].type == "obstacle"]
+    anchors = [object_id for object_id in candidates if state.objects[object_id].type == "robot_hand"]
+    ranked = sorted(
+        [object_id for object_id in candidates if object_id not in anchors],
+        key=lambda object_id: (
+            _interaction_score(state, object_id, target_xy, obstacle_ids),
+            object_id,
+        ),
+    )
+    selected = [event.target]
+    for object_id in [*anchors, *ranked]:
+        if object_id not in selected:
+            selected.append(object_id)
+        if len(selected) >= max_nodes:
+            break
+    return selected
+
+
 def _relation_frontier_object_ids(state: WorldState, target_id: str, *, max_depth: int) -> list[str]:
     selected: list[str] = []
     visited = {target_id}
@@ -384,6 +435,38 @@ def _proximity_score(state: WorldState, object_id: str, target_xy: tuple[float, 
         "background_object": 1.0,
     }.get(obj.type, 0.5)
     return _distance_xy(_object_xy(state, object_id), target_xy) + type_bias
+
+
+def _interaction_score(
+    state: WorldState,
+    object_id: str,
+    target_xy: tuple[float, float],
+    obstacle_ids: list[str],
+) -> float:
+    obj = state.objects[object_id]
+    if obj.type == "robot_hand":
+        return -3.0 + 0.05 * _distance_xy(_object_xy(state, object_id), target_xy)
+    if obj.type == "obstacle":
+        density = _local_obstacle_density(state, object_id, obstacle_ids)
+        axis_alignment = 1.0 if abs(_object_xy(state, object_id)[0] - target_xy[0]) < 0.05 else 0.0
+        target_distance = _distance_xy(_object_xy(state, object_id), target_xy)
+        return -2.0 - 2.0 * density - 0.1 * axis_alignment + 0.05 * target_distance
+    if obj.type == "table_edge":
+        return -1.0 + 0.05 * _distance_xy(_object_xy(state, object_id), target_xy)
+    if obj.type == "table":
+        return -0.5 + 0.05 * _distance_xy(_object_xy(state, object_id), target_xy)
+    return 1.0 + _distance_xy(_object_xy(state, object_id), target_xy)
+
+
+def _local_obstacle_density(state: WorldState, object_id: str, obstacle_ids: list[str]) -> float:
+    object_xy = _object_xy(state, object_id)
+    density = 0.0
+    for other_id in obstacle_ids:
+        if other_id == object_id:
+            continue
+        distance = _distance_xy(object_xy, _object_xy(state, other_id))
+        density += max(0.0, 0.075 - distance) / 0.075
+    return density
 
 
 def _object_xy(state: WorldState, object_id: str) -> tuple[float, float]:
@@ -438,6 +521,7 @@ __all__ = [
     "WorkingSetPhysicsDataset",
     "WorkingSetPhysicsSample",
     "collate_indexed_working_set_samples",
+    "collate_interaction_working_set_samples",
     "collate_proximity_working_set_samples",
     "collate_working_set_samples",
     "create_causal_working_set_state",

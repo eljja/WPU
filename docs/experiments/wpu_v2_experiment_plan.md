@@ -775,6 +775,29 @@ BFS. However, simple proximity is not enough. The next falsifiable experiment is
 a learned or relation-typed retriever that reports selected-object composition,
 top-k causal recall, and downstream loss under the same held-out seed protocol.
 
+Interaction-density retrieval follow-up:
+
+- `collate_interaction_working_set_samples`
+- `--selection-mode interaction`
+- `docs/experiments/wpu_v2_interaction_retrieval_results.md`
+
+This experiment uses the same N=2048, K=8/16/32, five-seed, initial-4,
+expanded-32 protocol, but ranks obstacle candidates by local obstacle-obstacle
+density while preserving contact anchors. It gives the current best deployed
+retrieval result:
+
+| selection | best policy | loss | total compute | accuracy |
+| --- | --- | --- | --- | --- |
+| indexed | physical sparse expansion | 0.964 | 0.251 | 0.500 |
+| proximity | initial calibrated regret | 0.965 | 0.256 | 0.498 |
+| interaction | structured sparse expansion | 0.960 | 0.253 | 0.499 |
+
+This supports a sharper v2 hypothesis: WPU advantage depends on retrieving the
+right local interaction structure before tensorization. The next experiment
+should report selected-object composition and top-k causal recall, then replace
+the hand-built interaction score with a learned state-native retriever or a
+relation-typed propagation operator.
+
 ## Combined V2 Regime Diagram
 
 The final v2 paper figure should be a regime diagram over:

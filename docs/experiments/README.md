@@ -21,6 +21,9 @@ Use these reports for paper-level claims:
   state-native retrieval ordering matters; proximity improves the initial
   under-complete working set in one regime but does not make K expansion
   generally beneficial.
+- `wpu_v2_interaction_retrieval_results.md`: interaction-density retrieval
+  follow-up showing that state-native retrieval should rank local causal
+  structure, not only relation order or target proximity.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -63,6 +66,9 @@ Historical or preliminary reports:
 - V2 K expansion is only useful when the retriever misses causal state and the
   expansion operator adds the right objects. Proximity-ranked retrieval shows
   that object ordering inside the state frontier matters as much as K size.
+- Interaction-density retrieval is the current best v2 retrieval result: it
+  improves the best deployed loss in the pairwise CWS task while staying
+  state-native and pre-tensor.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

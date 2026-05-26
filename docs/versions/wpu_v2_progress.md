@@ -1416,6 +1416,45 @@ step is not "expand more." It is better state-native retrieval ranking and
 relation-typed sparse propagation. Expansion should be triggered only when the
 initial state retriever exposes missing-interaction evidence.
 
+### Priority 6y: Interaction-Density Working-Set Retrieval
+
+Output:
+
+- `docs/experiments/wpu_v2_staged_k_expansion_interaction_initial4_5seed.csv`
+- `docs/experiments/wpu_v2_interaction_retrieval_results.md`
+
+Question:
+
+```text
+Can a state-native retriever that ranks local interaction density improve the
+WPU regime without returning to token processing?
+```
+
+Result:
+
+| selection | policy | loss | loss delta | total compute | accuracy |
+| --- | --- | --- | --- | --- | --- |
+| indexed | physical sparse expansion | 0.964 | -0.035 | 0.251 | 0.500 |
+| proximity | initial calibrated regret | 0.965 | -0.025 | 0.256 | 0.498 |
+| interaction | initial calibrated regret | 0.961 | -0.030 | 0.224 | 0.497 |
+| interaction | structured sparse expansion | 0.960 | -0.031 | 0.253 | 0.499 |
+
+K-specific best rows:
+
+| K | indexed best loss | proximity best loss | interaction best loss |
+| --- | --- | --- | --- |
+| 8 | 0.965 | 0.963 | 0.959 |
+| 16 | 0.947 | 0.952 | 0.945 |
+| 32 | 0.978 | 0.981 | 0.976 |
+
+Interpretation:
+
+This is the strongest retrieval result after v1. It shows that state-native
+ranking should target local causal structure, not only relation order or target
+proximity. The result is still bounded: K=32 improves only slightly, and
+expansion still does not help there. The next bottleneck is relation-typed
+sparse propagation over a larger local causal set.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1424,8 +1463,9 @@ clearer:
 1. State Store: keep BaseState + DeltaState as the core memory abstraction.
 2. Causal Index: move retrieval before tensorization; this is the biggest v2
    systems milestone.
-3. Event-Conditioned Retriever: make learned and proximity-ranked retrieval
-   compete with indexed and oracle retrieval under distractors.
+3. Event-Conditioned Retriever: make learned, proximity-ranked, and
+   interaction-ranked retrieval compete with indexed and oracle retrieval under
+   distractors.
 4. Adaptive K Scheduler: expose K growth as a controlled decision, not a fixed
    hyperparameter; hard, learned, interaction-aware, and forced counterfactual
    route variants now exist.
@@ -1481,6 +1521,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > from expansion itself. This narrows the v2 claim further: WPU needs a
 > state-native causal retriever and sparse propagation operator that preserve
 > the right local causal set before spending more K or dense compute.
+> The interaction-density retrieval follow-up is the current best evidence for
+> this refinement: ranking state-local interaction structure improves deployed
+> loss while remaining sparse and pre-tensor.
 
 ## Next Required Work
 
@@ -1500,6 +1543,9 @@ Before claiming v2 as a strong experimental result:
   relation-typed, and learned state-native ranking. The proximity experiment
   shows this can improve the initial working set, but simple geometry is not
   enough at K=32.
+- Turn interaction-density retrieval from a hand-built selector into either a
+  learned state retriever or a relation-typed propagation operator, and report
+  selected-object composition plus top-k causal recall.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

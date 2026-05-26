@@ -19,6 +19,7 @@ from scripts.staged_regret_hybrid import (  # noqa: E402
     _train_propagation,
     _train_regret_head,
 )
+from scripts.learned_retriever_probe import _learned_selected_ids, _train_model  # noqa: E402
 from scripts.structured_verifier_probe import (  # noqa: E402
     FEATURES,
     PHYSICAL_FEATURES,
@@ -32,6 +33,7 @@ from wpu.data.working_set_physics import (  # noqa: E402
     collate_indexed_working_set_samples,
     collate_interaction_working_set_samples,
     collate_proximity_working_set_samples,
+    collate_selected_working_set_samples,
 )
 from wpu.models.factory import create_model  # noqa: E402
 
@@ -61,7 +63,10 @@ def main() -> None:
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--interaction-mode", choices=["standard", "pairwise"], default="pairwise")
     parser.add_argument("--index-depth", type=int, default=1)
-    parser.add_argument("--selection-mode", choices=["indexed", "proximity", "interaction"], default="indexed")
+    parser.add_argument("--selection-mode", choices=["indexed", "proximity", "interaction", "learned_interaction"], default="indexed")
+    parser.add_argument("--retriever-steps", type=int, default=400)
+    parser.add_argument("--retriever-hidden-dim", type=int, default=64)
+    parser.add_argument("--retriever-lr", type=float, default=3e-3)
     parser.add_argument("--quantiles", type=float, nargs="+", default=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--out", type=Path, default=Path("artifacts/staged_k_expansion_hybrid.csv"))
@@ -105,7 +110,26 @@ def _run_condition(
         interaction_mode=args.interaction_mode,
     )
     class_weights = _class_weights(train_dataset).to(device) if args.class_weights else None
+    initial_retriever = None
+    expanded_retriever = None
+    if args.selection_mode == "learned_interaction":
+        train_samples = [train_dataset[index] for index in range(len(train_dataset))]
+        initial_retriever = _train_model(
+            train_samples,
+            args.initial_working_set_size,
+            args.retriever_steps,
+            args.retriever_hidden_dim,
+            args.retriever_lr,
+        )
+        expanded_retriever = _train_model(
+            train_samples,
+            args.expanded_working_set_size,
+            args.retriever_steps,
+            args.retriever_hidden_dim,
+            args.retriever_lr,
+        )
     train_args = argparse.Namespace(**vars(args), working_set_size=args.expanded_working_set_size)
+    train_args.selection_retriever = expanded_retriever
     _train_propagation(model, train_dataset, class_weights, train_args, device)
     _train_regret_head(model, train_dataset, train_args, device)
     validation_rows = _collect_rows(
@@ -116,6 +140,8 @@ def _run_condition(
         args.validation_samples,
         args,
         device,
+        initial_retriever,
+        expanded_retriever,
     )
     test_rows = _collect_rows(
         model,
@@ -125,6 +151,8 @@ def _run_condition(
         args.samples,
         args,
         device,
+        initial_retriever,
+        expanded_retriever,
     )
     route_threshold = _choose_regret_threshold(_as_regret_rows(validation_rows), args.compute_cost)
     structured_rule = _choose_expansion_rule(
@@ -212,6 +240,7 @@ def _run_condition(
                 "causal_k": 4 + causal_obstacles,
                 "interaction_mode": args.interaction_mode,
                 "selection_mode": args.selection_mode,
+                "retriever_steps": args.retriever_steps if args.selection_mode == "learned_interaction" else 0,
                 "hidden_dim": args.hidden_dim,
                 "layers": args.layers,
                 "initial_working_set_size": args.initial_working_set_size,
@@ -233,6 +262,8 @@ def _collect_rows(
     samples: int,
     args: argparse.Namespace,
     device: torch.device,
+    initial_retriever: torch.nn.Module | None = None,
+    expanded_retriever: torch.nn.Module | None = None,
 ) -> list[dict[str, str]]:
     dataset = WorkingSetPhysicsDataset(
         size=samples,
@@ -242,7 +273,11 @@ def _collect_rows(
         balanced_labels=args.balanced_labels,
         interaction_mode=args.interaction_mode,
     )
-    loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_dual_collate(args))
+    loader = DataLoader(
+        dataset,
+        batch_size=args.batch_size,
+        collate_fn=_dual_collate(args, initial_retriever, expanded_retriever),
+    )
     rows: list[dict[str, str]] = []
     model.eval()
     with torch.no_grad():
@@ -419,8 +454,28 @@ def _mean_expansion_policy_loss(
     return mean(losses)
 
 
-def _dual_collate(args: argparse.Namespace):
+def _dual_collate(
+    args: argparse.Namespace,
+    initial_retriever: torch.nn.Module | None = None,
+    expanded_retriever: torch.nn.Module | None = None,
+):
     def collate(samples):
+        if args.selection_mode == "learned_interaction":
+            if initial_retriever is None or expanded_retriever is None:
+                raise RuntimeError("learned_interaction selection requires trained retrievers")
+            initial_ids = [
+                _learned_selected_ids(sample.state, sample.event, args.initial_working_set_size, initial_retriever)
+                for sample in samples
+            ]
+            expanded_ids = [
+                _learned_selected_ids(sample.state, sample.event, args.expanded_working_set_size, expanded_retriever)
+                for sample in samples
+            ]
+            initial_batch, _, labels, _ = collate_selected_working_set_samples(samples, initial_ids)
+            expanded_batch, _, expanded_labels, _ = collate_selected_working_set_samples(samples, expanded_ids)
+            if not torch.equal(labels, expanded_labels):
+                raise RuntimeError("initial and expanded labels diverged")
+            return initial_batch, expanded_batch, labels
         collate_fn = _collate_for_selection(args.selection_mode)
         initial_batch, _, labels, _ = collate_fn(
             samples,
@@ -444,6 +499,8 @@ def _collate_for_selection(selection_mode: str):
         return collate_proximity_working_set_samples
     if selection_mode == "interaction":
         return collate_interaction_working_set_samples
+    if selection_mode == "learned_interaction":
+        raise RuntimeError("learned_interaction requires trained retrievers")
     if selection_mode == "indexed":
         return collate_indexed_working_set_samples
     raise ValueError(f"unknown selection mode: {selection_mode}")

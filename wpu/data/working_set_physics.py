@@ -310,6 +310,20 @@ def collate_interaction_working_set_samples(
     )
 
 
+def collate_selected_working_set_samples(
+    samples: list[WorkingSetPhysicsSample],
+    selected_ids_by_sample: list[list[str]],
+) -> tuple[StateGraphBatch, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Collate preselected explicit object ids before tensorization."""
+
+    if len(samples) != len(selected_ids_by_sample):
+        raise ValueError("samples and selected ids must have the same length")
+    return _collate_projected_working_set_samples(
+        samples,
+        selector=lambda _state, _event, iterator=iter(selected_ids_by_sample): next(iterator),
+    )
+
+
 def _indexed_object_ids(state: WorldState, event: Event, *, max_nodes: int, max_depth: int) -> list[str]:
     if event.target not in state.objects:
         return list(state.objects)[:max_nodes]
@@ -523,6 +537,7 @@ __all__ = [
     "collate_indexed_working_set_samples",
     "collate_interaction_working_set_samples",
     "collate_proximity_working_set_samples",
+    "collate_selected_working_set_samples",
     "collate_working_set_samples",
     "create_causal_working_set_state",
 ]

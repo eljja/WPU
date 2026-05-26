@@ -29,6 +29,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_learned_retriever_probe_results.md`: tests whether the
   interaction-density retriever can be reproduced by a small state-native MLP
   under held-out seeds.
+- `wpu_v2_learned_retriever_integrated_results.md`: inserts the learned
+  retriever into the staged WPU propagation/regret/expansion pipeline and
+  compares downstream loss.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -77,6 +80,9 @@ Historical or preliminary reports:
 - A small learned state retriever can reproduce the interaction teacher's
   composition with high held-out overlap, so the hand-built rule is not the
   final mechanism.
+- Integrated learned retrieval preserves most of the interaction retriever's
+  downstream advantage and is now the preferred direction over fixed
+  hand-written retrieval rules.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

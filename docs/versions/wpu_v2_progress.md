@@ -1487,6 +1487,45 @@ under held-out seeds. The next step is to integrate learned retrieval into the
 actual WPU training loop and train it from downstream regret, causal recall, and
 rollout consistency rather than only from the hand-built teacher.
 
+### Priority 6aa: Integrated Learned Retriever Pipeline
+
+Output:
+
+- `docs/experiments/wpu_v2_staged_k_expansion_learned_interaction_initial4_5seed.csv`
+- `docs/experiments/wpu_v2_learned_retriever_integrated_results.md`
+
+Question:
+
+```text
+Does the learned retriever still work when used inside staged WPU propagation,
+regret routing, and K expansion?
+```
+
+Result:
+
+| selection | best policy | loss | loss delta | total compute | accuracy |
+| --- | --- | --- | --- | --- | --- |
+| indexed | physical sparse expansion | 0.964 | -0.035 | 0.251 | 0.500 |
+| proximity | initial calibrated regret | 0.965 | -0.025 | 0.256 | 0.498 |
+| interaction teacher | structured sparse expansion | 0.960 | -0.031 | 0.253 | 0.499 |
+| learned interaction | physical sparse expansion | 0.961 | -0.032 | 0.224 | 0.495 |
+
+K-specific result:
+
+| K | teacher best loss | learned best loss |
+| --- | --- | --- |
+| 8 | 0.959 | 0.963 |
+| 16 | 0.945 | 0.945 |
+| 32 | 0.976 | 0.975 |
+
+Interpretation:
+
+This is the first integrated learned-retrieval result. It preserves most of the
+hand-built interaction retriever's downstream gain and slightly improves K=32
+loss/compute. K=8 is weaker, so teacher distillation is not a final retriever.
+The next retriever should be trained from downstream regret and rollout
+consistency, not only from hand-built teacher labels.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1558,7 +1597,10 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > loss while remaining sparse and pre-tensor. The learned-retriever probe then
 > shows that this retrieval structure can be approximated by a small
 > state-native MLP under held-out seeds, so v2 can move beyond hand-written
-> retrieval rules without returning to token serialization.
+> retrieval rules without returning to token serialization. The integrated
+> learned-retrieval run confirms that the learned retriever can be inserted into
+> the WPU propagation/regret pipeline while preserving most of the downstream
+> benefit.
 
 ## Next Required Work
 
@@ -1583,6 +1625,8 @@ Before claiming v2 as a strong experimental result:
   selected-object composition plus top-k causal recall.
 - Integrate the learned retriever probe into the WPU path and train it against
   downstream regret, causal recall, and rollout consistency.
+- Replace teacher-distilled retrieval with downstream-regret retrieval and
+  report confidence/composition to the scheduler.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

@@ -111,6 +111,11 @@ This is not yet an integrated WPU retriever, but it removes one weakness in the
 argument: the best current retrieval rule is hand-built, but its composition is
 learnable without token serialization.
 
+The integrated learned-retrieval pipeline now inserts that MLP before
+tensorization in the staged WPU experiment. It preserves most of the
+interaction retriever's downstream loss gain, so learned state-native retrieval
+is now a concrete v2 path rather than only a diagnostic probe.
+
 ## 3. Event-Conditioned Causal Retriever
 
 The retriever chooses the initial affected set. V1 shows that oracle CWS can
@@ -455,6 +460,8 @@ Current implementation status:
 - Implemented experimentally: learned retriever probe that distills the
   interaction-density selector into a small state-native MLP and evaluates
   selected working-set composition under held-out seeds.
+- Implemented experimentally: integrated learned-interaction retrieval in the
+  staged propagation/regret/K-expansion pipeline.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 
@@ -530,3 +537,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   or propagation core, not only by larger dense recompute.
 - Evidence that state-native retrieval can be learned from supervision beyond
   hand-written heuristics.
+- Evidence that learned retrieval preserves downstream WPU loss, not only
+  selected-object overlap.

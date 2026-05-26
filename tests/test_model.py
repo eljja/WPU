@@ -6,6 +6,7 @@ from wpu.data.working_set_physics import (
     collate_indexed_working_set_samples,
     collate_interaction_working_set_samples,
     collate_proximity_working_set_samples,
+    collate_selected_working_set_samples,
     collate_working_set_samples,
 )
 from wpu.models.factory import create_model
@@ -452,3 +453,16 @@ def test_pre_tensor_interaction_collate_prioritizes_obstacle_pairs() -> None:
     model = create_model("wpu-cws-indexed-regret-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=4)
     prediction = model(batch, num_branches=3)
     assert prediction.branch_probabilities.shape == (1, 3)
+
+
+def test_pre_tensor_selected_collate_uses_explicit_object_ids() -> None:
+    dataset = WorkingSetPhysicsDataset(size=1, seed=11, background_objects=128, causal_obstacles=16)
+    selected_ids = [["cup_001", "hand_001", "obstacle_000", "obstacle_001"]]
+
+    batch, target_delta, labels, causal_k = collate_selected_working_set_samples([dataset[0]], selected_ids)
+
+    assert batch.object_ids == selected_ids
+    assert batch.object_features.shape[1] == 4
+    assert target_delta.shape[1] == 4
+    assert labels.tolist() in ([0], [1], [2])
+    assert causal_k.tolist() == [20]

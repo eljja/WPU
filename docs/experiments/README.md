@@ -44,6 +44,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_retriever_reranker_results.md`: trains a deployed state-native
   reranker over explicit retrieval candidates and identifies the current
   credit-assignment bottleneck.
+- `wpu_v2_retriever_set_reranker_results.md`: upgrades reranking from
+  aggregate selected-set summaries to explicit object-set encoding and improves
+  loss across K=8,16,32.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -106,6 +109,9 @@ Historical or preliminary reports:
 - A first deployed reranker recovers part of the oracle gap at K=8, but larger
   K remains unstable. The next mechanism should encode candidate object sets
   directly rather than using only aggregate selected-set features.
+- Object-set reranking is the first learned retrieval policy that improves loss
+  across all tested K values. The gain is still small at larger K, but it
+  supports the direction of learned state working-set selection.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

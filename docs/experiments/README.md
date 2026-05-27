@@ -47,6 +47,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_retriever_set_reranker_results.md`: upgrades reranking from
   aggregate selected-set summaries to explicit object-set encoding and improves
   loss across K=8,16,32.
+- `wpu_v2_retriever_generated_candidates_results.md`: adds state-native
+  generated working-set candidates and shows larger deployed improvements over
+  fixed selector candidates.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -112,6 +115,9 @@ Historical or preliminary reports:
 - Object-set reranking is the first learned retrieval policy that improves loss
   across all tested K values. The gain is still small at larger K, but it
   supports the direction of learned state working-set selection.
+- Generated local state candidates further improve the object-set reranker and
+  expand the oracle. This is the current strongest evidence for v2: explicit
+  state enables learned working-set generation and scoring before propagation.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

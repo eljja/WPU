@@ -55,6 +55,9 @@ Use these reports for paper-level claims:
   deployed reranking peaks around 2-4 candidates.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
+- `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
+  leave-one-seed-out protocol and shows that current reranker gains are not yet
+  robust cross-seed.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -129,6 +132,9 @@ Historical or preliminary reports:
 - Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
   candidates. The next scoring work should focus on calibration/cross-seed
   generalization rather than objective swaps alone.
+- Cross-seed reranker transfer is weak. The current reranker captures
+  seed/model-specific validation behavior, so v2 needs invariant calibration or
+  co-training before making robust deployment claims.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

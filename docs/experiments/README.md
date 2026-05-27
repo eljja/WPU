@@ -58,6 +58,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
   leave-one-seed-out protocol and shows that current reranker gains are not yet
   robust cross-seed.
+- `wpu_v2_cross_seed_normalized_reranker_results.md`: tests per-example
+  normalized candidate losses for cross-seed transfer and finds partial but
+  insufficient improvement.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -135,6 +138,9 @@ Historical or preliminary reports:
 - Cross-seed reranker transfer is weak. The current reranker captures
   seed/model-specific validation behavior, so v2 needs invariant calibration or
   co-training before making robust deployment claims.
+- Normalizing candidate losses improves cross-seed transfer at K=8/16, but does
+  not close the same-seed gap. Loss scale is only part of the generalization
+  problem; model-invariant scoring remains unsolved.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

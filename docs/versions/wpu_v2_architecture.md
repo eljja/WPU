@@ -122,6 +122,11 @@ training works only after adding explicit state-index fanout context and
 balancing the K regimes. The retriever should therefore consume metadata from
 the causal index, not only per-object features.
 
+The integrated global-retriever experiment confirms that one mixed-K learned
+retriever can be reused across K=8,16,32 in the downstream WPU pipeline. This
+turns learned retrieval into a reusable module rather than a per-condition
+diagnostic.
+
 ## 3. Event-Conditioned Causal Retriever
 
 The retriever chooses the initial affected set. V1 shows that oracle CWS can
@@ -470,6 +475,8 @@ Current implementation status:
   staged propagation/regret/K-expansion pipeline.
 - Implemented experimentally: cross-K learned retriever probe showing that
   fanout/context features are required for K-regime generalization.
+- Implemented experimentally: global mixed-K learned retriever reused across
+  K=8,16,32 in staged propagation/regret/K-expansion evaluation.
 - Not yet complete: closed-loop constraint violation feedback into K expansion,
   branch split, or uncertainty growth.
 
@@ -549,3 +556,5 @@ V2 should be considered meaningfully better than v1 if it shows:
   selected-object overlap.
 - Evidence that learned retrieval generalizes across K regimes with explicit
   state-index context.
+- Evidence that one learned retriever can be reused across K regimes in the
+  downstream WPU loop.

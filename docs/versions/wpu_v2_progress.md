@@ -1557,6 +1557,39 @@ fanout context and balancing the train-K loss makes the learned retriever
 generalize across K=8,16,32. This is a strong v2 design constraint: the
 retriever should receive frontier/fanout metadata from the state index.
 
+### Priority 6ac: Integrated Global Mixed-K Retriever
+
+Output:
+
+- `scripts/staged_global_retriever_hybrid.py`
+- `docs/experiments/wpu_v2_staged_global_retriever_initial4_5seed.csv`
+- `docs/experiments/wpu_v2_global_retriever_integrated_results.md`
+
+Question:
+
+```text
+Can one mixed-K learned retriever be reused across K=8,16,32 inside the staged
+WPU propagation/regret/K-expansion pipeline?
+```
+
+Result:
+
+| selection | best policy | loss | total compute | accuracy |
+| --- | --- | --- | --- | --- |
+| indexed | physical sparse expansion | 0.964 | 0.251 | 0.500 |
+| interaction teacher | structured sparse expansion | 0.960 | 0.253 | 0.499 |
+| per-K learned retriever | physical sparse expansion | 0.961 | 0.224 | 0.495 |
+| global mixed-K learned retriever | physical sparse expansion | 0.961 | 0.233 | 0.502 |
+
+Interpretation:
+
+The global mixed-K retriever preserves most downstream performance without
+training a separate retriever per K condition. It is slightly weaker than
+per-K learned retrieval at K=16 and uses more compute at K=32, but it improves
+small-K behavior and gives the best overall accuracy among the learned
+retriever variants. This makes learned state retrieval a reusable WPU module,
+not only a condition-specific probe.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1634,6 +1667,9 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > benefit. The cross-K retrieval probe adds a further constraint: learned
 > retrieval generalizes across K only when it receives explicit state-index
 > fanout context and the training objective balances K regimes.
+> The integrated global-retriever experiment then shows that a single mixed-K
+> learned retriever can be reused inside the downstream WPU pipeline with little
+> loss relative to per-K retriever training.
 
 ## Next Required Work
 
@@ -1662,6 +1698,7 @@ Before claiming v2 as a strong experimental result:
   report confidence/composition to the scheduler.
 - Make the integrated learned retriever mixed-K and fanout-aware instead of
   training a separate retriever per K condition.
+- Move from teacher-distilled global retrieval to downstream-regret retrieval.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

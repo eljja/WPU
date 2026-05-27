@@ -63,7 +63,11 @@ def main() -> None:
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--interaction-mode", choices=["standard", "pairwise"], default="pairwise")
     parser.add_argument("--index-depth", type=int, default=1)
-    parser.add_argument("--selection-mode", choices=["indexed", "proximity", "interaction", "learned_interaction"], default="indexed")
+    parser.add_argument(
+        "--selection-mode",
+        choices=["indexed", "proximity", "interaction", "learned_interaction", "learned_interaction_global"],
+        default="indexed",
+    )
     parser.add_argument("--retriever-steps", type=int, default=400)
     parser.add_argument("--retriever-hidden-dim", type=int, default=64)
     parser.add_argument("--retriever-lr", type=float, default=3e-3)
@@ -128,6 +132,11 @@ def _run_condition(
             args.retriever_hidden_dim,
             args.retriever_lr,
         )
+    elif args.selection_mode == "learned_interaction_global":
+        initial_retriever = getattr(args, "initial_selection_retriever", None)
+        expanded_retriever = getattr(args, "expanded_selection_retriever", None)
+        if initial_retriever is None or expanded_retriever is None:
+            raise RuntimeError("learned_interaction_global requires global retrievers")
     train_args = argparse.Namespace(**vars(args), working_set_size=args.expanded_working_set_size)
     train_args.selection_retriever = expanded_retriever
     _train_propagation(model, train_dataset, class_weights, train_args, device)
@@ -240,7 +249,9 @@ def _run_condition(
                 "causal_k": 4 + causal_obstacles,
                 "interaction_mode": args.interaction_mode,
                 "selection_mode": args.selection_mode,
-                "retriever_steps": args.retriever_steps if args.selection_mode == "learned_interaction" else 0,
+                "retriever_steps": args.retriever_steps
+                if args.selection_mode in {"learned_interaction", "learned_interaction_global"}
+                else 0,
                 "hidden_dim": args.hidden_dim,
                 "layers": args.layers,
                 "initial_working_set_size": args.initial_working_set_size,
@@ -460,9 +471,9 @@ def _dual_collate(
     expanded_retriever: torch.nn.Module | None = None,
 ):
     def collate(samples):
-        if args.selection_mode == "learned_interaction":
+        if args.selection_mode in {"learned_interaction", "learned_interaction_global"}:
             if initial_retriever is None or expanded_retriever is None:
-                raise RuntimeError("learned_interaction selection requires trained retrievers")
+                raise RuntimeError("learned interaction selection requires trained retrievers")
             initial_ids = [
                 _learned_selected_ids(sample.state, sample.event, args.initial_working_set_size, initial_retriever)
                 for sample in samples
@@ -499,8 +510,8 @@ def _collate_for_selection(selection_mode: str):
         return collate_proximity_working_set_samples
     if selection_mode == "interaction":
         return collate_interaction_working_set_samples
-    if selection_mode == "learned_interaction":
-        raise RuntimeError("learned_interaction requires trained retrievers")
+    if selection_mode in {"learned_interaction", "learned_interaction_global"}:
+        raise RuntimeError("learned interaction selection requires trained retrievers")
     if selection_mode == "indexed":
         return collate_indexed_working_set_samples
     raise ValueError(f"unknown selection mode: {selection_mode}")

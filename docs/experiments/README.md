@@ -35,6 +35,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_learned_retriever_cross_k_results.md`: tests whether learned
   retrieval generalizes across K regimes and identifies fanout context as a
   required state-native input.
+- `wpu_v2_global_retriever_integrated_results.md`: evaluates one mixed-K
+  learned retriever reused across K=8,16,32 inside the downstream staged WPU
+  pipeline.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -89,6 +92,8 @@ Historical or preliminary reports:
 - Cross-K retrieval needs explicit state-index context. Mixed-K training with
   fanout features generalizes across K=8,16,32; K=16-only training fails at
   K=32.
+- A global mixed-K learned retriever preserves most downstream WPU performance
+  without training separate retrievers per K condition.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

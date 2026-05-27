@@ -49,7 +49,11 @@ def main() -> None:
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--interaction-mode", choices=["standard", "pairwise"], default="pairwise")
     parser.add_argument("--index-depth", type=int, default=1)
-    parser.add_argument("--selection-mode", choices=["indexed", "proximity", "interaction", "learned_interaction"], default="indexed")
+    parser.add_argument(
+        "--selection-mode",
+        choices=["indexed", "proximity", "interaction", "learned_interaction", "learned_interaction_global"],
+        default="indexed",
+    )
     parser.add_argument("--retriever-steps", type=int, default=400)
     parser.add_argument("--retriever-hidden-dim", type=int, default=64)
     parser.add_argument("--retriever-lr", type=float, default=3e-3)
@@ -370,10 +374,10 @@ def _prediction_loss(prediction, target_delta: torch.Tensor, labels: torch.Tenso
 
 def _collate_fn(args: argparse.Namespace):
     def collate(samples):
-        if getattr(args, "selection_mode", "indexed") == "learned_interaction":
+        if getattr(args, "selection_mode", "indexed") in {"learned_interaction", "learned_interaction_global"}:
             retriever = getattr(args, "selection_retriever", None)
             if retriever is None:
-                raise RuntimeError("learned_interaction selection requires args.selection_retriever")
+                raise RuntimeError("learned interaction selection requires args.selection_retriever")
             selected_ids = [
                 _learned_selected_ids(sample.state, sample.event, args.working_set_size, retriever)
                 for sample in samples
@@ -394,8 +398,8 @@ def _collate_for_selection(selection_mode: str):
         return collate_proximity_working_set_samples
     if selection_mode == "interaction":
         return collate_interaction_working_set_samples
-    if selection_mode == "learned_interaction":
-        raise RuntimeError("learned_interaction requires a trained retriever")
+    if selection_mode in {"learned_interaction", "learned_interaction_global"}:
+        raise RuntimeError("learned interaction selection requires a trained retriever")
     if selection_mode == "indexed":
         return collate_indexed_working_set_samples
     raise ValueError(f"unknown selection mode: {selection_mode}")

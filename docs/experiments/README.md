@@ -41,6 +41,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_retriever_regret_oracle_results.md`: measures the downstream
   retriever oracle gap and shows that teacher imitation is not the final
   retrieval objective.
+- `wpu_v2_retriever_reranker_results.md`: trains a deployed state-native
+  reranker over explicit retrieval candidates and identifies the current
+  credit-assignment bottleneck.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -100,6 +103,9 @@ Historical or preliminary reports:
 - The retriever-regret oracle probe shows the next bottleneck: interaction
   teacher imitation is rarely the downstream oracle, so v2 must train retrieval
   against task loss or regret rather than teacher overlap alone.
+- A first deployed reranker recovers part of the oracle gap at K=8, but larger
+  K remains unstable. The next mechanism should encode candidate object sets
+  directly rather than using only aggregate selected-set features.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

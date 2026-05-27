@@ -38,6 +38,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_global_retriever_integrated_results.md`: evaluates one mixed-K
   learned retriever reused across K=8,16,32 inside the downstream staged WPU
   pipeline.
+- `wpu_v2_retriever_regret_oracle_results.md`: measures the downstream
+  retriever oracle gap and shows that teacher imitation is not the final
+  retrieval objective.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -94,6 +97,9 @@ Historical or preliminary reports:
   K=32.
 - A global mixed-K learned retriever preserves most downstream WPU performance
   without training separate retrievers per K condition.
+- The retriever-regret oracle probe shows the next bottleneck: interaction
+  teacher imitation is rarely the downstream oracle, so v2 must train retrieval
+  against task loss or regret rather than teacher overlap alone.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

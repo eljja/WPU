@@ -64,6 +64,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_cross_seed_context_ablation_results.md`: ablates candidate identity
   and generated/base type context, showing that identity overfit is not the
   sole cross-seed failure mode.
+- `wpu_v2_cross_seed_diagnostic_reranker_results.md`: adds candidate-level
+  branch entropy, max-probability, and logit-margin diagnostics, then compares
+  context ablations under leave-one-seed-out transfer.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -147,6 +150,10 @@ Historical or preliminary reports:
 - Removing candidate identity does not reliably improve cross-seed transfer.
   The next missing signal is model-state diagnostics for each candidate, not a
   simple removal of selector context.
+- Candidate-level diagnostics provide a small cross-seed loss improvement, but
+  do not close the same-seed gap. The strongest variant depends on K, so v2
+  should move toward invariant candidate scoring or joint retriever-propagator
+  training rather than relying on fixed selector identity or post-hoc gates.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

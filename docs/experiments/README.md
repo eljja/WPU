@@ -53,6 +53,8 @@ Use these reports for paper-level claims:
 - `wpu_v2_generated_candidate_sweep_results.md`: sweeps generated candidate
   count and shows that oracle quality improves with more candidates while
   deployed reranking peaks around 2-4 candidates.
+- `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
+  larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -124,6 +126,9 @@ Historical or preliminary reports:
 - Candidate-count sweep shows that generation and scoring are now separate
   bottlenecks: more candidates improve the oracle, but deployed reranking needs
   better capacity/calibration once the candidate pool grows.
+- Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
+  candidates. The next scoring work should focus on calibration/cross-seed
+  generalization rather than objective swaps alone.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

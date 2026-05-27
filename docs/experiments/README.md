@@ -50,6 +50,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_retriever_generated_candidates_results.md`: adds state-native
   generated working-set candidates and shows larger deployed improvements over
   fixed selector candidates.
+- `wpu_v2_generated_candidate_sweep_results.md`: sweeps generated candidate
+  count and shows that oracle quality improves with more candidates while
+  deployed reranking peaks around 2-4 candidates.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -118,6 +121,9 @@ Historical or preliminary reports:
 - Generated local state candidates further improve the object-set reranker and
   expand the oracle. This is the current strongest evidence for v2: explicit
   state enables learned working-set generation and scoring before propagation.
+- Candidate-count sweep shows that generation and scoring are now separate
+  bottlenecks: more candidates improve the oracle, but deployed reranking needs
+  better capacity/calibration once the candidate pool grows.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

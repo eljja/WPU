@@ -59,6 +59,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_cross_seed_regret_distillation_results.md`: tests whether
   regret-distilled retrieval transfers across held-out seeds and diagnoses the
   large-K obstacle under-selection failure mode.
+- `wpu_v2_cross_seed_composition_regret_results.md`: adds a state-conditioned
+  working-set composition prior to cross-seed regret retrieval and fixes the
+  K=32 obstacle under-selection failure.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -154,6 +157,10 @@ Historical or preliminary reports:
   and K=16, but fails at K=32 unless a structural obstacle-count constraint is
   added. The next retriever should predict state-conditioned working-set
   composition, not only per-object scores.
+- State-conditioned composition-regret retrieval improves cross-seed loss at
+  K=8,16,32 and restores the K=32 obstacle count close to the generated oracle.
+  The remaining gap is candidate-set evaluation and joint retriever-propagator
+  training.
 - Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
   candidates. The next scoring work should focus on calibration/cross-seed
   generalization rather than objective swaps alone.

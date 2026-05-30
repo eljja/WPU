@@ -22,7 +22,15 @@ accuracy에서 우세하다.
 
 따라서 현재 논문의 핵심 주장은 보편 우월성이 아니다. WPU는 persistent identity,
 local causal change, uncertainty, branching이 지배적인 world-processing workload에
-적합한 계산 primitive가 무엇인지 묻는 반증 가능한 regime hypothesis다.
+적합한 계산 primitive가 무엇인지 묻는 반증 가능한 regime hypothesis다. 따라서
+실험 목표도 “WPU가 항상 이긴다”가 아니라 `rho`, `N`, branch pressure, noise,
+affected-region size에 따라 state-native execution이 언제 유효한지를 그리는 것이다.
+
+최근 v2 실험은 이 주장을 한 단계 좁혔다. WPU의 장점은 propagation 자체뿐 아니라
+propagation 이전의 object working-set control에서도 나타난다. Validation split에서
+실제 downstream branch loss가 가장 낮았던 candidate set을 pseudo-label로 삼아
+학습한 regret-distilled retriever는 `N=2048`, `K=8,16,32` 조건에서 learned
+interaction retriever보다 평균 loss를 낮췄고, 15개 seed/K 조건 중 14개에서 이겼다.
 
 ## 1. 문제의식
 
@@ -127,7 +135,9 @@ World-state maintenance and update
 WPU는 GPU/NPU/TPU/LPU를 폐기하자는 주장이 아니다. 현재 v1은 PyTorch 위의 reference
 model이다. 장기적으로는 object store, relation fetch, frontier queue, delta log,
 branch overlay, sparse-dense scheduler를 시스템 또는 하드웨어 primitive로 올릴 수
-있는지 묻는다.
+있는지 묻는다. 다만 hardware나 chiplet/IP는 아직 제품 주장이 아니라 미래 가설이다.
+먼저 software runtime에서 frontier queue, relation fetch, scatter/gather, sparse
+kernel, delta log, branch overlay 비용을 실제로 계측해야 한다.
 
 ## 5. Sparse-Dense Regime
 
@@ -150,6 +160,10 @@ otherwise   -> dense
 이는 최적 정책이 아니라 engineering default다. 중요한 점은 “항상 sparse”가
 아니라, affected fraction이 작을 때 sparse를 쓰고, 국소성이 깨질 때 hybrid/dense로
 전환한다는 점이다.
+
+v2 scheduler는 단순 `rho`가 아니라 prediction risk와 update cost를 함께 최적화해야
+한다. uncertainty, relation quality, fanout, branch divergence가 크다면 `rho`가 작아도
+regional dense correction을 선택할 수 있어야 한다.
 
 ## 6. WPU 구조
 
@@ -280,7 +294,50 @@ Controlled stress:
   가장 낮은 background MSE를 보인다. 즉 WPU v1은 모든 state-delta regime에서
   우월하지 않다.
 
-## 10. 현재 주장 경계
+## 10. V2: Regret-Distilled Working-Set Retrieval
+
+v1의 실패 경계는 명확했다. Sparse routed work는 줄일 수 있지만, large `N`에서
+accuracy가 충분히 유지되지 않았다. 따라서 v2의 핵심 질문은 propagation block을
+무작정 키우는 것이 아니라 “어떤 object set을 propagation 대상으로 선택할 것인가”다.
+
+기존 learned retriever는 hand-built interaction selector를 모방했다. 이는
+state-native objective이지만, 실제 downstream branch loss를 직접 최적화하지 않는다.
+새 실험은 validation split에서 다음 candidate들을 평가한다.
+
+- `indexed`
+- `proximity`
+- `interaction`
+- `learned`
+- `generated_0..generated_3`
+
+각 sample마다 downstream branch cross-entropy가 가장 낮은 candidate set을
+pseudo-label object set으로 삼고, 작은 state-native object scorer가 그 set을
+선택하도록 학습한다.
+
+`N=2048`, 5 seeds 평균:
+
+| K | Static learned interaction loss | Regret-distilled loss | Accuracy before | Accuracy after |
+|---:|---:|---:|---:|---:|
+| 8 | 0.988432 | 0.977017 | 0.506667 | 0.542222 |
+| 16 | 0.966183 | 0.955077 | 0.504444 | 0.513333 |
+| 32 | 1.004095 | 0.999112 | 0.475556 | 0.513333 |
+
+Regret-distilled retriever는 learned interaction retriever 대비 15개 seed/K 조건 중
+14개에서 loss를 낮췄다. 현재까지 v2에서 가장 강한 retrieval mechanism이다.
+
+이 결과의 의미는 중요하다. Explicit state는 sparse propagation을 가능하게 할 뿐
+아니라, propagation 이전의 object-level working-set selection을 학습 가능한
+control problem으로 노출한다. Token baseline은 같은 scene을 serialize할 수 있지만,
+이 object-level intervention point를 독립적인 제어면으로 자연스럽게 제공하지 않는다.
+
+단, 이 결과도 한계가 있다. 현재 regret distillation은 same-seed validation-to-test
+실험이다. Cross-seed generalization은 아직 해결되지 않았다. Candidate entropy,
+max probability, logit margin을 넣은 diagnostic reranker와 train-only variant
+selector는 작은 개선을 만들었지만 generated oracle과의 gap을 닫지는 못했다. 따라서
+v2의 다음 핵심 문제는 더 많은 candidate 생성이 아니라 invariant candidate scoring과
+retriever-propagator joint training이다.
+
+## 11. 현재 주장 경계
 
 현재 지지되는 주장:
 
@@ -289,6 +346,8 @@ Controlled stress:
 - WPU-family는 small-to-medium local synthetic regime에서 경쟁력이 있다.
 - WPU-hybrid는 irrelevant relation noise에 강하다.
 - routed sparse execution은 large `N`에서 CPU latency를 줄일 수 있다.
+- regret-distilled state retrieval은 same-seed validation-to-test 조건에서
+  interaction-teacher retrieval보다 downstream loss를 낮춘다.
 
 현재 지지되지 않는 주장:
 
@@ -297,12 +356,13 @@ Controlled stress:
 - perception에서 state를 end-to-end로 구성한다.
 - GPU/NPU/TPU/LPU보다 항상 빠르다.
 - fixed `rho` threshold가 최종 scheduler다.
+- robust cross-seed candidate scoring은 아직 해결되지 않았다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한
 predictive state를 유지하지 못한다는 강한 증거다.
 
-## 11. 보충 자료와 향후 검증
+## 12. 보충 자료와 향후 검증
 
 논문 본문은 주장에 직접 필요한 figure와 table만 남겼다. 촘촘한 sweep, stress
 figure, 세부 table은 영문 PDF의 supplementary materials와 `docs/experiments/`로
@@ -315,17 +375,31 @@ figure, 세부 table은 영문 PDF의 supplementary materials와 `docs/experimen
 Push the accuracy crossover beyond the runtime crossover.
 ```
 
-이를 위해서는 learned routing, sparse propagation capacity 확장, long-horizon
-rollout, branch calibration, simulator-backed dataset, matched Dreamer/GNS/object-centric
-baselines, state-integrity protocol, hardware-aware profiling이 필요하다.
+이를 위해서는 learned routing, regret-aware retrieval, invariant candidate scoring,
+retriever-propagator joint training, sparse propagation capacity 확장, long-horizon
+rollout, branch consistency, branch calibration, regional dense correction,
+simulator-backed dataset, matched Dreamer/GNS/object-centric baselines,
+state-integrity protocol, hardware-aware profiling이 필요하다.
 
-## 12. 결론
+## 13. 적용 가능성의 경계
+
+상업적 방향은 chiplet/IP나 robot OS core보다 software runtime 또는 middleware로 낮춰
+잡는 것이 맞다. 가까운 적용 후보는 digital twin state update, simulator backend,
+game/server synchronization, robotics world-model maintenance처럼 state는 크지만
+event가 바꾸는 영역은 국소적인 시스템이다.
+
+hardware claim은 matched accuracy에서의 speedup, sparse-kernel overhead, memory
+traffic, branch-overlay memory가 검증된 뒤에야 강하게 말할 수 있다.
+
+## 14. 결론
 
 World processing은 세계를 token으로 설명하는 문제만이 아니다. 세계는 유지되고,
 수정되고, 여러 미래로 분기되는 state다. WPU는 state를 기본 계산 객체로 두고,
 propagation을 중심 연산으로 둔다. Token과 attention은 여전히 중요하지만,
 state-native world model의 정의적 primitive는 token attention이 아니라 state
-propagation이다.
+propagation이다. 최신 v2 결과는 여기에 한 가지를 더한다. State를 명시적으로 두면
+propagation 이전의 causal working set selection도 학습 가능한 object-level control
+문제가 된다.
 
 Nature/Science급 방향으로 가려면 필요한 태도는 보편 우월 주장이 아니다. 새로운
 계산 원리, 즉 state-native propagation이 작동하는 regime을 명확히 제시하고,

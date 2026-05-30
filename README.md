@@ -5,18 +5,21 @@
 This repository contains the first research prototype for **State Is All You
 Need** and the **World-State Processing Unit (WPU)** idea.
 
-WPU is not a chatbot memory system and it is not yet a chip design. It is a
-PyTorch reference implementation and research scaffold for a state-native
-execution model: worlds are represented as persistent objects, typed relations,
-time, uncertainty, events, deltas, and future branches.
+WPU is not a chatbot memory system, not a universal Transformer replacement,
+and not yet a chip design. It is a PyTorch reference implementation and research
+scaffold for a state-native execution model: worlds are represented as
+persistent objects, typed relations, time, uncertainty, events, deltas, and
+future branches.
 
 ## Compute Context
 
-WPU is positioned as a proposed world-state processing architecture alongside
-CPU, GPU, TPU, NPU, and LPU designs. The intent is not to claim universal
-superiority, but to isolate a different execution target: persistent state,
-structured relations, sparse updates, temporal branches, and hierarchical
-memory.
+WPU is positioned as a proposed world-state processing workload and execution
+architecture alongside CPU, GPU, TPU, NPU, and LPU designs. The intent is not to
+claim universal superiority, but to isolate a different execution target:
+persistent state, structured relations, sparse updates, temporal branches, and
+hierarchical memory. Hardware is a possible future target only after the
+software runtime exposes real costs for frontier queues, relation fetch,
+scatter/gather, delta logs, branch overlays, and sparse kernels.
 
 ![WPU in the AI compute architecture landscape](docs/figures/wpu_compute_context.svg)
 
@@ -37,7 +40,9 @@ interface:
 The current claim is intentionally conditional: WPU should help in regimes where
 persistent identity, local causal change, uncertainty, and branching dominate.
 The repository includes negative and mixed results where token/graph baselines
-remain stronger.
+remain stronger. The research goal is therefore not to show that WPU always wins,
+but to map the `rho`, `N`, `B`, noise, and affected-region regimes where
+state-native execution is useful.
 
 ## Hybrid Execution Architecture
 
@@ -125,6 +130,7 @@ Key reports:
 - English LaTeX: `docs/arxiv/state_is_all_you_need_en.tex`
 - English PDF: `docs/arxiv/state_is_all_you_need_en.pdf`
 - Korean companion: `docs/arxiv/state_is_all_you_need_ko.md`
+- Korean README: `README.ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
 - Review response and differentiation: `docs/Review/review_response_and_differentiation.md`
 
@@ -153,9 +159,50 @@ The current evidence supports a regime hypothesis, not universal dominance.
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.
 
-The next important steps are learned routing, stronger long-horizon dynamics,
-real/simulator-backed benchmarks, state construction from perception, and
-state-integrity mechanisms such as checkpoint and rollback.
+## WPU v2 Direction: Learned Working-Set Control
+
+The strongest recent v2 result is not a larger propagation block. It is a change
+in the retrieval objective. Earlier learned retrievers imitated a hand-written
+interaction selector. The newer regret-distilled retriever instead learns from
+the candidate working set that actually minimizes downstream branch loss.
+
+Mean over five seeds at `N=2048`:
+
+| K | Learned interaction loss | Regret-distilled loss | Accuracy gain |
+|---:|---:|---:|---:|
+| 8 | 0.988432 | 0.977017 | 0.506667 -> 0.542222 |
+| 16 | 0.966183 | 0.955077 | 0.504444 -> 0.513333 |
+| 32 | 1.004095 | 0.999112 | 0.475556 -> 0.513333 |
+
+The regret-distilled retriever wins 14 of 15 seed/K conditions against the
+learned interaction retriever. This supports a sharper claim: explicit state is
+useful not only for sparse propagation, but also because it exposes
+pre-propagation object working-set control as a trainable operation. Token
+baselines can serialize the scene, but they do not naturally expose this
+object-level intervention point.
+
+The remaining v2 bottleneck is cross-seed generalization. Diagnostic rerankers
+and train-only variant selectors give small improvements, but they do not close
+the gap to the generated oracle. The next technical target is therefore:
+
+- train retrieval against downstream regret rather than teacher overlap;
+- make candidate scoring invariant across seeds and model instances;
+- jointly train retriever and propagator instead of treating retrieval as a
+  post-hoc selector;
+- preserve sparse routed work while improving large-`N` accuracy;
+- add long-horizon branch consistency, calibration, and state-integrity
+  mechanisms;
+- add object-state adapters for perception-to-state construction.
+
+## Application Boundary
+
+The near-term application target is software, not silicon: a state-update
+runtime or middleware layer for workloads where the state is large but each
+event changes a local subset. Plausible domains include digital twins,
+simulation backends, game/server state synchronization, and robotics world-model
+maintenance. Chiplet/IP or edge-processor claims are future hypotheses and
+require hardware-aware profiling plus a non-empty regime where WPU is faster at
+matched or acceptable accuracy.
 
 ## Test
 

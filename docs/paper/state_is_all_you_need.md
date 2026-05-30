@@ -23,6 +23,9 @@ The current paper does not claim universal superiority over Transformers,
 Graph Transformers, GPUs, TPUs, NPUs, or LPUs. It proposes a falsifiable regime
 hypothesis: state-native propagation should matter when persistent identity,
 local causal change, uncertainty, and branchable futures dominate the workload.
+The experimental goal is to map that regime over `rho`, `N`, branch pressure,
+noise, and affected-region size, not to claim that WPU always beats token or
+graph models.
 
 ## Relation To Existing Work
 
@@ -45,6 +48,11 @@ Network-based Simulators can be used as propagation cores. Set/Graph
 Transformers can be used as dense fallback or baselines. WPU asks what execution
 substrate is appropriate once the system must repeatedly update an explicit
 world state rather than only process a fresh sequence.
+
+In this framing, perception-to-state is an adapter problem rather than a solved
+part of v1. The core WPU should accept object-state graphs from supervised
+detectors, slot/object discovery, simulators, or logs, then expose how update
+work, prediction risk, and branch memory scale.
 
 ## State Primitive
 
@@ -100,6 +108,11 @@ otherwise   -> dense
 These thresholds are engineering defaults, not final constants. The B sweep
 shows that fixed thresholds are not sufficient; learned accuracy-latency-aware
 routing is required.
+
+The v2 scheduler should optimize prediction risk and update cost jointly. It
+should be allowed to choose regional dense correction even when `rho` looks
+small, or sparse propagation even when raw object count is large, if uncertainty,
+fanout, relation quality, or branch divergence make that route preferable.
 
 ## Propagation Rather Than Attention
 
@@ -177,6 +190,40 @@ Controlled stress tests:
 - Affected-background deltas: serialized-token has the best affected-background
   MSE at the largest affected count; WPU is not broadly superior.
 
+## V2 Retrieval Evidence
+
+The main v2 lesson is that retrieval should be trained against downstream
+regret, not against a hand-written teacher. Earlier learned retrievers imitated
+the interaction-density selector. That kept the mechanism state-native, but it
+optimized teacher overlap rather than branch prediction loss.
+
+The regret-distilled retriever changes the target. On a validation split, the
+system evaluates base candidates and generated candidates, then treats the
+candidate set with the lowest downstream branch cross-entropy as a pseudo-label
+object set. A small state-native object scorer is trained to recover that set
+from object/event features.
+
+Mean over five seeds at `N=2048`:
+
+| K | Static learned interaction loss | Regret-distilled loss | Accuracy before | Accuracy after |
+|---:|---:|---:|---:|---:|
+| 8 | 0.988432 | 0.977017 | 0.506667 | 0.542222 |
+| 16 | 0.966183 | 0.955077 | 0.504444 | 0.513333 |
+| 32 | 1.004095 | 0.999112 | 0.475556 | 0.513333 |
+
+The regret-distilled retriever wins 14 of 15 seed/K conditions against the
+learned interaction retriever. This is currently the strongest v2 retrieval
+mechanism. It supports a sharper WPU claim: explicit state is useful not only
+because it enables sparse propagation, but because it exposes object working-set
+selection as a trainable pre-propagation control problem.
+
+Diagnostic rerankers and train-only context-variant selection provide smaller
+cross-seed improvements. They show that candidate-level entropy, max
+probability, and logit margin contain useful signal, but they do not close the
+gap to the generated oracle. The unresolved v2 problem is therefore not simply
+candidate generation; it is invariant candidate scoring and joint
+retriever-propagator training.
+
 ## Current Evidence Boundary
 
 Supported:
@@ -187,6 +234,8 @@ Supported:
   regimes.
 - WPU-hybrid is robust under irrelevant relation noise.
 - Routed sparse execution can reduce CPU latency at large `N`.
+- Regret-distilled state retrieval improves downstream loss over
+  interaction-teacher retrieval in same-seed validation-to-test experiments.
 
 Not supported:
 
@@ -195,6 +244,22 @@ Not supported:
 - End-to-end perception-to-state construction.
 - Hardware-level advantage over GPU/NPU/TPU/LPU.
 - Fixed `rho` thresholds as a final routing policy.
+- Robust cross-seed candidate scoring; current diagnostic scorers are only
+  partial improvements.
+
+## Application Boundary
+
+The commercial implication should be stated conservatively. WPU is not yet a
+chiplet, robot OS core, or proven edge-AI processor. The nearer-term target is a
+software runtime or middleware layer for systems where state is large, identity
+persists, and each event changes a local subset: digital twin simulation,
+simulator backends, game/server state synchronization, and robotics world-model
+maintenance.
+
+Hardware remains a possible future target, but only after the software version
+measures the real costs that the current work proxies away: frontier queues,
+relation fetch, scatter/gather, sparse kernel overhead, delta logs, branch
+overlay memory, and state recovery.
 
 ## Research Direction
 
@@ -204,10 +269,15 @@ testable claim about when a different computational primitive is appropriate.
 The next decisive step is experimental, not rhetorical:
 
 - learned routing instead of fixed thresholds;
+- regret-aware retrieval trained from downstream branch loss;
+- invariant candidate scoring across seeds and model instances;
+- joint retriever-propagator training;
 - stronger sparse propagation capacity at large `N`;
-- long-horizon rollout and branch calibration;
+- regional dense correction for cases where pure sparse propagation loses
+  global consistency;
+- long-horizon rollout, branch consistency, and branch calibration;
 - matched Dreamer/GNS/object-centric baselines;
-- simulator-backed object dynamics;
+- simulator-backed object dynamics and object-state adapters for perception;
 - explicit state integrity: checkpoint, rollback, and consistency checks;
 - hardware-aware profiling of frontier queues, relation fetch, scatter/gather,
   delta logs, and branch overlays.

@@ -42,11 +42,18 @@ reference implementation, \texttt{WorldStateProcessor}. On a synthetic
 robot-cup object physics task, the prototype reduces next-state prediction MSE
 from 0.8111 to 0.0005 after 200 training steps and improves branch
 classification accuracy from 0.1289 to 0.7188, exceeding a 0.6680 majority
-baseline. These results do not establish broad world understanding. They
-establish a falsifiable research program: if world processing is dominated by
-persistent identity, local causal change, uncertainty, and branching, then state
-should be treated as a primary computational substrate rather than as a
-serialization target for tokens.
+baseline. Stronger v2 retrieval experiments show that explicit state also
+exposes pre-propagation working-set control: a regret-distilled state retriever,
+trained from candidate sets that minimize downstream branch loss, improves loss
+over an interaction-teacher retriever across \(K=8,16,32\) and wins 14 of 15
+seed/K conditions at \(N=2048\). These results do not establish broad world
+understanding. They establish a falsifiable research program: if world
+processing is dominated by persistent identity, local causal change,
+uncertainty, branching, and small event-conditioned causal working sets, then
+state should be treated as a primary computational substrate rather than as a
+serialization target for tokens. The experimental objective is to map the
+regime where this substrate is useful, not to claim universal superiority over
+token, graph, or latent world models.
 \end{abstract}
 
 \section{Introduction}
@@ -167,7 +174,11 @@ the object-relation state is already available. A complete WPU system would need
 a perception front-end, such as slot/object discovery or supervised
 segmentation, to construct and repair the state graph from pixels, point clouds,
 or multimodal observations. This front-end is outside v1 and is treated as a
-required next step, not as a solved problem.
+required next step, not as a solved problem. In the near term, perception should
+be treated as an object-state adapter layer: WPU can consume state graphs from
+supervised detectors, object discovery modules, simulators, or logs while the
+core execution question remains focused on update work, prediction risk, and
+branch memory.
 
 \section{Token and State Primitives}
 
@@ -273,7 +284,9 @@ bottlenecks \cite{adiletta2026rpu}, while neuromorphic and sparse-computation
 surveys emphasize event-like sparsity and recurrent state dynamics
 \cite{simeone2026neuromorphic}. WPU is complementary: it identifies the memory
 objects and update operations that a future world-state accelerator would need,
-but the present implementation remains a PyTorch reference model.
+but the present implementation remains a PyTorch reference model. Hardware,
+chiplet, or edge-processor claims should therefore be read as future hypotheses,
+not as conclusions of this paper.
 
 The performance claim is conditional. If the world has \(N\) objects, an event
 initially changes \(\Delta N\) objects, relation fanout is \(k\), propagation
@@ -297,7 +310,10 @@ frontier queue overhead, scatter/gather efficiency, kernel launch overhead, or
 state-corruption recovery. Those terms determine whether a WPU-style design
 actually outperforms dense accelerators on real hardware. The v1 experiments
 therefore report CPU latency and work proxies, but they should not be read as
-final hardware evidence.
+final hardware evidence. A software runtime or middleware layer is the nearer
+term target: only after measuring frontier queues, relation fetch, scatter/gather,
+sparse kernels, delta logs, branch-overlay memory, and recovery costs can a
+hardware target be specified responsibly.
 
 \paragraph{Conditional performance proposition.}
 For workloads in which \(\Delta N k^h B \ll N\), a WPU-style update has lower
@@ -448,6 +464,11 @@ inspectable. They are not claimed to be optimal constants. The supplementary
 accuracy; in this paper, the hard scheduler is evidence for a routing
 hypothesis, not a final routing policy.
 
+The v2 scheduler should therefore optimize prediction risk and update cost
+jointly. It should be able to choose regional dense correction even when
+\(\rho\) is small, or sparse propagation in large worlds, when uncertainty,
+fanout, relation quality, or branch divergence make that route preferable.
+
 The reference implementation is intentionally small. It should be read as an
 executable specification of the architecture, not as an optimized model. The
 important interface is that the same module consumes structured state graphs,
@@ -549,6 +570,66 @@ accuracy fails.}
 
 \FloatBarrier
 
+\section{V2 Retrieval: Regret-Distilled Working Sets}
+
+The v1 experiments identify a precise failure boundary: sparse routed work can
+become attractive before sparse WPU accuracy remains reliable. The v2 question
+is therefore not only how to propagate better, but how to choose the local
+working set that should be propagated. This is where explicit state creates an
+additional intervention point. Before any tensor propagation step, the system
+can select objects from the event frontier, score alternative working sets, and
+train that selection policy against downstream state-prediction regret.
+
+Earlier learned retrievers imitated a hand-built interaction-density selector.
+That objective is state-native, but it optimizes teacher overlap rather than
+branch prediction loss. The retriever-regret oracle probe showed that the
+interaction selector is rarely the downstream oracle. We therefore evaluated a
+regret-distilled retriever. On a validation split, the system evaluates base
+candidates \(\{\texttt{indexed}, \texttt{proximity}, \texttt{interaction},
+\texttt{learned}\}\) and generated local candidates. For each sample, the
+candidate set with the lowest downstream branch cross-entropy is treated as a
+pseudo-label object set. A small state-native object scorer is then trained to
+recover that set from object/event features.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\(K\) & Learned-interaction loss & Regret-distilled loss & Accuracy before & Accuracy after \\
+\midrule
+8 & 0.988432 & 0.977017 & 0.506667 & 0.542222 \\
+16 & 0.966183 & 0.955077 & 0.504444 & 0.513333 \\
+32 & 1.004095 & 0.999112 & 0.475556 & 0.513333 \\
+\bottomrule
+\end{tabular}
+\caption{Regret-distilled retrieval at \(N=2048\), averaged over five seeds.
+The regret-distilled retriever is trained from validation candidate sets that
+minimize downstream branch loss, rather than from the hand-built interaction
+teacher.}
+\label{tab:regret-distillation}
+\end{table}
+
+The regret-distilled retriever improves downstream loss at every tested \(K\)
+on average and wins 14 of 15 seed/K conditions against the learned interaction
+retriever. It also changes working-set composition: it selects fewer obstacles
+and does not always force the hand into the working set, more closely matching
+the generated oracle than the interaction teacher under the current budget.
+
+This result strengthens the WPU claim in a specific way. Explicit state is
+useful not only because it enables sparse propagation; it also exposes
+object-level working-set control as a trainable pre-propagation operation.
+Token baselines can serialize the same scene, but they do not naturally expose
+this object-level intervention point as an independent control surface.
+
+The result remains bounded. It is same-seed validation-to-test distillation,
+not a proof of robust cross-seed generalization. Diagnostic rerankers using
+candidate entropy, maximum branch probability, and logit margin provide small
+cross-seed improvements, and a train-only variant selector improves over a
+static base selector across \(K=8,16,32\). However, these mechanisms do not
+close the gap to the generated oracle. The unresolved v2 problem is therefore
+invariant candidate scoring and joint retriever-propagator training, not merely
+the generation of more candidate sets.
+
 \section{Discussion}
 
 The next-state result shows that the prototype learns the local synthetic delta
@@ -594,6 +675,12 @@ training step. These results make the v1 conclusion stricter: future claims
 must report not just isolated points, but surfaces over \(N\), \(B\), route,
 training budget, accuracy, calibration, and latency.
 
+This reframes the experimental objective. The question is not whether WPU wins
+every benchmark. It is whether there exists a non-empty region over \(\rho\),
+\(N\), branch pressure, relation noise, and affected-region size where
+state-native routing is faster at matched accuracy, or faster with an explicitly
+acceptable accuracy tradeoff.
+
 The controlled stress tests sharpen the failure-mode picture. Under irrelevant
 relation noise, WPU-hybrid loses only 0.025 branch-accuracy points from 0 to 128
 extra relations, while the Graph Transformer loses 0.3438 points. This is a
@@ -634,6 +721,16 @@ delta overlays should be a better execution primitive than repeatedly
 serializing the whole world into tokens. The experiments in this paper are a
 first assay of that regime, not a final proof.
 
+The corresponding v2 technical target is concrete: learned routing instead of
+fixed thresholds; regret-aware retrieval trained from downstream branch loss;
+invariant candidate scoring across seeds and model instances; joint
+retriever-propagator training; large-\(N\) sparse stability; regional dense
+correction when pure sparse propagation loses global consistency; long-horizon
+branch consistency and calibration; object-state adapters for perception;
+matched Dreamer/GNS/object-centric baselines; state integrity through
+checkpoint, rollback, uncertainty gates, and consistency checks; and
+hardware-aware profiling before any chip or IP claim.
+
 For the WPU proposal to be scientifically useful, it must make predictions that
 can fail. This paper commits to four such tests.
 
@@ -666,7 +763,11 @@ as observations and descriptions, and attention remains useful inside dense
 state modules, but neither is sufficient as the defining primitive for
 state-native world models. The current prototype is a small first step: it
 implements explicit world state, event-conditioned propagation, sparse-dense
-routing, and branch deltas in a reproducible neural model.
+routing, branch deltas, and regret-aware working-set selection in a reproducible
+neural model. The strongest current evidence is not universal dominance, but a
+more precise mechanism: when world updates depend on a small, identifiable
+causal working set inside a much larger state, explicit state enables both
+sparse propagation and trainable object-level control before propagation.
 
 \begin{thebibliography}{99}
 

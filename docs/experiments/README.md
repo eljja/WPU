@@ -65,6 +65,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_composition_variant_selector_results.md`: audits whether
   composition-regret policy variants can be selected without using the target
   seed's test performance.
+- `wpu_v2_cross_seed_set_evaluator_results.md`: tests a set-level evaluator
+  over base, generated, and composition-aware candidate sets; candidate oracle
+  improves but the learned evaluator overfits cross-seed.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -167,6 +170,9 @@ Historical or preliminary reports:
 - Composition policy selection can be done with other-seed evidence while
   preserving loss improvements at K=8,16,32. This makes the current
   composition-regret mechanism less brittle, but still not oracle-level.
+- Cross-seed candidate-set evaluation is not solved. The expanded candidate
+  oracle improves, but the learned set evaluator hurts K=8/16 and helps only
+  K=32, indicating cross-seed overfit or missing invariant state features.
 - Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
   candidates. The next scoring work should focus on calibration/cross-seed
   generalization rather than objective swaps alone.

@@ -53,6 +53,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_generated_candidate_sweep_results.md`: sweeps generated candidate
   count and shows that oracle quality improves with more candidates while
   deployed reranking peaks around 2-4 candidates.
+- `wpu_v2_retriever_regret_distillation_results.md`: trains a state-native
+  object retriever from downstream-regret oracle candidate sets instead of
+  interaction-teacher labels.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -141,6 +144,9 @@ Historical or preliminary reports:
 - Candidate-count sweep shows that generation and scoring are now separate
   bottlenecks: more candidates improve the oracle, but deployed reranking needs
   better capacity/calibration once the candidate pool grows.
+- Regret-distilled retrieval is the strongest v2 retrieval mechanism so far in
+  same-seed validation-to-test evaluation. It improves loss across K=8,16,32
+  and wins 14 of 15 seed/K conditions against the learned interaction retriever.
 - Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
   candidates. The next scoring work should focus on calibration/cross-seed
   generalization rather than objective swaps alone.

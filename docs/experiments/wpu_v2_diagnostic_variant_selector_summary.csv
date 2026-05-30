@@ -1,0 +1,10 @@
+accuracy,causal_k,criterion,delta_loss_vs_static_base,excess_over_generated_oracle,loss,n,selected_variants
+0.511111,8,min_cv_delta,-0.00237,0.031012,0.98748,5,no_identity;no_identity;full;set_only;diagnostics_only
+0.504444,16,min_cv_delta,-0.00456,0.055555,0.961623,5,diagnostics_only;diagnostics_only;diagnostics_only;full;full
+0.484445,32,min_cv_delta,0.000242,0.035614,1.004337,5,no_identity;full;full;set_only;full
+0.504444,8,max_cv_win_then_delta,-0.00228,0.031102,0.987569,5,no_identity;no_identity;full;set_only;full
+0.508889,16,max_cv_win_then_delta,-0.004509,0.055606,0.961674,5,full;diagnostics_only;diagnostics_only;full;full
+0.482222,32,max_cv_win_then_delta,0.000722,0.036094,1.004817,5,no_identity;full;full;set_only;no_identity
+0.515556,8,best_train_loss_delta,-0.004986,0.028396,0.984863,5,full;no_identity;full;full;full
+0.508889,16,best_train_loss_delta,-0.003892,0.056222,0.96229,5,full;full;full;full;full
+0.486667,32,best_train_loss_delta,-0.001975,0.033396,1.002119,5,full;diagnostics_only;diagnostics_only;full;full

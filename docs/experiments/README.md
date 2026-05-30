@@ -67,6 +67,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_cross_seed_diagnostic_reranker_results.md`: adds candidate-level
   branch entropy, max-probability, and logit-margin diagnostics, then compares
   context ablations under leave-one-seed-out transfer.
+- `wpu_v2_diagnostic_variant_selector_results.md`: analyzes whether context
+  variants can be selected using only train-seed evidence rather than held-out
+  test performance.
 - `wpu_v2_diagnostic_safety_gate_probe_results.md`: shows that diagnostic
   safety gates contain oracle signal but do not yet transfer as deployed
   thresholds.
@@ -154,6 +157,9 @@ Historical or preliminary reports:
   do not close the same-seed gap. The strongest variant depends on K, so v2
   should move toward invariant candidate scoring or joint retriever-propagator
   training rather than relying on fixed selector identity or post-hoc gates.
+- A train-only diagnostic variant selector improves over static base selection
+  across K=8,16,32, but the gains are small. This converts the context-variant
+  result into a deployable mechanism audit, not a solved retrieval policy.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

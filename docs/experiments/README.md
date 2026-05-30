@@ -62,6 +62,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_cross_seed_composition_regret_results.md`: adds a state-conditioned
   working-set composition prior to cross-seed regret retrieval and fixes the
   K=32 obstacle under-selection failure.
+- `wpu_v2_composition_variant_selector_results.md`: audits whether
+  composition-regret policy variants can be selected without using the target
+  seed's test performance.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -161,6 +164,9 @@ Historical or preliminary reports:
   K=8,16,32 and restores the K=32 obstacle count close to the generated oracle.
   The remaining gap is candidate-set evaluation and joint retriever-propagator
   training.
+- Composition policy selection can be done with other-seed evidence while
+  preserving loss improvements at K=8,16,32. This makes the current
+  composition-regret mechanism less brittle, but still not oracle-level.
 - Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
   candidates. The next scoring work should focus on calibration/cross-seed
   generalization rather than objective swaps alone.

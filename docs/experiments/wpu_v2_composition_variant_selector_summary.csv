@@ -1,0 +1,10 @@
+accuracy,causal_k,criterion,delta_loss_vs_static_learned,excess_over_generated_oracle,loss,n,selected_hand_rate,selected_obstacles,selected_policies
+0.52,8,lowest_other_seed_loss,-0.002391,0.029573,0.986041,5,0.664444,1.628889,composition_regret_argmax;composition_regret_expected;composition_regret_count_only;composition_regret_count_only;composition_regret_count_only
+0.533333,16,lowest_other_seed_loss,-0.015383,0.044732,0.9508,5,0.633333,1.757778,composition_regret_argmax;composition_regret_argmax;composition_regret_argmax;composition_regret_argmax;composition_regret_argmax
+0.513334,32,lowest_other_seed_loss,-0.001578,0.033793,1.002516,5,0.748889,1.597778,composition_regret_argmax;composition_regret_expected;composition_regret_argmax;composition_regret_expected;composition_regret_argmax
+0.522222,8,highest_other_seed_accuracy,-0.003665,0.028299,0.984766,5,0.602222,1.635556,composition_regret_count_only;composition_regret_count_only;composition_regret_count_only;composition_regret_count_only;composition_regret_count_only
+0.524444,16,highest_other_seed_accuracy,-0.013883,0.046232,0.9523,5,0.56,1.824445,composition_regret_count_only;composition_regret_argmax;composition_regret_count_only;composition_regret_argmax;composition_regret_count_only
+0.506667,32,highest_other_seed_accuracy,-0.0026,0.032771,1.001494,5,0.735556,1.475555,composition_regret_argmax;composition_regret_argmax;composition_regret_argmax;composition_regret_argmax;composition_regret_expected
+0.52,8,lowest_other_seed_excess,-0.002391,0.029573,0.986041,5,0.664444,1.628889,composition_regret_argmax;composition_regret_expected;composition_regret_count_only;composition_regret_count_only;composition_regret_count_only
+0.533333,16,lowest_other_seed_excess,-0.015383,0.044732,0.9508,5,0.633333,1.757778,composition_regret_argmax;composition_regret_argmax;composition_regret_argmax;composition_regret_argmax;composition_regret_argmax
+0.513334,32,lowest_other_seed_excess,-0.001578,0.033793,1.002516,5,0.748889,1.597778,composition_regret_argmax;composition_regret_expected;composition_regret_argmax;composition_regret_expected;composition_regret_argmax

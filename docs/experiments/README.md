@@ -68,6 +68,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_cross_seed_set_evaluator_results.md`: tests a set-level evaluator
   over base, generated, and composition-aware candidate sets; candidate oracle
   improves but the learned evaluator overfits cross-seed.
+- `wpu_v2_candidate_oracle_gap_analysis.md`: decomposes the set-evaluator
+  result into candidate-pool oracle gain and deployed selection failure,
+  narrowing the v2 bottleneck to transfer-stable candidate scoring.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -173,6 +176,10 @@ Historical or preliminary reports:
 - Cross-seed candidate-set evaluation is not solved. The expanded candidate
   oracle improves, but the learned set evaluator hurts K=8/16 and helps only
   K=32, indicating cross-seed overfit or missing invariant state features.
+- Candidate-oracle gap analysis shows that the next bottleneck is not merely
+  generating more candidate working sets. The candidate pool already contains
+  better choices; the missing mechanism is a transfer-stable scorer that can
+  identify them under held-out seeds.
 - Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
   candidates. The next scoring work should focus on calibration/cross-seed
   generalization rather than objective swaps alone.

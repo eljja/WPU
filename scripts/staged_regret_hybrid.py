@@ -4,10 +4,13 @@ import argparse
 from collections import Counter
 import csv
 from pathlib import Path
+import sys
 
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from scripts.learned_retriever_probe import _learned_selected_ids, _train_model
 from wpu.data.working_set_physics import (

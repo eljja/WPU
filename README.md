@@ -79,6 +79,15 @@ python -m pip install -e ".[dev]"
 The default install pulls the standard PyTorch package. If you need a specific
 CUDA build, install that PyTorch build first, then run the editable install.
 
+On Windows, verify that `python` resolves to a real interpreter rather than the
+Microsoft Store alias. A reproducible local path is:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pytest
+```
+
 ## Run The Demo
 
 ```bash

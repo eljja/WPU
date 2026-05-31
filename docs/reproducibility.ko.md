@@ -18,6 +18,16 @@ python -m pip install -e ".[dev]"
 driver/CUDA stack에 맞는 PyTorch build를 먼저 설치한 뒤 editable install을
 실행한다.
 
+Windows에서는 `python`이 실제 interpreter가 아니라 Microsoft Store alias로
+잡힐 수 있다. 이런 경우 의도한 Python 설치로 virtual environment를 만든 뒤 venv
+interpreter로 검증을 실행한다.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pytest
+```
+
 ## 필수 품질 검증
 
 논문, 문서, 모델 변경을 커밋하기 전에 다음을 실행한다.

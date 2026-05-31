@@ -19,6 +19,16 @@ The default install pulls the standard PyTorch package. For CUDA-specific
 experiments, install the PyTorch build matching the local driver/CUDA stack
 first, then run the editable install.
 
+On Windows, `python` can resolve to the Microsoft Store alias instead of an
+installed interpreter. If so, create a virtual environment with the intended
+Python installation and run checks through the venv interpreter:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pytest
+```
+
 ## Required Quality Checks
 
 Run before committing paper, documentation, or model changes:

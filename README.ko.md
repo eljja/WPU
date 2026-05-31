@@ -88,6 +88,15 @@ python -m pip install -e ".[dev]"
 기본 설치는 standard PyTorch package를 함께 설치한다. 특정 CUDA build가 필요하면
 해당 PyTorch build를 먼저 설치한 뒤 editable install을 실행한다.
 
+Windows에서는 `python`이 Microsoft Store alias로 잡히지 않는지 먼저 확인한다.
+로컬 재현에는 다음처럼 venv interpreter를 명시하는 경로가 안전하다.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\python.exe -m pytest
+```
+
 ## 데모 실행
 
 ```bash

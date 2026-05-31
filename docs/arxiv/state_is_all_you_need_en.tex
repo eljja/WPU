@@ -43,11 +43,13 @@ robot-cup object physics task, the prototype reduces next-state prediction MSE
 from 0.8111 to 0.0005 after 200 training steps and improves branch
 classification accuracy from 0.1289 to 0.7188, exceeding a 0.6680 majority
 baseline. Stronger v2 retrieval experiments show that explicit state also
-exposes pre-propagation working-set control: a regret-distilled state retriever,
-trained from candidate sets that minimize downstream branch loss, improves loss
-over an interaction-teacher retriever across \(K=8,16,32\) and wins 14 of 15
-seed/K conditions at \(N=2048\). These results do not establish broad world
-understanding. They establish a falsifiable research program: if world
+exposes pre-propagation working-set control. A regret-distilled state retriever
+wins 14 of 15 seed/K conditions against an interaction-teacher retriever, and a
+newer cross-seed experiment shows that risk-adjusted mechanism selection over
+state-native role/geometry/family descriptors improves held-out loss over a
+static learned selector for \(K=8,16,32\) at \(N=2048\). These results do not
+establish broad world understanding. They establish a falsifiable research
+program: if world
 processing is dominated by persistent identity, local causal change,
 uncertainty, branching, and small event-conditioned causal working sets, then
 state should be treated as a primary computational substrate rather than as a
@@ -570,21 +572,22 @@ accuracy fails.}
 
 \FloatBarrier
 
-\section{V2 Retrieval: Regret-Distilled Working Sets}
+\section{V2 Retrieval: Risk-Adjusted Working-Set Control}
 
 The v1 experiments identify a precise failure boundary: sparse routed work can
 become attractive before sparse WPU accuracy remains reliable. The v2 question
 is therefore not only how to propagate better, but how to choose the local
-working set that should be propagated. This is where explicit state creates an
-additional intervention point. Before any tensor propagation step, the system
-can select objects from the event frontier, score alternative working sets, and
-train that selection policy against downstream state-prediction regret.
+working set that should be propagated and which retrieval mechanism should be
+deployed. This is where explicit state creates an additional intervention
+point. Before any tensor propagation step, the system can select objects from
+the event frontier, score alternative working sets, and train that selection
+policy against downstream state-prediction regret.
 
 Earlier learned retrievers imitated a hand-built interaction-density selector.
 That objective is state-native, but it optimizes teacher overlap rather than
 branch prediction loss. The retriever-regret oracle probe showed that the
-interaction selector is rarely the downstream oracle. We therefore evaluated a
-regret-distilled retriever. On a validation split, the system evaluates base
+interaction selector is rarely the downstream oracle. We therefore first
+evaluated a regret-distilled retriever. On a validation split, the system evaluates base
 candidates \(\{\texttt{indexed}, \texttt{proximity}, \texttt{interaction},
 \texttt{learned}\}\) and generated local candidates. For each sample, the
 candidate set with the lowest downstream branch cross-entropy is treated as a
@@ -621,14 +624,47 @@ object-level working-set control as a trainable pre-propagation operation.
 Token baselines can serialize the same scene, but they do not naturally expose
 this object-level intervention point as an independent control surface.
 
-The result remains bounded. It is same-seed validation-to-test distillation,
-not a proof of robust cross-seed generalization. Diagnostic rerankers using
-candidate entropy, maximum branch probability, and logit margin provide small
-cross-seed improvements, and a train-only variant selector improves over a
-static base selector across \(K=8,16,32\). However, these mechanisms do not
-close the gap to the generated oracle. The unresolved v2 problem is therefore
-invariant candidate scoring and joint retriever-propagator training, not merely
-the generation of more candidate sets.
+The same-seed result is not sufficient as a cross-seed claim. We therefore
+tested a stricter mechanism-selection variant. Candidate sets are described by
+explicit state-native features: hand inclusion, selected obstacle ratio,
+obstacle pair density, event force, event-relative obstacle distance
+statistics, lateral spread, target-axis alignment, hand/edge distance, and
+candidate-family flags. The deployed policy selects among static learned
+interaction, composition-aware candidates, and an invariant set scorer using
+train-seed evidence. A strict no-harm seed-stable gate is too conservative at
+\(K=32\); a risk-adjusted selector, which penalizes worst-seed harm without
+requiring zero harm on every training seed, gives the best deployed tradeoff.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\(K\) & Static learned loss & Risk-adjusted loss & Accuracy before & Accuracy after \\
+\midrule
+8 & 0.988432 & 0.982002 & 0.506667 & 0.522222 \\
+16 & 0.966183 & 0.951243 & 0.504444 & 0.517778 \\
+32 & 1.004095 & 1.002597 & 0.475556 & 0.522222 \\
+\bottomrule
+\end{tabular}
+\caption{Risk-adjusted state-native mechanism selection at \(N=2048\),
+averaged over five held-out seeds. Candidate mechanisms are selected from
+train-seed evidence using explicit role/geometry/family descriptors before
+propagation.}
+\label{tab:risk-adjusted-selection}
+\end{table}
+
+This result sharpens the WPU claim further. Explicit state is useful not only
+because it enables sparse propagation; it also exposes object-level working-set
+control and mechanism routing as trainable pre-propagation operations. Token
+baselines can serialize the same scene, but they do not naturally expose this
+object-level intervention point as an independent control surface.
+
+The result remains bounded. Opaque set evaluators, score-margin confidence
+gates, and strict no-harm seed-stable gates do not solve the cross-seed
+selection problem, and the candidate oracle remains substantially better. The
+unresolved v2 problem is therefore invariant candidate descriptors,
+risk-aware mechanism selection, and joint retriever-propagator training, not
+merely the generation of more candidate sets.
 
 \section{Discussion}
 
@@ -723,9 +759,9 @@ first assay of that regime, not a final proof.
 
 The corresponding v2 technical target is concrete: learned routing instead of
 fixed thresholds; regret-aware retrieval trained from downstream branch loss;
-invariant candidate scoring across seeds and model instances; joint
-retriever-propagator training; large-\(N\) sparse stability; regional dense
-correction when pure sparse propagation loses global consistency; long-horizon
+invariant candidate descriptors and risk-adjusted mechanism selection across
+seeds and model instances; joint retriever-propagator training; large-\(N\)
+sparse stability; regional dense correction when pure sparse propagation loses global consistency; long-horizon
 branch consistency and calibration; object-state adapters for perception;
 matched Dreamer/GNS/object-centric baselines; state integrity through
 checkpoint, rollback, uncertainty gates, and consistency checks; and

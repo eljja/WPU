@@ -118,31 +118,35 @@ v1의 핵심 목표는 명확하다.
 Push the accuracy crossover beyond the runtime crossover.
 ```
 
-## WPU v2: Learned Working-Set Control
+## WPU v2: State-Native Working-Set Control
 
-최근 v2에서 가장 강한 개선은 propagation block을 키운 것이 아니라 retrieval
-objective를 바꾼 것이다. 기존 learned retriever는 hand-built interaction selector를
-모방했다. 새 regret-distilled retriever는 validation split에서 실제 downstream branch
-loss가 가장 낮았던 candidate working set을 pseudo-label로 삼아 object scorer를
-학습한다.
+최근 v2에서 가장 강한 개선은 propagation block을 키운 것이 아니라 propagation
+이전의 state-native control loop를 만든 것이다. 후보 causal working set을 생성하고,
+명시적 role/geometry/family descriptor로 설명한 뒤, train seed evidence를
+risk-adjusted 방식으로 평가해 사용할 retrieval mechanism을 고른다.
 
-`N=2048`, 5 seeds 평균:
+이전 v2 실험에서는 downstream branch loss를 최소화한 candidate set에서 학습한
+regret-distilled retriever가 learned interaction retriever 대비 15개 seed/K 조건 중
+14개에서 loss를 낮췄다. 최신 결과는 더 엄격하다. `N=2048`에서 held-out seed에 대해
+mechanism selection 자체를 검증한다.
 
-| K | Learned interaction loss | Regret-distilled loss | Accuracy gain |
+`N=2048`, 5 held-out seeds 평균:
+
+| K | Static learned loss | Risk-adjusted mechanism loss | Accuracy gain |
 |---:|---:|---:|---:|
-| 8 | 0.988432 | 0.977017 | 0.506667 -> 0.542222 |
-| 16 | 0.966183 | 0.955077 | 0.504444 -> 0.513333 |
-| 32 | 1.004095 | 0.999112 | 0.475556 -> 0.513333 |
+| 8 | 0.988432 | 0.982002 | 0.506667 -> 0.522222 |
+| 16 | 0.966183 | 0.951243 | 0.504444 -> 0.517778 |
+| 32 | 1.004095 | 1.002597 | 0.475556 -> 0.522222 |
 
-Regret-distilled retriever는 learned interaction retriever 대비 15개 seed/K 조건 중
-14개에서 loss를 낮췄다. 이는 WPU의 중요한 주장을 강화한다. Explicit state는 sparse
-propagation뿐 아니라, propagation 이전의 object-level working-set control을 학습
-가능한 문제로 노출한다. Token baseline은 scene을 serialize할 수 있지만, 이
-object-level intervention point를 자연스럽게 제공하지 않는다.
+이는 WPU의 중요한 주장을 강화한다. Explicit state는 sparse propagation뿐 아니라,
+propagation 이전의 object-level working-set control을 학습 가능하고 검증 가능한
+문제로 노출한다. Token baseline은 scene을 serialize할 수 있지만, 이 object-level
+intervention point를 자연스럽게 제공하지 않는다.
 
-남은 병목은 cross-seed generalization이다. Diagnostic reranker와 train-only variant
-selector는 작은 개선을 보였지만 generated oracle과의 gap을 닫지는 못했다. 다음 v2
-목표는 invariant candidate scorer 또는 retriever-propagator joint training이다.
+남은 병목은 generated/candidate oracle과의 gap이다. Opaque set evaluator,
+score-margin gate, strict no-harm seed-stable gate만으로는 충분하지 않았다. 다음 v2
+목표는 invariant candidate descriptor, risk-adjusted mechanism routing, 그리고
+retriever-propagator joint training이다.
 
 ## 논문 및 문서
 

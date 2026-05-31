@@ -190,15 +190,16 @@ Controlled stress tests:
 - Affected-background deltas: serialized-token has the best affected-background
   MSE at the largest affected count; WPU is not broadly superior.
 
-## V2 Retrieval Evidence
+## V2 Working-Set Control Evidence
 
-The main v2 lesson is that retrieval should be trained against downstream
-regret, not against a hand-written teacher. Earlier learned retrievers imitated
-the interaction-density selector. That kept the mechanism state-native, but it
-optimized teacher overlap rather than branch prediction loss.
+The main v2 lesson is that working-set control should be trained and selected
+against downstream regret, not against a hand-written teacher. Earlier learned
+retrievers imitated the interaction-density selector. That kept the mechanism
+state-native, but it optimized teacher overlap rather than branch prediction
+loss.
 
-The regret-distilled retriever changes the target. On a validation split, the
-system evaluates base candidates and generated candidates, then treats the
+The first improvement was regret-distilled retrieval. On a validation split,
+the system evaluates base candidates and generated candidates, then treats the
 candidate set with the lowest downstream branch cross-entropy as a pseudo-label
 object set. A small state-native object scorer is trained to recover that set
 from object/event features.
@@ -212,17 +213,29 @@ Mean over five seeds at `N=2048`:
 | 32 | 1.004095 | 0.999112 | 0.475556 | 0.513333 |
 
 The regret-distilled retriever wins 14 of 15 seed/K conditions against the
-learned interaction retriever. This is currently the strongest v2 retrieval
-mechanism. It supports a sharper WPU claim: explicit state is useful not only
-because it enables sparse propagation, but because it exposes object working-set
-selection as a trainable pre-propagation control problem.
+learned interaction retriever. The newer cross-seed result is stricter. It adds
+candidate-level role/geometry/family descriptors and selects among static,
+composition-aware, and invariant-scoring mechanisms using risk-adjusted
+train-seed evidence.
 
-Diagnostic rerankers and train-only context-variant selection provide smaller
-cross-seed improvements. They show that candidate-level entropy, max
-probability, and logit margin contain useful signal, but they do not close the
-gap to the generated oracle. The unresolved v2 problem is therefore not simply
-candidate generation; it is invariant candidate scoring and joint
-retriever-propagator training.
+Mean over five held-out seeds at `N=2048`:
+
+| K | Static learned loss | Risk-adjusted mechanism loss | Accuracy before | Accuracy after |
+|---:|---:|---:|---:|---:|
+| 8 | 0.988432 | 0.982002 | 0.506667 | 0.522222 |
+| 16 | 0.966183 | 0.951243 | 0.504444 | 0.517778 |
+| 32 | 1.004095 | 1.002597 | 0.475556 | 0.522222 |
+
+This is currently the strongest v2 working-set-control result. It supports a
+sharper WPU claim: explicit state is useful not only because it enables sparse
+propagation, but because it exposes object working-set selection and mechanism
+routing as trainable pre-propagation control problems.
+
+Negative results are equally important. Opaque set evaluators, score-margin
+confidence gates, and strict no-harm seed-stable gates do not solve cross-seed
+selection. The unresolved v2 problem is therefore not simply candidate
+generation; it is invariant candidate descriptors, risk-aware mechanism
+selection, and joint retriever-propagator training.
 
 ## Current Evidence Boundary
 
@@ -236,6 +249,9 @@ Supported:
 - Routed sparse execution can reduce CPU latency at large `N`.
 - Regret-distilled state retrieval improves downstream loss over
   interaction-teacher retrieval in same-seed validation-to-test experiments.
+- Risk-adjusted state-native mechanism selection improves held-out-seed loss
+  over static learned selection at `K=8,16,32` in the current `N=2048` CWS
+  setting.
 
 Not supported:
 
@@ -244,8 +260,8 @@ Not supported:
 - End-to-end perception-to-state construction.
 - Hardware-level advantage over GPU/NPU/TPU/LPU.
 - Fixed `rho` thresholds as a final routing policy.
-- Robust cross-seed candidate scoring; current diagnostic scorers are only
-  partial improvements.
+- Closed oracle gap for cross-seed candidate scoring; current risk-adjusted
+  mechanism selection is positive but still far from the candidate oracle.
 
 ## Application Boundary
 
@@ -270,7 +286,8 @@ The next decisive step is experimental, not rhetorical:
 
 - learned routing instead of fixed thresholds;
 - regret-aware retrieval trained from downstream branch loss;
-- invariant candidate scoring across seeds and model instances;
+- invariant candidate descriptors and risk-adjusted mechanism selection across
+  seeds and model instances;
 - joint retriever-propagator training;
 - stronger sparse propagation capacity at large `N`;
 - regional dense correction for cases where pure sparse propagation loses

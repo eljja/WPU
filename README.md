@@ -159,34 +159,39 @@ The current evidence supports a regime hypothesis, not universal dominance.
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.
 
-## WPU v2 Direction: Learned Working-Set Control
+## WPU v2 Direction: State-Native Working-Set Control
 
-The strongest recent v2 result is not a larger propagation block. It is a change
-in the retrieval objective. Earlier learned retrievers imitated a hand-written
-interaction selector. The newer regret-distilled retriever instead learns from
-the candidate working set that actually minimizes downstream branch loss.
+The strongest recent v2 result is not a larger propagation block. It is a
+state-native control loop before propagation: generate candidate causal working
+sets, describe them with explicit role/geometry/family features, and choose a
+retrieval mechanism with risk-adjusted train-seed evidence.
 
-Mean over five seeds at `N=2048`:
+Earlier v2 work showed that a regret-distilled retriever, trained from candidate
+sets that minimize downstream branch loss, beats a learned interaction retriever
+in 14 of 15 seed/K conditions. The newer cross-seed result is stricter: it tests
+mechanism selection under held-out seeds at `N=2048`.
 
-| K | Learned interaction loss | Regret-distilled loss | Accuracy gain |
+Mean over five held-out seeds:
+
+| K | Static learned loss | Risk-adjusted mechanism loss | Accuracy gain |
 |---:|---:|---:|---:|
-| 8 | 0.988432 | 0.977017 | 0.506667 -> 0.542222 |
-| 16 | 0.966183 | 0.955077 | 0.504444 -> 0.513333 |
-| 32 | 1.004095 | 0.999112 | 0.475556 -> 0.513333 |
+| 8 | 0.988432 | 0.982002 | 0.506667 -> 0.522222 |
+| 16 | 0.966183 | 0.951243 | 0.504444 -> 0.517778 |
+| 32 | 1.004095 | 1.002597 | 0.475556 -> 0.522222 |
 
-The regret-distilled retriever wins 14 of 15 seed/K conditions against the
-learned interaction retriever. This supports a sharper claim: explicit state is
-useful not only for sparse propagation, but also because it exposes
-pre-propagation object working-set control as a trainable operation. Token
-baselines can serialize the scene, but they do not naturally expose this
-object-level intervention point.
+This supports a sharper claim: explicit state is useful not only for sparse
+propagation, but also because it exposes object-level working-set control as a
+trainable, inspectable pre-propagation operation. Token baselines can serialize
+the scene, but they do not naturally expose this intervention point.
 
-The remaining v2 bottleneck is cross-seed generalization. Diagnostic rerankers
-and train-only variant selectors give small improvements, but they do not close
-the gap to the generated oracle. The next technical target is therefore:
+The remaining v2 bottleneck is still the oracle gap. Opaque set evaluators,
+score-margin gates, and strict no-harm seed-stable gates are not sufficient.
+The next technical target is therefore:
 
-- train retrieval against downstream regret rather than teacher overlap;
-- make candidate scoring invariant across seeds and model instances;
+- train retrieval and mechanism selection against downstream regret rather than
+  teacher overlap;
+- make candidate descriptors invariant across seeds and model instances;
+- use risk-adjusted mechanism routing instead of a single opaque reranker;
 - jointly train retriever and propagator instead of treating retrieval as a
   post-hoc selector;
 - preserve sparse routed work while improving large-`N` accuracy;

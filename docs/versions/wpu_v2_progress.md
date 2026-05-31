@@ -1590,6 +1590,64 @@ small-K behavior and gives the best overall accuracy among the learned
 retriever variants. This makes learned state retrieval a reusable WPU module,
 not only a condition-specific probe.
 
+### Priority 6ad: Cross-Seed Working-Set Mechanism Selection
+
+Output:
+
+- `scripts/retriever_cross_seed_set_evaluator_probe.py`
+- `scripts/retriever_cross_seed_conservative_set_evaluator_probe.py`
+- `scripts/retriever_cross_seed_invariant_set_scorer_probe.py`
+- `docs/experiments/wpu_v2_cross_seed_set_evaluator_results.md`
+- `docs/experiments/wpu_v2_candidate_oracle_gap_analysis.md`
+- `docs/experiments/wpu_v2_conservative_set_evaluator_results.md`
+- `docs/experiments/wpu_v2_invariant_set_scorer_results.md`
+
+Question:
+
+```text
+Can WPU select causal working-set mechanisms under held-out seeds, rather than
+only generating useful candidate sets?
+```
+
+Findings:
+
+1. The expanded candidate pool contains better choices, but an opaque learned
+   set evaluator overfits cross-seed. The candidate oracle improves, while the
+   deployed evaluator hurts K=8/16 and helps only K=32.
+2. Score-margin confidence is not a reliable safety signal. Conservative
+   train-loss and per-seed no-harm margin gates still fail to protect K=8/16.
+3. Explicit state descriptors help. Role/geometry/family candidate descriptors
+   improve K=8/16, but descriptor-only scoring still fails at K=32.
+4. Mechanism selection is the current best solution. A risk-adjusted selector
+   chooses among static learned retrieval, composition-aware retrieval, and the
+   invariant scorer using train-seed evidence.
+
+Result at N=2048 over five held-out seeds:
+
+| K | static learned loss | risk-adjusted mechanism loss | accuracy before | accuracy after |
+| --- | --- | --- | --- | --- |
+| 8 | 0.988432 | 0.982002 | 0.506667 | 0.522222 |
+| 16 | 0.966183 | 0.951243 | 0.504444 | 0.517778 |
+| 32 | 1.004095 | 1.002597 | 0.475556 | 0.522222 |
+
+Interpretation:
+
+This is the strongest current cross-seed working-set result. It does not close
+the candidate-oracle gap, but it moves the WPU v2 claim from "learn a retriever"
+to a more precise architecture:
+
+```text
+explicit state descriptors
++ composition constraints
++ invariant candidate scoring
++ risk-adjusted mechanism routing
+```
+
+The result also records two useful negative findings. Larger opaque rerankers
+are not automatically better, and strict no-harm seed-stable gating is too
+conservative at large K. WPU needs structured mechanism selection, not a return
+to token serialization and not a single universal reranker.
+
 ## Updated V2 Direction
 
 The seven architecture directions remain valid, but their priorities are now
@@ -1601,9 +1659,9 @@ clearer:
 3. Event-Conditioned Retriever: make learned, proximity-ranked, and
    interaction-ranked retrieval compete with indexed and oracle retrieval under
    distractors.
-4. Adaptive K Scheduler: expose K growth as a controlled decision, not a fixed
-   hyperparameter; hard, learned, interaction-aware, and forced counterfactual
-   route variants now exist.
+4. Adaptive K Scheduler: expose K growth and mechanism choice as controlled
+   decisions, not fixed hyperparameters; hard, learned, interaction-aware,
+   risk-adjusted, and forced counterfactual route variants now exist.
 5. Local Propagation Core: support both sparse and local dense updates.
 6. Delta/Branch Engine: implemented the first delta-conditioned branch scorer;
    the next step is full branch-specific delta trajectories.
@@ -1669,7 +1727,12 @@ WPU v2 is now concrete enough to claim a direction, not a final result:
 > fanout context and the training objective balances K regimes.
 > The integrated global-retriever experiment then shows that a single mixed-K
 > learned retriever can be reused inside the downstream WPU pipeline with little
-> loss relative to per-K retriever training.
+> loss relative to per-K retriever training. The cross-seed mechanism-selection
+> experiments add the next constraint: candidate generation is not enough.
+> Opaque set evaluators and score-margin gates do not transfer reliably, while
+> explicit role/geometry/family descriptors plus risk-adjusted routing among
+> static, composition-aware, and invariant mechanisms improve held-out loss
+> across K=8,16,32.
 
 ## Next Required Work
 
@@ -1698,7 +1761,8 @@ Before claiming v2 as a strong experimental result:
   report confidence/composition to the scheduler.
 - Make the integrated learned retriever mixed-K and fanout-aware instead of
   training a separate retriever per K condition.
-- Move from teacher-distilled global retrieval to downstream-regret retrieval.
+- Move from teacher-distilled global retrieval to downstream-regret retrieval
+  with risk-adjusted mechanism selection.
 - Extend delta-conditioned branch scoring into branch-specific delta
   trajectories and calibration losses.
 - Evaluate closed-loop rollout with trained checkpoints, not only random or

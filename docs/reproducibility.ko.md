@@ -34,6 +34,7 @@ python -m pytest
 - rollout probability normalization;
 - script entrypoint hygiene;
 - documentation link integrity;
+- LaTeX figure와 citation integrity;
 - experiment `Source CSV` integrity;
 - robot-cup demo smoke output.
 
@@ -95,4 +96,3 @@ Generated result를 `docs/experiments/`로 승격하기 전 확인할 것:
 `docs/claims.ko.md`를 authoritative claim boundary로 사용한다. 현재 저장소가
 지지하는 것은 regime-specific WPU hypothesis이며, token/graph/latent world model
 또는 hardware accelerator baseline에 대한 보편 우월성이 아니다.
-

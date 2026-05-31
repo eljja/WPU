@@ -35,6 +35,7 @@ The test suite covers:
 - rollout probability normalization;
 - script entrypoint hygiene;
 - documentation link integrity;
+- LaTeX figure and citation integrity;
 - experiment `Source CSV` integrity;
 - robot-cup demo smoke output.
 
@@ -97,4 +98,3 @@ before promotion.
 Use `docs/claims.md` as the authoritative claim boundary. The current repository
 supports a regime-specific WPU hypothesis, not universal superiority over token,
 graph, latent world-model, or hardware accelerator baselines.
-

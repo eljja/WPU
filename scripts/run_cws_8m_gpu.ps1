@@ -56,9 +56,9 @@ if ($LASTEXITCODE -ne 0) {
 
 & $Python scripts/analyze_causal_working_set.py `
     --input "$OutDir/n-sweep.csv" `
-    --output "docs/experiments/causal_working_set_8m_gpu_results.md"
+    --output "$OutDir/results.md"
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host "CWS 8M GPU run complete."
+Write-Host "CWS 8M GPU run complete. Review $OutDir/results.md before promoting it to docs/experiments/."

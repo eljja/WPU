@@ -1,5 +1,7 @@
 # WPU V2 Integrated Learned Retriever Results
 
+Source CSV: `docs/experiments/wpu_v2_staged_k_expansion_learned_interaction_initial4_5seed.csv`
+
 ## Question
 
 The previous learned-retriever probe showed that a small state-native MLP can

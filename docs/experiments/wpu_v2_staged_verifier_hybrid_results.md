@@ -1,5 +1,10 @@
 # WPU V2 Deployed Staged Verifier Results
 
+Source CSVs:
+
+- `docs/experiments/wpu_v2_staged_verifier_hybrid_5seed.csv`
+- `docs/experiments/wpu_v2_staged_verifier_hybrid_safe_5seed.csv`
+
 This experiment moves the structured verifier idea from a post-hoc CSV probe
 into the actual staged WPU training/evaluation pipeline.
 

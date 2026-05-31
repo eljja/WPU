@@ -1,5 +1,7 @@
 # WPU v2 Cross-Seed Reranker Probe
 
+Source CSV: `docs/experiments/wpu_v2_retriever_cross_seed_reranker.csv`
+
 ## Purpose
 
 Previous generated-candidate reranker experiments trained and selected policies from validation examples produced by the same seed/model condition used for testing. That is useful for debugging, but it is not a strong generalization claim.

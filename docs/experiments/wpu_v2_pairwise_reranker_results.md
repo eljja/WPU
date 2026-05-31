@@ -1,5 +1,7 @@
 # WPU v2 Pairwise Reranker Probe
 
+Source CSV: `docs/experiments/wpu_v2_retriever_pairwise_reranker.csv`
+
 ## Purpose
 
 The generated-candidate sweep showed that more candidates improve the oracle but make deployed scoring harder. This experiment tests a direct fix: train the object-set reranker with pairwise candidate ranking loss instead of relying mainly on best-candidate classification.

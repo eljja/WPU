@@ -1,5 +1,7 @@
 # WPU V2 Learned Retriever Probe
 
+Source CSV: `docs/experiments/wpu_v2_learned_retriever_probe.csv`
+
 ## Question
 
 Interaction-density retrieval improved the deployed WPU result, but the first

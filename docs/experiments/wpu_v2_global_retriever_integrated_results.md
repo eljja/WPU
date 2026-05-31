@@ -1,5 +1,7 @@
 # WPU V2 Global Mixed-K Retriever Integrated Results
 
+Source CSV: `docs/experiments/wpu_v2_staged_global_retriever_initial4_5seed.csv`
+
 ## Question
 
 The previous integrated learned retriever trained a separate retriever for each

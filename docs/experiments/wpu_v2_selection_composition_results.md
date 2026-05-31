@@ -1,5 +1,7 @@
 # WPU V2 Working-Set Selection Composition
 
+Source CSV: `docs/experiments/wpu_v2_selection_composition.csv`
+
 ## Purpose
 
 The interaction-density retrieval experiment improved deployed loss, but loss

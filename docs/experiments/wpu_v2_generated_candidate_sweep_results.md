@@ -1,5 +1,7 @@
 # WPU v2 Generated Candidate Count Sweep
 
+Source CSV: `docs/experiments/wpu_v2_retriever_generated_candidate_sweep.csv`
+
 ## Purpose
 
 The first generated-candidate experiment used four generated working-set candidates. This sweep tests whether that choice is robust. The goal is to separate two effects:

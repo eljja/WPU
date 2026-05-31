@@ -1,5 +1,10 @@
 # WPU V2 Regret Router Variant Results
 
+Source CSVs:
+
+- `docs/experiments/wpu_v2_regret_router_variant_paired.csv`
+- `docs/experiments/wpu_v2_regret_router_variant_summary.csv`
+
 This experiment tests whether the staged regret router improves when its input
 is made more state-native.
 

@@ -1,5 +1,7 @@
 # WPU v2 Cross-Seed Composition-Regret Retriever
 
+Source CSV: `docs/experiments/wpu_v2_retriever_cross_seed_composition_regret.csv`
+
 ## Question
 
 The cross-seed regret-distilled retriever transferred at K=8 and K=16, but

@@ -1,5 +1,7 @@
 # WPU V2 Learned Retriever Cross-K Generalization
 
+Source CSV: `docs/experiments/wpu_v2_learned_retriever_cross_k_probe.csv`
+
 ## Question
 
 The integrated learned retriever was trained separately for each causal working

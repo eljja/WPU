@@ -1,5 +1,10 @@
 # WPU V2 Interaction-Density Retrieval Results
 
+Source CSVs:
+
+- `docs/experiments/wpu_v2_staged_k_expansion_interaction_initial4_5seed.csv`
+- `docs/experiments/wpu_v2_selection_composition.csv`
+
 ## Question
 
 The proximity retrieval experiment showed that state-native object ordering

@@ -1,5 +1,7 @@
 # WPU v2 Cross-Seed Reranker Context Ablation
 
+Source CSV: `docs/experiments/wpu_v2_retriever_cross_seed_context_ablation.csv`
+
 ## Purpose
 
 The normalized cross-seed reranker improved over the standard cross-seed reranker, but it still lagged behind same-seed reranking. One possible explanation was that the reranker overfit to candidate identity one-hot features rather than learning transferable object-set structure.

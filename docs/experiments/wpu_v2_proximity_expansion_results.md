@@ -1,5 +1,7 @@
 # WPU V2 Proximity Working-Set Retrieval Results
 
+Source CSV: `docs/experiments/wpu_v2_staged_k_expansion_proximity_initial4_5seed.csv`
+
 ## Question
 
 The previous deployed K-expansion experiment showed a narrow positive regime:

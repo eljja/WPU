@@ -1,5 +1,7 @@
 # WPU v2 Normalized Cross-Seed Reranker Probe
 
+Source CSV: `docs/experiments/wpu_v2_retriever_cross_seed_normalized_reranker.csv`
+
 ## Purpose
 
 The first cross-seed reranker showed weak transfer. One likely cause was absolute loss-scale overfitting: each seed trains a different propagation model, so raw candidate cross-entropy values may not share a stable scale.

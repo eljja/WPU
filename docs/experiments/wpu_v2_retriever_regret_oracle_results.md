@@ -1,5 +1,10 @@
 # WPU v2 Retriever Regret Oracle Probe
 
+Source CSVs:
+
+- `docs/experiments/wpu_v2_retriever_regret_oracle.csv`
+- `docs/experiments/wpu_v2_retriever_regret_oracle_samples.csv`
+
 ## Purpose
 
 This experiment asks whether the current state retriever should keep imitating the interaction-density teacher, or whether downstream branch loss exposes a different objective.

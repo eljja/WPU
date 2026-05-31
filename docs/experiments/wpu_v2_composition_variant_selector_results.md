@@ -1,5 +1,10 @@
 # WPU v2 Composition Variant Selector
 
+Source CSVs:
+
+- `docs/experiments/wpu_v2_retriever_cross_seed_composition_regret.csv`
+- `docs/experiments/wpu_v2_composition_variant_selector_summary.csv`
+
 ## Question
 
 The composition-regret retriever introduced three deployable policies:

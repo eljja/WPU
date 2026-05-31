@@ -1,5 +1,10 @@
 # WPU v2 Diagnostic Variant Selector
 
+Source CSVs:
+
+- `docs/experiments/wpu_v2_retriever_cross_seed_diagnostic_reranker.csv`
+- `docs/experiments/wpu_v2_diagnostic_variant_selector_summary.csv`
+
 ## Question
 
 The diagnostic reranker experiment found that the best context variant changes

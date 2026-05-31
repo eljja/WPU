@@ -1,5 +1,10 @@
 # WPU V2 Deployed K-Expansion Results
 
+Source CSVs:
+
+- `docs/experiments/wpu_v2_staged_k_expansion_hybrid_5seed.csv`
+- `docs/experiments/wpu_v2_staged_k_expansion_hybrid_initial4_5seed.csv`
+
 This experiment implements the next step after verifier gates: when a verifier
 fires, the system re-collates a larger event-local state and recomputes the
 branch prediction.

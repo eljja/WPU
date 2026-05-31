@@ -1,5 +1,7 @@
 # WPU v2 Conservative Set-Evaluator Gate
 
+Source CSV: `docs/experiments/wpu_v2_retriever_conservative_set_evaluator.csv`
+
 ## Question
 
 The cross-seed set evaluator found better candidate working sets in the pool,
@@ -77,4 +79,3 @@ set-evaluator gating. The next candidate-scoring work should focus on:
 - calibration under seed/layout perturbations;
 - joint retriever-propagator objectives that penalize high-confidence
   wrong candidate choices.
-

@@ -1,5 +1,7 @@
 # WPU v2 Cross-Seed Diagnostic Reranker Probe
 
+Source CSV: `docs/experiments/wpu_v2_retriever_cross_seed_diagnostic_reranker.csv`
+
 ## Question
 
 Prior v2 experiments showed that generated state candidates improve the

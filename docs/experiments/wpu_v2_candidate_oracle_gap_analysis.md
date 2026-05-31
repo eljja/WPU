@@ -1,5 +1,7 @@
 # WPU v2 Candidate Oracle Gap Analysis
 
+Source CSV: `docs/experiments/wpu_v2_retriever_cross_seed_set_evaluator.csv`
+
 ## Purpose
 
 The cross-seed set-evaluator experiment produced a useful negative result. This
@@ -78,4 +80,3 @@ The next experiments should target one of three fixes:
 - joint retriever-propagator training: optimize candidate choice against
   downstream branch loss with held-out-like perturbations instead of post-hoc
   set scoring.
-

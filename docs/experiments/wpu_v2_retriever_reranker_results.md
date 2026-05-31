@@ -1,5 +1,7 @@
 # WPU v2 Retriever Reranker Probe
 
+Source CSV: `docs/experiments/wpu_v2_retriever_reranker.csv`
+
 ## Purpose
 
 The retriever-regret oracle probe showed that no single static working-set selector is optimal for all samples. This experiment tests whether a deployed state-native reranker can recover part of that oracle gap without using tokenization, labels, or test losses at inference.

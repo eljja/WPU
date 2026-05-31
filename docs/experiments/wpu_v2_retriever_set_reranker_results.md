@@ -1,5 +1,7 @@
 # WPU v2 Object-Set Retriever Reranker Probe
 
+Source CSV: `docs/experiments/wpu_v2_retriever_set_reranker.csv`
+
 ## Purpose
 
 The aggregate reranker used only selected-set summaries such as hand presence, obstacle count, and pair density. It improved K=8 but was not reliable at larger K. This experiment tests the next state-native mechanism: encode each candidate working set as an explicit object set before scoring it.

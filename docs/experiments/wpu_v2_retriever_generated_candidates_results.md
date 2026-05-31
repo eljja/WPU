@@ -1,5 +1,7 @@
 # WPU v2 Generated Candidate Retriever Reranker
 
+Source CSV: `docs/experiments/wpu_v2_retriever_generated_candidates.csv`
+
 ## Purpose
 
 The object-set reranker improved retrieval decisions across K=8,16,32, but it was still restricted to four fixed candidate selectors: indexed, proximity, interaction, and learned. This experiment tests whether WPU improves when the retrieval system also generates additional local state candidates.

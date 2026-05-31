@@ -1,5 +1,7 @@
 # WPU v2 Regret-Distilled Retriever
 
+Source CSV: `docs/experiments/wpu_v2_retriever_regret_distillation.csv`
+
 ## Question
 
 Earlier learned retrievers imitated the hand-built interaction selector. That

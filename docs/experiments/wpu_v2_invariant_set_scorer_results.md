@@ -1,5 +1,7 @@
 # WPU v2 Invariant Set Scorer
 
+Source CSV: `docs/experiments/wpu_v2_retriever_invariant_set_scorer.csv`
+
 ## Question
 
 Prior set-evaluator experiments showed that good candidate working sets exist,

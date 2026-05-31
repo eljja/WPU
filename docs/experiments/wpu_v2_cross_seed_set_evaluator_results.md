@@ -1,5 +1,7 @@
 # WPU v2 Cross-Seed Candidate-Set Evaluator
 
+Source CSV: `docs/experiments/wpu_v2_retriever_cross_seed_set_evaluator.csv`
+
 ## Question
 
 Composition-regret retrieval improved cross-seed working-set construction, but

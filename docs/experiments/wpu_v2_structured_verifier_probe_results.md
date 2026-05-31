@@ -1,5 +1,11 @@
 # WPU V2 Structured Verifier Probe
 
+Source CSVs:
+
+- `docs/experiments/wpu_v2_staged_regret_context_samples.csv`
+- `docs/experiments/wpu_v2_structured_verifier_probe.csv`
+- `docs/experiments/wpu_v2_structured_verifier_probe_summary.csv`
+
 This experiment tests the next scheduler direction after the failure of scalar
 state-only regret routing.
 

@@ -104,6 +104,27 @@ def test_experiment_source_csv_references_are_nonempty() -> None:
     assert not issues, "Invalid experiment Source CSV references:\n" + "\n".join(issues)
 
 
+def test_current_v2_evidence_reports_declare_source_csvs() -> None:
+    readme = (ROOT / "docs" / "experiments" / "README.md").read_text(encoding="utf-8")
+    current_section = readme.split("Historical or preliminary reports:", 1)[0]
+    referenced_reports = re.findall(r"`([^`]+\.md)`", current_section)
+
+    missing: list[str] = []
+    for report in referenced_reports:
+        if not report.startswith("wpu_v2_"):
+            continue
+        if not (report.endswith("_results.md") or report.endswith("_analysis.md")):
+            continue
+        path = ROOT / "docs" / "experiments" / report
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        if "Source CSV" not in text:
+            missing.append(report)
+
+    assert not missing, "Current v2 evidence reports must declare Source CSVs:\n" + "\n".join(missing)
+
+
 def test_latex_graphics_and_citations_resolve() -> None:
     issues: list[str] = []
     for path in ROOT.rglob("*.tex"):

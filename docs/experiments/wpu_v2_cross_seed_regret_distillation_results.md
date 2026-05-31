@@ -1,5 +1,7 @@
 # WPU v2 Cross-Seed Regret Distillation
 
+Source CSV: `docs/experiments/wpu_v2_retriever_cross_seed_regret_distillation.csv`
+
 ## Question
 
 Same-seed regret distillation was the strongest WPU v2 retrieval result at the

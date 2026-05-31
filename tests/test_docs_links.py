@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import csv
+import subprocess
 from pathlib import Path
 
 
@@ -33,6 +34,18 @@ def _should_check_backtick_path(target: str) -> bool:
             "README",
         )
     )
+
+
+def _is_git_tracked(path: Path) -> bool:
+    result = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", str(path.relative_to(ROOT))],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        timeout=10,
+    )
+    return result.returncode == 0
 
 
 def test_markdown_local_references_exist() -> None:
@@ -73,9 +86,15 @@ def test_experiment_source_csv_references_are_nonempty() -> None:
             if target.replace("\\", "/").startswith("artifacts/"):
                 issues.append(f"{path.relative_to(ROOT)} -> uncommitted artifact source {target}")
                 continue
+            if not target.replace("\\", "/").startswith("docs/experiments/"):
+                issues.append(f"{path.relative_to(ROOT)} -> source CSV outside docs/experiments {target}")
+                continue
             candidate = ROOT / target.replace("\\", "/")
             if not candidate.exists():
                 issues.append(f"{path.relative_to(ROOT)} -> missing {target}")
+                continue
+            if not _is_git_tracked(candidate):
+                issues.append(f"{path.relative_to(ROOT)} -> untracked source CSV {target}")
                 continue
             with candidate.open(newline="", encoding="utf-8") as handle:
                 rows = list(csv.reader(handle))

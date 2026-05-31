@@ -43,6 +43,7 @@ python -m pytest
 - sparse/dense/model shape path;
 - rollout probability normalization;
 - script entrypoint hygiene;
+- README core script smoke execution;
 - documentation link integrity;
 - LaTeX figure와 citation integrity;
 - experiment `Source CSV` integrity;

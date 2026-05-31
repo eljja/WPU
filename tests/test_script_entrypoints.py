@@ -41,3 +41,61 @@ def test_staged_regret_hybrid_help_runs_as_direct_script() -> None:
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_readme_core_scripts_run_as_direct_scripts(tmp_path: Path) -> None:
+    checkpoint = tmp_path / "object_physics_smoke.pt"
+    commands = [
+        [
+            sys.executable,
+            "scripts/train_object_physics.py",
+            "--steps",
+            "1",
+            "--batch-size",
+            "2",
+            "--background-objects",
+            "2",
+            "--hidden-dim",
+            "16",
+            "--checkpoint",
+            str(checkpoint),
+        ],
+        [
+            sys.executable,
+            "scripts/eval_object_physics.py",
+            "--samples",
+            "4",
+            "--batch-size",
+            "2",
+            "--background-objects",
+            "2",
+            "--hidden-dim",
+            "16",
+            "--checkpoint",
+            str(tmp_path / "missing_checkpoint.pt"),
+        ],
+        [
+            sys.executable,
+            "scripts/route_sweep.py",
+            "--samples",
+            "4",
+            "--batch-size",
+            "2",
+            "--background-sizes",
+            "0",
+            "2",
+        ],
+    ]
+
+    for command in commands:
+        result = subprocess.run(
+            command,
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, result.stderr
+
+    assert checkpoint.exists()

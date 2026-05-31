@@ -44,6 +44,7 @@ The test suite covers:
 - sparse/dense/model shape paths;
 - rollout probability normalization;
 - script entrypoint hygiene;
+- README core script smoke execution;
 - documentation link integrity;
 - LaTeX figure and citation integrity;
 - experiment `Source CSV` integrity;

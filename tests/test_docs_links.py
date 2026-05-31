@@ -15,6 +15,7 @@ SOURCE_CSV_BULLET = re.compile(r"-\s*`([^`]+)`")
 LATEX_GRAPHICS = re.compile(r"\\includegraphics(?:\[[^\]]*])?\{([^}]+)\}")
 LATEX_CITE = re.compile(r"\\cite\{([^}]+)\}")
 LATEX_BIBITEM = re.compile(r"\\bibitem\{([^}]+)\}")
+MARKDOWN_TABLE_ROW = re.compile(r"^\|\s*(.*?)\s*\|$")
 
 
 def _is_external(target: str) -> bool:
@@ -46,6 +47,23 @@ def _is_git_tracked(path: Path) -> bool:
         timeout=10,
     )
     return result.returncode == 0
+
+
+def _markdown_table_rows(path: Path) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = MARKDOWN_TABLE_ROW.match(line)
+        if not match:
+            continue
+        cells = [cell.strip() for cell in match.group(1).split("|")]
+        if cells and all(set(cell) <= {"-", ":"} for cell in cells):
+            continue
+        rows.append(cells)
+    return rows
+
+
+def _round6(value: str) -> str:
+    return f"{float(value):.6f}"
 
 
 def test_markdown_local_references_exist() -> None:
@@ -123,6 +141,75 @@ def test_current_v2_evidence_reports_declare_source_csvs() -> None:
             missing.append(report)
 
     assert not missing, "Current v2 evidence reports must declare Source CSVs:\n" + "\n".join(missing)
+
+
+def test_selector_report_tables_match_summary_csvs() -> None:
+    cases = [
+        (
+            ROOT / "docs" / "experiments" / "wpu_v2_composition_variant_selector_results.md",
+            ROOT / "docs" / "experiments" / "wpu_v2_composition_variant_selector_summary.csv",
+            "selector criterion",
+            "criterion",
+            "delta loss vs static learned",
+            "delta_loss_vs_static_learned",
+            {
+                "lowest other-seed loss": "lowest_other_seed_loss",
+                "highest other-seed accuracy": "highest_other_seed_accuracy",
+            },
+        ),
+        (
+            ROOT / "docs" / "experiments" / "wpu_v2_diagnostic_variant_selector_results.md",
+            ROOT / "docs" / "experiments" / "wpu_v2_diagnostic_variant_selector_summary.csv",
+            "criterion",
+            "criterion",
+            "delta loss vs static base",
+            "delta_loss_vs_static_base",
+            {
+                "min CV delta": "min_cv_delta",
+                "max CV win then delta": "max_cv_win_then_delta",
+                "best train loss delta": "best_train_loss_delta",
+            },
+        ),
+    ]
+    issues: list[str] = []
+
+    for report_path, csv_path, table_criterion, csv_criterion, table_delta, csv_delta, criterion_labels in cases:
+        with csv_path.open(newline="", encoding="utf-8") as handle:
+            csv_rows = {
+                (row["causal_k"], row[csv_criterion]): row
+                for row in csv.DictReader(handle)
+            }
+
+        table_rows = _markdown_table_rows(report_path)
+        header_index = next(
+            index for index, row in enumerate(table_rows)
+            if row[:2] == ["K", table_criterion]
+        )
+        headers = table_rows[header_index]
+        for row in table_rows[header_index + 1:]:
+            if len(row) != len(headers) or not row[0].isdigit():
+                break
+            values = dict(zip(headers, row))
+            criterion_key = criterion_labels.get(values[table_criterion], values[table_criterion])
+            key = (values["K"], criterion_key)
+            source = csv_rows.get(key)
+            if source is None:
+                issues.append(f"{report_path.relative_to(ROOT)} -> table row missing in CSV {key}")
+                continue
+            comparisons = [
+                ("loss", "loss"),
+                ("accuracy", "accuracy"),
+                (table_delta, csv_delta),
+                ("excess over generated oracle", "excess_over_generated_oracle"),
+            ]
+            for table_column, csv_column in comparisons:
+                if _round6(values[table_column]) != _round6(source[csv_column]):
+                    issues.append(
+                        f"{report_path.relative_to(ROOT)} -> {key} {table_column} "
+                        f"table={values[table_column]} csv={source[csv_column]}"
+                    )
+
+    assert not issues, "Report table values do not match source CSVs:\n" + "\n".join(issues)
 
 
 def test_latex_graphics_and_citations_resolve() -> None:

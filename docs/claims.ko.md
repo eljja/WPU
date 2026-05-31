@@ -1,0 +1,53 @@
+# WPU 주장 관리표
+
+이 문서는 WPU 논문 수준의 주장을 현재 증거, 한계, 반증 조건과 연결한다. 목적은
+과장 주장을 막고, 심사 대응 시 어떤 주장이 어떤 실험으로 뒷받침되는지 명확히
+보여주는 것이다.
+
+## 주장 상태
+
+| ID | 주장 | 현재 상태 | 주요 증거 | 경계 |
+|---|---|---|---|---|
+| C1 | Token과 state는 서로 다른 operational primitive다. | framing claim으로 지지됨. | `docs/arxiv/state_is_all_you_need_en.tex`, token/state schematic, state model API. | token이 state를 encode할 수 없다는 뜻이 아니다. native update operation의 차이다. |
+| C2 | Explicit world-state processing은 학습 가능한 neural model로 구현 가능하다. | synthetic object-physics prototype에서 지지됨. | `WorldStateProcessor`, `CausalWorkingSetProcessor`, 31개 테스트 통과, robot-cup validation. | 일반 물리 이해나 perception-to-state 구성을 증명하지 않는다. |
+| C3 | Sparse/hybrid/dense routing은 단순 그림이 아니라 측정 가능한 execution regime이다. | v1 routing instrumentation에서 지지됨. | Route sweep, dense `N` sweep, `rho` threshold, `selected_paths`. | fixed `rho` threshold는 최적 scheduler가 아니라 engineering default다. |
+| C4 | v1 WPU에는 실제 accuracy-runtime tension이 있다. | 지지됨. | 5-seed robust suite와 dense `N` sweep. | v1에서는 accuracy advantage가 runtime advantage보다 먼저 사라진다. 이는 win이 아니라 failure boundary다. |
+| C5 | WPU-hybrid는 synthetic task의 irrelevant relation noise에 강하다. | 해당 stress regime에서 지지됨. | `controlled_stress_v1_results.md`. | 모든 state-delta/affected-background regime에서 우월하다는 뜻은 아니다. |
+| C6 | large `N`은 causal working set `K`가 작고 tensorization 전에 식별될 때만 WPU에 유리하다. | 조건부 systems hypothesis로 초기 증거가 있음. | CWS GPU/CPU reports, pre-tensor indexed sweep, v1 closure. | `N`이 큰 것만으로는 충분하지 않다. retrieval이 `O(N)`에 가깝거나 causal state를 놓치면 실패한다. |
+| C7 | explicit state는 propagation 이전의 working-set control을 노출한다. | 현재 가장 강한 v2 mechanism claim으로 지지됨. | regret-distilled retrieval, invariant descriptors, `N=2048`, `K=8,16,32` risk-adjusted mechanism selection. | candidate oracle은 여전히 더 강하다. cross-seed robust scoring은 아직 해결되지 않았다. |
+| C8 | WPU는 아직 hardware/chiplet/IP 결과가 아니다. | 명시적으로 지지되지 않음. | Review response, arXiv discussion, README application boundary. | hardware claim에는 sparse kernel, memory traffic, branch overlay, matched-accuracy speedup 증거가 필요하다. |
+| C9 | WPU propagation은 full physics가 아니라 단순화된 local-causality prior다. | 제한된 analogy로 지지됨. | arXiv propagation section과 limitations. | 실제 물리 competence는 simulator/robotics benchmark와 long-horizon stability가 필요하다. |
+| C10 | 단기 WPU 가치는 silicon보다 software runtime/middleware에서 더 가능성이 있다. | plausible direction이며 아직 실험적으로 증명되지 않음. | application boundary docs와 PyTorch prototype. | digital-twin, simulation backend, game/server, robotics middleware benchmark가 필요하다. |
+
+## 반증 조건
+
+- controlled identity/locality/branching benchmark에서 serialized-token 또는 graph
+  baseline이 동일 compute로 WPU와 같거나 더 좋으면, 그 regime에서 WPU는 필수
+  primitive가 아니다.
+- realistic state store에서 pre-tensor retrieval 비용이 `O(N)`에 가깝게 증가하면,
+  large-`N` systems claim은 무너진다.
+- 더 큰 seed/model sweep에서 risk-adjusted mechanism selection의 held-out gain이
+  사라지면, 현재 v2 working-set-control 주장은 diagnostic result로 낮춰야 한다.
+- sparse routing이 meaningful latency/memory saving을 만들기 전에 accuracy를 해치면,
+  해당 workload에서 propagation은 중심 연산으로 부적절하다.
+- long-horizon rollout에서 delta overlay가 state corruption을 누적하고 회복하지
+  못하면, verification/rollback 없이 persistent state는 장점이 아니라 위험이 된다.
+
+## 제출용 태도
+
+방어 가능한 논문 태도는 다음이다.
+
+```text
+WPU는 regime-specific state-native execution model이다.
+유리한 조건은 large explicit state, small identifiable causal working set,
+local relation propagation, branchable uncertainty, event 간 state reuse다.
+```
+
+논문이 주장하면 안 되는 것:
+
+- token, graph, latent world model에 대한 보편 우월성;
+- 실제 물리 세계 이해;
+- end-to-end perception-to-state 구성 완료;
+- hardware-level speed/energy advantage;
+- candidate-oracle gap 해결.
+

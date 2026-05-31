@@ -154,6 +154,7 @@ retriever-propagator joint training이다.
 - English PDF: `docs/arxiv/state_is_all_you_need_en.pdf`
 - Korean companion: `docs/arxiv/state_is_all_you_need_ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
+- Claim ledger: `docs/claims.ko.md`
 - Experiment index: `docs/experiments/README.md`
 - Review response: `docs/Review/review_response_and_differentiation.md`
 

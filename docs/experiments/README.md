@@ -123,6 +123,9 @@ Historical or preliminary reports:
   `WorldStateProcessor`.
 - `baseline_and_regime_results.md`: initial one-seed baseline and route sweep;
   superseded for claims by the robust reports.
+- `wpu_v2_geometry_hybrid_pilot_results.md`: two-seed CPU pipeline check for
+  geometry-only local interaction features versus dense interaction hybrid;
+  useful as a compute-realism diagnostic, not paper evidence.
 
 ## Main Takeaways
 

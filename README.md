@@ -132,6 +132,7 @@ Key reports:
 - Korean companion: `docs/arxiv/state_is_all_you_need_ko.md`
 - Korean README: `README.ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
+- Claim ledger: `docs/claims.md`
 - Review response and differentiation: `docs/Review/review_response_and_differentiation.md`
 
 Build the PDF:

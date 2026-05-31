@@ -1,5 +1,7 @@
 # WPU: World-State Processing Unit
 
+[![CI](https://github.com/eljja/WPU/actions/workflows/ci.yml/badge.svg)](https://github.com/eljja/WPU/actions/workflows/ci.yml)
+
 ![WPU compute architecture overview](docs/figures/wpu_compute_architectures.png)
 
 This repository contains the first research prototype for **State Is All You

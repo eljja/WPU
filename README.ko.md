@@ -1,5 +1,7 @@
 # WPU: World-State Processing Unit
 
+[![CI](https://github.com/eljja/WPU/actions/workflows/ci.yml/badge.svg)](https://github.com/eljja/WPU/actions/workflows/ci.yml)
+
 ![WPU compute architecture overview](docs/figures/wpu_compute_architectures.png)
 
 이 저장소는 **State Is All You Need**와 **World-State Processing Unit

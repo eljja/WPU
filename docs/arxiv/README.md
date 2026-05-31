@@ -18,8 +18,8 @@ The main paper keeps the argument compact:
 - propagation as the state analogue of attention;
 - small robot-cup validation;
 - reviewer-driven regime evidence and robust baseline comparison;
-- v2 retrieval evidence: generated candidates, diagnostic reranking, train-only
-  variant selection, and regret-distilled working-set retrieval;
+- v2 retrieval evidence: generated candidates, regret-distilled retrieval,
+  invariant candidate descriptors, and risk-adjusted mechanism selection;
 - discussion that explicitly rejects universal superiority claims.
 
 Detailed sweep tables, extra stress figures, and branch-memory schematics are
@@ -55,12 +55,14 @@ crossover. In the current dense N sweep, WPU-family accuracy advantage ends
 around `N≈120`, while routed runtime advantage begins around `N≈124` versus
 serialized-token and around `N≈178` versus dense-graph.
 
-The strongest current v2 mechanism is regret-distilled retrieval. At `N=2048`,
-the retriever trained from downstream-regret oracle candidate sets improves loss
-over the learned interaction retriever across `K=8,16,32` and wins 14 of 15
-seed/K conditions. This does not prove broad WPU superiority, but it strengthens
-the state-native mechanism claim: explicit state exposes object-level working
-set control before propagation.
+The strongest current v2 cross-seed result is risk-adjusted mechanism selection
+over explicit role/geometry/family descriptors. At `N=2048`, it improves
+held-out mean loss over static learned selection for `K=8,16,32`. Earlier
+regret-distilled retrieval remains important because it wins 14 of 15 seed/K
+conditions in same-seed validation-to-test evaluation, but the stricter
+cross-seed conclusion is narrower: explicit state exposes object-level
+working-set control and mechanism routing before propagation; it does not yet
+close the candidate-oracle gap or prove broad WPU superiority.
 
 ## Application Boundary
 

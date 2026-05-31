@@ -62,7 +62,8 @@ Per-seed loss deltas versus static learned interaction:
 
 ## Interpretation
 
-This is the strongest v2 retrieval mechanism so far.
+At this stage of the v2 sequence, this was the strongest same-seed retrieval
+mechanism.
 
 The regret-distilled retriever improves downstream loss at every K on average
 and wins 14 of 15 seed/K conditions. It also changes the selected working-set
@@ -90,5 +91,6 @@ limitation.
 
 The next required test is cross-seed regret distillation: train the object scorer
 from downstream-regret labels across several seeds and evaluate it on a held-out
-seed/model. If that transfers, WPU v2 can claim a concrete path from explicit
-state to robust learned working-set selection.
+seed/model. Later reports show that this transfer is only partial and that
+risk-adjusted mechanism selection over explicit candidate descriptors is the
+stronger current cross-seed result.

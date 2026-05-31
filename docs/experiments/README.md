@@ -134,87 +134,33 @@ Historical or preliminary reports:
 - WPU-hybrid is robust to irrelevant relation noise.
 - Affected-background stress does not support broad WPU superiority; token
   baselines remain strong.
-- V2 K expansion is only useful when the retriever misses causal state and the
-  expansion operator adds the right objects. Proximity-ranked retrieval shows
-  that object ordering inside the state frontier matters as much as K size.
-- Interaction-density retrieval is the current best v2 retrieval result: it
-  improves the best deployed loss in the pairwise CWS task while staying
-  state-native and pre-tensor.
-- A small learned state retriever can reproduce the interaction teacher's
-  composition with high held-out overlap, so the hand-built rule is not the
-  final mechanism.
-- Integrated learned retrieval preserves most of the interaction retriever's
-  downstream advantage and is now the preferred direction over fixed
-  hand-written retrieval rules.
-- Cross-K retrieval needs explicit state-index context. Mixed-K training with
-  fanout features generalizes across K=8,16,32; K=16-only training fails at
-  K=32.
-- A global mixed-K learned retriever preserves most downstream WPU performance
-  without training separate retrievers per K condition.
-- The retriever-regret oracle probe shows the next bottleneck: interaction
-  teacher imitation is rarely the downstream oracle, so v2 must train retrieval
-  against task loss or regret rather than teacher overlap alone.
-- A first deployed reranker recovers part of the oracle gap at K=8, but larger
-  K remains unstable. The next mechanism should encode candidate object sets
-  directly rather than using only aggregate selected-set features.
-- Object-set reranking is the first learned retrieval policy that improves loss
-  across all tested K values. The gain is still small at larger K, but it
-  supports the direction of learned state working-set selection.
-- Generated local state candidates further improve the object-set reranker and
-  expand the oracle. This is the current strongest evidence for v2: explicit
-  state enables learned working-set generation and scoring before propagation.
-- Candidate-count sweep shows that generation and scoring are now separate
-  bottlenecks: more candidates improve the oracle, but deployed reranking needs
-  better capacity/calibration once the candidate pool grows.
-- Regret-distilled retrieval is the strongest v2 retrieval mechanism so far in
-  same-seed validation-to-test evaluation. It improves loss across K=8,16,32
-  and wins 14 of 15 seed/K conditions against the learned interaction retriever.
-- Cross-seed regret distillation partially transfers: it improves loss at K=8
-  and K=16, but fails at K=32 unless a structural obstacle-count constraint is
-  added. The next retriever should predict state-conditioned working-set
-  composition, not only per-object scores.
-- State-conditioned composition-regret retrieval improves cross-seed loss at
-  K=8,16,32 and restores the K=32 obstacle count close to the generated oracle.
-  The remaining gap is candidate-set evaluation and joint retriever-propagator
-  training.
-- Composition policy selection can be done with other-seed evidence while
-  preserving loss improvements at K=8,16,32. This makes the current
-  composition-regret mechanism less brittle, but still not oracle-level.
-- Cross-seed candidate-set evaluation is not solved. The expanded candidate
-  oracle improves, but the learned set evaluator hurts K=8/16 and helps only
-  K=32, indicating cross-seed overfit or missing invariant state features.
-- Candidate-oracle gap analysis shows that the next bottleneck is not merely
-  generating more candidate working sets. The candidate pool already contains
-  better choices; the missing mechanism is a transfer-stable scorer that can
-  identify them under held-out seeds.
-- Conservative set-evaluator gating does not solve the transfer problem.
-  Score margin is not a reliable confidence signal under held-out seeds, so v2
-  needs invariant candidate descriptors or joint retriever-propagator training.
-- Invariant candidate descriptors are useful but incomplete by themselves.
-  Event-relative role/geometry plus family flags improve K=8/16, and
-  risk-adjusted routing among invariant and composition mechanisms improves
-  K=8/16/32. Strict no-harm seed-stable gating is too conservative at K=32.
-  This supports structured state-native mechanism selection, not a return to
-  tokenization or a larger opaque reranker.
-- Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
-  candidates. The next scoring work should focus on calibration/cross-seed
-  generalization rather than objective swaps alone.
-- Cross-seed reranker transfer is weak. The current reranker captures
-  seed/model-specific validation behavior, so v2 needs invariant calibration or
-  co-training before making robust deployment claims.
-- Normalizing candidate losses improves cross-seed transfer at K=8/16, but does
-  not close the same-seed gap. Loss scale is only part of the generalization
-  problem; model-invariant scoring remains unsolved.
-- Removing candidate identity does not reliably improve cross-seed transfer.
-  The next missing signal is model-state diagnostics for each candidate, not a
-  simple removal of selector context.
-- Candidate-level diagnostics provide a small cross-seed loss improvement, but
-  do not close the same-seed gap. The strongest variant depends on K, so v2
-  should move toward invariant candidate scoring or joint retriever-propagator
-  training rather than relying on fixed selector identity or post-hoc gates.
-- A train-only diagnostic variant selector improves over static base selection
-  across K=8,16,32, but the gains are small. This converts the context-variant
-  result into a deployable mechanism audit, not a solved retrieval policy.
+- V2 K expansion is useful only when the initial working set is under-complete
+  and the expansion operator adds causally relevant objects. Always expanding,
+  especially with dense recompute over a larger subgraph, is worse.
+- Pre-tensor state retrieval is the key systems distinction: selecting the
+  event-local working set before tensorization makes WPU latency weakly
+  dependent on total `N` in the synthetic large-state CWS sweeps.
+- Retrieval quality matters as much as propagation capacity. Proximity and
+  interaction-density retrieval show that state frontier ordering is a
+  scientific variable, not an implementation detail.
+- Learned retrieval is viable but not solved. Teacher-distilled learned
+  retrieval can reproduce hand-built interaction structure, mixed-K retrieval
+  needs explicit fanout/context features, and global mixed-K retrieval can be
+  reused across `K=8,16,32` with limited loss.
+- Downstream-regret supervision is stronger than teacher imitation in same-seed
+  validation-to-test evaluation: regret-distilled retrieval improves loss at
+  `K=8,16,32` and wins 14 of 15 seed/K conditions against learned interaction.
+- Cross-seed transfer is the hard problem. Regret distillation, composition
+  constraints, generated candidates, rerankers, diagnostic gates, and normalized
+  losses each expose useful signal but do not close the candidate-oracle gap.
+- The current strongest cross-seed working-set result is risk-adjusted
+  mechanism selection over explicit role/geometry/family descriptors. At
+  `N=2048`, it improves held-out mean loss over static learned selection at
+  `K=8,16,32`, but the candidate oracle remains substantially better.
+- The defensible v2 claim is therefore architectural: explicit state exposes
+  working-set generation, candidate description, mechanism routing, and
+  risk-aware deployment as trainable pre-propagation control surfaces. It does
+  not yet prove broad accuracy dominance over token or graph baselines.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

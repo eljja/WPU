@@ -64,5 +64,8 @@ required mechanism is a cross-seed-regularized candidate evaluator with stronger
 state-invariant features, or joint retriever-propagator training where candidate
 selection is optimized against held-out-like perturbations.
 
-The current best deployed v2 mechanism remains composition-regret retrieval,
-not the set evaluator.
+At this stage, the best deployed v2 mechanism remained composition-regret
+retrieval, not the set evaluator. Later invariant-descriptor experiments narrow
+the conclusion further: opaque set evaluation is not enough, while
+risk-adjusted mechanism selection over explicit state descriptors is the
+stronger cross-seed path.

@@ -4,6 +4,12 @@ WPU v2 is not a return to token processing. It is a stronger state-native model
 that treats world processing as indexed causal retrieval, local propagation,
 delta construction, and branch-aware rollout.
 
+Status note: this document defines the architecture target. Historical
+"current" claims inside component sections should be read as implementation
+status at the time that component was added. The present paper-level evidence is
+summarized by risk-adjusted cross-seed mechanism selection and the still-open
+candidate-oracle gap.
+
 ## V2 Goal
 
 WPU v2 should expand the regime where WPU is better than token and dense graph

@@ -64,7 +64,7 @@ This is a useful negative result. The scoring bottleneck is not solved by changi
 
 ## Consequence
 
-The current best deployed retrieval policy remains the CE/soft-utility object-set reranker with 2-4 generated candidates. Pairwise ranking can be considered only as an auxiliary loss after calibration is improved.
+At this stage, the best deployed retrieval policy remained the CE/soft-utility object-set reranker with 2-4 generated candidates. Later cross-seed results show that this still does not solve candidate selection; invariant descriptors and risk-adjusted mechanism routing are stronger paper-level evidence.
 
 The next scoring experiments should avoid a simple objective swap and instead test:
 

@@ -3,6 +3,13 @@
 This plan converts the WPU v2 architecture into falsifiable experiments. The
 goal is to expand the proven WPU regime without returning to token processing.
 
+Reading note: this is a living experiment plan. "Current best" statements in
+individual priority sections are local to the state of the plan when that
+section was written. For submission-level claims, use the experiment index,
+paper brief, and arXiv manuscript, which summarize the latest cross-seed
+risk-adjusted mechanism-selection result and the remaining candidate-oracle
+gap.
+
 ## Common Setup
 
 Unless otherwise stated:
@@ -289,8 +296,8 @@ K=16, but not K=32. This is the right kind of evidence: it identifies a
 conditional dense-recompute regime instead of claiming dense local propagation
 is universally better.
 
-The interaction-aware hybrid is the current best scheduler variant on this
-stress test. It routes from state-local pairwise geometry, reaches the best
+At this stage, the interaction-aware hybrid was the best scheduler variant on
+this stress test. It routes from state-local pairwise geometry, reaches the best
 accuracy at K=8, K=16, and K=32, and uses only about 15-18% local-dense mixing.
 This gives a more realistic v2 hypothesis: dense fallback should be triggered
 by measured interaction structure inside the causal working set, not by total
@@ -337,8 +344,8 @@ Threshold sweep pilot:
 - `docs/figures/wpu_v2_selective_threshold_pareto.png`
 
 The two-seed threshold sweep confirms that the selective model has an
-accuracy-compute frontier. Threshold 0.15 is the current best fixed operating
-point:
+accuracy-compute frontier. At this stage, threshold 0.15 was the best fixed
+operating point:
 
 | K | t=0.15 accuracy | t=0.15 dense compute | full interaction accuracy |
 | --- | --- | --- | --- |
@@ -783,8 +790,8 @@ Interaction-density retrieval follow-up:
 
 This experiment uses the same N=2048, K=8/16/32, five-seed, initial-4,
 expanded-32 protocol, but ranks obstacle candidates by local obstacle-obstacle
-density while preserving contact anchors. It gives the current best deployed
-retrieval result:
+density while preserving contact anchors. At this stage, it gave the best
+deployed retrieval result:
 
 | selection | best policy | loss | total compute | accuracy |
 | --- | --- | --- | --- | --- |

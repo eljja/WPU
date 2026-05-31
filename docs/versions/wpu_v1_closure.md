@@ -22,7 +22,7 @@ non-native operations. WPU makes those operations primary.
 
 ## Supported Evidence
 
-The strongest current evidence is the event-conditioned CWS 8M GPU sweep:
+The strongest v1-closure evidence is the event-conditioned CWS 8M GPU sweep:
 
 - Source CSV: `docs/experiments/cws_balanced_branch_8m_gpu_event_conditioned_dense_n_sweep.csv`
 - Report: `docs/experiments/cws_balanced_branch_8m_gpu_event_conditioned_dense_n_sweep_results.md`
@@ -119,4 +119,3 @@ honest statement:
 > working sets are small, and event-conditioned retrieval is reliable. The next
 > version must expand that regime by improving causal selection, adaptive
 > propagation, branch calibration, and indexed state access.
-

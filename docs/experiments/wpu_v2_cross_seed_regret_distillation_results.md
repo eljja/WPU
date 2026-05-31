@@ -2,7 +2,8 @@
 
 ## Question
 
-Same-seed regret distillation is the strongest current WPU v2 retrieval result.
+Same-seed regret distillation was the strongest WPU v2 retrieval result at the
+time of this experiment.
 It trains an object retriever from candidate working sets that minimize
 downstream branch loss. The remaining question is whether this mechanism
 transfers across seeds and model instances.

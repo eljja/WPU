@@ -385,24 +385,37 @@ training이다.
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한
 predictive state를 유지하지 못한다는 강한 증거다.
 
-## 12. 보충 자료와 향후 검증
+## 12. 보충 자료와 반증 기준
 
 논문 본문은 주장에 직접 필요한 figure와 table만 남겼다. 촘촘한 sweep, stress
 figure, 세부 table은 영문 PDF의 supplementary materials와 `docs/experiments/`로
 이동했다. 논문 안에 roadmap-style section을 길게 두지 않는 대신,
-`docs/arxiv/README.md`가 후속 검증 계획을 관리한다.
+`docs/arxiv/README.md`가 후속 검증 계획을 관리한다. 본문에서 필요한 것은 계획의
+나열이 아니라 현재 주장이 어떤 조건에서 참/거짓이 되는지 명확히 하는 것이다.
 
-다음 실험에서 가장 중요한 목표는 명확하다.
+현재 WPU 주장은 다음 조건을 만족할 때 강화된다.
 
 ```text
-Push the accuracy crossover beyond the runtime crossover.
+accuracy crossover >= runtime crossover
+small identifiable K inside large N
+stable branch/delta rollout
+matched or acceptable accuracy at lower routed work
 ```
 
-이를 위해서는 learned routing, regret-aware retrieval, invariant candidate descriptor,
-risk-adjusted mechanism selection, retriever-propagator joint training, sparse propagation capacity 확장, long-horizon
-rollout, branch consistency, branch calibration, regional dense correction,
-simulator-backed dataset, matched Dreamer/GNS/object-centric baselines,
-state-integrity protocol, hardware-aware profiling이 필요하다.
+반대로 다음 결과가 반복되면 WPU v2의 핵심 주장은 약해진다.
+
+- `K`가 작고 식별 가능한데도 token/graph baseline이 동일 work에서 계속 우세하다.
+- pre-tensor retrieval 비용이 실제 구현에서 `O(N)`에 가깝게 증가한다.
+- risk-adjusted mechanism selection의 cross-seed gain이 더 큰 seed/model sweep에서
+  사라진다.
+- long-horizon rollout에서 delta overlay가 누적 오차와 state corruption을 제어하지
+  못한다.
+- sparse advantage가 실제 sparse kernel, memory traffic, branch overlay 비용을
+  포함하면 사라진다.
+
+따라서 제출용 논문의 태도는 “WPU가 항상 우월하다”가 아니라 “명시적 state와
+propagation이 유리해지는 regime을 예측하고, 그 regime 밖에서는 실패할 수 있음을
+실험적으로 드러낸다”가 되어야 한다.
 
 ## 13. 적용 가능성의 경계
 

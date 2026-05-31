@@ -66,7 +66,8 @@ Compared with the static base validation choice:
 
 ## Interpretation
 
-This is the strongest WPU v2 retrieval result so far. It shows two separate effects:
+At this stage of the v2 sequence, this was the strongest generated-candidate
+retrieval result. It shows two separate effects:
 
 - Candidate generation expands the achievable oracle: generated oracle improves over base oracle by 0.005626 at K=8, 0.009125 at K=16, and 0.005798 at K=32.
 - The learned object-set reranker recovers part of that new oracle gap while remaining deployed and state-native.

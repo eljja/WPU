@@ -4,6 +4,11 @@ This document records what has been completed after the v1 closure and what
 the current v2 evidence implies. Already completed dense N-sweep work is not
 repeated here.
 
+Reading note: this is a chronological progress log. Earlier subsections may use
+"current best" relative to the date of that experiment. For paper-level claims,
+use the final cross-seed mechanism-selection section, `docs/experiments/README.md`,
+and the arXiv manuscript as the authoritative summary.
+
 ## Implemented V2 Components
 
 ### Causal Index

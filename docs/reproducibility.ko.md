@@ -90,7 +90,7 @@ Generated result를 `docs/experiments/`로 승격하기 전 확인할 것:
 
 - 의도한 모든 seed가 완료되었는지;
 - matched-baseline claim을 위한 model parameter scale이 비교 가능한지;
-- `Source CSV`가 포함되어 있고 비어 있지 않은지;
+- `Source CSV`가 `docs/experiments/`에 커밋되어 있고 비어 있지 않은지;
 - 해석이 `docs/claims.ko.md`의 claim boundary를 따르는지;
 - negative/mixed result를 숨기지 않았는지.
 

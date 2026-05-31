@@ -1,6 +1,6 @@
 # Dense N-Sweep CWS 8M GPU Results
 
-Source CSV: `artifacts/cws_balanced_branch_8m_gpu_event_conditioned_dense_n_sweep/n-sweep.csv`
+Source CSV: `docs/experiments/cws_balanced_branch_8m_gpu_event_conditioned_dense_n_sweep.csv`
 
 This report tests the large-`N` claim in the stricter form:
 

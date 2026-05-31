@@ -1,6 +1,6 @@
 # Event-Conditioned CWS 8M GPU Results
 
-Source CSV: `artifacts/cws_balanced_branch_8m_gpu_event_conditioned_final/n-sweep.csv`
+Source CSV: `docs/experiments/cws_balanced_branch_8m_gpu_event_conditioned_final.csv`
 
 This report tests the large-`N` claim in the stricter form:
 

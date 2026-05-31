@@ -1,6 +1,6 @@
 # Causal Working Set v2 Results
 
-Source CSV: `artifacts/causal_working_set_v1_cpu/n-sweep.csv`
+Source CSV: `docs/experiments/causal_working_set_v2_results.csv`
 
 This report tests the large-`N` claim in the stricter form:
 

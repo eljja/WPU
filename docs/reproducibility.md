@@ -91,7 +91,7 @@ Promote a generated result into `docs/experiments/` only after checking:
 
 - all intended seeds completed;
 - model parameter scales are comparable for matched-baseline claims;
-- `Source CSV` is included and nonempty;
+- `Source CSV` is committed under `docs/experiments/` and nonempty;
 - interpretation follows `docs/claims.md`;
 - negative or mixed results are not hidden.
 

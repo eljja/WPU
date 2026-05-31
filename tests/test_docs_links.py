@@ -66,6 +66,7 @@ def test_experiment_source_csv_references_are_nonempty() -> None:
         for match in SOURCE_CSV.finditer(text):
             target = match.group(1)
             if target.replace("\\", "/").startswith("artifacts/"):
+                issues.append(f"{path.relative_to(ROOT)} -> uncommitted artifact source {target}")
                 continue
             candidate = ROOT / target.replace("\\", "/")
             if not candidate.exists():

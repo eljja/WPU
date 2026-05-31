@@ -220,12 +220,19 @@ def _summarize(
     train_scorer_modes = _predict_modes(train_examples, scorer, candidate_names, variant)
     train_scorer_loss = _mean_policy_loss(train_examples, train_scorer_modes)
     train_static_loss = _mean_policy_loss(train_examples, ["learned"] * len(train_examples))
+    mechanism_modes, selected_mechanism = _choose_train_mechanism_modes(
+        train_examples,
+        test_examples,
+        train_scorer_modes,
+        scorer_modes,
+    )
     safe_uses_scorer = train_scorer_loss + args.safe_margin < train_static_loss
     safe_modes = scorer_modes if safe_uses_scorer else static_modes
     rows = [
         _policy_row(test_examples, "static_learned_interaction", static_modes, candidate_names),
         _policy_row(test_examples, "invariant_set_scorer", scorer_modes, candidate_names),
         _policy_row(test_examples, "train_safe_invariant_set_scorer", safe_modes, candidate_names),
+        _policy_row(test_examples, "train_selected_mechanism", mechanism_modes, candidate_names),
         _policy_row(test_examples, "generated_plus_composition_oracle", oracle_modes, candidate_names),
     ]
     for row in rows:
@@ -235,7 +242,32 @@ def _summarize(
         row["selected_non_learned_rate"] = round(mean(float(mode != "learned") for mode in scorer_modes), 6)
         row["safe_margin"] = args.safe_margin
         row["safe_uses_invariant_scorer"] = int(safe_uses_scorer)
+        row["train_selected_mechanism"] = selected_mechanism
     return rows
+
+
+def _choose_train_mechanism_modes(
+    train_examples: list[dict[str, object]],
+    test_examples: list[dict[str, object]],
+    train_scorer_modes: list[str],
+    test_scorer_modes: list[str],
+) -> tuple[list[str], str]:
+    train_candidates = {
+        "learned": ["learned"] * len(train_examples),
+        "composition_argmax": ["composition_argmax"] * len(train_examples),
+        "composition_expected": ["composition_expected"] * len(train_examples),
+        "composition_count_only": ["composition_count_only"] * len(train_examples),
+        "invariant": train_scorer_modes,
+    }
+    test_candidates = {
+        "learned": ["learned"] * len(test_examples),
+        "composition_argmax": ["composition_argmax"] * len(test_examples),
+        "composition_expected": ["composition_expected"] * len(test_examples),
+        "composition_count_only": ["composition_count_only"] * len(test_examples),
+        "invariant": test_scorer_modes,
+    }
+    best_name = min(train_candidates, key=lambda name: (_mean_policy_loss(train_examples, train_candidates[name]), name))
+    return test_candidates[best_name], best_name
 
 
 if __name__ == "__main__":

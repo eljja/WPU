@@ -75,8 +75,9 @@ Use these reports for paper-level claims:
   per-seed no-harm margin gates for the set evaluator; both fail to protect
   K=8/16 under held-out seeds.
 - `wpu_v2_invariant_set_scorer_results.md`: replaces the opaque set evaluator
-  with role/geometry/family descriptors; improves K=8/16 but fails at K=32,
-  giving a sharper constraint for v2 candidate scoring.
+  with role/geometry/family descriptors and adds train-selected mechanism
+  routing; descriptor-only scoring helps K=8/16, while mechanism routing
+  improves K=8/16/32.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -189,10 +190,11 @@ Historical or preliminary reports:
 - Conservative set-evaluator gating does not solve the transfer problem.
   Score margin is not a reliable confidence signal under held-out seeds, so v2
   needs invariant candidate descriptors or joint retriever-propagator training.
-- Invariant candidate descriptors are useful but incomplete. Role/geometry plus
-  family flags improve K=8/16 cross-seed loss, while K=32 still fails. This
-  supports structured state-native scoring, not a return to tokenization or a
-  larger opaque reranker.
+- Invariant candidate descriptors are useful but incomplete by themselves.
+  Event-relative role/geometry plus family flags improve K=8/16, and
+  train-selected routing among invariant and composition mechanisms improves
+  K=8/16/32. This supports structured state-native mechanism selection, not a
+  return to tokenization or a larger opaque reranker.
 - Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
   candidates. The next scoring work should focus on calibration/cross-seed
   generalization rather than objective swaps alone.

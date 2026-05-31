@@ -183,6 +183,9 @@ def _collect_examples(
                 ),
                 6,
             )
+            geometry = _selected_geometry_features(sample, selected_ids)
+            for feature_name, value in geometry.items():
+                row[f"{name}_{feature_name}"] = round(value, 6)
             object_tensor, mask_tensor = _selected_object_tensor(sample, selected_ids, args.budget)
             object_features.append(object_tensor)
             object_masks.append(mask_tensor)
@@ -214,9 +217,64 @@ def _context_features(
         pair_density,
         selected_hand * pair_density,
         obstacle_ratio * pair_density,
+        float(row[f"{name}_event_force"]),
+        float(row[f"{name}_obstacle_distance_min"]),
+        float(row[f"{name}_obstacle_distance_mean"]),
+        float(row[f"{name}_obstacle_distance_max"]),
+        float(row[f"{name}_obstacle_distance_span"]),
+        float(row[f"{name}_obstacle_abs_y_mean"]),
+        float(row[f"{name}_obstacle_abs_y_max"]),
+        float(row[f"{name}_obstacle_axis_ratio"]),
+        float(row[f"{name}_hand_distance"]),
+        float(row[f"{name}_edge_distance"]),
         float(name.startswith("generated_")),
         float(name.startswith("composition_")),
     ]
+
+
+def _selected_geometry_features(sample, selected_ids: list[str]) -> dict[str, float]:
+    target_xy = _object_xy(sample.state, sample.event.target)
+    obstacle_offsets: list[tuple[float, float]] = []
+    for object_id in selected_ids:
+        if object_id.startswith("obstacle_") and object_id in sample.state.objects:
+            object_xy = _object_xy(sample.state, object_id)
+            obstacle_offsets.append((object_xy[0] - target_xy[0], object_xy[1] - target_xy[1]))
+    distances = [(x * x + y * y) ** 0.5 for x, y in obstacle_offsets] or [1.0]
+    abs_y = [abs(y) for _, y in obstacle_offsets] or [1.0]
+    axis_ratio = mean(float(abs(x) < 0.05) for x, _ in obstacle_offsets) if obstacle_offsets else 0.0
+    hand_distance = (
+        _distance_xy(target_xy, _object_xy(sample.state, "hand_001"))
+        if "hand_001" in selected_ids and "hand_001" in sample.state.objects
+        else 1.0
+    )
+    edge_distance = (
+        _distance_xy(target_xy, _object_xy(sample.state, "edge_001"))
+        if "edge_001" in selected_ids and "edge_001" in sample.state.objects
+        else 1.0
+    )
+    return {
+        "event_force": float(sample.event.delta.get("force", 0.0)),
+        "obstacle_distance_min": min(distances),
+        "obstacle_distance_mean": mean(distances),
+        "obstacle_distance_max": max(distances),
+        "obstacle_distance_span": max(distances) - min(distances),
+        "obstacle_abs_y_mean": mean(abs_y),
+        "obstacle_abs_y_max": max(abs_y),
+        "obstacle_axis_ratio": axis_ratio,
+        "hand_distance": hand_distance,
+        "edge_distance": edge_distance,
+    }
+
+
+def _object_xy(state, object_id: str) -> tuple[float, float]:
+    position = state.objects[object_id].attributes.get("position", [0.0, 0.0, 0.0])
+    if not isinstance(position, (list, tuple)) or len(position) < 2:
+        return 0.0, 0.0
+    return float(position[0]), float(position[1])
+
+
+def _distance_xy(left: tuple[float, float], right: tuple[float, float]) -> float:
+    return ((left[0] - right[0]) ** 2 + (left[1] - right[1]) ** 2) ** 0.5
 
 
 def _train_set_evaluator(

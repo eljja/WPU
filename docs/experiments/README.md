@@ -71,6 +71,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_candidate_oracle_gap_analysis.md`: decomposes the set-evaluator
   result into candidate-pool oracle gain and deployed selection failure,
   narrowing the v2 bottleneck to transfer-stable candidate scoring.
+- `wpu_v2_conservative_set_evaluator_results.md`: tests train-loss and
+  per-seed no-harm margin gates for the set evaluator; both fail to protect
+  K=8/16 under held-out seeds.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -180,6 +183,9 @@ Historical or preliminary reports:
   generating more candidate working sets. The candidate pool already contains
   better choices; the missing mechanism is a transfer-stable scorer that can
   identify them under held-out seeds.
+- Conservative set-evaluator gating does not solve the transfer problem.
+  Score margin is not a reliable confidence signal under held-out seeds, so v2
+  needs invariant candidate descriptors or joint retriever-propagator training.
 - Pairwise ranking loss helps K=8 but hurts K=16/32 by over-selecting generated
   candidates. The next scoring work should focus on calibration/cross-seed
   generalization rather than objective swaps alone.

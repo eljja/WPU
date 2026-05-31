@@ -44,6 +44,11 @@ The report also includes:
 - `train_selected_mechanism`: select the best train-seed mechanism among
   static learned interaction, composition candidates, and invariant scoring,
   then deploy that mechanism to the held-out seed.
+- `seed_stable_selected_mechanism`: deploy a mechanism only when it improves
+  every train seed and satisfies the configured win-rate threshold.
+- `risk_adjusted_selected_mechanism`: select by mean train-seed improvement
+  penalized by worst-seed harm, avoiding both unrestricted mean selection and
+  overly conservative no-harm filtering.
 
 ## Results
 
@@ -54,14 +59,18 @@ Mean over five held-out seeds:
 | role_geometry_family | 8 | static learned interaction | 0.988432 | 0.506667 | 0.004444 | 0.000000 |
 | role_geometry_family | 8 | invariant set scorer | 0.983660 | 0.515556 | 0.191111 | -0.004772 |
 | role_geometry_family | 8 | train-selected mechanism | 0.982002 | 0.522222 | 0.228889 | -0.006429 |
+| role_geometry_family | 8 | risk-adjusted mechanism | 0.982002 | 0.522222 | 0.228889 | -0.006429 |
 | role_geometry_family | 8 | candidate oracle | 0.955536 | 0.555555 | 1.000000 | -0.032895 |
 | role_geometry_family | 16 | static learned interaction | 0.966183 | 0.504444 | 0.002222 | 0.000000 |
 | role_geometry_family | 16 | invariant set scorer | 0.958227 | 0.500000 | 0.195555 | -0.007956 |
 | role_geometry_family | 16 | train-selected mechanism | 0.951243 | 0.517778 | 0.077778 | -0.014940 |
+| role_geometry_family | 16 | risk-adjusted mechanism | 0.951243 | 0.517778 | 0.077778 | -0.014940 |
 | role_geometry_family | 16 | candidate oracle | 0.905009 | 0.580000 | 1.000000 | -0.061173 |
 | role_geometry_family | 32 | static learned interaction | 1.004095 | 0.475556 | 0.004444 | 0.000000 |
 | role_geometry_family | 32 | invariant set scorer | 1.008212 | 0.500000 | 0.164444 | 0.004118 |
 | role_geometry_family | 32 | train-selected mechanism | 1.002708 | 0.522222 | 0.008889 | -0.001387 |
+| role_geometry_family | 32 | seed-stable mechanism | 1.004715 | 0.480000 | 0.002222 | 0.000620 |
+| role_geometry_family | 32 | risk-adjusted mechanism | 1.002597 | 0.522222 | 0.113333 | -0.001498 |
 | role_geometry_family | 32 | candidate oracle | 0.968548 | 0.577778 | 1.000000 | -0.035547 |
 | role_geometry_only | 8 | static learned interaction | 0.988432 | 0.506667 | 0.004444 | 0.000000 |
 | role_geometry_only | 8 | invariant set scorer | 0.985303 | 0.513333 | 0.226667 | -0.003129 |
@@ -87,11 +96,20 @@ chooses among static learned interaction, composition candidates, and invariant
 scoring using only train-seed validation loss. It improves held-out loss at
 `K=8`, `K=16`, and `K=32`.
 
-The selected mechanisms are interpretable. With `role_geometry_family`, the
-selector chooses mostly invariant scoring at `K=8`, composition candidates at
-`K=16`, and composition-count-only at `K=32`. This supports a stronger v2
-claim: WPU candidate selection should be a structured mechanism-selection
-problem over explicit state descriptors, not a single opaque reranker.
+The selected mechanisms are interpretable. With `role_geometry_family`,
+mean train selection chooses mostly invariant scoring at `K=8`, composition
+candidates at `K=16`, and composition-count-only at `K=32`.
+
+The stricter seed-stable gate is useful as a diagnostic but not as the deployed
+policy. It preserves the `K=8/16` gains, but it under-deploys at `K=32` and
+slightly hurts loss relative to static learned interaction. The risk-adjusted
+selector fixes this tradeoff: it keeps the `K=8/16` gains and also improves
+`K=32` by penalizing worst-seed harm without requiring zero harm on every
+training seed.
+
+This supports a stronger v2 claim: WPU candidate selection should be a
+structured mechanism-selection problem over explicit state descriptors, not a
+single opaque reranker.
 
 ## Consequence
 
@@ -103,7 +121,7 @@ candidate quality =
   explicit role/geometry descriptors
   + calibrated family priors
   + composition constraints
-  + train-selected mechanism routing
+  + risk-adjusted train-seed mechanism routing
 ```
 
 For the paper, this result narrows the WPU v2 claim:
@@ -111,5 +129,6 @@ For the paper, this result narrows the WPU v2 claim:
 ```text
 Explicit state enables transferable working-set descriptors and mechanism
 routing before propagation. Descriptor-only scoring improves K=8/16, while
-train-selected mechanism routing preserves improvement across K=8/16/32.
+risk-adjusted mechanism routing preserves improvement across K=8/16/32 without
+falling back to token serialization.
 ```

@@ -65,6 +65,10 @@ def main() -> None:
     parser.add_argument("--composition-lr", type=float, default=3e-3)
     parser.add_argument("--scorer-lr", type=float, default=3e-3)
     parser.add_argument("--safe-margin", type=float, default=0.0)
+    parser.add_argument("--mechanism-safe-margin", type=float, default=0.0)
+    parser.add_argument("--mechanism-min-win-rate", type=float, default=0.75)
+    parser.add_argument("--mechanism-max-seed-harm", type=float, default=0.0)
+    parser.add_argument("--mechanism-risk-penalty", type=float, default=0.5)
     parser.add_argument("--utility-temperature", type=float, default=1.0)
     parser.add_argument("--normalized-utility-weight", type=float, default=0.05)
     parser.add_argument("--samples", type=int, default=90)
@@ -106,11 +110,14 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
         heldout = contexts[heldout_seed]
         object_retriever = _train_cross_seed_regret_retriever(train_contexts, base_candidate_names, args)
         composition_prior = _train_composition_prior(train_contexts, base_candidate_names, args)
-        train_examples = [
-            example
-            for context in train_contexts
-            for example in _collect_examples(context, object_retriever, composition_prior, candidate_names, args, split="validation")
-        ]
+        train_examples = []
+        for seed, context in contexts.items():
+            if seed == heldout_seed:
+                continue
+            seed_examples = _collect_examples(context, object_retriever, composition_prior, candidate_names, args, split="validation")
+            for example in seed_examples:
+                example["source_seed"] = seed
+            train_examples.extend(seed_examples)
         test_examples = _collect_examples(heldout, object_retriever, composition_prior, candidate_names, args, split="test")
         for variant in ("role_geometry_family", "role_geometry_only"):
             scorer = _train_invariant_scorer(train_examples, candidate_names, args, variant)
@@ -226,6 +233,20 @@ def _summarize(
         train_scorer_modes,
         scorer_modes,
     )
+    stable_modes, stable_metrics = _choose_seed_stable_mechanism_modes(
+        train_examples,
+        test_examples,
+        train_scorer_modes,
+        scorer_modes,
+        args,
+    )
+    risk_modes, risk_metrics = _choose_risk_adjusted_mechanism_modes(
+        train_examples,
+        test_examples,
+        train_scorer_modes,
+        scorer_modes,
+        args,
+    )
     safe_uses_scorer = train_scorer_loss + args.safe_margin < train_static_loss
     safe_modes = scorer_modes if safe_uses_scorer else static_modes
     rows = [
@@ -233,6 +254,8 @@ def _summarize(
         _policy_row(test_examples, "invariant_set_scorer", scorer_modes, candidate_names),
         _policy_row(test_examples, "train_safe_invariant_set_scorer", safe_modes, candidate_names),
         _policy_row(test_examples, "train_selected_mechanism", mechanism_modes, candidate_names),
+        _policy_row(test_examples, "seed_stable_selected_mechanism", stable_modes, candidate_names),
+        _policy_row(test_examples, "risk_adjusted_selected_mechanism", risk_modes, candidate_names),
         _policy_row(test_examples, "generated_plus_composition_oracle", oracle_modes, candidate_names),
     ]
     for row in rows:
@@ -243,6 +266,19 @@ def _summarize(
         row["safe_margin"] = args.safe_margin
         row["safe_uses_invariant_scorer"] = int(safe_uses_scorer)
         row["train_selected_mechanism"] = selected_mechanism
+        row["seed_stable_selected_mechanism"] = stable_metrics["selected_mechanism"]
+        row["seed_stable_mean_delta"] = stable_metrics["mean_delta"]
+        row["seed_stable_win_rate"] = stable_metrics["win_rate"]
+        row["seed_stable_max_delta"] = stable_metrics["max_delta"]
+        row["mechanism_safe_margin"] = args.mechanism_safe_margin
+        row["mechanism_min_win_rate"] = args.mechanism_min_win_rate
+        row["mechanism_max_seed_harm"] = args.mechanism_max_seed_harm
+        row["risk_adjusted_selected_mechanism"] = risk_metrics["selected_mechanism"]
+        row["risk_adjusted_mean_delta"] = risk_metrics["mean_delta"]
+        row["risk_adjusted_win_rate"] = risk_metrics["win_rate"]
+        row["risk_adjusted_max_delta"] = risk_metrics["max_delta"]
+        row["risk_adjusted_score"] = risk_metrics["score"]
+        row["mechanism_risk_penalty"] = args.mechanism_risk_penalty
     return rows
 
 
@@ -268,6 +304,119 @@ def _choose_train_mechanism_modes(
     }
     best_name = min(train_candidates, key=lambda name: (_mean_policy_loss(train_examples, train_candidates[name]), name))
     return test_candidates[best_name], best_name
+
+
+def _choose_seed_stable_mechanism_modes(
+    train_examples: list[dict[str, object]],
+    test_examples: list[dict[str, object]],
+    train_scorer_modes: list[str],
+    test_scorer_modes: list[str],
+    args: argparse.Namespace,
+) -> tuple[list[str], dict[str, object]]:
+    train_candidates = {
+        "learned": ["learned"] * len(train_examples),
+        "composition_argmax": ["composition_argmax"] * len(train_examples),
+        "composition_expected": ["composition_expected"] * len(train_examples),
+        "composition_count_only": ["composition_count_only"] * len(train_examples),
+        "invariant": train_scorer_modes,
+    }
+    test_candidates = {
+        "learned": ["learned"] * len(test_examples),
+        "composition_argmax": ["composition_argmax"] * len(test_examples),
+        "composition_expected": ["composition_expected"] * len(test_examples),
+        "composition_count_only": ["composition_count_only"] * len(test_examples),
+        "invariant": test_scorer_modes,
+    }
+    seeds = sorted({int(example["source_seed"]) for example in train_examples})
+    static_seed_losses = _seed_losses(train_examples, train_candidates["learned"], seeds)
+    scored: list[tuple[float, str, float, float, float]] = []
+    for name, modes in train_candidates.items():
+        losses = _seed_losses(train_examples, modes, seeds)
+        deltas = [losses[seed] - static_seed_losses[seed] for seed in seeds]
+        mean_delta = mean(deltas)
+        win_rate = mean(float(delta + args.mechanism_safe_margin < 0.0) for delta in deltas)
+        max_delta = max(deltas)
+        if (
+            name == "learned"
+            or (
+                mean_delta + args.mechanism_safe_margin < 0.0
+                and win_rate >= args.mechanism_min_win_rate
+                and max_delta <= args.mechanism_max_seed_harm
+            )
+        ):
+            scored.append((mean_delta, name, win_rate, max_delta, mean(losses.values())))
+    best_mean_delta, best_name, best_win_rate, best_max_delta, _ = min(scored, key=lambda item: (item[0], item[1]))
+    return test_candidates[best_name], {
+        "selected_mechanism": best_name,
+        "mean_delta": round(best_mean_delta, 6),
+        "win_rate": round(best_win_rate, 6),
+        "max_delta": round(best_max_delta, 6),
+    }
+
+
+def _choose_risk_adjusted_mechanism_modes(
+    train_examples: list[dict[str, object]],
+    test_examples: list[dict[str, object]],
+    train_scorer_modes: list[str],
+    test_scorer_modes: list[str],
+    args: argparse.Namespace,
+) -> tuple[list[str], dict[str, object]]:
+    train_candidates = {
+        "learned": ["learned"] * len(train_examples),
+        "composition_argmax": ["composition_argmax"] * len(train_examples),
+        "composition_expected": ["composition_expected"] * len(train_examples),
+        "composition_count_only": ["composition_count_only"] * len(train_examples),
+        "invariant": train_scorer_modes,
+    }
+    test_candidates = {
+        "learned": ["learned"] * len(test_examples),
+        "composition_argmax": ["composition_argmax"] * len(test_examples),
+        "composition_expected": ["composition_expected"] * len(test_examples),
+        "composition_count_only": ["composition_count_only"] * len(test_examples),
+        "invariant": test_scorer_modes,
+    }
+    seeds = sorted({int(example["source_seed"]) for example in train_examples})
+    static_seed_losses = _seed_losses(train_examples, train_candidates["learned"], seeds)
+    scored: list[tuple[float, str, float, float, float]] = []
+    for name, modes in train_candidates.items():
+        losses = _seed_losses(train_examples, modes, seeds)
+        deltas = [losses[seed] - static_seed_losses[seed] for seed in seeds]
+        mean_delta = mean(deltas)
+        win_rate = mean(float(delta + args.mechanism_safe_margin < 0.0) for delta in deltas)
+        max_delta = max(deltas)
+        score = mean_delta + args.mechanism_risk_penalty * max(0.0, max_delta)
+        scored.append((score, name, mean_delta, win_rate, max_delta))
+    best_score, best_name, best_mean_delta, best_win_rate, best_max_delta = min(scored, key=lambda item: (item[0], item[1]))
+    if best_score + args.mechanism_safe_margin >= 0.0:
+        best_name = "learned"
+        best_score = 0.0
+        best_mean_delta = 0.0
+        best_win_rate = 0.0
+        best_max_delta = 0.0
+    return test_candidates[best_name], {
+        "selected_mechanism": best_name,
+        "mean_delta": round(best_mean_delta, 6),
+        "win_rate": round(best_win_rate, 6),
+        "max_delta": round(best_max_delta, 6),
+        "score": round(best_score, 6),
+    }
+
+
+def _seed_losses(
+    examples: list[dict[str, object]],
+    selected_modes: list[str],
+    seeds: list[int],
+) -> dict[int, float]:
+    losses = {}
+    for seed in seeds:
+        seed_examples = []
+        seed_modes = []
+        for example, mode in zip(examples, selected_modes, strict=True):
+            if int(example["source_seed"]) == seed:
+                seed_examples.append(example)
+                seed_modes.append(mode)
+        losses[seed] = _mean_policy_loss(seed_examples, seed_modes)
+    return losses
 
 
 if __name__ == "__main__":

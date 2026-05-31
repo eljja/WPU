@@ -9,7 +9,7 @@
 | ID | 주장 | 현재 상태 | 주요 증거 | 경계 |
 |---|---|---|---|---|
 | C1 | Token과 state는 서로 다른 operational primitive다. | framing claim으로 지지됨. | `docs/arxiv/state_is_all_you_need_en.tex`, token/state schematic, state model API. | token이 state를 encode할 수 없다는 뜻이 아니다. native update operation의 차이다. |
-| C2 | Explicit world-state processing은 학습 가능한 neural model로 구현 가능하다. | synthetic object-physics prototype에서 지지됨. | `WorldStateProcessor`, `CausalWorkingSetProcessor`, 31개 테스트 통과, robot-cup validation. | 일반 물리 이해나 perception-to-state 구성을 증명하지 않는다. |
+| C2 | Explicit world-state processing은 학습 가능한 neural model로 구현 가능하다. | synthetic object-physics prototype에서 지지됨. | `WorldStateProcessor`, `CausalWorkingSetProcessor`, 통과 중인 test suite, robot-cup validation. | 일반 물리 이해나 perception-to-state 구성을 증명하지 않는다. |
 | C3 | Sparse/hybrid/dense routing은 단순 그림이 아니라 측정 가능한 execution regime이다. | v1 routing instrumentation에서 지지됨. | Route sweep, dense `N` sweep, `rho` threshold, `selected_paths`. | fixed `rho` threshold는 최적 scheduler가 아니라 engineering default다. |
 | C4 | v1 WPU에는 실제 accuracy-runtime tension이 있다. | 지지됨. | 5-seed robust suite와 dense `N` sweep. | v1에서는 accuracy advantage가 runtime advantage보다 먼저 사라진다. 이는 win이 아니라 failure boundary다. |
 | C5 | WPU-hybrid는 synthetic task의 irrelevant relation noise에 강하다. | 해당 stress regime에서 지지됨. | `controlled_stress_v1_results.md`. | 모든 state-delta/affected-background regime에서 우월하다는 뜻은 아니다. |
@@ -50,4 +50,3 @@ local relation propagation, branchable uncertainty, event 간 state reuse다.
 - end-to-end perception-to-state 구성 완료;
 - hardware-level speed/energy advantage;
 - candidate-oracle gap 해결.
-

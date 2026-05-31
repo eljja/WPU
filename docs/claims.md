@@ -9,7 +9,7 @@ falsify the claim. It is the repository's guardrail against overclaiming.
 | ID | Claim | Current status | Primary evidence | Boundary |
 |---|---|---|---|---|
 | C1 | Token and state are different operational primitives. | Supported as a framing claim. | `docs/arxiv/state_is_all_you_need_en.tex`, token/state schematic, state model APIs. | This is not a claim that tokens cannot encode state; it is a claim about native update operations. |
-| C2 | Explicit world-state processing is implementable in a trainable neural model. | Supported for the synthetic object-physics prototype. | `WorldStateProcessor`, `CausalWorkingSetProcessor`, 31 passing tests, robot-cup validation. | Does not prove general physical understanding or perception-to-state construction. |
+| C2 | Explicit world-state processing is implementable in a trainable neural model. | Supported for the synthetic object-physics prototype. | `WorldStateProcessor`, `CausalWorkingSetProcessor`, passing test suite, robot-cup validation. | Does not prove general physical understanding or perception-to-state construction. |
 | C3 | Sparse/hybrid/dense routing is a measurable execution regime, not just a diagram. | Supported for v1 routing instrumentation. | Route sweep, dense `N` sweep, `rho` thresholds, `selected_paths`. | Fixed `rho` thresholds are engineering defaults, not an optimal scheduler. |
 | C4 | v1 WPU shows a real accuracy-runtime tension. | Supported. | Robust 5-seed suite and dense `N` sweep. | WPU accuracy advantage ends before runtime advantage in v1; this is a failure boundary, not a win. |
 | C5 | WPU-hybrid is robust to irrelevant relation noise in the synthetic task. | Supported for the tested stress regime. | `controlled_stress_v1_results.md`. | Does not imply superiority under all state-delta or affected-background regimes. |
@@ -53,4 +53,3 @@ The paper should not claim:
 - end-to-end perception-to-state construction;
 - hardware-level speed or energy advantage;
 - a closed candidate-oracle gap.
-

@@ -85,7 +85,8 @@ Python 3.11+ 권장.
 python -m pip install -e ".[dev]"
 ```
 
-PyTorch가 없다면 환경에 맞는 CPU/CUDA build를 먼저 설치한다.
+기본 설치는 standard PyTorch package를 함께 설치한다. 특정 CUDA build가 필요하면
+해당 PyTorch build를 먼저 설치한 뒤 editable install을 실행한다.
 
 ## 데모 실행
 
@@ -157,6 +158,7 @@ retriever-propagator joint training이다.
 - Korean companion: `docs/arxiv/state_is_all_you_need_ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
 - Claim ledger: `docs/claims.ko.md`
+- Reproducibility guide: `docs/reproducibility.ko.md`
 - Experiment index: `docs/experiments/README.md`
 - Review response: `docs/Review/review_response_and_differentiation.md`
 

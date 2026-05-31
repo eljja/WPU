@@ -76,8 +76,8 @@ Python 3.11+ is recommended.
 python -m pip install -e ".[dev]"
 ```
 
-If PyTorch is not already installed, install a CPU or CUDA build appropriate for
-your environment before running training jobs.
+The default install pulls the standard PyTorch package. If you need a specific
+CUDA build, install that PyTorch build first, then run the editable install.
 
 ## Run The Demo
 
@@ -135,6 +135,7 @@ Key reports:
 - Korean README: `README.ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
 - Claim ledger: `docs/claims.md`
+- Reproducibility guide: `docs/reproducibility.md`
 - Review response and differentiation: `docs/Review/review_response_and_differentiation.md`
 
 Build the PDF:

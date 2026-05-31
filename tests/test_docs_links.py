@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCAL_LINK = re.compile(r"!?\[[^\]]*]\(([^)]+)\)")
 BACKTICK_PATH = re.compile(r"`([^`]+\.(?:md|tex|pdf|csv|png|svg|py|ps1|docx))`")
 SOURCE_CSV = re.compile(r"Source CSV:\s*`([^`]+)`")
+SOURCE_CSVS_SECTION = re.compile(r"Source CSVs:\s*\n((?:\s*-\s*`[^`]+`\s*\n?)+)")
+SOURCE_CSV_BULLET = re.compile(r"-\s*`([^`]+)`")
 LATEX_GRAPHICS = re.compile(r"\\includegraphics(?:\[[^\]]*])?\{([^}]+)\}")
 LATEX_CITE = re.compile(r"\\cite\{([^}]+)\}")
 LATEX_BIBITEM = re.compile(r"\\bibitem\{([^}]+)\}")
@@ -63,8 +65,11 @@ def test_experiment_source_csv_references_are_nonempty() -> None:
     issues: list[str] = []
     for path in (ROOT / "docs" / "experiments").glob("*.md"):
         text = path.read_text(encoding="utf-8")
-        for match in SOURCE_CSV.finditer(text):
-            target = match.group(1)
+        source_targets = [match.group(1) for match in SOURCE_CSV.finditer(text)]
+        for section in SOURCE_CSVS_SECTION.finditer(text):
+            source_targets.extend(match.group(1) for match in SOURCE_CSV_BULLET.finditer(section.group(1)))
+
+        for target in source_targets:
             if target.replace("\\", "/").startswith("artifacts/"):
                 issues.append(f"{path.relative_to(ROOT)} -> uncommitted artifact source {target}")
                 continue

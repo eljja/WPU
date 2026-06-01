@@ -22,7 +22,7 @@ def _is_external(target: str) -> bool:
     return bool(re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", target))
 
 
-def _should_check_backtick_path(target: str) -> bool:
+def _should_check_root_backtick_path(target: str) -> bool:
     normalized = target.replace("\\", "/")
     if normalized.startswith("artifacts/"):
         return False
@@ -35,6 +35,15 @@ def _should_check_backtick_path(target: str) -> bool:
             "README",
         )
     )
+
+
+def _resolve_backtick_path(source_path: Path, target: str) -> Path | None:
+    normalized = target.replace("\\", "/")
+    if normalized.startswith("artifacts/") or _is_external(normalized):
+        return None
+    if _should_check_root_backtick_path(normalized):
+        return (ROOT / normalized).resolve()
+    return (source_path.parent / normalized).resolve()
 
 
 def _is_git_tracked(path: Path) -> bool:
@@ -146,9 +155,9 @@ def test_markdown_local_references_exist() -> None:
 
         for match in BACKTICK_PATH.finditer(text):
             target = match.group(1)
-            if not _should_check_backtick_path(target):
+            candidate = _resolve_backtick_path(path, target)
+            if candidate is None:
                 continue
-            candidate = (ROOT / target.replace("\\", "/")).resolve()
             if not candidate.exists():
                 missing.append(f"{path.relative_to(ROOT)} -> {target}")
 
@@ -183,6 +192,21 @@ def test_experiment_source_csv_references_are_nonempty() -> None:
                 issues.append(f"{path.relative_to(ROOT)} -> empty {target}")
 
     assert not issues, "Invalid experiment Source CSV references:\n" + "\n".join(issues)
+
+
+def test_claim_ledgers_have_matching_claim_ids() -> None:
+    expected_ids = [f"C{index}" for index in range(1, 11)]
+    issues: list[str] = []
+    for ledger_path in (ROOT / "docs" / "claims.md", ROOT / "docs" / "claims.ko.md"):
+        ids = [
+            row[0]
+            for row in _markdown_table_rows(ledger_path)
+            if row and re.fullmatch(r"C\d+", row[0])
+        ]
+        if ids != expected_ids:
+            issues.append(f"{ledger_path.relative_to(ROOT)} ids={ids}")
+
+    assert not issues, "Claim ledgers must keep matching C1-C10 rows:\n" + "\n".join(issues)
 
 
 def test_current_v2_evidence_reports_declare_source_csvs() -> None:

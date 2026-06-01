@@ -2,6 +2,8 @@
 
 Date: 2026-05-09
 
+Source CSV: `docs/experiments/robust_v1_baseline_summary.csv`
+
 This experiment package responds directly to reviewer criticism. It does not try
 to prove universal WPU superiority. It tests whether a narrower regime claim
 survives stronger baselines, multiple seeds, confidence intervals, route sweeps,
@@ -75,9 +77,9 @@ Final branch accuracy, mean +/- 95% CI:
 | N | Best WPU | Accuracy | Best non-WPU | Accuracy | Interpretation |
 |---:|---|---:|---|---:|---|
 | 4 | WPU-hybrid | 0.7242 +/- 0.0260 | Dense graph | 0.6398 +/- 0.1257 | WPU variants win, routed scheduler fails because it selects dense. |
-| 24 | WPU-hybrid | 0.7320 +/- 0.0280 | Graph transformer | 0.6609 +/- 0.0680 | WPU-hybrid wins in the medium local regime. |
-| 84 | WPU-hybrid | 0.7508 +/- 0.0244 | Graph transformer | 0.6953 +/- 0.0388 | WPU remains competitive and best in this synthetic regime. |
-| 204 | WPU-sparse/routed | 0.4516 +/- 0.1957 | Graph transformer | 0.7172 +/- 0.0615 | WPU fails; token/graph baselines dominate accuracy. |
+| 24 | WPU-hybrid | 0.7320 +/- 0.0280 | Graph Transformer | 0.6609 +/- 0.0680 | WPU-hybrid wins in the medium local regime. |
+| 84 | WPU-hybrid | 0.7508 +/- 0.0244 | Graph Transformer | 0.6953 +/- 0.0388 | WPU remains competitive and best in this synthetic regime. |
+| 204 | WPU-sparse/routed | 0.4516 +/- 0.1957 | Graph Transformer | 0.7172 +/- 0.0615 | WPU fails; token/graph baselines dominate accuracy. |
 
 This is the most important result. It supports a conditional regime claim, not a
 universal claim. WPU wins or remains best up to `N=84` on this synthetic local

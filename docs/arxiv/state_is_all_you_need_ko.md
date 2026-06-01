@@ -268,7 +268,7 @@ Robust comparison:
 | 4 | WPU-hybrid | 0.7242 +/- 0.0260 | Dense graph | 0.6398 +/- 0.1257 | WPU 우세, routed scheduler는 dense 선택 때문에 실패 가능. |
 | 24 | WPU-hybrid | 0.7320 +/- 0.0280 | Graph Transformer | 0.6609 +/- 0.0680 | medium local regime에서 WPU 우세. |
 | 84 | WPU-hybrid | 0.7508 +/- 0.0244 | Graph Transformer | 0.6953 +/- 0.0388 | synthetic regime에서 WPU가 가장 강함. |
-| 204 | WPU-routed/sparse | 0.4516 +/- 0.1957 | Graph Transformer | 0.7172 +/- 0.0615 | WPU 실패, graph/token baseline이 accuracy 우세. |
+| 204 | WPU-sparse/routed | 0.4516 +/- 0.1957 | Graph Transformer | 0.7172 +/- 0.0615 | WPU 실패, token/graph baseline이 accuracy 우세. |
 
 Dense N sweep:
 

@@ -163,7 +163,7 @@ Robust comparison over 5 seeds, 150 steps, 256 evaluation samples:
 | 4 | WPU-hybrid | 0.7242 +/- 0.0260 | Dense graph | 0.6398 +/- 0.1257 | WPU wins; routed scheduler can fail by choosing dense. |
 | 24 | WPU-hybrid | 0.7320 +/- 0.0280 | Graph Transformer | 0.6609 +/- 0.0680 | WPU wins in a medium local regime. |
 | 84 | WPU-hybrid | 0.7508 +/- 0.0244 | Graph Transformer | 0.6953 +/- 0.0388 | WPU remains best in this synthetic regime. |
-| 204 | WPU-routed/sparse | 0.4516 +/- 0.1957 | Graph Transformer | 0.7172 +/- 0.0615 | WPU fails; graph/token baselines dominate accuracy. |
+| 204 | WPU-sparse/routed | 0.4516 +/- 0.1957 | Graph Transformer | 0.7172 +/- 0.0615 | WPU fails; token/graph baselines dominate accuracy. |
 
 Dense N sweep:
 

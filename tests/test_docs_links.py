@@ -556,6 +556,83 @@ def test_paper_v2_tables_match_source_csvs() -> None:
     assert not issues, "Paper v2 tables do not match source CSVs:\n" + "\n".join(issues)
 
 
+def test_robust_v1_baseline_tables_match_summary_csv() -> None:
+    csv_path = ROOT / "docs" / "experiments" / "robust_v1_baseline_summary.csv"
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        source_rows = list(csv.DictReader(handle))
+
+    def accuracy_cell(row: dict[str, str], prefix: str) -> str:
+        return f"{float(row[f'{prefix}_accuracy_mean']):.4f} +/- {float(row[f'{prefix}_accuracy_ci95']):.4f}"
+
+    expected_rows = {
+        row["N"]: [
+            row["N"],
+            row["best_wpu"],
+            accuracy_cell(row, "wpu"),
+            row["best_non_wpu"],
+            accuracy_cell(row, "non_wpu"),
+        ]
+        for row in source_rows
+    }
+    report_expected_rows = {
+        row["N"]: expected_rows[row["N"]] + [row["interpretation"]]
+        for row in source_rows
+    }
+
+    def check_markdown(
+        path: Path,
+        header: list[str],
+        expected: dict[str, list[str]],
+        compare_columns: int | None = None,
+    ) -> list[str]:
+        table_rows = _markdown_table_rows(path)
+        header_index = next(index for index, row in enumerate(table_rows) if row == header)
+        compare_columns = compare_columns or len(header)
+        issues: list[str] = []
+        for row in table_rows[header_index + 1: header_index + 1 + len(expected)]:
+            if row[:compare_columns] != expected[row[0]][:compare_columns]:
+                issues.append(
+                    f"{path.relative_to(ROOT)} N={row[0]} "
+                    f"table={row[:compare_columns]} csv={expected[row[0]][:compare_columns]}"
+                )
+        return issues
+
+    issues: list[str] = []
+    issues.extend(
+        check_markdown(
+            ROOT / "docs" / "experiments" / "robust_v1_results.md",
+            ["N", "Best WPU", "Accuracy", "Best non-WPU", "Accuracy", "Interpretation"],
+            report_expected_rows,
+        )
+    )
+    for paper_path, header in (
+        (
+            ROOT / "docs" / "paper" / "state_is_all_you_need.md",
+            ["N", "Best WPU", "Accuracy", "Best non-WPU", "Accuracy", "Interpretation"],
+        ),
+        (
+            ROOT / "docs" / "arxiv" / "state_is_all_you_need_ko.md",
+            ["N", "Best WPU", "Accuracy", "Best non-WPU", "Accuracy", "해석"],
+        ),
+    ):
+        issues.extend(
+            check_markdown(paper_path, header, report_expected_rows, compare_columns=5)
+        )
+
+    tex_text = (ROOT / "docs" / "arxiv" / "state_is_all_you_need_en.tex").read_text(encoding="utf-8")
+    for row in source_rows:
+        latex_row = (
+            rf"\(N={row['N']}\) & {row['best_wpu'].replace('-', ' ')} & "
+            rf"\({float(row['wpu_accuracy_mean']):.4f} \pm {float(row['wpu_accuracy_ci95']):.4f}\) & "
+            rf"{row['best_non_wpu']} & "
+            rf"\({float(row['non_wpu_accuracy_mean']):.4f} \pm {float(row['non_wpu_accuracy_ci95']):.4f}\) \\"
+        )
+        if latex_row not in tex_text:
+            issues.append(f"docs/arxiv/state_is_all_you_need_en.tex missing row {latex_row}")
+
+    assert not issues, "Robust v1 baseline tables do not match summary CSV:\n" + "\n".join(issues)
+
+
 def test_latex_graphics_and_citations_resolve() -> None:
     issues: list[str] = []
     for path in ROOT.rglob("*.tex"):

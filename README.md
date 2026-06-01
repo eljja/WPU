@@ -102,6 +102,31 @@ Expected trace:
 - branch probabilities for stable, falls, and caught futures
 - memory estimate for base state, deltas, and branches
 
+## Minimal Public API
+
+After installation, the core state-processing flow is available from the package
+root:
+
+```python
+import wpu
+from wpu.data.object_physics import create_robot_cup_state, create_touch_event
+
+state = create_robot_cup_state()
+event = create_touch_event()
+
+event_delta = wpu.StateStore(state).apply_event(event)
+sparse_delta = wpu.SparsePropagationEngine(max_depth=1).sparse_propagate(state, event).delta
+dense_delta = wpu.DenseRecomputeEngine().dense_recompute(state, region=["cup_001"]).delta
+
+print(event_delta.object_updates["cup_001"])
+print(sparse_delta.object_updates["cup_001"])
+print(dense_delta.object_updates["cup_001"])
+```
+
+This is the intended v1 interface: explicit world state is patched by event
+deltas, propagated locally, and optionally recomputed over a bounded dense
+region.
+
 ## Train And Evaluate
 
 ```bash

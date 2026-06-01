@@ -111,6 +111,29 @@ python demos/robot_cup_demo.py
 - stable/falls/caught branch probabilities
 - base state, deltas, branches memory estimate
 
+## 최소 Public API
+
+설치 후 핵심 state-processing 흐름은 package root에서 바로 사용할 수 있다.
+
+```python
+import wpu
+from wpu.data.object_physics import create_robot_cup_state, create_touch_event
+
+state = create_robot_cup_state()
+event = create_touch_event()
+
+event_delta = wpu.StateStore(state).apply_event(event)
+sparse_delta = wpu.SparsePropagationEngine(max_depth=1).sparse_propagate(state, event).delta
+dense_delta = wpu.DenseRecomputeEngine().dense_recompute(state, region=["cup_001"]).delta
+
+print(event_delta.object_updates["cup_001"])
+print(sparse_delta.object_updates["cup_001"])
+print(dense_delta.object_updates["cup_001"])
+```
+
+이것이 v1의 의도된 interface다. Explicit world state는 event delta로 patch되고,
+local propagation을 거친 뒤, 필요하면 제한된 dense region에서 recompute된다.
+
 ## 주요 실험 요약
 
 현재 evidence는 “WPU가 항상 이긴다”가 아니라 regime hypothesis를 지지한다.

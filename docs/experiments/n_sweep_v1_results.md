@@ -1,5 +1,7 @@
 # Dense N Sweep v1 Results
 
+Source CSV: `docs/experiments/n_sweep_v1_accuracy_crossover.csv`
+
 Branch pressure for route/runtime analysis: `B=3`.
 
 N values: `4, 8, 12, 16, 24, 36, 52, 68, 84, 108, 132, 164, 204, 260`.

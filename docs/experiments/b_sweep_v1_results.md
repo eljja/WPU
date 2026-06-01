@@ -1,5 +1,7 @@
 # Dense B Sweep v1 Results
 
+Source CSV: `docs/experiments/b_sweep_v1_summary.csv`
+
 Branch pressure values: `B=1..16`.
 
 N values: `24, 84, 132, 204`.

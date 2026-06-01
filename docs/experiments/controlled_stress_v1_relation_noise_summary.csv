@@ -1,0 +1,6 @@
+model,acc_at_0,acc_at_128,acc_drop,mse_multiplier,cup_mse_multiplier
+wpu-routed,0.728906,0.696094,0.032813,30.033,1.401
+wpu-sparse,0.728906,0.696094,0.032813,30.033,1.401
+wpu-hybrid,0.750781,0.725781,0.025,6.598,1.355
+graph-transformer,0.685937,0.342188,0.34375,10.165,5.582
+serialized-token,0.674219,0.632812,0.041406,8.519,11.642

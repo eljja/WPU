@@ -210,15 +210,13 @@ def test_claim_ledgers_have_matching_claim_ids() -> None:
     assert not issues, "Claim ledgers must keep matching C1-C10 rows:\n" + "\n".join(issues)
 
 
-def test_current_v2_evidence_reports_declare_source_csvs() -> None:
+def test_current_evidence_reports_declare_source_csvs() -> None:
     readme = (ROOT / "docs" / "experiments" / "README.md").read_text(encoding="utf-8")
     current_section = readme.split("Historical or preliminary reports:", 1)[0]
     referenced_reports = re.findall(r"`([^`]+\.md)`", current_section)
 
     missing: list[str] = []
     for report in referenced_reports:
-        if not report.startswith("wpu_v2_"):
-            continue
         if not (report.endswith("_results.md") or report.endswith("_analysis.md")):
             continue
         path = ROOT / "docs" / "experiments" / report
@@ -228,7 +226,7 @@ def test_current_v2_evidence_reports_declare_source_csvs() -> None:
         if "Source CSV" not in text:
             missing.append(report)
 
-    assert not missing, "Current v2 evidence reports must declare Source CSVs:\n" + "\n".join(missing)
+    assert not missing, "Current evidence reports must declare Source CSVs:\n" + "\n".join(missing)
 
 
 def test_selector_report_tables_match_summary_csvs() -> None:
@@ -631,6 +629,74 @@ def test_robust_v1_baseline_tables_match_summary_csv() -> None:
             issues.append(f"docs/arxiv/state_is_all_you_need_en.tex missing row {latex_row}")
 
     assert not issues, "Robust v1 baseline tables do not match summary CSV:\n" + "\n".join(issues)
+
+
+def test_v1_current_summary_tables_match_source_csvs() -> None:
+    cases = [
+        (
+            ROOT / "docs" / "experiments" / "n_sweep_v1_results.md",
+            ROOT / "docs" / "experiments" / "n_sweep_v1_accuracy_crossover.csv",
+            [
+                "N",
+                "best_wpu",
+                "best_wpu_acc",
+                "best_non_wpu",
+                "best_non_wpu_acc",
+                "acc_gap_wpu_minus_non",
+                "wpu_routed_acc",
+                "wpu_routed_runtime_ms",
+                "serialized_token_runtime_ms",
+                "graph_transformer_runtime_ms",
+                "routed_work_proxy",
+            ],
+        ),
+        (
+            ROOT / "docs" / "experiments" / "b_sweep_v1_results.md",
+            ROOT / "docs" / "experiments" / "b_sweep_v1_summary.csv",
+            ["N", "best_B", "best_acc", "best_runtime_ms", "best_work_proxy", "route_changes"],
+        ),
+        (
+            ROOT / "docs" / "experiments" / "step_sweep_v1_results.md",
+            ROOT / "docs" / "experiments" / "step_sweep_v1_summary.csv",
+            ["model", "best_step", "best_acc", "acc_at_50", "acc_at_150", "acc_at_300", "gain_150_to_300"],
+        ),
+        (
+            ROOT / "docs" / "experiments" / "controlled_stress_v1_results.md",
+            ROOT / "docs" / "experiments" / "controlled_stress_v1_relation_noise_summary.csv",
+            ["model", "acc_at_0", "acc_at_128", "acc_drop", "mse_multiplier", "cup_mse_multiplier"],
+        ),
+        (
+            ROOT / "docs" / "experiments" / "controlled_stress_v1_results.md",
+            ROOT / "docs" / "experiments" / "controlled_stress_v1_affected_count_summary.csv",
+            ["model", "best_bg_count", "best_bg_mse", "bg_mse_at_64", "acc_at_64", "cup_mse_at_64", "total_mse_change_0_to_max"],
+        ),
+    ]
+
+    def cell_matches(table_value: str, csv_value: str) -> bool:
+        try:
+            float(table_value)
+            float(csv_value)
+        except ValueError:
+            return table_value == csv_value
+        return _round_decimals(table_value, 6) == _round_decimals(csv_value, 6)
+
+    issues: list[str] = []
+    for report_path, csv_path, header in cases:
+        table_rows = _markdown_table_rows(report_path)
+        header_index = next(index for index, row in enumerate(table_rows) if row == header)
+        with csv_path.open(newline="", encoding="utf-8") as handle:
+            csv_rows = list(csv.DictReader(handle))
+        for offset, csv_row in enumerate(csv_rows, start=1):
+            table_row = table_rows[header_index + offset]
+            values = dict(zip(header, table_row))
+            for column in header:
+                if not cell_matches(values[column], csv_row[column]):
+                    issues.append(
+                        f"{report_path.relative_to(ROOT)} {column} row={offset} "
+                        f"table={values[column]} csv={csv_row[column]}"
+                    )
+
+    assert not issues, "Current v1 summary tables do not match source CSVs:\n" + "\n".join(issues)
 
 
 def test_latex_graphics_and_citations_resolve() -> None:

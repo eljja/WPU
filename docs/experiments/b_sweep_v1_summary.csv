@@ -1,0 +1,5 @@
+N,best_B,best_acc,best_runtime_ms,best_work_proxy,route_changes
+24,1,0.725781,0.645193,1.0,"B=1:sparse, B=2:hybrid, B=6:dense"
+84,1,0.753125,0.720389,1.0,"B=1:sparse, B=5:hybrid"
+132,1,0.630469,0.604974,1.0,"B=1:sparse, B=7:hybrid"
+204,1,0.459375,0.648289,1.0,"B=1:sparse, B=11:hybrid"

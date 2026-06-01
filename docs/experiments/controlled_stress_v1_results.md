@@ -1,5 +1,10 @@
 # Controlled Stress v1 Results
 
+Source CSVs:
+
+- `docs/experiments/controlled_stress_v1_relation_noise_summary.csv`
+- `docs/experiments/controlled_stress_v1_affected_count_summary.csv`
+
 These experiments test failure modes, not just best-case performance.
 
 Relation-noise values: `0, 4, 8, 16, 32, 64, 128`.

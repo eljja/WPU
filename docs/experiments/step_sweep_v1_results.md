@@ -1,5 +1,7 @@
 # Dense Step Sweep v1 Results
 
+Source CSV: `docs/experiments/step_sweep_v1_summary.csv`
+
 Training steps: `0, 5, 10, 15, 20, 30, 40, 50, 75, 100, 125, 150, 200, 250, 300`.
 
 Evaluation: `N=84`, `B=3`, 5 seeds, 256 samples per evaluation point.

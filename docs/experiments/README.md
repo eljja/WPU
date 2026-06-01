@@ -1,8 +1,9 @@
 # WPU Experiment Reports
 
-This directory contains the experiment evidence behind the current WPU v1 paper.
-The paper claim is intentionally regime-specific: WPU is not shown to be
-universally superior to token or graph baselines.
+This directory contains the experiment evidence behind the current WPU research
+paper and the v1-to-v2 evidence trail. The paper claim is intentionally
+regime-specific: WPU is not shown to be universally superior to token or graph
+baselines.
 
 ## Current Evidence Hierarchy
 

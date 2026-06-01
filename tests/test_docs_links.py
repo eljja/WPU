@@ -250,6 +250,14 @@ def test_all_experiment_reports_are_classified_in_experiment_readme() -> None:
     assert not missing, "Experiment reports must be classified in docs/experiments/README.md:\n" + "\n".join(missing)
 
 
+def test_experiment_index_does_not_frame_all_evidence_as_v1_only() -> None:
+    readme_path = ROOT / "docs" / "experiments" / "README.md"
+    readme = readme_path.read_text(encoding="utf-8")
+
+    assert "current WPU v1 paper" not in readme
+    assert "v1-to-v2 evidence trail" in readme
+
+
 def test_selector_report_tables_match_summary_csvs() -> None:
     cases = [
         (

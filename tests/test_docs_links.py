@@ -153,6 +153,14 @@ def test_markdown_local_references_exist() -> None:
             candidate = (path.parent / target).resolve()
             if not candidate.exists():
                 missing.append(f"{path.relative_to(ROOT)} -> {target}")
+                continue
+            try:
+                candidate.relative_to(ROOT)
+            except ValueError:
+                missing.append(f"{path.relative_to(ROOT)} -> link outside repository {target}")
+                continue
+            if candidate.is_file() and not _is_git_tracked(candidate):
+                missing.append(f"{path.relative_to(ROOT)} -> untracked local link {target}")
 
         for match in BACKTICK_PATH.finditer(text):
             target = match.group(1)

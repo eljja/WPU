@@ -653,9 +653,18 @@ def test_latex_graphics_and_citations_resolve() -> None:
                     candidate.with_suffix(suffix)
                     for candidate in list(candidates)
                     for suffix in (".pdf", ".png", ".jpg", ".jpeg", ".svg")
-                )
+            )
             if not any(candidate.exists() for candidate in candidates):
                 issues.append(f"{path.relative_to(ROOT)} -> missing graphic {target}")
+                continue
+            resolved = next(candidate for candidate in candidates if candidate.exists())
+            try:
+                resolved.relative_to(ROOT)
+            except ValueError:
+                issues.append(f"{path.relative_to(ROOT)} -> graphic outside repository {target}")
+                continue
+            if not _is_git_tracked(resolved):
+                issues.append(f"{path.relative_to(ROOT)} -> untracked graphic {target}")
 
         cited_keys = {
             key.strip()

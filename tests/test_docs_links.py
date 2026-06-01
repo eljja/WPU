@@ -281,6 +281,63 @@ def test_clipped_diagnostic_report_table_matches_summary_csv() -> None:
     assert not issues, "Clipped diagnostic report table values do not match source CSV:\n" + "\n".join(issues)
 
 
+def test_invariant_set_scorer_report_table_matches_source_csv() -> None:
+    report_path = ROOT / "docs" / "experiments" / "wpu_v2_invariant_set_scorer_results.md"
+    csv_path = ROOT / "docs" / "experiments" / "wpu_v2_retriever_invariant_set_scorer.csv"
+    policy_labels = {
+        "static learned interaction": "static_learned_interaction",
+        "invariant set scorer": "invariant_set_scorer",
+        "train-selected mechanism": "train_selected_mechanism",
+        "seed-stable mechanism": "seed_stable_selected_mechanism",
+        "risk-adjusted mechanism": "risk_adjusted_selected_mechanism",
+        "candidate oracle": "generated_plus_composition_oracle",
+    }
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        csv_rows = list(csv.DictReader(handle))
+
+    def mean_for(feature_variant: str, causal_k: str, policy: str, column: str) -> float:
+        values = [
+            float(row[column])
+            for row in csv_rows
+            if row["feature_variant"] == feature_variant
+            and row["causal_k"] == causal_k
+            and row["policy"] == policy
+        ]
+        if not values:
+            raise AssertionError(f"Missing rows for {(feature_variant, causal_k, policy, column)}")
+        return sum(values) / len(values)
+
+    table_rows = _markdown_table_rows(report_path)
+    header_index = next(
+        index for index, row in enumerate(table_rows)
+        if row[:3] == ["variant", "K", "policy"]
+    )
+    headers = table_rows[header_index]
+    issues: list[str] = []
+    for row in table_rows[header_index + 1:]:
+        if len(row) != len(headers) or row[0] not in {"role_geometry_family", "role_geometry_only"}:
+            break
+        values = dict(zip(headers, row))
+        variant = values["variant"]
+        causal_k = values["K"]
+        policy = policy_labels[values["policy"]]
+        static_loss = mean_for(variant, causal_k, "static_learned_interaction", "loss")
+        expected = {
+            "loss": mean_for(variant, causal_k, policy, "loss"),
+            "accuracy": mean_for(variant, causal_k, policy, "accuracy"),
+            "oracle match": mean_for(variant, causal_k, policy, "oracle_match_rate"),
+        }
+        expected["delta vs static"] = expected["loss"] - static_loss
+        for table_column, expected_value in expected.items():
+            if _round_decimals(values[table_column], 6) != _round_decimals(str(expected_value), 6):
+                issues.append(
+                    f"{report_path.relative_to(ROOT)} -> {(variant, causal_k, values['policy'])} "
+                    f"{table_column} table={values[table_column]} csv={expected_value}"
+                )
+
+    assert not issues, "Invariant set scorer report table values do not match source CSV:\n" + "\n".join(issues)
+
+
 def test_latex_graphics_and_citations_resolve() -> None:
     issues: list[str] = []
     for path in ROOT.rglob("*.tex"):

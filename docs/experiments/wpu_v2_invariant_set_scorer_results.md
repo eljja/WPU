@@ -67,7 +67,7 @@ Mean over five held-out seeds:
 | role_geometry_family | 16 | invariant set scorer | 0.958227 | 0.500000 | 0.195555 | -0.007956 |
 | role_geometry_family | 16 | train-selected mechanism | 0.951243 | 0.517778 | 0.077778 | -0.014940 |
 | role_geometry_family | 16 | risk-adjusted mechanism | 0.951243 | 0.517778 | 0.077778 | -0.014940 |
-| role_geometry_family | 16 | candidate oracle | 0.905009 | 0.580000 | 1.000000 | -0.061173 |
+| role_geometry_family | 16 | candidate oracle | 0.905009 | 0.580000 | 1.000000 | -0.061174 |
 | role_geometry_family | 32 | static learned interaction | 1.004095 | 0.475556 | 0.004444 | 0.000000 |
 | role_geometry_family | 32 | invariant set scorer | 1.008212 | 0.500000 | 0.164444 | 0.004118 |
 | role_geometry_family | 32 | train-selected mechanism | 1.002708 | 0.522222 | 0.008889 | -0.001387 |

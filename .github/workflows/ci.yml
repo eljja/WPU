@@ -27,3 +27,24 @@ jobs:
 
       - name: Run test suite
         run: python -m pytest
+
+  paper:
+    name: Build paper PDF
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compile English arXiv paper
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: docs/arxiv/state_is_all_you_need_en.tex
+          args: -interaction=nonstopmode -halt-on-error
+
+      - name: Upload compiled PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: state-is-all-you-need-pdf
+          path: docs/arxiv/state_is_all_you_need_en.pdf

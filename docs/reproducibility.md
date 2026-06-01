@@ -50,7 +50,10 @@ The test suite covers:
 - experiment `Source CSV` integrity;
 - robot-cup demo smoke output.
 
-GitHub Actions runs the same test command on push and pull request.
+GitHub Actions runs the same test command on push and pull request. It also
+compiles the English arXiv paper from `docs/arxiv/state_is_all_you_need_en.tex`
+and uploads the resulting PDF as a workflow artifact, so paper changes must keep
+both the evidence tests and the LaTeX build green.
 
 ## Demo Reproduction
 

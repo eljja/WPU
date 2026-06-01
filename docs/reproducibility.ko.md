@@ -49,7 +49,10 @@ python -m pytest
 - experiment `Source CSV` integrity;
 - robot-cup demo smoke output.
 
-GitHub Actions는 push와 pull request에서 같은 test command를 실행한다.
+GitHub Actions는 push와 pull request에서 같은 test command를 실행한다. 또한
+`docs/arxiv/state_is_all_you_need_en.tex`에서 영문 arXiv PDF를 빌드하고 workflow
+artifact로 업로드한다. 따라서 논문 변경은 evidence test와 LaTeX build를 모두
+통과해야 한다.
 
 ## 데모 재현
 

@@ -126,6 +126,53 @@ Historical or preliminary reports:
 - `wpu_v2_geometry_hybrid_pilot_results.md`: two-seed CPU pipeline check for
   geometry-only local interaction features versus dense interaction hybrid;
   useful as a compute-realism diagnostic, not paper evidence.
+- `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
+  useful for provenance, not a result claim by itself.
+- `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;
+  superseded by staged regret and verifier experiments.
+- `wpu_v2_clipped_diagnostic_probe_results.md`: clipped residual diagnostic
+  probe; useful as a negative routing-calibration result.
+- `wpu_v2_compute_aware_pairwise_pilot_results.md`: compute-aware pairwise
+  pilot; superseded by later selective and regret-router audits.
+- `wpu_v2_distilled_selective_pilot_results.md`: early selective-router
+  distillation pilot; superseded by five-seed selective validation.
+- `wpu_v2_distractor_sweep_pilot_results.md`: distractor sweep pilot for
+  stress-testing retrieval sensitivity.
+- `wpu_v2_interaction_hybrid_pilot_results.md`: early interaction-hybrid pilot;
+  superseded by interaction retrieval and staged hybrid reports.
+- `wpu_v2_k_sweep_pilot_results.md`: early K sweep used to locate useful
+  working-set budgets.
+- `wpu_v2_learned_hybrid_pilot_results.md`: learned hybrid pilot before the
+  staged regret route was introduced.
+- `wpu_v2_learned_selective_pilot_results.md`: first learned selective-router
+  pilot.
+- `wpu_v2_learned_selective_t015_pilot_results.md`: threshold-0.15 learned
+  selective-router pilot.
+- `wpu_v2_pairwise_interaction_pilot_results.md`: pairwise interaction pilot
+  before the later pairwise reranker analysis.
+- `wpu_v2_pre_tensor_indexed_n_sweep_results.md`: pre-tensor indexed
+  large-`N` sweep; useful for systems framing, superseded by later CWS
+  protocols for current claims.
+- `wpu_v2_selective_5seed_validation_results.md`: five-seed selective-router
+  validation preceding the stricter staged-regret analysis.
+- `wpu_v2_selective_compute_pairwise_comparison_results.md`: selective
+  compute-aware pairwise comparison pilot.
+- `wpu_v2_selective_threshold_comparison_results.md`: selective threshold
+  comparison pilot.
+- `wpu_v2_selector_gap_results.md`: selector-gap diagnostic before generated
+  candidate and invariant-scorer follow-ups.
+- `wpu_v2_staged_regret_context_probe_results.md`: staged-regret context probe
+  showing that simple diagnostic concatenation is not sufficient.
+- `wpu_v2_staged_regret_hybrid_pilot_results.md`: first staged-regret hybrid
+  pilot; superseded by the five-seed staged-regret report.
+- `wpu_v2_staged_regret_margin_policy_results.md`: K-conditioned margin policy
+  audit; useful as a negative deployment-calibration result.
+- `wpu_v2_staged_regret_margin_sweep_results.md`: margin sweep supporting the
+  later conservative staged-regret policy analysis.
+- `cws_balanced_branch_8m_gpu_event_conditioned_dense_n_sweep_results.md`:
+  dense N-sweep from the 8M-class event-conditioned CWS protocol.
+- `cws_balanced_branch_8m_gpu_event_conditioned_final_results.md`: final
+  promoted 8M-class event-conditioned CWS result.
 
 ## Main Takeaways
 

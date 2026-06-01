@@ -237,6 +237,19 @@ def test_current_evidence_reports_declare_source_csvs() -> None:
     assert not missing, "Current evidence reports must declare Source CSVs:\n" + "\n".join(missing)
 
 
+def test_all_experiment_reports_are_classified_in_experiment_readme() -> None:
+    readme_path = ROOT / "docs" / "experiments" / "README.md"
+    readme = readme_path.read_text(encoding="utf-8")
+    reports = sorted(
+        path.name
+        for path in readme_path.parent.glob("*.md")
+        if path.name != readme_path.name
+    )
+    missing = [report for report in reports if f"`{report}`" not in readme]
+
+    assert not missing, "Experiment reports must be classified in docs/experiments/README.md:\n" + "\n".join(missing)
+
+
 def test_selector_report_tables_match_summary_csvs() -> None:
     cases = [
         (

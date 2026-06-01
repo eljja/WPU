@@ -38,10 +38,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Compile English arXiv paper
-        uses: xu-cheng/latex-action@v3
+        uses: xu-cheng/latex-action@v4
         with:
           root_file: docs/arxiv/state_is_all_you_need_en.tex
-          args: -interaction=nonstopmode -halt-on-error
+          working_directory: .
+          args: -pdf -interaction=nonstopmode -halt-on-error
 
       - name: Upload compiled PDF
         uses: actions/upload-artifact@v4

@@ -32,6 +32,7 @@ def _should_check_root_backtick_path(target: str) -> bool:
             "scripts/",
             "tests/",
             "wpu/",
+            "demos/",
             "README",
         )
     )

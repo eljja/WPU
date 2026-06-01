@@ -44,13 +44,13 @@ Mean over five seeds:
 
 | K | policy | loss | accuracy | excess over generated oracle |
 |---:|---|---:|---:|---:|
-| 8 | static learned interaction | 0.988432 | 0.506667 | 0.031964 |
+| 8 | static learned interaction | 0.988727 | 0.508889 | 0.032260 |
 | 8 | regret-distilled retriever | 0.977017 | 0.542222 | 0.020550 |
 | 8 | generated oracle | 0.956468 | 0.557778 | 0.000000 |
-| 16 | static learned interaction | 0.966183 | 0.504444 | 0.060115 |
+| 16 | static learned interaction | 0.966098 | 0.504444 | 0.060031 |
 | 16 | regret-distilled retriever | 0.955077 | 0.513333 | 0.049009 |
 | 16 | generated oracle | 0.906068 | 0.580000 | 0.000000 |
-| 32 | static learned interaction | 1.004095 | 0.475556 | 0.035372 |
+| 32 | static learned interaction | 1.004100 | 0.480000 | 0.035377 |
 | 32 | regret-distilled retriever | 0.999112 | 0.513333 | 0.030389 |
 | 32 | generated oracle | 0.968723 | 0.577778 | 0.000000 |
 

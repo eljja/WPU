@@ -362,6 +362,52 @@ def test_invariant_set_scorer_report_table_matches_source_csv() -> None:
     assert not issues, "Invariant set scorer report table values do not match source CSV:\n" + "\n".join(issues)
 
 
+def test_regret_distillation_report_table_matches_source_csv() -> None:
+    report_path = ROOT / "docs" / "experiments" / "wpu_v2_retriever_regret_distillation_results.md"
+    csv_path = ROOT / "docs" / "experiments" / "wpu_v2_retriever_regret_distillation.csv"
+    policy_labels = {
+        "static learned interaction": "static_interaction",
+        "regret-distilled retriever": "regret_distilled_retriever",
+        "generated oracle": "generated_oracle",
+    }
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        csv_rows = list(csv.DictReader(handle))
+
+    def mean_for(causal_k: str, policy: str, column: str) -> float:
+        values = [
+            float(row[column])
+            for row in csv_rows
+            if row["causal_k"] == causal_k and row["policy"] == policy
+        ]
+        if not values:
+            raise AssertionError(f"Missing rows for {(causal_k, policy, column)}")
+        return sum(values) / len(values)
+
+    table_rows = _markdown_table_rows(report_path)
+    header_index = next(
+        index for index, row in enumerate(table_rows)
+        if row == ["K", "policy", "loss", "accuracy", "excess over generated oracle"]
+    )
+    headers = table_rows[header_index]
+    issues: list[str] = []
+    for row in table_rows[header_index + 1: header_index + 10]:
+        values = dict(zip(headers, row))
+        policy = policy_labels[values["policy"]]
+        for table_column, csv_column in (
+            ("loss", "loss"),
+            ("accuracy", "accuracy"),
+            ("excess over generated oracle", "excess_over_generated_oracle"),
+        ):
+            expected = mean_for(values["K"], policy, csv_column)
+            if _round_decimals(values[table_column], 6) != _round_decimals(str(expected), 6):
+                issues.append(
+                    f"{report_path.relative_to(ROOT)} -> {(values['K'], values['policy'])} "
+                    f"{table_column} table={values[table_column]} csv={expected}"
+                )
+
+    assert not issues, "Regret distillation report table values do not match source CSV:\n" + "\n".join(issues)
+
+
 def test_readme_v2_summary_tables_match_invariant_scorer_csv() -> None:
     csv_path = ROOT / "docs" / "experiments" / "wpu_v2_retriever_invariant_set_scorer.csv"
     with csv_path.open(newline="", encoding="utf-8") as handle:
@@ -419,6 +465,94 @@ def test_readme_v2_summary_tables_match_invariant_scorer_csv() -> None:
                 )
 
     assert not issues, "README v2 summary tables do not match source CSV:\n" + "\n".join(issues)
+
+
+def test_paper_v2_tables_match_source_csvs() -> None:
+    regret_csv = ROOT / "docs" / "experiments" / "wpu_v2_retriever_regret_distillation.csv"
+    invariant_csv = ROOT / "docs" / "experiments" / "wpu_v2_retriever_invariant_set_scorer.csv"
+
+    with regret_csv.open(newline="", encoding="utf-8") as handle:
+        regret_rows = list(csv.DictReader(handle))
+    with invariant_csv.open(newline="", encoding="utf-8") as handle:
+        invariant_rows = list(csv.DictReader(handle))
+
+    def regret_mean(causal_k: str, policy: str, column: str) -> float:
+        values = [
+            float(row[column])
+            for row in regret_rows
+            if row["causal_k"] == causal_k and row["policy"] == policy
+        ]
+        if not values:
+            raise AssertionError(f"Missing regret rows for {(causal_k, policy, column)}")
+        return sum(values) / len(values)
+
+    def invariant_mean(causal_k: str, policy: str, column: str) -> float:
+        values = [
+            float(row[column])
+            for row in invariant_rows
+            if row["feature_variant"] == "role_geometry_family"
+            and row["causal_k"] == causal_k
+            and row["policy"] == policy
+        ]
+        if not values:
+            raise AssertionError(f"Missing invariant rows for {(causal_k, policy, column)}")
+        return sum(values) / len(values)
+
+    expected_regret = {
+        causal_k: [
+            causal_k,
+            f"{regret_mean(causal_k, 'static_interaction', 'loss'):.6f}",
+            f"{regret_mean(causal_k, 'regret_distilled_retriever', 'loss'):.6f}",
+            f"{regret_mean(causal_k, 'static_interaction', 'accuracy'):.6f}",
+            f"{regret_mean(causal_k, 'regret_distilled_retriever', 'accuracy'):.6f}",
+        ]
+        for causal_k in ("8", "16", "32")
+    }
+    expected_risk_adjusted = {
+        causal_k: [
+            causal_k,
+            f"{invariant_mean(causal_k, 'static_learned_interaction', 'loss'):.6f}",
+            f"{invariant_mean(causal_k, 'risk_adjusted_selected_mechanism', 'loss'):.6f}",
+            f"{invariant_mean(causal_k, 'static_learned_interaction', 'accuracy'):.6f}",
+            f"{invariant_mean(causal_k, 'risk_adjusted_selected_mechanism', 'accuracy'):.6f}",
+        ]
+        for causal_k in ("8", "16", "32")
+    }
+
+    def check_markdown_table(path: Path, header: list[str], expected: dict[str, list[str]]) -> list[str]:
+        table_rows = _markdown_table_rows(path)
+        header_index = next(index for index, row in enumerate(table_rows) if row == header)
+        issues: list[str] = []
+        for row in table_rows[header_index + 1: header_index + 4]:
+            if row != expected[row[0]]:
+                issues.append(f"{path.relative_to(ROOT)} K={row[0]} table={row} csv={expected[row[0]]}")
+        return issues
+
+    issues: list[str] = []
+    for paper_path in (ROOT / "docs" / "paper" / "state_is_all_you_need.md", ROOT / "docs" / "arxiv" / "state_is_all_you_need_ko.md"):
+        issues.extend(
+            check_markdown_table(
+                paper_path,
+                ["K", "Static learned interaction loss", "Regret-distilled loss", "Accuracy before", "Accuracy after"],
+                expected_regret,
+            )
+        )
+        issues.extend(
+            check_markdown_table(
+                paper_path,
+                ["K", "Static learned loss", "Risk-adjusted mechanism loss", "Accuracy before", "Accuracy after"],
+                expected_risk_adjusted,
+            )
+        )
+
+    tex_text = (ROOT / "docs" / "arxiv" / "state_is_all_you_need_en.tex").read_text(encoding="utf-8")
+    for expected in (expected_regret, expected_risk_adjusted):
+        for row in expected.values():
+            latex_row = " & ".join(row) + r" \\"
+            if latex_row not in tex_text:
+                issues.append(f"docs/arxiv/state_is_all_you_need_en.tex missing row {latex_row}")
+
+    assert not issues, "Paper v2 tables do not match source CSVs:\n" + "\n".join(issues)
 
 
 def test_latex_graphics_and_citations_resolve() -> None:

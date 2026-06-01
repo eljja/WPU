@@ -321,9 +321,9 @@ pseudo-label object set으로 삼고, 작은 state-native object scorer가 그 s
 
 | K | Static learned interaction loss | Regret-distilled loss | Accuracy before | Accuracy after |
 |---:|---:|---:|---:|---:|
-| 8 | 0.988432 | 0.977017 | 0.506667 | 0.542222 |
-| 16 | 0.966183 | 0.955077 | 0.504444 | 0.513333 |
-| 32 | 1.004095 | 0.999112 | 0.475556 | 0.513333 |
+| 8 | 0.988727 | 0.977017 | 0.508889 | 0.542222 |
+| 16 | 0.966098 | 0.955077 | 0.504444 | 0.513333 |
+| 32 | 1.004100 | 0.999112 | 0.480000 | 0.513333 |
 
 Regret-distilled retriever는 learned interaction retriever 대비 15개 seed/K 조건 중
 14개에서 loss를 낮췄다. 그러나 same-seed validation-to-test 결과만으로는 충분하지

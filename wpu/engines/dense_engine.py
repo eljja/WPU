@@ -27,7 +27,7 @@ class DenseRecomputeEngine:
 
     def dense_recompute(self, state: WorldState, region: list[str] | None = None) -> DenseRecomputeResult:
         tensor = self.project_state_to_tensor(state, region)
-        updated = self._placeholder_dense_update(tensor)
+        updated = self._global_consistency_update(tensor)
         object_ids = region or list(state.objects)
         delta = DeltaState(time=state.time, metadata={"engine": "dense"})
         for row_index, object_id in enumerate(object_ids):
@@ -40,7 +40,8 @@ class DenseRecomputeEngine:
             )
         return DenseRecomputeResult(delta=delta, tensor=updated, region=region)
 
-    def _placeholder_dense_update(self, tensor: np.ndarray) -> np.ndarray:
+    def _global_consistency_update(self, tensor: np.ndarray) -> np.ndarray:
+        """Apply a simple dense confidence synchronization over the selected region."""
         if tensor.size == 0:
             return tensor
         updated = tensor.copy()

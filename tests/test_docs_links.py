@@ -70,6 +70,65 @@ def _round_decimals(value: str, digits: int) -> str:
     return f"{float(value):.{digits}f}"
 
 
+def _assert_table_matches_csv(
+    report_path: Path,
+    csv_path: Path,
+    table_header_prefix: list[str],
+    csv_key_columns: list[str],
+    table_key_columns: list[str],
+    comparisons: list[tuple[str, str, int]],
+    key_value_maps: dict[str, dict[str, str]] | None = None,
+    key_rounding: dict[str, int] | None = None,
+    csv_row_filter: dict[str, str] | None = None,
+) -> list[str]:
+    key_value_maps = key_value_maps or {}
+    key_rounding = key_rounding or {}
+    csv_row_filter = csv_row_filter or {}
+
+    def normalize_key_value(column: str, value: str) -> str:
+        mapped = key_value_maps.get(column, {}).get(value, value)
+        if column in key_rounding:
+            return _round_decimals(mapped, key_rounding[column])
+        return mapped
+
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        csv_rows = {}
+        for row in csv.DictReader(handle):
+            if any(_round_decimals(row[column], 6) != _round_decimals(value, 6) for column, value in csv_row_filter.items()):
+                continue
+            key = tuple(normalize_key_value(column, row[column]) for column in csv_key_columns)
+            csv_rows[key] = row
+
+    table_rows = _markdown_table_rows(report_path)
+    header_index = next(
+        index for index, row in enumerate(table_rows)
+        if row[: len(table_header_prefix)] == table_header_prefix
+    )
+    headers = table_rows[header_index]
+    issues: list[str] = []
+    for row in table_rows[header_index + 1:]:
+        if len(row) != len(headers):
+            break
+        values = dict(zip(headers, row))
+        if not values[table_key_columns[0]].replace(".", "", 1).isdigit():
+            break
+        key = tuple(
+            normalize_key_value(column, values[column])
+            for column in table_key_columns
+        )
+        source = csv_rows.get(key)
+        if source is None:
+            issues.append(f"{report_path.relative_to(ROOT)} -> table row missing in CSV {key}")
+            continue
+        for table_column, csv_column, digits in comparisons:
+            if _round_decimals(values[table_column], digits) != _round_decimals(source[csv_column], digits):
+                issues.append(
+                    f"{report_path.relative_to(ROOT)} -> {key} {table_column} "
+                    f"table={values[table_column]} csv={source[csv_column]}"
+                )
+    return issues
+
+
 def test_markdown_local_references_exist() -> None:
     missing: list[str] = []
     for path in ROOT.rglob("*.md"):
@@ -178,40 +237,22 @@ def test_selector_report_tables_match_summary_csvs() -> None:
     issues: list[str] = []
 
     for report_path, csv_path, table_criterion, csv_criterion, table_delta, csv_delta, criterion_labels in cases:
-        with csv_path.open(newline="", encoding="utf-8") as handle:
-            csv_rows = {
-                (row["causal_k"], row[csv_criterion]): row
-                for row in csv.DictReader(handle)
-            }
-
-        table_rows = _markdown_table_rows(report_path)
-        header_index = next(
-            index for index, row in enumerate(table_rows)
-            if row[:2] == ["K", table_criterion]
+        issues.extend(
+            _assert_table_matches_csv(
+                report_path=report_path,
+                csv_path=csv_path,
+                table_header_prefix=["K", table_criterion],
+                csv_key_columns=["causal_k", csv_criterion],
+                table_key_columns=["K", table_criterion],
+                comparisons=[
+                    ("loss", "loss", 6),
+                    ("accuracy", "accuracy", 6),
+                    (table_delta, csv_delta, 6),
+                    ("excess over generated oracle", "excess_over_generated_oracle", 6),
+                ],
+                key_value_maps={table_criterion: criterion_labels},
+            )
         )
-        headers = table_rows[header_index]
-        for row in table_rows[header_index + 1:]:
-            if len(row) != len(headers) or not row[0].isdigit():
-                break
-            values = dict(zip(headers, row))
-            criterion_key = criterion_labels.get(values[table_criterion], values[table_criterion])
-            key = (values["K"], criterion_key)
-            source = csv_rows.get(key)
-            if source is None:
-                issues.append(f"{report_path.relative_to(ROOT)} -> table row missing in CSV {key}")
-                continue
-            comparisons = [
-                ("loss", "loss"),
-                ("accuracy", "accuracy"),
-                (table_delta, csv_delta),
-                ("excess over generated oracle", "excess_over_generated_oracle"),
-            ]
-            for table_column, csv_column in comparisons:
-                if _round6(values[table_column]) != _round6(source[csv_column]):
-                    issues.append(
-                        f"{report_path.relative_to(ROOT)} -> {key} {table_column} "
-                        f"table={values[table_column]} csv={source[csv_column]}"
-                    )
 
     assert not issues, "Report table values do not match source CSVs:\n" + "\n".join(issues)
 
@@ -219,43 +260,23 @@ def test_selector_report_tables_match_summary_csvs() -> None:
 def test_clipped_diagnostic_report_table_matches_summary_csv() -> None:
     report_path = ROOT / "docs" / "experiments" / "wpu_v2_clipped_diagnostic_probe_results.md"
     csv_path = ROOT / "docs" / "experiments" / "wpu_v2_clipped_diagnostic_probe_summary.csv"
-    with csv_path.open(newline="", encoding="utf-8") as handle:
-        csv_rows = {
-            _round_decimals(row["residual_clip"], 2): row
-            for row in csv.DictReader(handle)
-            if _round_decimals(row["compute_cost"], 2) == "0.05"
-        }
-
-    table_rows = _markdown_table_rows(report_path)
-    header_index = next(
-        index for index, row in enumerate(table_rows)
-        if row[:2] == ["residual clip", "regret pearson"]
+    issues = _assert_table_matches_csv(
+        report_path=report_path,
+        csv_path=csv_path,
+        table_header_prefix=["residual clip", "regret pearson"],
+        csv_key_columns=["residual_clip"],
+        table_key_columns=["residual clip"],
+        comparisons=[
+            ("regret pearson", "regret_pearson", 3),
+            ("regret R2", "regret_r2", 3),
+            ("dense rate", "dense_rate", 3),
+            ("policy loss", "policy_loss", 3),
+            ("loss delta", "policy_delta_vs_sparse", 3),
+            ("oracle excess", "policy_excess_over_oracle", 3),
+        ],
+        csv_row_filter={"compute_cost": "0.05"},
+        key_rounding={"residual_clip": 2, "residual clip": 2},
     )
-    headers = table_rows[header_index]
-    comparisons = [
-        ("regret pearson", "regret_pearson"),
-        ("regret R2", "regret_r2"),
-        ("dense rate", "dense_rate"),
-        ("policy loss", "policy_loss"),
-        ("loss delta", "policy_delta_vs_sparse"),
-        ("oracle excess", "policy_excess_over_oracle"),
-    ]
-    issues: list[str] = []
-
-    for row in table_rows[header_index + 1:]:
-        if len(row) != len(headers) or not row[0].replace(".", "", 1).isdigit():
-            break
-        values = dict(zip(headers, row))
-        source = csv_rows.get(values["residual clip"])
-        if source is None:
-            issues.append(f"{report_path.relative_to(ROOT)} -> table row missing in CSV {values['residual clip']}")
-            continue
-        for table_column, csv_column in comparisons:
-            if _round_decimals(values[table_column], 3) != _round_decimals(source[csv_column], 3):
-                issues.append(
-                    f"{report_path.relative_to(ROOT)} -> clip={values['residual clip']} {table_column} "
-                    f"table={values[table_column]} csv={source[csv_column]}"
-                )
 
     assert not issues, "Clipped diagnostic report table values do not match source CSV:\n" + "\n".join(issues)
 

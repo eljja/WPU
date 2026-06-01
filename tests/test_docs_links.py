@@ -66,6 +66,10 @@ def _round6(value: str) -> str:
     return f"{float(value):.6f}"
 
 
+def _round_decimals(value: str, digits: int) -> str:
+    return f"{float(value):.{digits}f}"
+
+
 def test_markdown_local_references_exist() -> None:
     missing: list[str] = []
     for path in ROOT.rglob("*.md"):
@@ -210,6 +214,50 @@ def test_selector_report_tables_match_summary_csvs() -> None:
                     )
 
     assert not issues, "Report table values do not match source CSVs:\n" + "\n".join(issues)
+
+
+def test_clipped_diagnostic_report_table_matches_summary_csv() -> None:
+    report_path = ROOT / "docs" / "experiments" / "wpu_v2_clipped_diagnostic_probe_results.md"
+    csv_path = ROOT / "docs" / "experiments" / "wpu_v2_clipped_diagnostic_probe_summary.csv"
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        csv_rows = {
+            _round_decimals(row["residual_clip"], 2): row
+            for row in csv.DictReader(handle)
+            if _round_decimals(row["compute_cost"], 2) == "0.05"
+        }
+
+    table_rows = _markdown_table_rows(report_path)
+    header_index = next(
+        index for index, row in enumerate(table_rows)
+        if row[:2] == ["residual clip", "regret pearson"]
+    )
+    headers = table_rows[header_index]
+    comparisons = [
+        ("regret pearson", "regret_pearson"),
+        ("regret R2", "regret_r2"),
+        ("dense rate", "dense_rate"),
+        ("policy loss", "policy_loss"),
+        ("loss delta", "policy_delta_vs_sparse"),
+        ("oracle excess", "policy_excess_over_oracle"),
+    ]
+    issues: list[str] = []
+
+    for row in table_rows[header_index + 1:]:
+        if len(row) != len(headers) or not row[0].replace(".", "", 1).isdigit():
+            break
+        values = dict(zip(headers, row))
+        source = csv_rows.get(values["residual clip"])
+        if source is None:
+            issues.append(f"{report_path.relative_to(ROOT)} -> table row missing in CSV {values['residual clip']}")
+            continue
+        for table_column, csv_column in comparisons:
+            if _round_decimals(values[table_column], 3) != _round_decimals(source[csv_column], 3):
+                issues.append(
+                    f"{report_path.relative_to(ROOT)} -> clip={values['residual clip']} {table_column} "
+                    f"table={values[table_column]} csv={source[csv_column]}"
+                )
+
+    assert not issues, "Clipped diagnostic report table values do not match source CSV:\n" + "\n".join(issues)
 
 
 def test_latex_graphics_and_citations_resolve() -> None:

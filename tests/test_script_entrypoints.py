@@ -31,16 +31,26 @@ def test_scripts_importing_script_modules_bootstrap_repo_root() -> None:
 
 
 def test_staged_regret_hybrid_help_runs_as_direct_script() -> None:
-    result = subprocess.run(
-        [sys.executable, "scripts/staged_regret_hybrid.py", "--help"],
-        cwd=ROOT,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
-        text=True,
-        timeout=20,
-    )
+    _assert_help_runs("scripts/staged_regret_hybrid.py")
 
-    assert result.returncode == 0, result.stderr
+
+def test_readme_and_current_evidence_script_help_runs() -> None:
+    scripts = [
+        "scripts/train_object_physics.py",
+        "scripts/eval_object_physics.py",
+        "scripts/route_sweep.py",
+        "scripts/robust_experiment_suite.py",
+        "scripts/analyze_n_sweep.py",
+        "scripts/analyze_b_sweep.py",
+        "scripts/analyze_step_sweep.py",
+        "scripts/analyze_controlled_stress.py",
+        "scripts/causal_working_set_experiment.py",
+        "scripts/retriever_regret_distillation_probe.py",
+        "scripts/retriever_cross_seed_invariant_set_scorer_probe.py",
+    ]
+
+    for script in scripts:
+        _assert_help_runs(script)
 
 
 def test_readme_core_scripts_run_as_direct_scripts(tmp_path: Path) -> None:
@@ -99,3 +109,16 @@ def test_readme_core_scripts_run_as_direct_scripts(tmp_path: Path) -> None:
         assert result.returncode == 0, result.stderr
 
     assert checkpoint.exists()
+
+
+def _assert_help_runs(script: str) -> None:
+    result = subprocess.run(
+        [sys.executable, script, "--help"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, f"{script}\n{result.stderr}"

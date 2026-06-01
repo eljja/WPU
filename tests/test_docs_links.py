@@ -338,6 +338,65 @@ def test_invariant_set_scorer_report_table_matches_source_csv() -> None:
     assert not issues, "Invariant set scorer report table values do not match source CSV:\n" + "\n".join(issues)
 
 
+def test_readme_v2_summary_tables_match_invariant_scorer_csv() -> None:
+    csv_path = ROOT / "docs" / "experiments" / "wpu_v2_retriever_invariant_set_scorer.csv"
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        csv_rows = list(csv.DictReader(handle))
+
+    def mean_for(causal_k: str, policy: str, column: str) -> float:
+        values = [
+            float(row[column])
+            for row in csv_rows
+            if row["feature_variant"] == "role_geometry_family"
+            and row["causal_k"] == causal_k
+            and row["policy"] == policy
+        ]
+        if not values:
+            raise AssertionError(f"Missing README source rows for {(causal_k, policy, column)}")
+        return sum(values) / len(values)
+
+    expected_by_k = {
+        causal_k: {
+            "Static learned loss": mean_for(causal_k, "static_learned_interaction", "loss"),
+            "Risk-adjusted mechanism loss": mean_for(causal_k, "risk_adjusted_selected_mechanism", "loss"),
+            "Accuracy gain": (
+                mean_for(causal_k, "static_learned_interaction", "accuracy"),
+                mean_for(causal_k, "risk_adjusted_selected_mechanism", "accuracy"),
+            ),
+        }
+        for causal_k in ("8", "16", "32")
+    }
+
+    issues: list[str] = []
+    for readme_path in (ROOT / "README.md", ROOT / "README.ko.md"):
+        table_rows = _markdown_table_rows(readme_path)
+        header_index = next(
+            index for index, row in enumerate(table_rows)
+            if row == ["K", "Static learned loss", "Risk-adjusted mechanism loss", "Accuracy gain"]
+        )
+        for row in table_rows[header_index + 1: header_index + 4]:
+            values = dict(zip(table_rows[header_index], row))
+            expected = expected_by_k[values["K"]]
+            if _round_decimals(values["Static learned loss"], 6) != _round_decimals(
+                str(expected["Static learned loss"]), 6
+            ):
+                issues.append(f"{readme_path.relative_to(ROOT)} K={values['K']} static loss")
+            if _round_decimals(values["Risk-adjusted mechanism loss"], 6) != _round_decimals(
+                str(expected["Risk-adjusted mechanism loss"]), 6
+            ):
+                issues.append(f"{readme_path.relative_to(ROOT)} K={values['K']} risk-adjusted loss")
+            expected_gain = (
+                f"{expected['Accuracy gain'][0]:.6f} -> {expected['Accuracy gain'][1]:.6f}"
+            )
+            if values["Accuracy gain"] != expected_gain:
+                issues.append(
+                    f"{readme_path.relative_to(ROOT)} K={values['K']} accuracy gain "
+                    f"table={values['Accuracy gain']} csv={expected_gain}"
+                )
+
+    assert not issues, "README v2 summary tables do not match source CSV:\n" + "\n".join(issues)
+
+
 def test_latex_graphics_and_citations_resolve() -> None:
     issues: list[str] = []
     for path in ROOT.rglob("*.tex"):

@@ -22,3 +22,11 @@ def test_pyproject_license_metadata_is_setuptools_compatible() -> None:
 
     assert project["license"] == {"file": "LICENSE"}
     assert "License :: OSI Approved :: GNU Affero General Public License v3" in project["classifiers"]
+
+
+def test_ci_builds_and_smoke_installs_wheel() -> None:
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+    assert "python -m pip wheel . --no-deps --wheel-dir dist" in ci
+    assert "python -m pip install --force-reinstall --no-deps dist/*.whl" in ci
+    assert "wpu.create_model('wpu-cws-indexed'" in ci

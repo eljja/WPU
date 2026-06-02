@@ -36,6 +36,8 @@ Run before committing paper, documentation, or model changes:
 ```bash
 python -m pytest
 python -m pip wheel . --no-deps --wheel-dir dist
+python -m pip install --force-reinstall --no-deps dist/wpu-*.whl
+python -c "import wpu; wpu.create_model('wpu-cws-indexed', hidden_dim=16, layers=1, working_set_size=4)"
 ```
 
 The test suite covers:

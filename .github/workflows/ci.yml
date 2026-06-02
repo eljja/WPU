@@ -31,6 +31,11 @@ jobs:
       - name: Build wheel
         run: python -m pip wheel . --no-deps --wheel-dir dist
 
+      - name: Install built wheel and smoke import
+        run: |
+          python -m pip install --force-reinstall --no-deps dist/*.whl
+          python -c "import wpu; model = wpu.create_model('wpu-cws-indexed', hidden_dim=16, layers=1, working_set_size=4); print(type(model).__name__)"
+
   paper:
     name: Build paper PDF
     runs-on: ubuntu-latest

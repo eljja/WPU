@@ -134,6 +134,18 @@ print(dense_delta.object_updates["cup_001"])
 이것이 v1의 의도된 interface다. Explicit world state는 event delta로 patch되고,
 local propagation을 거친 뒤, 필요하면 제한된 dense region에서 recompute된다.
 
+현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
+
+```python
+import wpu
+
+model = wpu.create_model(
+    "wpu-cws-indexed",
+    hidden_dim=64,
+    working_set_size=16,
+)
+```
+
 ## 주요 실험 요약
 
 현재 evidence는 “WPU가 항상 이긴다”가 아니라 regime hypothesis를 지지한다.

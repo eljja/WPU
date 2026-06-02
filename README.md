@@ -127,6 +127,19 @@ This is the intended v1 interface: explicit world state is patched by event
 deltas, propagated locally, and optionally recomputed over a bounded dense
 region.
 
+The current v2 working-set models are also available from the package root
+through the model factory:
+
+```python
+import wpu
+
+model = wpu.create_model(
+    "wpu-cws-indexed",
+    hidden_dim=64,
+    working_set_size=16,
+)
+```
+
 ## Train And Evaluate
 
 ```bash

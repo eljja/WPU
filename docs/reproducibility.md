@@ -35,6 +35,7 @@ Run before committing paper, documentation, or model changes:
 
 ```bash
 python -m pytest
+python -m pip wheel . --no-deps --wheel-dir dist
 ```
 
 The test suite covers:
@@ -54,6 +55,15 @@ GitHub Actions runs the same test command on push and pull request. It also
 compiles the English arXiv paper from `docs/arxiv/state_is_all_you_need_en.tex`
 and uploads the resulting PDF as a workflow artifact, so paper changes must keep
 both the evidence tests and the LaTeX build green.
+
+On Windows machines with Anaconda on `PATH`, setuptools can occasionally import
+Anaconda's `distutils` from inside a virtual environment. If wheel metadata
+generation fails with a `distutils` assertion, run the wheel check with:
+
+```powershell
+$env:SETUPTOOLS_USE_DISTUTILS='stdlib'
+.\.venv\Scripts\python.exe -m pip wheel . --no-deps --wheel-dir dist
+```
 
 ## Demo Reproduction
 

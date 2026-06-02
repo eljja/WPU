@@ -34,6 +34,7 @@ python -m venv .venv
 
 ```bash
 python -m pytest
+python -m pip wheel . --no-deps --wheel-dir dist
 ```
 
 현재 test suite가 확인하는 항목:
@@ -53,6 +54,15 @@ GitHub Actions는 push와 pull request에서 같은 test command를 실행한다
 `docs/arxiv/state_is_all_you_need_en.tex`에서 영문 arXiv PDF를 빌드하고 workflow
 artifact로 업로드한다. 따라서 논문 변경은 evidence test와 LaTeX build를 모두
 통과해야 한다.
+
+Windows에서 Anaconda가 `PATH`에 있으면 virtual environment 안에서도 setuptools가
+Anaconda의 `distutils`를 잘못 import할 수 있다. Wheel metadata 생성 중
+`distutils` assertion이 발생하면 다음처럼 표준 distutils를 강제한다.
+
+```powershell
+$env:SETUPTOOLS_USE_DISTUTILS='stdlib'
+.\.venv\Scripts\python.exe -m pip wheel . --no-deps --wheel-dir dist
+```
 
 ## 데모 재현
 

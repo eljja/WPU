@@ -28,6 +28,9 @@ jobs:
       - name: Run test suite
         run: python -m pytest
 
+      - name: Build wheel
+        run: python -m pip wheel . --no-deps --wheel-dir dist
+
   paper:
     name: Build paper PDF
     runs-on: ubuntu-latest

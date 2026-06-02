@@ -8,6 +8,12 @@
 The English manuscript is the submission-oriented source. The Korean manuscript
 is intended for review, discussion, and translation alignment.
 
+`state_is_all_you_need_en.tex` is the authoritative submission source. The
+committed PDF is a convenience artifact for review, and local rebuilds may
+change PDF metadata even when the manuscript source is unchanged. Submission
+edits should therefore be judged against the LaTeX source, the evidence tables,
+and the CI paper build.
+
 ## Current Paper Shape
 
 The main paper keeps the argument compact:

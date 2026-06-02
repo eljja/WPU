@@ -258,6 +258,16 @@ def test_experiment_index_does_not_frame_all_evidence_as_v1_only() -> None:
     assert "v1-to-v2 evidence trail" in readme
 
 
+def test_paper_reproducibility_docs_define_authoritative_source() -> None:
+    required = "state_is_all_you_need_en.tex` is the authoritative"
+    for path in (
+        ROOT / "docs" / "arxiv" / "README.md",
+        ROOT / "docs" / "reproducibility.md",
+    ):
+        text = path.read_text(encoding="utf-8")
+        assert required in text, f"{path.relative_to(ROOT)} must identify the authoritative paper source"
+
+
 def test_selector_report_tables_match_summary_csvs() -> None:
     cases = [
         (

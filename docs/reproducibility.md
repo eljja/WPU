@@ -85,6 +85,11 @@ The Korean companion is maintained as Markdown:
 docs/arxiv/state_is_all_you_need_ko.md
 ```
 
+`docs/arxiv/state_is_all_you_need_en.tex` is the authoritative submission
+source. The committed PDF is a review convenience artifact; rebuilds can change
+PDF metadata without changing manuscript content. Treat the CI paper build and
+the source/evidence consistency tests as the reproducibility checks.
+
 ## Experiment Artifact Policy
 
 Committed paper evidence lives under `docs/experiments/` and `docs/figures/`.

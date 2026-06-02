@@ -10,6 +10,7 @@ from wpu.data.working_set_physics import (
     collate_working_set_samples,
 )
 from wpu.models.factory import create_model
+from wpu.models.factory import MODEL_NAMES
 from wpu.models.batch import StateGraphBatch
 from wpu.models.causal_working_set_processor import CausalWorkingSetProcessor
 from wpu.models.world_state_processor import WorldStateProcessor
@@ -143,6 +144,12 @@ def test_factory_selects_valid_attention_heads_for_small_hidden_dims() -> None:
         model = create_model(name, hidden_dim=10, layers=1, working_set_size=4)
         prediction = model(state_batch, num_branches=3)
         assert prediction.branch_probabilities.shape == (1, 3)
+
+
+def test_all_declared_model_names_are_factory_creatable() -> None:
+    for name in MODEL_NAMES:
+        model = create_model(name, hidden_dim=16, layers=1, working_set_size=4)
+        assert model is not None, name
 
 
 def test_factory_rejects_invalid_explicit_attention_heads() -> None:

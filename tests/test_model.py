@@ -127,6 +127,33 @@ def test_indexed_cws_model_uses_relation_frontier() -> None:
     assert model.last_working_set_stats.mean_causal_recall > 0.0
 
 
+def test_factory_selects_valid_attention_heads_for_small_hidden_dims() -> None:
+    state_batch, _, _, _ = collate_working_set_samples(
+        [WorkingSetPhysicsDataset(size=1, seed=5, background_objects=8, causal_obstacles=2)[0]]
+    )
+    names = [
+        "wpu-routed",
+        "wpu-cws-indexed",
+        "dense-graph",
+        "graph-transformer",
+        "serialized-token",
+    ]
+
+    for name in names:
+        model = create_model(name, hidden_dim=10, layers=1, working_set_size=4)
+        prediction = model(state_batch, num_branches=3)
+        assert prediction.branch_probabilities.shape == (1, 3)
+
+
+def test_factory_rejects_invalid_explicit_attention_heads() -> None:
+    try:
+        create_model("wpu-cws-indexed", hidden_dim=10, num_heads=4)
+    except ValueError as error:
+        assert "must be divisible" in str(error)
+    else:
+        raise AssertionError("factory accepted incompatible hidden_dim/num_heads")
+
+
 def test_indexed_sparse_cws_model_disables_local_dense_block() -> None:
     model = create_model("wpu-cws-indexed-sparse", hidden_dim=32, num_heads=4, layers=1, working_set_size=8)
 

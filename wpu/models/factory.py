@@ -36,14 +36,15 @@ MODEL_NAMES = [
 
 
 def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module:
+    num_heads = _num_heads_for(hidden_dim, kwargs.get("num_heads"))
     if name == "wpu-routed":
-        return WorldStateProcessor(hidden_dim=hidden_dim)
+        return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads)
     if name == "wpu-sparse":
-        return WorldStateProcessor(hidden_dim=hidden_dim, forced_path=ExecutionPath.SPARSE)
+        return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads, forced_path=ExecutionPath.SPARSE)
     if name == "wpu-hybrid":
-        return WorldStateProcessor(hidden_dim=hidden_dim, forced_path=ExecutionPath.HYBRID)
+        return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads, forced_path=ExecutionPath.HYBRID)
     if name == "wpu-dense":
-        return WorldStateProcessor(hidden_dim=hidden_dim, forced_path=ExecutionPath.DENSE)
+        return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads, forced_path=ExecutionPath.DENSE)
     if name in {
         "wpu-cws-indexed",
         "wpu-cws-indexed-sparse",
@@ -60,7 +61,6 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
     }:
         working_set_size = int(kwargs.get("working_set_size", 16))
         layers = int(kwargs.get("layers", 2))
-        num_heads = int(kwargs.get("num_heads", 8 if hidden_dim % 8 == 0 else 4))
         interaction_dense_threshold = float(kwargs.get("interaction_dense_threshold", 0.15))
         return CausalWorkingSetProcessor(
             hidden_dim=hidden_dim,
@@ -88,7 +88,6 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         selector = name.removeprefix("wpu-cws-")
         working_set_size = int(kwargs.get("working_set_size", 16))
         layers = int(kwargs.get("layers", 2))
-        num_heads = int(kwargs.get("num_heads", 8 if hidden_dim % 8 == 0 else 4))
         return CausalWorkingSetProcessor(
             hidden_dim=hidden_dim,
             num_heads=num_heads,
@@ -98,17 +97,17 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
             local_dense=True,
         )
     if name == "dense-graph":
-        return DenseGraphProcessor(hidden_dim=hidden_dim, num_heads=int(kwargs.get("num_heads", 4)))
+        return DenseGraphProcessor(hidden_dim=hidden_dim, num_heads=num_heads)
     if name == "graph-transformer":
         return GraphTransformerProcessor(
             hidden_dim=hidden_dim,
-            num_heads=int(kwargs.get("num_heads", 4)),
+            num_heads=num_heads,
             layers=int(kwargs.get("layers", 2)),
         )
     if name == "serialized-token":
         return SerializedTokenProcessor(
             hidden_dim=hidden_dim,
-            num_heads=int(kwargs.get("num_heads", 4)),
+            num_heads=num_heads,
             layers=int(kwargs.get("layers", 2)),
         )
     raise ValueError(f"unknown model: {name}")
@@ -132,3 +131,19 @@ def _adaptive_route(name: str) -> str:
     if name == "wpu-cws-indexed-state-regret-hybrid":
         return "state_regret"
     return "hard"
+
+
+def _num_heads_for(hidden_dim: int, requested: object | None) -> int:
+    if hidden_dim < 1:
+        raise ValueError(f"hidden_dim must be positive, got {hidden_dim}")
+    if requested is not None:
+        num_heads = int(requested)
+        if num_heads < 1:
+            raise ValueError(f"num_heads must be positive, got {num_heads}")
+        if hidden_dim % num_heads != 0:
+            raise ValueError(f"hidden_dim={hidden_dim} must be divisible by num_heads={num_heads}")
+        return num_heads
+    for candidate in (8, 4, 2, 1):
+        if hidden_dim % candidate == 0:
+            return candidate
+    return 1

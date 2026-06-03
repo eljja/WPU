@@ -218,6 +218,45 @@ def test_claim_ledgers_have_matching_claim_ids() -> None:
     assert not issues, "Claim ledgers must keep matching C1-C10 rows:\n" + "\n".join(issues)
 
 
+def test_core_bilingual_docs_stay_paired_and_linked() -> None:
+    pairs = [
+        (ROOT / "README.md", ROOT / "README.ko.md"),
+        (ROOT / "docs" / "claims.md", ROOT / "docs" / "claims.ko.md"),
+        (ROOT / "docs" / "reproducibility.md", ROOT / "docs" / "reproducibility.ko.md"),
+        (ROOT / "docs" / "publication_readiness.md", ROOT / "docs" / "publication_readiness.ko.md"),
+    ]
+    issues: list[str] = []
+    for english_path, korean_path in pairs:
+        if not english_path.exists():
+            issues.append(f"missing {english_path.relative_to(ROOT)}")
+        if not korean_path.exists():
+            issues.append(f"missing {korean_path.relative_to(ROOT)}")
+        if english_path.exists() and not _is_git_tracked(english_path):
+            issues.append(f"untracked {english_path.relative_to(ROOT)}")
+        if korean_path.exists() and not _is_git_tracked(korean_path):
+            issues.append(f"untracked {korean_path.relative_to(ROOT)}")
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_ko = (ROOT / "README.ko.md").read_text(encoding="utf-8")
+    for required in (
+        "README.ko.md",
+        "docs/claims.md",
+        "docs/publication_readiness.md",
+        "docs/reproducibility.md",
+    ):
+        if required not in readme:
+            issues.append(f"README.md missing {required}")
+    for required in (
+        "docs/claims.ko.md",
+        "docs/publication_readiness.ko.md",
+        "docs/reproducibility.ko.md",
+    ):
+        if required not in readme_ko:
+            issues.append(f"README.ko.md missing {required}")
+
+    assert not issues, "Core bilingual documentation must stay paired and discoverable:\n" + "\n".join(issues)
+
+
 def test_current_evidence_reports_declare_source_csvs() -> None:
     readme = (ROOT / "docs" / "experiments" / "README.md").read_text(encoding="utf-8")
     current_section = readme.split("Historical or preliminary reports:", 1)[0]

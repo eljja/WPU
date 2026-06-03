@@ -1,0 +1,77 @@
+# WPU Publication Readiness and Gap Register
+
+This register states what is ready for external publication, what is not ready,
+and what evidence would change that status. It is intentionally conservative:
+the goal is to make WPU scientifically useful by making the remaining gaps
+explicit and falsifiable.
+
+## Current Readiness
+
+| Target | Status | Reason |
+|---|---|---|
+| GitHub public repository | Ready | Code, tests, AGPL license, README, reproducibility guide, experiment index, claim ledger, wheel build, and CI are in place. |
+| arXiv preprint | Ready with constrained claims | The paper can be posted as an early research prototype if it states a regime-specific hypothesis rather than broad superiority. |
+| Workshop / position paper | Ready | The repository provides a coherent architecture, negative results, and a falsifiable experimental program. |
+| Top-tier ML systems or robotics paper | Not ready | Needs stronger matched baselines, long-horizon evaluation, simulator or real-world tasks, and larger seed/model sweeps. |
+| Hardware/chiplet/accelerator claim | Not ready | No sparse-kernel, memory-traffic, power, or matched-accuracy hardware evidence exists yet. |
+| Nature/Science-style broad-impact claim | Not ready | The idea may be high-impact, but current evidence is synthetic and regime-limited. |
+
+## Defensible External Claim
+
+The current defensible claim is:
+
+```text
+WPU is a state-native execution model for explicit world state. It is useful in
+regimes where total state N is large, the causal working set K is small and
+identifiable before tensorization, updates are local and relation-mediated, and
+branch/uncertainty state is reused across events.
+```
+
+This claim is supported by the implementation, v1 regime studies, and v2
+working-set-control experiments. It does not imply that WPU is generally more
+accurate than token, graph, or latent world models.
+
+## Gap Register
+
+| Gap | Why it matters | Current evidence | Required next evidence |
+|---|---|---|---|
+| Broad baseline superiority is not shown | Reviewers will reject universal WPU claims without matched token/graph/world-model baselines. | v1 shows WPU loses at large `N`; v2 shows working-set-control gains but not broad dominance. | Parameter-matched, compute-matched token/graph baselines over controlled `N`, `K`, branch count, and horizon. |
+| Candidate-oracle gap remains open | WPU v2 exposes a useful control surface, but deployed selectors still leave substantial oracle performance unused. | Risk-adjusted descriptor selection improves held-out loss at `N=2048`, but candidate oracle is substantially better. | Joint retriever-propagator training, calibrated regret targets, and transfer-stable candidate scoring. |
+| Cross-seed and cross-task transfer is incomplete | Synthetic gains can be seed-specific if selection policies overfit generation artifacts. | Several cross-seed rerankers and gates fail or only partially improve. | Larger seed sweeps, new synthetic generators, and leave-generator-family-out validation. |
+| Long-horizon state integrity is not proven | Persistent state is only valuable if delta overlays do not accumulate unrecoverable corruption. | Current tests cover rollout normalization and short synthetic prediction. | Multi-step branch rollout benchmarks with rollback, correction, calibration, and state-consistency metrics. |
+| Real-world or simulator-backed grounding is absent | A world-processing claim needs evidence beyond toy object physics. | Current evidence is synthetic robot-cup and CWS data. | MuJoCo/Isaac/robotics/game-server/digital-twin benchmarks with explicit state extraction. |
+| Perception-to-state is not solved | WPU assumes explicit state exists; external users will ask how pixels become objects and relations. | Documents correctly frame perception adapters as future work. | Object-state adapter baseline using supervised segmentation, slot discovery, or simulator-provided object labels. |
+| Hardware claims are unsupported | WPU as a processing unit requires systems evidence, not only PyTorch models. | Current code is a reference implementation. | Sparse frontier kernel profiling, memory-traffic accounting, branch-overlay memory measurements, and matched-accuracy speedups. |
+| Calibration and uncertainty are shallow | Branch probabilities matter only if calibrated under distribution shift. | v1/v2 reports include branch accuracy and some calibration discussion, but not a full uncertainty benchmark. | ECE/Brier/NLL over multi-step rollouts, branch collapse tests, and uncertainty-gated recompute experiments. |
+
+## Immediate Improvement Priorities
+
+1. Close the candidate-oracle gap without returning to token processing.
+2. Add long-horizon CWS rollout evaluation with state-integrity metrics.
+3. Add a simulator-backed benchmark where explicit object state is available.
+4. Expand cross-seed evaluation into cross-generator-family evaluation.
+5. Add calibrated branch/uncertainty metrics as first-class reported outputs.
+6. Profile sparse frontier and branch-overlay memory costs separately from dense tensor compute.
+
+## Public Communication Rules
+
+- Say "state-native execution regime," not "universal Transformer replacement."
+- Say "software research prototype," not "completed hardware accelerator."
+- Say "local-causal propagation prior," not "real physical understanding."
+- Say "candidate-oracle gap remains," not "retrieval is solved."
+- Say "large `N` helps only when `K` is small and identifiable," not "WPU wins when `N` is large."
+
+## Minimum Bar for the Next Stronger Claim
+
+The next stronger claim should only be made if a new experiment shows all of the
+following:
+
+- WPU preserves or improves accuracy at the point where sparse runtime becomes
+  favorable.
+- The improvement holds across at least five seeds and at least one generator or
+  simulator shift.
+- The causal working set is selected before tensorization with sublinear or
+  indexed access to total state.
+- Token and graph baselines are matched for parameter count, training budget,
+  and available state information.
+- Negative regimes remain reported rather than filtered out.

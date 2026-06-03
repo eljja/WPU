@@ -182,6 +182,7 @@ Key reports:
 - Korean README: `README.ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
 - Claim ledger: `docs/claims.md`
+- Publication readiness and gap register: `docs/publication_readiness.md`
 - Reproducibility guide: `docs/reproducibility.md`
 - Review response and differentiation: `docs/Review/review_response_and_differentiation.md`
 

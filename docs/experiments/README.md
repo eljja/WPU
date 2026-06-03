@@ -215,3 +215,6 @@ Historical or preliminary reports:
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.
+
+For publication readiness, unresolved gaps, and the evidence required for
+stronger claims, see `docs/publication_readiness.md`.

@@ -202,6 +202,7 @@ retriever-propagator joint training이다.
 - Korean companion: `docs/arxiv/state_is_all_you_need_ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
 - Claim ledger: `docs/claims.ko.md`
+- Publication readiness / gap register: `docs/publication_readiness.ko.md`
 - Reproducibility guide: `docs/reproducibility.ko.md`
 - Experiment index: `docs/experiments/README.md`
 - Review response: `docs/Review/review_response_and_differentiation.md`

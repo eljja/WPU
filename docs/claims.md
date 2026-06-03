@@ -3,6 +3,8 @@
 This ledger maps each paper-level WPU claim to the evidence that currently
 supports it, the boundary of that evidence, and the result that would weaken or
 falsify the claim. It is the repository's guardrail against overclaiming.
+For external-release readiness and unresolved gaps, see
+`docs/publication_readiness.md`.
 
 ## Claim Status
 

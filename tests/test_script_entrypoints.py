@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -51,6 +53,19 @@ def test_readme_and_current_evidence_script_help_runs() -> None:
 
     for script in scripts:
         _assert_help_runs(script)
+
+
+def test_documented_python_scripts_expose_help() -> None:
+    scripts = _documented_python_scripts()
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        results = list(executor.map(_run_help, scripts))
+
+    failures = [
+        f"{script}\n{stderr}"
+        for script, returncode, stderr in results
+        if returncode != 0
+    ]
+    assert not failures, "Documented scripts must expose --help:\n" + "\n".join(failures)
 
 
 def test_readme_core_scripts_run_as_direct_scripts(tmp_path: Path) -> None:
@@ -112,6 +127,12 @@ def test_readme_core_scripts_run_as_direct_scripts(tmp_path: Path) -> None:
 
 
 def _assert_help_runs(script: str) -> None:
+    _, returncode, stderr = _run_help(script)
+
+    assert returncode == 0, f"{script}\n{stderr}"
+
+
+def _run_help(script: str) -> tuple[str, int, str]:
     result = subprocess.run(
         [sys.executable, script, "--help"],
         cwd=ROOT,
@@ -120,5 +141,14 @@ def _assert_help_runs(script: str) -> None:
         text=True,
         timeout=20,
     )
+    return script, result.returncode, result.stderr
 
-    assert result.returncode == 0, f"{script}\n{result.stderr}"
+
+def _documented_python_scripts() -> list[str]:
+    refs: set[str] = set()
+    for path in [*ROOT.glob("README*.md"), *(ROOT / "docs").rglob("*.md")]:
+        if any(part in {"artifacts", ".venv", ".git"} for part in path.parts):
+            continue
+        text = path.read_text(encoding="utf-8")
+        refs.update(match.group(1) for match in re.finditer(r"`(scripts/[^`]+?\.py)`", text))
+    return sorted(refs)

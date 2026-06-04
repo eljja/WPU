@@ -181,6 +181,12 @@ gain/law-form shift에서는 oracle relation을 써도 residual MSE가 남는다
 객체화는 candidate local theory를 드러낼 수 있지만, 그 theory를 믿을지 수정할지는
 OOD stress로 결정해야 한다.
 
+Revision probe는 작은 calibration set으로 이 loop를 닫는다. Gain calibration은
+`hidden_inverse_gain_shift` MSE를 `0.115978`에서 `0.000342`로 낮추고, form revision은
+`hidden_power_shift` MSE를 `0.054596`에서 `0.008887`로 낮춘다. Oracle-relation form
+revision은 `0.000232`에 도달하므로, 남은 gap은 law form만이 아니라 relation selection과
+noisy calibration에도 있다.
+
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 
 ```python

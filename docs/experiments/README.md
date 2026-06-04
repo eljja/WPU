@@ -48,6 +48,12 @@ Use these reports for paper-level claims:
   and denominator shifts, but also exposes the right failure boundaries:
   far-distance relation recall drops to `0.658594`, and gain/law-form shifts
   leave residual MSE even with oracle relations.
+- `object_relation_law_revision_probe_results.md`: revision follow-up showing
+  that small calibration sets can reduce OOD law residuals over objectified
+  relations. Gain calibration cuts `hidden_inverse_gain_shift` MSE from
+  `0.115978` to `0.000342`; form revision cuts `hidden_power_shift` MSE from
+  `0.054596` to `0.008887`, while the oracle relation result `0.000232` exposes
+  the remaining relation-selection gap.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.

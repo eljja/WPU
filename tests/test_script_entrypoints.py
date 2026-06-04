@@ -272,6 +272,46 @@ def test_object_relation_law_probe_runs(tmp_path: Path) -> None:
     assert "object_relation_law_probe row_type=summary" in result.stdout
 
 
+def test_object_relation_law_revision_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "object_relation_law_revision.csv"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/object_relation_law_revision_probe.py",
+            "--train-samples",
+            "16",
+            "--calibration-samples",
+            "8",
+            "--eval-samples",
+            "8",
+            "--train-steps",
+            "4",
+            "--candidates",
+            "4",
+            "--seeds",
+            "3",
+            "5",
+            "--mechanisms",
+            "hidden_inverse_gain_shift",
+            "hidden_power_shift",
+            "--out",
+            str(output),
+        ],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    text = output.read_text(encoding="utf-8")
+    assert "summary,all,hidden_inverse_gain_shift,form_revised_history_law" in text
+    assert "summary,all,hidden_power_shift,gain_calibrated_history_law" in text
+    assert "calibration_mse" in text
+    assert "object_relation_law_revision_probe row_type=summary" in result.stdout
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

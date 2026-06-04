@@ -180,6 +180,12 @@ residual MSE가 남는다. 이것이 WPU에서 approximate theory가 갖는 oper
 객체화는 local rule을 제안하고, OOD stress는 그 rule을 신뢰할지, 재보정할지, 교체할지를
 결정한다.
 
+Revision probe는 이 결정을 operational하게 만든다. 64개 calibration sample만으로 gain
+calibration은 `hidden_inverse_gain_shift` MSE를 `0.115978`에서 `0.000342`로 낮추고,
+form revision은 `hidden_power_shift` MSE를 `0.054596`에서 `0.008887`로 낮춘다.
+Oracle-relation form revision은 `0.000232`에 도달하므로, 남은 gap은 candidate law
+family만이 아니라 relation selection과 calibration noise에도 있다.
+
 따라서 개발 단계는 다음과 같다.
 
 ```text
@@ -189,6 +195,7 @@ measured object contract
   -> held-out-rule prediction gain
   -> interpretable local-law fit
   -> OOD stress and rule revision
+  -> relation/law error attribution
   -> falsifiable revised relation theory
 ```
 

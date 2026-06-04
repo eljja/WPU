@@ -94,6 +94,12 @@ gain 또는 law-form shift에서는 oracle relation을 사용해도 residual MSE
 따라서 WPU loop는 "한 번 law를 fit한다"가 아니라 objectify, local rule 제안, stress,
 그리고 OOD error가 relation failure와 law mis-specification을 분리할 때 rule을 수정하는
 과정이다.
+Revision probe는 이 loop가 synthetic setting에서 operational할 수 있음을 보인다.
+64개 calibration sample로 gain calibration은 `hidden_inverse_gain_shift` MSE를
+0.115978에서 0.000342로 낮추고, form revision은 `hidden_power_shift` MSE를
+0.054596에서 0.008887로 낮춘다. Oracle-relation form revision은 0.000232에
+도달하므로, 남은 gap은 law-form capacity만이 아니라 relation selection과 calibration
+noise다.
 정식 정의는 `docs/objectification.ko.md`에 둔다.
 
 ## 2. 선행연구와 차별성

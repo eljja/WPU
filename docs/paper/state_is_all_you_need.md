@@ -57,6 +57,13 @@ oracle relations. Thus the intended WPU loop is not "fit a law once"; it is
 objectify, propose a local rule, stress it, and revise the rule when OOD error
 separates relation failure from law mis-specification.
 
+A revision probe shows this loop can be made operational in the synthetic
+setting. With 64 calibration samples, gain calibration reduces
+`hidden_inverse_gain_shift` MSE from `0.115978` to `0.000342`; form revision
+reduces `hidden_power_shift` MSE from `0.054596` to `0.008887`. Oracle-relation
+form revision reaches `0.000232`, identifying the remaining gap as relation
+selection and calibration noise rather than only law-form capacity.
+
 The WPU claim is therefore operational rather than representational:
 
 ```text

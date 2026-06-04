@@ -177,6 +177,12 @@ to `0.658594`, and shifted gain/law form leaves residual MSE even with oracle
 relations. In WPU terms, objectification can expose a candidate local theory;
 OOD stress is what decides whether that theory should be trusted or revised.
 
+A revision probe then closes the loop with a small calibration set. Gain
+calibration reduces `hidden_inverse_gain_shift` MSE from `0.115978` to
+`0.000342`; form revision reduces `hidden_power_shift` MSE from `0.054596` to
+`0.008887`. The oracle-relation form revision reaches `0.000232`, showing the
+remaining gap is relation selection and noisy calibration, not only law form.
+
 The current v2 working-set models are also available from the package root
 through the model factory:
 

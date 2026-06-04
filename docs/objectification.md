@@ -193,6 +193,13 @@ operational meaning of approximate theory in WPU: objectification proposes a
 local rule; OOD stress decides whether the rule is trusted, recalibrated, or
 replaced.
 
+The revision probe operationalizes that decision. With 64 calibration samples,
+gain calibration reduces `hidden_inverse_gain_shift` MSE from `0.115978` to
+`0.000342`, and form revision reduces `hidden_power_shift` MSE from `0.054596`
+to `0.008887`. The oracle-relation form revision reaches `0.000232`, showing
+that the remaining gap is relation selection and calibration noise, not only the
+candidate law family.
+
 The development ladder is therefore:
 
 ```text
@@ -202,6 +209,7 @@ measured object contract
   -> held-out-rule prediction gain
   -> interpretable local-law fit
   -> OOD stress and rule revision
+  -> relation/law error attribution
   -> falsifiable revised relation theory
 ```
 

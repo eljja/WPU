@@ -1,0 +1,6 @@
+mechanism,policy,samples,candidate_count,relation_precision,relation_recall,mean_selected_k,downstream_accuracy,downstream_loss
+hidden_field,no_relation,256,8,0.000000,0.000000,0.000000,0.496094,0.693147
+hidden_field,geometry_only,256,8,0.137369,0.460938,3.355469,0.765625,0.565862
+hidden_field,type_prior,256,8,0.000000,0.000000,0.000000,0.496094,0.693147
+hidden_field,history_scorer,256,8,0.988281,0.988281,1.000000,0.996094,0.275466
+hidden_field,oracle_relation,256,8,1.000000,1.000000,1.000000,1.000000,0.270057

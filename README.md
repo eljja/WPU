@@ -155,6 +155,14 @@ role-aware learned repair improves aliased-type accuracy from `0.343750` to
 `0.671875` and lowers loss from `1.319667` to `0.885275`; ungated dense-distractor
 repair restores frontier recall but worsens loss.
 
+A second toy probe tests the longer-term objectification direction: learning
+relation candidates from object histories rather than from type names. A history
+scorer trained on `contact_transfer` and `support_transfer` transfers to held-out
+`hidden_field`, reaching relation precision/recall `0.988281` and downstream
+accuracy `0.996094` versus `0.496094` for no relation or type prior. This is a
+synthetic hidden-mechanism diagnostic, not evidence of real physical-law
+discovery.
+
 The current v2 working-set models are also available from the package root
 through the model factory:
 

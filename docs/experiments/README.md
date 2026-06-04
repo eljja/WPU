@@ -31,6 +31,11 @@ Use these reports for paper-level claims:
   aliased-type branch accuracy from `0.343750` to `0.671875` and lowers loss
   from `1.319667` to `0.885275`, while ungated dense-distractor repair worsens
   loss despite frontier recall `1.000000`.
+- `object_history_hidden_mechanism_probe_results.md`: toy hidden-mechanism probe
+  showing that relation candidates learned from object histories can transfer
+  beyond nominal type names. A history scorer trained on `contact_transfer` and
+  `support_transfer` reaches relation precision/recall `0.988281` on held-out
+  `hidden_field`, improving downstream accuracy from `0.496094` to `0.996094`.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.

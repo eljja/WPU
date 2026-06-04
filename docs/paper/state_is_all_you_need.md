@@ -36,6 +36,13 @@ aliased-type branch accuracy from `0.343750` to `0.671875` and lowers loss from
 `1.319667` to `0.885275`, while ungated dense-distractor repair restores frontier
 recall but worsens loss.
 
+A second toy probe tests whether relation candidates can be learned from object
+histories and transferred to a held-out mechanism family. A history scorer
+trained on `contact_transfer` and `support_transfer` reaches relation
+precision/recall `0.988281` on held-out `hidden_field`, improving downstream
+accuracy from `0.496094` to `0.996094`. This is still synthetic evidence; it is
+not a claim of physical-law discovery.
+
 The WPU claim is therefore operational rather than representational:
 
 ```text

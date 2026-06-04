@@ -167,6 +167,39 @@ def test_objectification_relation_repair_probe_runs(tmp_path: Path) -> None:
     assert "downstream_branch_loss" in text
 
 
+def test_object_history_hidden_mechanism_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "hidden_mechanism.csv"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/object_history_hidden_mechanism_probe.py",
+            "--train-samples",
+            "16",
+            "--eval-samples",
+            "8",
+            "--train-steps",
+            "4",
+            "--candidates",
+            "4",
+            "--out",
+            str(output),
+        ],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output.exists()
+    text = output.read_text(encoding="utf-8")
+    assert "history_scorer" in text
+    assert "hidden_field" in text
+    assert "relation_precision" in text
+    assert "downstream_loss" in text
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

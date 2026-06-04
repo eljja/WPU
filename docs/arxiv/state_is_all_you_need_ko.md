@@ -77,6 +77,11 @@ relation hypothesis를 지탱할 persistent state variable이다. Toy downstream
 첫 repair-to-prediction loop를 닫는다. Role-aware learned repair는 aliased-type branch
 accuracy를 0.343750에서 0.671875로 올리고 loss를 1.319667에서 0.885275로 낮춘다.
 반대로 ungated dense-distractor repair는 frontier recall을 복구하지만 loss를 악화시킨다.
+두 번째 toy probe는 object history에서 relation candidate를 학습하고 held-out mechanism
+family로 transfer할 수 있는지 테스트한다. `contact_transfer`와 `support_transfer`로
+학습한 history scorer는 held-out `hidden_field`에서 relation precision/recall 0.988281을
+기록하고 downstream accuracy를 0.496094에서 0.996094로 올린다. 이것도 synthetic
+evidence이며 물리 법칙 발견 주장이 아니다.
 정식 정의는 `docs/objectification.ko.md`에 둔다.
 
 ## 2. 선행연구와 차별성

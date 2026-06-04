@@ -161,6 +161,13 @@ Role-aware learned repair는 aliased-type accuracy를 `0.343750`에서 `0.671875
 올리고 loss를 `1.319667`에서 `0.885275`로 낮춘다. Ungated dense-distractor repair는
 frontier recall을 복구하지만 loss를 악화시킨다.
 
+두 번째 toy probe는 장기 객체화 방향을 테스트한다. Type name이 아니라 object
+history에서 relation candidate를 학습하는 방식이다. `contact_transfer`와
+`support_transfer`로 학습한 history scorer는 held-out `hidden_field`로 transfer하여
+relation precision/recall `0.988281`, downstream accuracy `0.996094`를 기록한다.
+No-relation 또는 type prior는 `0.496094`에 머문다. 이것은 synthetic hidden-mechanism
+diagnostic이지 실제 물리 법칙 발견 증거는 아니다.
+
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 
 ```python

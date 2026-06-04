@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import torch  # noqa: E402
 
 import object_relation_law_probe as base  # noqa: E402
+import wpu  # noqa: E402
 
 
 REVISION_MECHANISMS = ("hidden_inverse_gain_shift", "hidden_power_shift")
@@ -30,6 +31,9 @@ SUMMARY_COLUMNS = (
     "delta_mse",
     "sign_accuracy",
     "calibration_mse",
+    "relative_improvement",
+    "relation_selection_gap",
+    "law_residual_gap",
 )
 
 
@@ -100,6 +104,7 @@ def main() -> None:
                 calibration=calibration,
                 threshold=args.threshold,
             )
+            seed_mechanism_rows: list[dict[str, str]] = []
             for policy in POLICIES:
                 row = evaluate_revision(
                     scorer=scorer,
@@ -111,6 +116,9 @@ def main() -> None:
                     threshold=args.threshold,
                     candidate_count=args.candidates,
                 )
+                seed_mechanism_rows.append(row)
+            annotate_revision_reports(seed_mechanism_rows, calibration_samples=args.calibration_samples)
+            for row in seed_mechanism_rows:
                 rows.append({"row_type": "seed", "seed": str(seed), **row, "seed_count": "1"})
 
     if len(seeds) > 1:
@@ -131,8 +139,10 @@ def main() -> None:
             f"mechanism={row['mechanism']} "
             f"policy={row['policy']} "
             f"selected_form={row['selected_form']} "
+            f"decision={row['revision_decision']} "
             f"delta_mse={row['delta_mse']} "
-            f"calibration_mse={row['calibration_mse']}"
+            f"calibration_mse={row['calibration_mse']} "
+            f"relative_improvement={row['relative_improvement']}"
         )
 
 
@@ -347,7 +357,64 @@ def evaluate_revision(
         "delta_mse": f"{totals['mse'] / max(len(samples), 1):.6f}",
         "sign_accuracy": f"{totals['sign_correct'] / max(len(samples), 1):.6f}",
         "calibration_mse": f"{calibration_error:.6f}",
+        "revision_decision": "unreported",
+        "relative_improvement": "0.000000",
+        "relation_selection_gap": "0.000000",
+        "law_residual_gap": "0.000000",
     }
+
+
+def annotate_revision_reports(rows: list[dict[str, str]], *, calibration_samples: int) -> None:
+    base_error = _row_delta_mse(rows, "base_history_law")
+    oracle_error = _row_delta_mse(rows, "form_revised_oracle_law")
+    for row in rows:
+        hypothesis = make_hypothesis(row)
+        report = wpu.evaluate_law_revision(
+            base_error=base_error,
+            revised_error=float(row["delta_mse"]),
+            selected_hypothesis=hypothesis,
+            calibration_samples=calibration_samples,
+            oracle_relation_error=oracle_error,
+        )
+        if row["policy"] == "base_history_law":
+            row["revision_decision"] = "baseline"
+        else:
+            row["revision_decision"] = report.decision
+        row["relative_improvement"] = f"{report.relative_improvement:.6f}"
+        row["relation_selection_gap"] = f"{(report.relation_selection_gap or 0.0):.6f}"
+        row["law_residual_gap"] = f"{(report.law_residual_gap or 0.0):.6f}"
+
+
+def make_hypothesis(row: dict[str, str]) -> wpu.LocalLawHypothesis:
+    selected_form = row["selected_form"]
+    expression = {
+        "trained_base": "trained inverse-distance mixture",
+        "gain_scaled_base": "alpha * trained inverse-distance mixture",
+        "inverse_square": "gain * impulse / (distance^2 + c)",
+        "inverse_cube": "gain * impulse / (distance^3 + c)",
+        "inverse_linear": "gain * impulse / (distance + c)",
+        "mixed": "linear mixture of inverse-square, inverse-cube, impulse, bias",
+    }.get(selected_form, selected_form)
+    status = "base" if row["policy"] == "base_history_law" else "revised"
+    return wpu.LocalLawHypothesis(
+        name=f"{row['mechanism']}:{row['policy']}",
+        relation_type="influences",
+        expression=expression,
+        input_fields=("current_impulse", "distance", "relation_history"),
+        parameters={"mean_selected_k": float(row["mean_selected_k"])},
+        evidence={
+            "delta_mse": float(row["delta_mse"]),
+            "calibration_mse": float(row["calibration_mse"]),
+        },
+        status=status,
+    )
+
+
+def _row_delta_mse(rows: list[dict[str, str]], policy: str) -> float:
+    for row in rows:
+        if row["policy"] == policy:
+            return float(row["delta_mse"])
+    raise ValueError(f"missing policy row: {policy}")
 
 
 def predict_revision(
@@ -372,6 +439,7 @@ def summarize_seed_rows(rows: list[dict[str, str]], *, seeds: list[int]) -> list
     for (mechanism, policy), group in sorted(groups.items()):
         first = group[0]
         form_counts = Counter(row["selected_form"] for row in group)
+        decision_counts = Counter(row["revision_decision"] for row in group)
         summary = {
             "row_type": "summary",
             "seed": "all",
@@ -384,6 +452,7 @@ def summarize_seed_rows(rows: list[dict[str, str]], *, seeds: list[int]) -> list
         for column in SUMMARY_COLUMNS:
             values = [float(row[column]) for row in group]
             summary[column] = f"{sum(values) / len(values):.6f}"
+        summary["revision_decision"] = decision_counts.most_common(1)[0][0]
         summary["seed_count"] = str(len(seeds))
         summaries.append(summary)
     return summaries

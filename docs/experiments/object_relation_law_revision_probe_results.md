@@ -31,16 +31,16 @@ python scripts/object_relation_law_revision_probe.py --train-samples 768 --calib
 
 The table reports five-seed means over 1,280 held-out test samples per mechanism.
 
-| mechanism | policy | selected_form | relation_precision | relation_recall | delta_mse | calibration_mse |
-|---|---|---|---:|---:|---:|---:|
-| hidden_inverse_gain_shift | base_history_law | trained_base | 0.998438 | 0.998438 | 0.115978 | 0.000000 |
-| hidden_inverse_gain_shift | gain_calibrated_history_law | gain_scaled_base | 0.998438 | 0.998438 | 0.000342 | 0.001854 |
-| hidden_inverse_gain_shift | form_revised_history_law | mixed | 0.998438 | 0.998438 | 0.000323 | 0.001723 |
-| hidden_inverse_gain_shift | form_revised_oracle_law | mixed | 1.000000 | 1.000000 | 0.000229 | 0.000218 |
-| hidden_power_shift | base_history_law | trained_base | 0.956250 | 0.956250 | 0.054596 | 0.000000 |
-| hidden_power_shift | gain_calibrated_history_law | gain_scaled_base | 0.956250 | 0.956250 | 0.022787 | 0.030868 |
-| hidden_power_shift | form_revised_history_law | mixed | 0.956250 | 0.956250 | 0.008887 | 0.014951 |
-| hidden_power_shift | form_revised_oracle_law | mixed | 1.000000 | 1.000000 | 0.000232 | 0.000218 |
+| mechanism | policy | selected_form | decision | delta_mse | relative_improvement | relation_selection_gap | law_residual_gap |
+|---|---|---|---|---:|---:|---:|---:|
+| hidden_inverse_gain_shift | base_history_law | trained_base | baseline | 0.115978 | 0.000000 | 0.115749 | 0.000229 |
+| hidden_inverse_gain_shift | gain_calibrated_history_law | gain_scaled_base | accept_revision | 0.000342 | 0.997063 | 0.000112 | 0.000229 |
+| hidden_inverse_gain_shift | form_revised_history_law | mixed | accept_revision | 0.000323 | 0.997164 | 0.000093 | 0.000229 |
+| hidden_inverse_gain_shift | form_revised_oracle_law | mixed | accept_revision | 0.000229 | 0.998006 | 0.000000 | 0.000229 |
+| hidden_power_shift | base_history_law | trained_base | baseline | 0.054596 | 0.000000 | 0.054364 | 0.000232 |
+| hidden_power_shift | gain_calibrated_history_law | gain_scaled_base | accept_revision | 0.022787 | 0.580086 | 0.022555 | 0.000232 |
+| hidden_power_shift | form_revised_history_law | mixed | accept_revision | 0.008887 | 0.840020 | 0.008655 | 0.000232 |
+| hidden_power_shift | form_revised_oracle_law | mixed | accept_revision | 0.000232 | 0.995656 | 0.000000 | 0.000232 |
 
 ## Interpretation
 
@@ -52,12 +52,15 @@ objectify -> propose local law -> stress -> observe residual -> revise law
 
 For `hidden_inverse_gain_shift`, the residual is mostly a gain error. A scalar
 calibration reduces MSE from `0.115978` to `0.000342`; form revision gives a
-similar `0.000323`.
+similar `0.000323`. Both revisions are accepted by `evaluate_law_revision`, with
+relative improvement above `0.997`.
 
 For `hidden_power_shift`, the residual is a law-form error. Gain calibration
 helps but remains at `0.022787`; form revision improves to `0.008887`. The
 oracle relation result `0.000232` shows that most remaining error is not the
-candidate law family itself but relation-selection and noisy calibration.
+candidate law family itself but relation-selection and noisy calibration. The
+reported gap makes this explicit: form revision leaves relation-selection gap
+`0.008655` and law-residual gap `0.000232`.
 
 This is still a generated synthetic benchmark. It does not show discovery of an
 unknown physical theory. It does show how WPU-style objectification can make

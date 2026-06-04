@@ -158,6 +158,10 @@ def test_objectification_relation_repair_probe_runs(tmp_path: Path) -> None:
     assert "ungated" in text
     assert "type_gated" in text
     assert "learned_scorer" in text
+    assert "in_distribution" in text
+    assert "dense_distractors" in text
+    assert "aliased_types_with_roles" in text
+    assert "aliased_types_without_roles" in text
 
 
 def _assert_help_runs(script: str) -> None:

@@ -14,7 +14,9 @@ chip design도 아니다. 현재 목표는 world processing을 token sequence가
 
 중심 primitive는 **객체화(objectification)** 다. 즉 세계를 persistent하고 addressable한
 객체로 변환하고, 그 객체의 state, relation, uncertainty, delta, branch overlay를 직접
-갱신할 수 있게 만드는 것이다. 정의는 `docs/objectification.ko.md`에 둔다.
+갱신할 수 있게 만드는 것이다. 객체화는 단순히 type label을 붙이는 일이 아니다.
+Role, affordance, geometry, confidence, history처럼 relation을 지탱하는 state
+variable이 필요하다. 정의는 `docs/objectification.ko.md`에 둔다.
 
 ## 핵심 주장
 
@@ -151,8 +153,10 @@ geometry-inferred relation patch를 추가할 수 있다. 이것은 state repair
 물리 법칙을 해결했다는 주장이 아니다. Repair probe는 typed objectification이 왜
 중요한지 보여준다. Geometry-only repair는 frontier recall을 복구하지만 distractor를
 붙일 수 있고, type-gated repair는 controlled case에서 precision을 유지한다. 작은
-learned relation scorer도 같은 controlled distribution에서 type gate와 같은 결과를
-낸다.
+learned relation scorer는 type gate와 같은 결과를 내고, 더 조밀한 distractor에서도
+precision을 유지하며, role/affordance state variable이 보존되면 aliased type name을
+넘어 transfer한다. 반대로 type과 role 정보가 모두 제거되면 실패하므로, 객체화의
+경계가 측정 가능해진다.
 
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 

@@ -16,6 +16,7 @@ from wpu.engines.sparse_engine import SparsePropagationEngine  # noqa: E402
 
 TYPE_VOCAB = ["background_object", "cup", "robot_hand", "table", "table_edge"]
 RELATION_VOCAB = ["near", "touching"]
+ROLE_KEYS = ["dynamic", "manipulator", "support", "boundary", "context"]
 
 
 def main() -> None:
@@ -56,6 +57,7 @@ def main() -> None:
     for summary in rows:
         print(
             "relation_repair_probe "
+            f"scenario={summary['scenario']} "
             f"policy={summary['repair_policy']} "
             f"samples={summary['samples']} "
             f"before_recall={summary['mean_before_frontier_recall']} "
@@ -87,29 +89,39 @@ def run_probe(
         steps=learned_steps,
     )
     rows: list[dict[str, str]] = []
-    for repair_policy, allowed_type_pairs, learned_filter in (
-        ("ungated", None, None),
-        ("type_gated", _core_allowed_type_pairs(), None),
-        (
-            "learned_scorer",
-            None,
-            lambda state, relation, scorer=learned_scorer: _score_relation_candidate(state, relation, scorer)
-            >= learned_threshold,
-        ),
-    ):
-        rows.append(
-            _run_policy(
-                samples=samples,
-                seed=seed,
-                near_distance=near_distance,
-                contact_distance=contact_distance,
-                background_objects=background_objects,
-                near_distractors=near_distractors,
-                repair_policy=repair_policy,
-                allowed_type_pairs=allowed_type_pairs,
-                learned_filter=learned_filter,
+    scenarios = (
+        ("in_distribution", background_objects, near_distractors, False, True),
+        ("dense_distractors", max(background_objects, 128), max(near_distractors, 24), False, True),
+        ("aliased_types_with_roles", background_objects, near_distractors, True, True),
+        ("aliased_types_without_roles", background_objects, near_distractors, True, False),
+    )
+    for scenario, eval_background, eval_distractors, alias_types, include_roles in scenarios:
+        for repair_policy, allowed_type_pairs, learned_filter in (
+            ("ungated", None, None),
+            ("type_gated", _core_allowed_type_pairs(), None),
+            (
+                "learned_scorer",
+                None,
+                lambda state, relation, scorer=learned_scorer: _score_relation_candidate(state, relation, scorer)
+                >= learned_threshold,
+            ),
+        ):
+            rows.append(
+                _run_policy(
+                    samples=samples,
+                    seed=seed,
+                    near_distance=near_distance,
+                    contact_distance=contact_distance,
+                    background_objects=eval_background,
+                    near_distractors=eval_distractors,
+                    repair_policy=repair_policy,
+                    allowed_type_pairs=allowed_type_pairs,
+                    learned_filter=learned_filter,
+                    scenario=scenario,
+                    alias_types=alias_types,
+                    include_roles=include_roles,
+                )
             )
-        )
     return rows
 
 
@@ -124,6 +136,9 @@ def _run_policy(
     repair_policy: str,
     allowed_type_pairs: set[tuple[str, str]] | None,
     learned_filter,
+    scenario: str,
+    alias_types: bool,
+    include_roles: bool,
 ) -> dict[str, str]:
     rng = random.Random(seed)
     sparse = SparsePropagationEngine(max_depth=2)
@@ -142,6 +157,8 @@ def _run_policy(
             rng,
             background_objects=background_objects,
             near_distractors=near_distractors,
+            alias_types=alias_types,
+            include_roles=include_roles,
         )
         event = Event("hand_touched_cup", "cup_001", {"force": 0.4}, confidence=0.9)
         expected_objects = {"cup_001", "hand_001", "edge_001", "table_001"}
@@ -184,6 +201,7 @@ def _run_policy(
     repair_precision = totals["true_positive_edges"] / max(totals["added"], 1)
     repair_recall = totals["true_positive_edges"] / max(totals["expected_edges"], 1)
     return {
+        "scenario": scenario,
         "repair_policy": repair_policy,
         "samples": str(samples),
         "seed": str(seed),
@@ -201,20 +219,63 @@ def _run_policy(
     }
 
 
-def _state_with_missing_relations(rng: random.Random, *, background_objects: int, near_distractors: int) -> WorldState:
+def _state_with_missing_relations(
+    rng: random.Random,
+    *,
+    background_objects: int,
+    near_distractors: int,
+    alias_types: bool = False,
+    include_roles: bool = True,
+) -> WorldState:
     hand_x = rng.uniform(0.08, 0.18)
     edge_x = rng.uniform(0.16, 0.22)
     state = WorldState(metadata={"scenario": "objectification_relation_repair_probe"})
-    state.add_object(WorldObject("cup_001", "cup", {"position": [0.0, 0.0, 0.82]}, confidence=0.95))
-    state.add_object(WorldObject("hand_001", "robot_hand", {"position": [hand_x, 0.0, 0.82]}, confidence=0.92))
-    state.add_object(WorldObject("edge_001", "table_edge", {"position": [edge_x, 0.0, 0.82]}, confidence=0.94))
-    state.add_object(WorldObject("table_001", "table", {"position": [0.02, 0.0, 0.75]}, confidence=0.98))
+    cup_type = "vessel" if alias_types else "cup"
+    hand_type = "end_effector" if alias_types else "robot_hand"
+    edge_type = "support_boundary" if alias_types else "table_edge"
+    table_type = "support_plane" if alias_types else "table"
+    state.add_object(
+        WorldObject(
+            "cup_001",
+            cup_type,
+            _object_attributes([0.0, 0.0, 0.82], include_roles=include_roles, dynamic=1.0),
+            confidence=0.95,
+        )
+    )
+    state.add_object(
+        WorldObject(
+            "hand_001",
+            hand_type,
+            _object_attributes([hand_x, 0.0, 0.82], include_roles=include_roles, manipulator=1.0),
+            confidence=0.92,
+        )
+    )
+    state.add_object(
+        WorldObject(
+            "edge_001",
+            edge_type,
+            _object_attributes([edge_x, 0.0, 0.82], include_roles=include_roles, boundary=1.0),
+            confidence=0.94,
+        )
+    )
+    state.add_object(
+        WorldObject(
+            "table_001",
+            table_type,
+            _object_attributes([0.02, 0.0, 0.75], include_roles=include_roles, support=1.0),
+            confidence=0.98,
+        )
+    )
     for index in range(near_distractors):
         state.add_object(
             WorldObject(
                 f"near_context_{index:04d}",
-                "background_object",
-                {"position": [rng.uniform(0.02, 0.22), rng.uniform(-0.04, 0.04), 0.82]},
+                "scene_prop" if alias_types else "background_object",
+                _object_attributes(
+                    [rng.uniform(0.02, 0.22), rng.uniform(-0.04, 0.04), 0.82],
+                    include_roles=include_roles,
+                    context=1.0,
+                ),
                 confidence=0.75,
             )
         )
@@ -222,12 +283,34 @@ def _state_with_missing_relations(rng: random.Random, *, background_objects: int
         state.add_object(
             WorldObject(
                 f"context_{index:04d}",
-                "background_object",
-                {"position": [10.0 + index, 10.0, 0.0]},
+                "scene_prop" if alias_types else "background_object",
+                _object_attributes([10.0 + index, 10.0, 0.0], include_roles=include_roles, context=1.0),
                 confidence=0.75,
             )
         )
     return state
+
+
+def _object_attributes(
+    position: list[float],
+    *,
+    include_roles: bool,
+    dynamic: float = 0.0,
+    manipulator: float = 0.0,
+    support: float = 0.0,
+    boundary: float = 0.0,
+    context: float = 0.0,
+) -> dict[str, object]:
+    attributes: dict[str, object] = {"position": position}
+    if include_roles:
+        attributes["objectification_roles"] = {
+            "dynamic": dynamic,
+            "manipulator": manipulator,
+            "support": support,
+            "boundary": boundary,
+            "context": context,
+        }
+    return attributes
 
 
 @dataclass(slots=True)
@@ -385,6 +468,7 @@ def _relation_candidate_features(state: WorldState, relation: Relation) -> torch
             1.0 if "background_object" in {left_type, right_type} else 0.0,
             *relation_features,
             *type_features,
+            *_role_pair_features(state, relation.src, relation.dst),
         ],
         dtype=torch.float32,
     )
@@ -397,6 +481,26 @@ def _type_features(left_type: str, right_type: str) -> list[float]:
     if right_type in counts:
         counts[right_type] += 1.0
     return [counts[value] for value in TYPE_VOCAB]
+
+
+def _role_pair_features(state: WorldState, left_id: str, right_id: str) -> list[float]:
+    left_roles = _roles(state.objects[left_id])
+    right_roles = _roles(state.objects[right_id])
+    summed = [left_roles[key] + right_roles[key] for key in ROLE_KEYS]
+    products = [
+        left_roles["dynamic"] * right_roles["manipulator"] + left_roles["manipulator"] * right_roles["dynamic"],
+        left_roles["dynamic"] * right_roles["support"] + left_roles["support"] * right_roles["dynamic"],
+        left_roles["dynamic"] * right_roles["boundary"] + left_roles["boundary"] * right_roles["dynamic"],
+        left_roles["context"] + right_roles["context"],
+    ]
+    return [*summed, *products]
+
+
+def _roles(obj: WorldObject) -> dict[str, float]:
+    value = obj.attributes.get("objectification_roles")
+    if not isinstance(value, dict):
+        return {key: 0.0 for key in ROLE_KEYS}
+    return {key: float(value.get(key, 0.0)) for key in ROLE_KEYS}
 
 
 def _position(state: WorldState, object_id: str) -> tuple[float, float, float]:

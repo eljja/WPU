@@ -80,9 +80,9 @@ the consequences through a structured world memory.
 
 We call the required conversion \emph{objectification}: an observation,
 simulator export, database state, or tracker output is converted into
-persistent, addressable objects with typed attributes, typed relations,
-uncertainty, admissible deltas, and branch-local overlays. Objectification is
-not a claim that perception is solved; it is the contract that defines the
+persistent, addressable objects with typed attributes, role/affordance state,
+typed relations, uncertainty, admissible deltas, and branch-local overlays.
+Objectification is not a claim that perception is solved; it is the contract that defines the
 state substrate consumed by WPU. The reference implementation treats this as a
 measurable contract rather than a slogan: identity coverage, relation endpoint
 validity, confidence, delta validity, and causal-working-set locality can be
@@ -94,12 +94,15 @@ toward hybrid or dense recomputation.
 If object identity exists but local relation extraction misses an edge, the
 prototype can add conservative geometry-derived relation-repair patches. These
 patches are treated as hypotheses for frontier recovery, not as discovered
-physical laws. A controlled repair probe further shows that typed
-objectification is not cosmetic: ungated geometry repair recovers frontier
-recall but can attach distractors, whereas type-gated repair preserves precision
-in the tested setting. A small learned relation scorer matches that type gate in
-the same controlled distribution, but transfer to shifted or hidden-rule regimes
-remains future evidence.
+physical laws. The repair probe now separates nominal type labels from
+relation-bearing object state. Ungated geometry repair recovers frontier recall
+but attaches distractors, and the precision collapse worsens under denser
+distractors. Hand-written type gating preserves precision only while type names
+match the gate. A small learned scorer transfers across aliased type names when
+role/affordance variables are preserved, but fails when both type and role
+information are removed. This makes the objectification boundary falsifiable:
+WPU does not need names alone; it needs persistent state variables that can
+support relation hypotheses.
 
 We introduce the World-State Processing Unit (WPU) as both a model family and an
 execution abstraction. It is not proposed as a replacement for GPUs, TPUs, or

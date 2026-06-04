@@ -15,7 +15,9 @@ future branches.
 
 The central primitive is **objectification**: converting a world into
 persistent, addressable objects whose state, relations, uncertainty, deltas, and
-branch overlays can be updated directly. See `docs/objectification.md`.
+branch overlays can be updated directly. Objectification is not merely assigning
+type labels; it requires relation-bearing state variables such as role,
+affordance, geometry, confidence, and history. See `docs/objectification.md`.
 
 ## Compute Context
 
@@ -144,8 +146,11 @@ relation patches before sparse propagation. This is a state repair heuristic,
 not a claim that physical law has been solved. The repair probe shows why typed
 objectification matters: geometry-only repair restores frontier recall but can
 attach distractors, while type-gated repair preserves precision in the
-controlled case. A small learned relation scorer now matches that type gate in
-the same controlled distribution.
+controlled case. A small learned relation scorer now matches that type gate,
+stays precise under denser distractors, and transfers across aliased type names
+when role/affordance state variables are preserved. It fails when both type and
+role information are removed, which makes the objectification boundary
+measurable.
 
 The current v2 working-set models are also available from the package root
 through the model factory:

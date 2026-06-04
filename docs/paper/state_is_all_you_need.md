@@ -14,19 +14,23 @@ delta update, or branch overlay first-class operations.
 
 WPU calls the required conversion **objectification**: a world observation or
 simulator/database state is converted into persistent, addressable objects with
-typed attributes, relations, uncertainty, admissible deltas, and branch-local
-overlays. The formal definition is maintained in `docs/objectification.md`.
+typed attributes, role/affordance state, relations, uncertainty, admissible
+deltas, and branch-local overlays. The formal definition is maintained in
+`docs/objectification.md`.
 The implementation now treats this as a measurable contract through
 `evaluate_objectification`: invalid identities, broken relation endpoints,
 invalid deltas, and poor causal locality are reported before propagation.
 When identity exists but local relation extraction misses edges, the prototype
 can also apply conservative geometry-derived relation repair. Repaired edges are
-logged hypotheses, not ground-truth physics. A controlled repair probe shows
-that type information is necessary: ungated geometry repair recovers frontier
-recall but can attach distractors, while type-gated repair preserves precision
-in the tested setting. A small learned scorer matches the type gate in this
-controlled distribution, but transfer under hidden-rule or shifted distractor
-regimes remains open.
+logged hypotheses, not ground-truth physics. The repair probe now separates
+nominal type labels from relation-bearing object state. Ungated geometry repair
+recovers frontier recall but attaches distractors, and the precision collapse
+worsens under denser distractors. Hand-written type gating preserves precision
+only while type names match the gate. A small learned scorer transfers across
+aliased type names when role/affordance variables are preserved, but fails when
+both type and role information are removed. This makes the objectification
+boundary falsifiable: WPU does not need names alone; it needs persistent state
+variables that can support relation hypotheses.
 
 The WPU claim is therefore operational rather than representational:
 

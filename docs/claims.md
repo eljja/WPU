@@ -11,7 +11,7 @@ For the formal objectification definition, see `docs/objectification.md`.
 
 | ID | Claim | Current status | Primary evidence | Boundary |
 |---|---|---|---|---|
-| C1 | Token, state, and objectified state are different operational primitives. | Supported as a framing claim. | `docs/objectification.md`, `docs/arxiv/state_is_all_you_need_en.tex`, `docs/arxiv/state_is_all_you_need_ko.md`, `wpu/core/state.py`, `wpu/memory/state_store.py`. | This is not a claim that tokens cannot encode state; it is a claim that persistent identity, relation traversal, delta patching, and branch overlays are native operations only after objectification. |
+| C1 | Token, state, and objectified state are different operational primitives. | Supported as a framing claim. | `docs/objectification.md`, `docs/arxiv/state_is_all_you_need_en.tex`, `docs/arxiv/state_is_all_you_need_ko.md`, `wpu/core/state.py`, `wpu/memory/state_store.py`. | This is not a claim that tokens cannot encode state; it is a claim that persistent identity, role/affordance state, relation traversal, delta patching, and branch overlays are native operations only after objectification. |
 | C2 | Explicit objectified world-state processing is implementable in a trainable neural model. | Supported for the synthetic object-physics prototype. | `docs/objectification.md`, `wpu/core/objectification.py`, `wpu/models/world_state_processor.py`, `wpu/models/causal_working_set_processor.py`, `wpu/data/object_physics.py`, `demos/robot_cup_demo.py`, passing test suite. | Does not prove general physical understanding, end-to-end object construction, or perception-to-state construction. |
 | C3 | Sparse/hybrid/dense routing is a measurable execution regime, not just a diagram. | Supported for v1 routing instrumentation. | `wpu/engines/scheduler.py`, `docs/experiments/b_sweep_v1_results.md`, `docs/experiments/n_sweep_v1_results.md`, `docs/experiments/baseline_and_regime_results.md`. | Fixed `rho` thresholds are engineering defaults, not an optimal scheduler. |
 | C4 | v1 WPU shows a real accuracy-runtime tension. | Supported. | `docs/experiments/robust_v1_results.md`, `docs/experiments/n_sweep_v1_results.md`, `docs/versions/wpu_v1_closure.md`. | WPU accuracy advantage ends before runtime advantage in v1; this is a failure boundary, not a win. |
@@ -21,7 +21,7 @@ For the formal objectification definition, see `docs/objectification.md`.
 | C8 | WPU is not yet a hardware/chiplet/IP result. | Explicitly not supported. | `docs/Review/review_response_and_differentiation.md`, `docs/paper/state_is_all_you_need.md`, `README.md`. | Hardware claims require real sparse-kernel, memory-traffic, branch-overlay, and matched-accuracy speedup evidence. |
 | C9 | WPU propagation over objectified relations is a simplified local-causality prior, not full physics. | Supported as a bounded analogy. | `docs/objectification.md`, `docs/arxiv/state_is_all_you_need_en.tex`, `docs/arxiv/state_is_all_you_need_ko.md`, `docs/paper/state_is_all_you_need.md`. | Real physics competence or unknown-theory discovery requires simulator/robotics benchmarks, long-horizon stability, and evidence that learned relations generalize beyond the training generator. |
 | C10 | Near-term WPU value is more plausible as software runtime/middleware than silicon. | Plausible direction, not experimentally proven. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | Requires digital-twin, simulation backend, game/server, or robotics middleware benchmarks. |
-| C11 | Objectification quality is measurable and locally repairable as a contract before propagation. | Supported as an implementation claim. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `README.md`, `docs/objectification.md`. | Relation repair produces conservative hypotheses, not ground-truth physics. This is not evidence that perception-to-object construction or unknown-theory discovery is solved. |
+| C11 | Objectification quality is measurable and locally repairable as a contract before propagation. | Supported as an implementation claim. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `tests/test_script_entrypoints.py`, `docs/experiments/objectification_relation_repair_probe_results.md`, `README.md`, `docs/objectification.md`. | Relation repair produces conservative hypotheses, not ground-truth physics. The latest probe shows that learned repair can transfer across aliased type names only when role/affordance state is preserved; this is not evidence that perception-to-object construction or unknown-theory discovery is solved. |
 
 ## Falsification Tests
 
@@ -39,6 +39,9 @@ For the formal objectification definition, see `docs/objectification.md`.
 - If geometry-derived relation repair adds spurious edges that reduce
   downstream prediction or working-set precision, repair must be gated or
   replaced by learned candidate scoring.
+- If learned relation scoring only works for nominal type labels and fails when
+  role/affordance variables are preserved under aliasing, objectification has
+  not escaped brittle type classification.
 - If delta overlays accumulate unrecoverable state corruption in long-horizon
   rollout, persistent state becomes a liability without verification and
   rollback mechanisms.

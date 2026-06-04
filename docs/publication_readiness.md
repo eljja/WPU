@@ -52,7 +52,7 @@ that does not yet validate perception-to-state construction.
 | Hardware claims are unsupported | WPU as a processing unit requires systems evidence, not only PyTorch models. | Current code is a reference implementation. | Sparse frontier kernel profiling, memory-traffic accounting, branch-overlay memory measurements, and matched-accuracy speedups. |
 | Calibration and uncertainty are shallow | Branch probabilities matter only if calibrated under distribution shift. | v1/v2 reports include branch accuracy and some calibration discussion, but not a full uncertainty benchmark. | ECE/Brier/NLL over multi-step rollouts, branch collapse tests, and uncertainty-gated recompute experiments. |
 | Objectification quality is not benchmarked | WPU performance depends on correct identity, relation, and delta construction. | `evaluate_objectification` now measures the object contract, but current experiments still use synthetic object state where objectification is mostly given. | Object construction benchmarks measuring missed objects, identity swaps, relation errors, and downstream propagation loss. |
-| Relation repair can add false hypotheses | Repair can recover missing local connectivity, but spurious edges can expand `K` and hurt sparse precision. | The relation-repair probe shows ungated repair recovers frontier recall but drops precision to `0.078994` with near distractors; type-gated and learned-scorer repair restore precision to `1.000000` in the controlled case. | Repair precision/recall against simulator relations, downstream loss with and without repair, and learned gates that reject harmful repaired edges under distribution shift. |
+| Relation repair can add false hypotheses | Repair can recover missing local connectivity, but spurious edges can expand `K` and hurt sparse precision. | The relation-repair probe shows ungated repair recovers frontier recall but drops precision to `0.078994` with near distractors and `0.013244` with dense distractors. Type-gated and learned-scorer repair restore precision to `1.000000` in-distribution; the learned scorer also transfers across aliased type names when role/affordance state is preserved, but fails when both type and role information are removed. | Repair precision/recall against simulator relations, downstream loss with and without repair, and learned gates that reject harmful repaired edges under cross-generator and hidden-mechanism shift. |
 | Unknown-theory discovery is only a long-term program | Learning relations that expose unknown regularities is a stronger claim than using known object relations. | Current work uses hand-designed synthetic relations and learned selectors. | Held-out-rule or hidden-mechanism benchmarks where learned object relations improve prediction and produce falsifiable new structure. |
 
 ## Immediate Improvement Priorities
@@ -66,11 +66,12 @@ that does not yet validate perception-to-state construction.
 7. Use `ObjectificationReport` in experiment logs and add objectification-quality
    benchmarks: identity stability, relation precision, relation recall, delta
    locality, and downstream error from objectification mistakes.
-8. Evaluate relation repair precision/recall and downstream impact before
-   treating repaired edges as useful; compare ungated, type-gated, and learned
-   candidate scoring.
+8. Evaluate relation repair downstream impact before treating repaired edges as
+   useful; compare ungated, type-gated, role-aware learned scoring, and
+   no-repair baselines.
 9. Add hidden-rule benchmarks where the model must infer relation families not
-   supplied by the generator.
+   supplied by the generator, then test whether learned relations reduce
+   prediction error under held-out mechanisms.
 
 ## Public Communication Rules
 

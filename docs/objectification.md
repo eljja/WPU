@@ -15,6 +15,7 @@ persistent, addressable state entities:
 Objectification(x) =
   identity
   + typed attributes
+  + role/affordance state
   + typed relations
   + time/history
   + uncertainty
@@ -23,9 +24,12 @@ Objectification(x) =
 ```
 
 An objectified entity is not just a detected region, token span, row in a table,
-or embedding. It is a state-bearing unit that can be queried, patched,
-propagated through relations, branched into futures, and checked for
-consistency across time.
+type label, or embedding. It is a state-bearing unit that can be queried,
+patched, propagated through relations, branched into futures, and checked for
+consistency across time. Type labels are useful metadata, but they are not
+sufficient objectification by themselves. WPU needs relation-bearing state
+variables such as dynamic role, manipulator role, support role, boundary role,
+context role, geometry, confidence, and history.
 
 ## Minimal Object Contract
 
@@ -34,6 +38,9 @@ A WPU object should satisfy the following contract:
 - `identity`: the object can be referred to across events and time steps.
 - `attributes`: the object carries typed state such as position, velocity,
   role, health, ownership, temperature, or confidence.
+- `role/affordance state`: the object exposes variables that help decide which
+  relation families can plausibly propagate change, rather than relying only on
+  nominal type names.
 - `relations`: the object participates in typed edges such as `on`, `near`,
   `touching`, `supports`, `connected_to`, `causes`, or `depends_on`.
 - `uncertainty`: the object and its attributes can be uncertain.
@@ -59,8 +66,12 @@ repair explicit and auditable instead of silently falling back to token or dense
 processing. Repair can be type-gated: geometry-only repair may recover recall
 while adding spurious distractor edges, so typed object identity is part of the
 repair contract. The current probe also includes a small learned relation
-scorer that matches the hand-written type gate in a controlled distractor
-distribution.
+scorer. It matches the hand-written type gate in the controlled distractor
+distribution, remains precise under denser distractors, and transfers across
+aliased type names when role/affordance state variables are preserved. It fails
+when both type labels and role variables are removed. This is the operational
+boundary: objectification is not naming; it is persistent state with enough
+relational variables to support propagation.
 
 ## What Objectification Is Not
 

@@ -114,6 +114,7 @@ Promote a generated result into `docs/experiments/` only after checking:
 - model parameter scales are comparable for matched-baseline claims;
 - `ObjectificationReport` metrics are logged when a claim depends on explicit
   object state, sparse retrieval, or perception/state adapters;
+- relation-repair metrics are logged when repaired edges are used;
 - every `Source CSV` or `Source CSVs` entry is git-tracked under
   `docs/experiments/` and nonempty;
 - interpretation follows `docs/claims.md`;

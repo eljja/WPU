@@ -25,6 +25,13 @@ does not solve perception-to-state construction, but it gives WPU a concrete
 failure boundary: if the supplied objects/relations/deltas are unreliable,
 sparse state propagation should not be trusted.
 
+Added deterministic relation repair through `infer_missing_relations` and
+`repair_objectification_relations`. This recovers missed local `near` and
+`touching` edges from object geometry when identity exists but relation
+extraction failed. Repaired edges are logged hypotheses for frontier recovery,
+not evidence of physical-law discovery. The next experiment must measure repair
+precision/recall and downstream loss before using repair in paper-level claims.
+
 ### Causal Index
 
 Added `wpu.core.causal_index.CausalIndex`, a first state-indexed retrieval

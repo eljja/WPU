@@ -23,6 +23,7 @@ The main paper keeps the argument compact:
 - token versus state primitives;
 - objectification as the construction of persistent, addressable state objects;
 - objectification quality as a measurable pre-propagation contract;
+- relation repair as auditable hypothesis generation for missed local edges;
 - relation to object-centric, graph, world-model, and accelerator literature;
 - WPU architecture and sparse/hybrid/dense routing;
 - propagation as the state analogue of attention;
@@ -48,6 +49,8 @@ validation planning are tracked here instead.
   distractor objects, and long-horizon branch divergence.
 - Log `ObjectificationReport` metrics alongside accuracy, latency, work proxy,
   and branch calibration.
+- Evaluate relation-repair precision/recall and downstream loss before treating
+  repaired edges as useful.
 - Replace fixed `rho` routing with learned accuracy-latency-aware routing.
 - Improve large-`N` sparse stability with stronger propagation and regional
   dense correction.

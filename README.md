@@ -138,6 +138,11 @@ the WPU object contract before propagation: stable identities, valid relation
 endpoints, usable confidence, valid deltas, and optional causal-working-set
 locality.
 
+If object identity exists but relation extraction missed local edges,
+`repair_objectification_relations` can add conservative geometry-inferred
+relation patches before sparse propagation. This is a state repair heuristic,
+not a claim that physical law has been solved.
+
 The current v2 working-set models are also available from the package root
 through the model factory:
 

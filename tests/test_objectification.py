@@ -3,6 +3,7 @@ import pytest
 import wpu
 from wpu.core.state import DeltaState, Relation, WorldObject, WorldState
 from wpu.data.object_physics import create_robot_cup_state
+from wpu.engines.sparse_engine import SparsePropagationEngine
 
 
 def test_objectification_report_scores_valid_state_contract() -> None:
@@ -47,3 +48,20 @@ def test_objectification_report_penalizes_broken_identity_relation_and_delta() -
     assert report.delta_validity == 0.0
     assert report.delta_locality == 0.0
     assert report.contract_score < 0.35
+
+
+def test_geometry_repair_adds_missing_relation_frontier_edges() -> None:
+    state = WorldState()
+    state.add_object(WorldObject("cup_001", "cup", {"position": [0.0, 0.0, 0.0]}, confidence=0.9))
+    state.add_object(WorldObject("hand_001", "robot_hand", {"position": [0.12, 0.0, 0.0]}, confidence=0.9))
+    event = wpu.Event("hand_touched_cup", "cup_001", {"force": 0.4}, confidence=0.9)
+
+    before = SparsePropagationEngine(max_depth=2).sparse_propagate(state, event)
+    repaired, repair_report = wpu.repair_objectification_relations(state, near_distance=0.2)
+    after = SparsePropagationEngine(max_depth=2).sparse_propagate(repaired, event)
+
+    assert before.affected_objects == {"cup_001"}
+    assert repair_report.added_relation_count == 1
+    assert repair_report.added_relation_types == {"near": 1}
+    assert "hand_001" in after.affected_objects
+    assert repair_report.to_dict()["added_relation_count"] == 1

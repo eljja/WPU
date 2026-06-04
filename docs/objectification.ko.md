@@ -47,6 +47,12 @@ contract를 만족하는지 측정한다. 측정 항목은 identity coverage, re
 validity, object/relation confidence, delta validity, expected causal working
 set 대비 optional delta locality다.
 
+Public API는 `infer_missing_relations`와 `repair_objectification_relations`도
+제공한다. 이 함수들은 object identity는 있지만 relation extraction이 local
+connectivity를 놓친 경우, 약한 `near`, `touching` 같은 geometry-derived relation
+patch를 보수적으로 추가한다. 즉 relation repair를 token fallback이나 silent dense
+fallback이 아니라 명시적이고 audit 가능한 hypothesis로 만든다.
+
 ## 객체화가 아닌 것
 
 객체화는 WPU가 이미 perception을 해결했다는 뜻이 아니다. 현재 WPU core는 simulator,
@@ -83,6 +89,8 @@ efficiency, memory traffic을 개선할 수 있다.
 endpoint가 깨져 있거나 delta가 non-causal object를 갱신하면, WPU는 계산량을 줄이면서
 동시에 더 틀릴 수 있다. 따라서 성능 보고에는 execution metric과 objectification
 metric을 함께 넣어야 한다.
+실패 원인이 object 누락이 아니라 local relation 누락이라면, WPU는 retrieval budget을
+넓히거나 dense recompute로 가기 전에 relation repair를 시도할 수 있다.
 
 ## 물리적 근사와의 관계
 
@@ -129,18 +137,29 @@ observed object histories
 이해하지 못한 domain에서는 인간이 이름 붙이기 전의 안정적인 interaction pattern을
 드러낼 수도 있다. 이것은 현재 결과가 아니라 연구 프로그램으로 취급해야 한다.
 
+따라서 개발 단계는 다음과 같다.
+
+```text
+measured object contract
+  -> deterministic relation repair
+  -> learned relation candidates
+  -> held-out-rule prediction gain
+  -> falsifiable revised relation theory
+```
+
 ## 개선 경로
 
 객체화에 기반해 WPU를 개선하는 구체적 경로는 다음이다.
 
 1. Schema validation, `ObjectificationReport`, state-integrity test로 object contract를 강화한다.
 2. Contact, support, containment, flow, dependency, ownership, constraint relation family를 추가한다.
-3. Domain knowledge가 있을 때 local conservation, consistency, no-spurious-delta loss로 propagation을 학습한다.
-4. 반복 delta 이후에도 object identity와 relation consistency가 유지되는지 long-horizon rollout test를 추가한다.
-5. Ground-truth object/relation이 있는 simulator-backed benchmark를 추가한다.
-6. Object history에서 candidate relation을 학습하고 held-out regime에서 prediction을 개선하는지 평가한다.
-7. Retriever/projection budget을 객체화 품질에 연결한다. 낮은 relation validity나 낮은 delta locality는 blind sparse propagation이 아니라 wider retrieval, dense recompute, state repair를 trigger해야 한다. 현재 scheduler는 낮은 objectification score를 sparse routing에서 hybrid/dense로 올리는 첫 버전을 구현한다.
-8. 객체화 실패도 보고한다. Missed object, identity swap, relation hallucination, `K`가 작지 않은 global event가 포함된다.
+3. Deterministic relation repair는 conservative fallback으로만 사용하고, 모든 repaired edge는 ground truth가 아니라 hypothesis로 log한다.
+4. Domain knowledge가 있을 때 local conservation, consistency, no-spurious-delta loss로 propagation을 학습한다.
+5. 반복 delta 이후에도 object identity와 relation consistency가 유지되는지 long-horizon rollout test를 추가한다.
+6. Ground-truth object/relation이 있는 simulator-backed benchmark를 추가한다.
+7. Object history에서 candidate relation을 학습하고 held-out regime에서 prediction을 개선하는지 평가한다.
+8. Retriever/projection budget을 객체화 품질에 연결한다. 낮은 relation validity나 낮은 delta locality는 blind sparse propagation이 아니라 wider retrieval, dense recompute, state repair를 trigger해야 한다. 현재 scheduler는 낮은 objectification score를 sparse routing에서 hybrid/dense로 올리는 첫 버전을 구현한다.
+9. 객체화 실패도 보고한다. Missed object, identity swap, relation hallucination, `K`가 작지 않은 global event가 포함된다.
 
 ## 주장 경계
 

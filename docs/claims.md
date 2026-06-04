@@ -21,7 +21,7 @@ For the formal objectification definition, see `docs/objectification.md`.
 | C8 | WPU is not yet a hardware/chiplet/IP result. | Explicitly not supported. | `docs/Review/review_response_and_differentiation.md`, `docs/paper/state_is_all_you_need.md`, `README.md`. | Hardware claims require real sparse-kernel, memory-traffic, branch-overlay, and matched-accuracy speedup evidence. |
 | C9 | WPU propagation over objectified relations is a simplified local-causality prior, not full physics. | Supported as a bounded analogy. | `docs/objectification.md`, `docs/arxiv/state_is_all_you_need_en.tex`, `docs/arxiv/state_is_all_you_need_ko.md`, `docs/paper/state_is_all_you_need.md`. | Real physics competence or unknown-theory discovery requires simulator/robotics benchmarks, long-horizon stability, and evidence that learned relations generalize beyond the training generator. |
 | C10 | Near-term WPU value is more plausible as software runtime/middleware than silicon. | Plausible direction, not experimentally proven. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | Requires digital-twin, simulation backend, game/server, or robotics middleware benchmarks. |
-| C11 | Objectification quality is measurable as a contract before propagation. | Supported as an implementation claim. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `README.md`, `docs/objectification.md`. | This is not evidence that perception-to-object construction is solved; it only evaluates supplied objectified state. |
+| C11 | Objectification quality is measurable and locally repairable as a contract before propagation. | Supported as an implementation claim. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `README.md`, `docs/objectification.md`. | Relation repair produces conservative hypotheses, not ground-truth physics. This is not evidence that perception-to-object construction or unknown-theory discovery is solved. |
 
 ## Falsification Tests
 
@@ -36,6 +36,9 @@ For the formal objectification definition, see `docs/objectification.md`.
 - If sparse routing harms accuracy before producing meaningful latency or
   memory savings, propagation is not the right central operation for that
   workload.
+- If geometry-derived relation repair adds spurious edges that reduce
+  downstream prediction or working-set precision, repair must be gated or
+  replaced by learned candidate scoring.
 - If delta overlays accumulate unrecoverable state corruption in long-horizon
   rollout, persistent state becomes a liability without verification and
   rollback mechanisms.

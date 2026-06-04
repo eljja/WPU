@@ -19,6 +19,9 @@ overlays. The formal definition is maintained in `docs/objectification.md`.
 The implementation now treats this as a measurable contract through
 `evaluate_objectification`: invalid identities, broken relation endpoints,
 invalid deltas, and poor causal locality are reported before propagation.
+When identity exists but local relation extraction misses edges, the prototype
+can also apply conservative geometry-derived relation repair. Repaired edges are
+logged hypotheses, not ground-truth physics.
 
 The WPU claim is therefore operational rather than representational:
 
@@ -60,7 +63,8 @@ world state rather than only process a fresh sequence.
 In this framing, perception-to-state is an adapter problem rather than a solved
 part of v1. The core WPU should accept object-state graphs from supervised
 detectors, slot/object discovery, simulators, or logs, then expose how update
-work, prediction risk, objectification quality, and branch memory scale.
+work, prediction risk, objectification quality, relation-repair precision, and
+branch memory scale.
 
 ## State Primitive
 

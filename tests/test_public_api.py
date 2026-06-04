@@ -20,6 +20,7 @@ def test_root_package_exports_core_public_api() -> None:
         "ExecutionPath",
         "MODEL_NAMES",
         "MemoryEstimate",
+        "ObjectificationRepairReport",
         "ObjectificationReport",
         "Scheduler",
         "SchedulerMetrics",
@@ -30,6 +31,8 @@ def test_root_package_exports_core_public_api() -> None:
         "WorldStateProcessor",
         "create_model",
         "evaluate_objectification",
+        "infer_missing_relations",
+        "repair_objectification_relations",
         "rollout",
     }
 

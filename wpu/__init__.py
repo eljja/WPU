@@ -1,6 +1,12 @@
 """World-State Processing Unit research prototype."""
 
-from wpu.core.objectification import ObjectificationReport, evaluate_objectification
+from wpu.core.objectification import (
+    ObjectificationRepairReport,
+    ObjectificationReport,
+    evaluate_objectification,
+    infer_missing_relations,
+    repair_objectification_relations,
+)
 from wpu.core.state import Branch, DeltaState, Event, Relation, WorldObject, WorldState
 from wpu.engines import DenseRecomputeEngine, ExecutionPath, Scheduler, SchedulerMetrics, SparsePropagationEngine, rollout
 from wpu.memory import DeltaStore, MemoryEstimate, StateStore, estimate_memory
@@ -16,6 +22,7 @@ __all__ = [
     "ExecutionPath",
     "MODEL_NAMES",
     "MemoryEstimate",
+    "ObjectificationRepairReport",
     "ObjectificationReport",
     "Relation",
     "Scheduler",
@@ -30,5 +37,7 @@ __all__ = [
     "create_model",
     "evaluate_objectification",
     "estimate_memory",
+    "infer_missing_relations",
+    "repair_objectification_relations",
     "rollout",
 ]

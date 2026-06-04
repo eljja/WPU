@@ -20,7 +20,7 @@
 | C8 | WPU는 아직 hardware/chiplet/IP 결과가 아니다. | 명시적으로 지지되지 않음. | `docs/Review/review_response_and_differentiation.md`, `docs/paper/state_is_all_you_need.md`, `README.md`. | hardware claim에는 sparse kernel, memory traffic, branch overlay, matched-accuracy speedup 증거가 필요하다. |
 | C9 | 객체화된 relation 위의 WPU propagation은 full physics가 아니라 단순화된 local-causality prior다. | 제한된 analogy로 지지됨. | `docs/objectification.ko.md`, `docs/arxiv/state_is_all_you_need_en.tex`, `docs/arxiv/state_is_all_you_need_ko.md`, `docs/paper/state_is_all_you_need.md`. | 실제 물리 competence나 unknown-theory discovery는 simulator/robotics benchmark, long-horizon stability, learned relation이 training generator 밖에서도 일반화된다는 증거가 필요하다. |
 | C10 | 단기 WPU 가치는 silicon보다 software runtime/middleware에서 더 가능성이 있다. | plausible direction이며 아직 실험적으로 증명되지 않음. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | digital-twin, simulation backend, game/server, robotics middleware benchmark가 필요하다. |
-| C11 | 객체화 품질은 propagation 전에 contract로 측정 가능하다. | 구현 주장으로 지지됨. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `README.ko.md`, `docs/objectification.ko.md`. | perception-to-object construction이 해결됐다는 증거가 아니다. supplied objectified state를 평가할 뿐이다. |
+| C11 | 객체화 품질은 propagation 전에 contract로 측정 가능하고 국소적으로 repair 가능하다. | 구현 주장으로 지지됨. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `README.ko.md`, `docs/objectification.ko.md`. | Relation repair는 보수적 hypothesis를 만들 뿐 ground-truth physics가 아니다. perception-to-object construction이나 unknown-theory discovery가 해결됐다는 증거가 아니다. |
 
 ## 반증 조건
 
@@ -33,6 +33,9 @@
   사라지면, 현재 v2 working-set-control 주장은 diagnostic result로 낮춰야 한다.
 - sparse routing이 meaningful latency/memory saving을 만들기 전에 accuracy를 해치면,
   해당 workload에서 propagation은 중심 연산으로 부적절하다.
+- geometry-derived relation repair가 spurious edge를 추가해 downstream prediction이나
+  working-set precision을 낮추면, repair는 gate되거나 learned candidate scoring으로
+  대체되어야 한다.
 - long-horizon rollout에서 delta overlay가 state corruption을 누적하고 회복하지
   못하면, verification/rollback 없이 persistent state는 장점이 아니라 위험이 된다.
 

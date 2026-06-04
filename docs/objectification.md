@@ -51,6 +51,13 @@ state satisfies the operational contract before propagation: identity coverage,
 relation endpoint validity, object/relation confidence, delta validity, and
 optional delta locality against an expected causal working set.
 
+The API also exposes `infer_missing_relations` and
+`repair_objectification_relations`. These add conservative geometry-derived
+relation patches such as weak `near` and `touching` edges when object identity
+exists but relation extraction missed local connectivity. This makes relation
+repair explicit and auditable instead of silently falling back to token or dense
+processing.
+
 ## What Objectification Is Not
 
 Objectification does not mean that WPU already solves perception. The current
@@ -89,6 +96,9 @@ Objectification quality is a prerequisite for these metrics. If identity is
 unstable, relation endpoints are invalid, or deltas hit non-causal objects, WPU
 can spend less compute while becoming less correct. Therefore performance
 reports should include both execution metrics and objectification metrics.
+If the failure is a missing local relation rather than a missing object, WPU can
+attempt relation repair before widening the retrieval budget or invoking dense
+recompute.
 
 ## Relation to Physical Approximation
 
@@ -136,6 +146,16 @@ For less understood domains, they may expose stable interaction patterns before
 humans can name the underlying theory. This should be treated as a research
 program, not as a current result.
 
+The development ladder is therefore:
+
+```text
+measured object contract
+  -> deterministic relation repair
+  -> learned relation candidates
+  -> held-out-rule prediction gain
+  -> falsifiable revised relation theory
+```
+
 ## Improvement Path
 
 The concrete path to improve WPU through objectification is:
@@ -144,20 +164,22 @@ The concrete path to improve WPU through objectification is:
    and state-integrity tests.
 2. Add relation families for contact, support, containment, flow, dependency,
    ownership, and constraint.
-3. Train propagation with local conservation, consistency, and no-spurious-delta
+3. Use deterministic relation repair only as a conservative fallback; log every
+   repaired edge as a hypothesis, not as ground truth.
+4. Train propagation with local conservation, consistency, and no-spurious-delta
    losses where domain knowledge is available.
-4. Add long-horizon rollout tests that measure whether object identity and
+5. Add long-horizon rollout tests that measure whether object identity and
    relation consistency survive repeated deltas.
-5. Add simulator-backed benchmarks where ground-truth objects and relations are
+6. Add simulator-backed benchmarks where ground-truth objects and relations are
    available.
-6. Learn candidate relations from object histories and evaluate whether they
+7. Learn candidate relations from object histories and evaluate whether they
    improve prediction under held-out regimes.
-7. Couple retriever/projection budgets to objectification quality: low relation
+8. Couple retriever/projection budgets to objectification quality: low relation
    validity or poor delta locality should trigger wider retrieval, dense
    recompute, or state repair rather than blind sparse propagation. The current
    scheduler implements a first version by escalating low objectification
    scores away from sparse routing.
-8. Report failures where objectification is wrong: missed objects, identity
+9. Report failures where objectification is wrong: missed objects, identity
    swaps, relation hallucinations, and global events where `K` is not small.
 
 ## Claim Boundary

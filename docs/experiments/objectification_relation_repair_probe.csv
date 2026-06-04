@@ -1,0 +1,2 @@
+samples,seed,near_distance,contact_distance,background_objects,mean_before_frontier_recall,mean_after_frontier_recall,mean_added_relations,mean_candidate_pairs,repair_precision,repair_recall
+64,17,0.250000,0.080000,32,0.250000,1.000000,7.640625,630.000000,1.000000,1.000000

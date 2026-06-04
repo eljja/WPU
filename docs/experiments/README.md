@@ -11,10 +11,18 @@ adapter, log `ObjectificationReport` fields alongside accuracy, loss, latency,
 work proxy, calibration, and route statistics. This separates propagation
 failure from objectification failure.
 
+When relation repair is used, log repaired edge count, repaired relation types,
+repair precision/recall when ground truth is available, and downstream loss
+with and without repair. Repaired edges are hypotheses for frontier recovery,
+not ground-truth physical relations.
+
 ## Current Evidence Hierarchy
 
 Use these reports for paper-level claims:
 
+- `objectification_relation_repair_probe_results.md`: minimal objectification
+  repair probe showing that geometry-derived relation hypotheses can recover a
+  missing sparse frontier in a controlled local case.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.

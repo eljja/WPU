@@ -3,7 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from statistics import fmean
 
-from wpu.core.state import DeltaState, WorldState
+from wpu.core.state import DeltaState, Relation, WorldState
+
+
+SYMMETRIC_RELATIONS = {"near", "touching"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +42,22 @@ class ObjectificationReport:
             "delta_validity": self.delta_validity,
             "delta_locality": self.delta_locality,
             "contract_score": self.contract_score,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ObjectificationRepairReport:
+    """Report for deterministic objectification repair heuristics."""
+
+    added_relation_count: int
+    added_relation_types: dict[str, int]
+    candidate_pair_count: int
+
+    def to_dict(self) -> dict[str, int | dict[str, int]]:
+        return {
+            "added_relation_count": self.added_relation_count,
+            "added_relation_types": dict(self.added_relation_types),
+            "candidate_pair_count": self.candidate_pair_count,
         }
 
 
@@ -116,6 +135,85 @@ def evaluate_objectification(
     )
 
 
+def infer_missing_relations(
+    state: WorldState,
+    *,
+    near_distance: float = 0.35,
+    contact_distance: float = 0.08,
+    confidence: float = 0.55,
+) -> tuple[DeltaState, ObjectificationRepairReport]:
+    """Infer conservative relation patches from object attributes.
+
+    This is a deterministic objectification-repair primitive, not a learned
+    physics solver. It adds weak `near` and `touching` candidate relations when
+    typed object positions make the relation locally plausible. The intended use
+    is to recover sparse frontier connectivity when object identity exists but
+    relation extraction missed an edge.
+    """
+
+    if near_distance <= 0.0:
+        raise ValueError("near_distance must be positive")
+    if contact_distance < 0.0:
+        raise ValueError("contact_distance must be non-negative")
+
+    existing = {_relation_key(relation.src, relation.dst, relation.type) for relation in state.relations}
+    object_ids = list(state.objects)
+    delta = DeltaState(time=state.time, metadata={"objectification_repair": "geometry"})
+    added_types: dict[str, int] = {}
+    candidate_pair_count = 0
+
+    for left_index, left_id in enumerate(object_ids):
+        left_position = _position3(state, left_id)
+        if left_position is None:
+            continue
+        for right_id in object_ids[left_index + 1 :]:
+            right_position = _position3(state, right_id)
+            if right_position is None:
+                continue
+            candidate_pair_count += 1
+            distance = _distance3(left_position, right_position)
+            if distance <= near_distance:
+                strength = max(0.05, 1.0 - distance / near_distance)
+                _append_relation_patch(
+                    delta,
+                    existing,
+                    added_types,
+                    Relation(left_id, right_id, "near", strength=strength, confidence=confidence),
+                )
+            if distance <= contact_distance:
+                strength = max(0.05, 1.0 - distance / max(contact_distance, 1e-6))
+                _append_relation_patch(
+                    delta,
+                    existing,
+                    added_types,
+                    Relation(left_id, right_id, "touching", strength=strength, confidence=confidence),
+                )
+
+    return delta, ObjectificationRepairReport(
+        added_relation_count=len(delta.relation_updates),
+        added_relation_types=added_types,
+        candidate_pair_count=candidate_pair_count,
+    )
+
+
+def repair_objectification_relations(
+    state: WorldState,
+    *,
+    near_distance: float = 0.35,
+    contact_distance: float = 0.08,
+    confidence: float = 0.55,
+) -> tuple[WorldState, ObjectificationRepairReport]:
+    """Return a state with conservative geometry-inferred relation patches."""
+
+    delta, report = infer_missing_relations(
+        state,
+        near_distance=near_distance,
+        contact_distance=contact_distance,
+        confidence=confidence,
+    )
+    return state.apply_delta(delta), report
+
+
 def _safe_ratio(numerator: int, denominator: int, *, empty_value: float) -> float:
     if denominator <= 0:
         return empty_value
@@ -126,3 +224,34 @@ def _mean_confidence_quality(values: list[float]) -> float:
     if not values:
         return 1.0
     return fmean(float(value) if 0.0 <= float(value) <= 1.0 else 0.0 for value in values)
+
+
+def _append_relation_patch(
+    delta: DeltaState,
+    existing: set[tuple[str, str, str]],
+    added_types: dict[str, int],
+    relation: Relation,
+) -> None:
+    key = _relation_key(relation.src, relation.dst, relation.type)
+    if key in existing:
+        return
+    existing.add(key)
+    delta.relation_updates.append(relation)
+    added_types[relation.type] = added_types.get(relation.type, 0) + 1
+
+
+def _relation_key(src: str, dst: str, relation_type: str) -> tuple[str, str, str]:
+    if relation_type in SYMMETRIC_RELATIONS and dst < src:
+        return dst, src, relation_type
+    return src, dst, relation_type
+
+
+def _position3(state: WorldState, object_id: str) -> tuple[float, float, float] | None:
+    position = state.objects[object_id].attributes.get("position")
+    if not isinstance(position, (list, tuple)) or len(position) < 3:
+        return None
+    return float(position[0]), float(position[1]), float(position[2])
+
+
+def _distance3(left: tuple[float, float, float], right: tuple[float, float, float]) -> float:
+    return ((left[0] - right[0]) ** 2 + (left[1] - right[1]) ** 2 + (left[2] - right[2]) ** 2) ** 0.5

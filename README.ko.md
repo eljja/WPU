@@ -175,6 +175,12 @@ delta MSE `0.000828`를 기록하며, no-relation 또는 type prior의 `0.445909
 이는 객체화가 approximate local theory로 이어질 수 있는 controlled path를 보이지만,
 여전히 generated synthetic evidence다.
 
+같은 probe의 OOD version은 경계를 보여준다. Relation selection은 distance, gain,
+law-form shift에서도 유용하지만 far-distance relation recall은 `0.658594`로 떨어지고,
+gain/law-form shift에서는 oracle relation을 써도 residual MSE가 남는다. WPU 관점에서
+객체화는 candidate local theory를 드러낼 수 있지만, 그 theory를 믿을지 수정할지는
+OOD stress로 결정해야 한다.
+
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 
 ```python

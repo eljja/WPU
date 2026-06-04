@@ -16,6 +16,12 @@ import torch  # noqa: E402
 
 TRAIN_MECHANISMS = ("contact_inverse", "support_inverse")
 EVAL_MECHANISMS = ("hidden_inverse",)
+SUPPORTED_MECHANISMS = TRAIN_MECHANISMS + (
+    "hidden_inverse",
+    "hidden_inverse_far",
+    "hidden_inverse_gain_shift",
+    "hidden_power_shift",
+)
 POLICIES = (
     "no_relation",
     "geometry_law",
@@ -79,6 +85,13 @@ def main() -> None:
     parser.add_argument("--threshold", type=float, default=0.5)
     parser.add_argument("--geometry-threshold", type=float, default=0.85)
     parser.add_argument(
+        "--eval-mechanisms",
+        nargs="*",
+        default=list(EVAL_MECHANISMS),
+        choices=SUPPORTED_MECHANISMS,
+        help="Held-out mechanisms to evaluate. Defaults to hidden_inverse.",
+    )
+    parser.add_argument(
         "--out",
         type=Path,
         default=Path("docs/experiments/object_relation_law_probe.csv"),
@@ -104,6 +117,7 @@ def main() -> None:
             history_steps=args.history_steps,
             threshold=args.threshold,
             geometry_threshold=args.geometry_threshold,
+            eval_mechanisms=tuple(args.eval_mechanisms),
         )
         for row in seed_rows:
             rows.append({"row_type": "seed", "seed": str(seed), **row, "seed_count": "1"})
@@ -197,9 +211,10 @@ def run_probe(
     history_steps: int,
     threshold: float,
     geometry_threshold: float,
+    eval_mechanisms: tuple[str, ...] = EVAL_MECHANISMS,
 ) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
-    for mechanism in EVAL_MECHANISMS:
+    for mechanism in eval_mechanisms:
         for policy in POLICIES:
             rows.append(
                 evaluate_policy(
@@ -314,7 +329,7 @@ def generate_sample(
 
     for index in range(candidates):
         is_causal = index == causal_index
-        distance = rng.uniform(0.35, 1.85)
+        distance = _sample_distance(rng, mechanism)
         object_type = _object_type(mechanism, is_causal)
         source_history = _source_history(rng, history_steps)
         target_history = _target_history(
@@ -326,7 +341,7 @@ def generate_sample(
         )
         current_delta = rng.gauss(0.0, 0.015)
         if is_causal:
-            current_delta += _gain(mechanism) * current_impulse / _distance_denominator(distance)
+            current_delta += _gain(mechanism) * current_impulse / _response_denominator(mechanism, distance)
             target_delta = current_delta
         result.append(
             Candidate(
@@ -413,7 +428,7 @@ def predict_delta(candidate: Candidate, law: LocalLaw) -> float:
 
 
 def _object_type(mechanism: str, is_causal: bool) -> str:
-    if mechanism == "hidden_inverse":
+    if mechanism.startswith("hidden_"):
         return "latent_body" if is_causal else "ambient_body"
     if mechanism == "support_inverse":
         return "support" if is_causal else "prop"
@@ -421,11 +436,30 @@ def _object_type(mechanism: str, is_causal: bool) -> str:
 
 
 def _gain(mechanism: str) -> float:
-    return {"contact_inverse": 0.55, "support_inverse": 0.65, "hidden_inverse": 0.60}[mechanism]
+    return {
+        "contact_inverse": 0.55,
+        "support_inverse": 0.65,
+        "hidden_inverse": 0.60,
+        "hidden_inverse_far": 0.60,
+        "hidden_inverse_gain_shift": 0.90,
+        "hidden_power_shift": 0.60,
+    }[mechanism]
+
+
+def _sample_distance(rng: random.Random, mechanism: str) -> float:
+    if mechanism == "hidden_inverse_far":
+        return rng.uniform(1.85, 3.20)
+    return rng.uniform(0.35, 1.85)
 
 
 def _distance_denominator(distance: float) -> float:
     return distance * distance + 0.20
+
+
+def _response_denominator(mechanism: str, distance: float) -> float:
+    if mechanism == "hidden_power_shift":
+        return distance**3 + 0.20
+    return _distance_denominator(distance)
 
 
 def _signed_impulse(rng: random.Random) -> float:
@@ -450,7 +484,7 @@ def _target_history(
 ) -> list[float]:
     values = [rng.gauss(0.0, 0.04) for _ in source_history]
     if is_causal:
-        scale = _gain(mechanism) / _distance_denominator(distance)
+        scale = _gain(mechanism) / _response_denominator(mechanism, distance)
         for index in range(1, len(source_history)):
             values[index] += scale * source_history[index - 1]
     return values

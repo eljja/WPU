@@ -251,6 +251,9 @@ def test_object_relation_law_probe_runs(tmp_path: Path) -> None:
             "--seeds",
             "3",
             "5",
+            "--eval-mechanisms",
+            "hidden_inverse",
+            "hidden_inverse_far",
             "--out",
             str(output),
         ],
@@ -264,6 +267,7 @@ def test_object_relation_law_probe_runs(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stderr
     text = output.read_text(encoding="utf-8")
     assert "summary,all,hidden_inverse,history_relation_law" in text
+    assert "summary,all,hidden_inverse_far,history_relation_law" in text
     assert "delta_mse" in text
     assert "object_relation_law_probe row_type=summary" in result.stdout
 

@@ -173,6 +173,13 @@ prior는 `0.445909`에 머문다. 이는 objectified history가 controlled synth
 approximate local law fitting을 지탱할 수 있음을 보인다. 아직 unknown physical law를
 발견했다는 증거는 아니다.
 
+같은 probe의 OOD version은 distance, gain, response-form shift를 평가한다. Relation/law
+stack은 여전히 유용하지만 보편적으로 안정적이지는 않다. Far-distance relation recall은
+`0.658594`로 떨어지고, gain 또는 denominator shift에서는 oracle relation을 사용해도
+residual MSE가 남는다. 이것이 WPU에서 approximate theory가 갖는 operational meaning이다.
+객체화는 local rule을 제안하고, OOD stress는 그 rule을 신뢰할지, 재보정할지, 교체할지를
+결정한다.
+
 따라서 개발 단계는 다음과 같다.
 
 ```text
@@ -181,6 +188,7 @@ measured object contract
   -> learned relation candidates
   -> held-out-rule prediction gain
   -> interpretable local-law fit
+  -> OOD stress and rule revision
   -> falsifiable revised relation theory
 ```
 

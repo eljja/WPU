@@ -185,6 +185,14 @@ that objectified histories can support approximate local law fitting in a
 controlled synthetic setting. It does not show that unknown physical laws have
 been discovered.
 
+The OOD version of the same probe evaluates distance, gain, and response-form
+shift. It shows that the relation/law stack remains useful, but not universally
+stable: far-distance relation recall drops to `0.658594`, and gain or
+denominator shifts leave residual MSE even with oracle relations. This is the
+operational meaning of approximate theory in WPU: objectification proposes a
+local rule; OOD stress decides whether the rule is trusted, recalibrated, or
+replaced.
+
 The development ladder is therefore:
 
 ```text
@@ -193,6 +201,7 @@ measured object contract
   -> learned relation candidates
   -> held-out-rule prediction gain
   -> interpretable local-law fit
+  -> OOD stress and rule revision
   -> falsifiable revised relation theory
 ```
 

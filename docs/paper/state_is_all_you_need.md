@@ -50,6 +50,13 @@ held-out `hidden_inverse`, reaching five-seed mean relation precision/recall
 prior. This is a controlled synthetic bridge from objectification to approximate
 local theory, not evidence of unknown-law discovery.
 
+An OOD version maps the failure boundary: the relation/law stack remains useful
+under distance, gain, and denominator shifts, but far-distance relation recall
+drops to `0.658594`, and shifted gain or law form leaves residual MSE even with
+oracle relations. Thus the intended WPU loop is not "fit a law once"; it is
+objectify, propose a local rule, stress it, and revise the rule when OOD error
+separates relation failure from law mis-specification.
+
 The WPU claim is therefore operational rather than representational:
 
 ```text

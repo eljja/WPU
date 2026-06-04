@@ -88,6 +88,12 @@ held-out `hidden_inverse`에서 5개 seed 평균 relation precision/recall 0.988
 delta MSE 0.000828을 기록한다. No-relation 또는 type prior의 delta MSE는
 0.445909다. 이는 객체화에서 approximate local theory로 가는 controlled synthetic
 bridge이지 unknown-law discovery 증거는 아니다.
+OOD version은 failure boundary를 제시한다. Relation/law stack은 distance, gain,
+denominator shift에서도 유용하지만 far-distance relation recall은 0.658594로 떨어지고,
+gain 또는 law-form shift에서는 oracle relation을 사용해도 residual MSE가 남는다.
+따라서 WPU loop는 "한 번 law를 fit한다"가 아니라 objectify, local rule 제안, stress,
+그리고 OOD error가 relation failure와 law mis-specification을 분리할 때 rule을 수정하는
+과정이다.
 정식 정의는 `docs/objectification.ko.md`에 둔다.
 
 ## 2. 선행연구와 차별성

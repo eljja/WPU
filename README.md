@@ -171,6 +171,12 @@ and delta MSE `0.000828` versus `0.445909` for no relation or type prior. This
 shows a controlled path from objectification to approximate local theory, but it
 is still generated synthetic evidence.
 
+The OOD version of the same probe maps the boundary: relation selection remains
+useful under distance, gain, and law-form shifts, but far-distance recall drops
+to `0.658594`, and shifted gain/law form leaves residual MSE even with oracle
+relations. In WPU terms, objectification can expose a candidate local theory;
+OOD stress is what decides whether that theory should be trusted or revised.
+
 The current v2 working-set models are also available from the package root
 through the model factory:
 

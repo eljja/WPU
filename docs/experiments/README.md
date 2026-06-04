@@ -43,6 +43,11 @@ Use these reports for paper-level claims:
   `hidden_inverse`, reaching five-seed mean relation precision/recall `0.988281`
   and delta MSE `0.000828` versus `0.445909` for no relation or type prior. This
   is still synthetic and does not establish real physical-law discovery.
+- `object_relation_law_ood_probe_results.md`: OOD stress version of the local-law
+  probe. It shows that objectified relations remain useful under distance, gain,
+  and denominator shifts, but also exposes the right failure boundaries:
+  far-distance relation recall drops to `0.658594`, and gain/law-form shifts
+  leave residual MSE even with oracle relations.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import dataclass
+import math
 from pathlib import Path
 import random
 import sys
@@ -17,6 +18,7 @@ from wpu.engines.sparse_engine import SparsePropagationEngine  # noqa: E402
 TYPE_VOCAB = ["background_object", "cup", "robot_hand", "table", "table_edge"]
 RELATION_VOCAB = ["near", "touching"]
 ROLE_KEYS = ["dynamic", "manipulator", "support", "boundary", "context"]
+BRANCH_LABELS = ["stable", "caught", "falls"]
 
 
 def main() -> None:
@@ -63,7 +65,9 @@ def main() -> None:
             f"before_recall={summary['mean_before_frontier_recall']} "
             f"after_recall={summary['mean_after_frontier_recall']} "
             f"repair_precision={summary['repair_precision']} "
-            f"repair_recall={summary['repair_recall']}"
+            f"repair_recall={summary['repair_recall']} "
+            f"downstream_accuracy={summary['downstream_branch_accuracy']} "
+            f"downstream_loss={summary['downstream_branch_loss']}"
         )
 
 
@@ -97,6 +101,7 @@ def run_probe(
     )
     for scenario, eval_background, eval_distractors, alias_types, include_roles in scenarios:
         for repair_policy, allowed_type_pairs, learned_filter in (
+            ("no_repair", None, None),
             ("ungated", None, None),
             ("type_gated", _core_allowed_type_pairs(), None),
             (
@@ -150,6 +155,8 @@ def _run_policy(
         "skipped_pairs": 0,
         "true_positive_edges": 0,
         "expected_edges": 0,
+        "downstream_loss": 0.0,
+        "downstream_correct": 0,
     }
 
     for index in range(samples):
@@ -169,7 +176,14 @@ def _run_policy(
         )
 
         before = sparse.sparse_propagate(state, event)
-        if learned_filter is None:
+        if repair_policy == "no_repair":
+            repaired = state
+            repair_report = wpu.ObjectificationRepairReport(
+                added_relation_count=0,
+                added_relation_types={},
+                candidate_pair_count=0,
+            )
+        elif learned_filter is None:
             repaired, repair_report = wpu.repair_objectification_relations(
                 state,
                 near_distance=near_distance,
@@ -197,6 +211,10 @@ def _run_policy(
         totals["skipped_pairs"] += repair_report.skipped_pair_count
         totals["true_positive_edges"] += len(repaired_edges & expected_edges)
         totals["expected_edges"] += len(expected_edges)
+        target_label = _oracle_branch_label(state)
+        predicted_label, loss = _predict_branch_from_frontier(repaired, after.affected_objects, target_label)
+        totals["downstream_loss"] += loss
+        totals["downstream_correct"] += int(predicted_label == target_label)
 
     repair_precision = totals["true_positive_edges"] / max(totals["added"], 1)
     repair_recall = totals["true_positive_edges"] / max(totals["expected_edges"], 1)
@@ -216,6 +234,8 @@ def _run_policy(
         "mean_skipped_pairs": f"{totals['skipped_pairs'] / samples:.6f}",
         "repair_precision": f"{repair_precision:.6f}",
         "repair_recall": f"{repair_recall:.6f}",
+        "downstream_branch_accuracy": f"{totals['downstream_correct'] / samples:.6f}",
+        "downstream_branch_loss": f"{totals['downstream_loss'] / samples:.6f}",
     }
 
 
@@ -448,6 +468,51 @@ def _expected_near_edges(state: WorldState, *, near_distance: float, contact_dis
     return expected
 
 
+def _oracle_branch_label(state: WorldState) -> str:
+    hand_distance = _distance(_position(state, "cup_001"), _position(state, "hand_001"))
+    edge_distance = _distance(_position(state, "cup_001"), _position(state, "edge_001"))
+    if hand_distance <= 0.12:
+        return "caught"
+    if edge_distance <= 0.19:
+        return "falls"
+    return "stable"
+
+
+def _predict_branch_from_frontier(state: WorldState, visible_ids: set[str], target_label: str) -> tuple[str, float]:
+    logits = _frontier_branch_logits(state, visible_ids)
+    prediction = BRANCH_LABELS[max(range(len(logits)), key=lambda index: logits[index])]
+    target_index = BRANCH_LABELS.index(target_label)
+    return prediction, _cross_entropy(logits, target_index)
+
+
+def _frontier_branch_logits(state: WorldState, visible_ids: set[str]) -> list[float]:
+    cup_position = _position(state, "cup_001")
+    logits = [0.6, -0.8, -0.8]
+    if "hand_001" in visible_ids:
+        hand_distance = _distance(cup_position, _position(state, "hand_001"))
+        logits[1] = 2.8 * max(0.0, 1.0 - hand_distance / 0.18)
+    if "edge_001" in visible_ids:
+        edge_distance = _distance(cup_position, _position(state, "edge_001"))
+        logits[2] = 2.8 * max(0.0, 1.0 - edge_distance / 0.22)
+    if "table_001" in visible_ids:
+        logits[0] += 0.4
+
+    context_count = sum(1 for object_id in visible_ids if _is_context_object(state.objects[object_id]))
+    if context_count:
+        confusion = min(1.6, 0.08 * context_count)
+        logits[0] += 0.5 * confusion
+        logits[1] -= confusion
+        logits[2] -= confusion
+    return logits
+
+
+def _cross_entropy(logits: list[float], target_index: int) -> float:
+    max_logit = max(logits)
+    exp_sum = sum(math.exp(logit - max_logit) for logit in logits)
+    log_prob = logits[target_index] - max_logit - math.log(exp_sum)
+    return -log_prob
+
+
 def _score_relation_candidate(state: WorldState, relation: Relation, scorer: LinearRelationScorer) -> float:
     feature = _relation_candidate_features(state, relation)
     return float(torch.sigmoid(feature @ scorer.weights + scorer.bias).item())
@@ -501,6 +566,10 @@ def _roles(obj: WorldObject) -> dict[str, float]:
     if not isinstance(value, dict):
         return {key: 0.0 for key in ROLE_KEYS}
     return {key: float(value.get(key, 0.0)) for key in ROLE_KEYS}
+
+
+def _is_context_object(obj: WorldObject) -> bool:
+    return _roles(obj)["context"] > 0.0 or obj.type in {"background_object", "scene_prop"}
 
 
 def _position(state: WorldState, object_id: str) -> tuple[float, float, float]:

@@ -71,7 +71,11 @@ distribution, remains precise under denser distractors, and transfers across
 aliased type names when role/affordance state variables are preserved. It fails
 when both type labels and role variables are removed. This is the operational
 boundary: objectification is not naming; it is persistent state with enough
-relational variables to support propagation.
+relational variables to support propagation. The same probe now includes a toy
+downstream branch diagnostic: role-aware learned repair improves aliased-type
+branch accuracy from `0.343750` to `0.671875` and lowers loss from `1.319667` to
+`0.885275`, while ungated dense-distractor repair worsens loss despite restoring
+frontier recall. This is still a diagnostic, not physical-law discovery.
 
 ## What Objectification Is Not
 
@@ -114,7 +118,8 @@ reports should include both execution metrics and objectification metrics.
 If the failure is a missing local relation rather than a missing object, WPU can
 attempt relation repair before widening the retrieval budget or invoking dense
 recompute. The repair itself must be evaluated by relation precision/recall and
-downstream prediction loss.
+downstream prediction loss; frontier recall alone is insufficient because
+spurious relations can expand `K` and damage prediction.
 
 ## Relation to Physical Approximation
 

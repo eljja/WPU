@@ -26,7 +26,11 @@ Use these reports for paper-level claims:
   distractor-induced spurious edges. The shifted probe separates nominal type
   labels from role-bearing object state: a learned relation scorer transfers
   across aliased type names when role/affordance variables are preserved, but it
-  fails when both type and role information are removed.
+  fails when both type and role information are removed. The same probe now
+  includes a toy downstream branch diagnostic: role-aware learned repair improves
+  aliased-type branch accuracy from `0.343750` to `0.671875` and lowers loss
+  from `1.319667` to `0.885275`, while ungated dense-distractor repair worsens
+  loss despite frontier recall `1.000000`.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.

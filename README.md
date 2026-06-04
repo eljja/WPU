@@ -150,7 +150,10 @@ controlled case. A small learned relation scorer now matches that type gate,
 stays precise under denser distractors, and transfers across aliased type names
 when role/affordance state variables are preserved. It fails when both type and
 role information are removed, which makes the objectification boundary
-measurable.
+measurable. The same toy probe now measures downstream branch prediction:
+role-aware learned repair improves aliased-type accuracy from `0.343750` to
+`0.671875` and lowers loss from `1.319667` to `0.885275`; ungated dense-distractor
+repair restores frontier recall but worsens loss.
 
 The current v2 working-set models are also available from the package root
 through the model factory:

@@ -65,7 +65,11 @@ distribution에서 hand-written type gate와 같은 결과를 내고, 더 조밀
 조건에서도 precision을 유지하며, role/affordance state variable이 보존되면 aliased type
 name을 넘어 transfer한다. 반대로 type label과 role variable이 모두 제거되면 실패한다.
 이것이 operational boundary다. 객체화는 이름 붙이기가 아니라, propagation을 지탱할
-충분한 relational variable을 가진 persistent state다.
+충분한 relational variable을 가진 persistent state다. 같은 probe는 toy downstream
+branch diagnostic도 포함한다. Role-aware learned repair는 aliased-type 조건에서 branch
+accuracy를 `0.343750`에서 `0.671875`로 올리고 loss를 `1.319667`에서 `0.885275`로
+낮춘다. 반대로 ungated dense-distractor repair는 frontier recall을 복구해도 loss를
+악화시킨다. 이것은 여전히 diagnostic이지 물리 법칙 발견 증거가 아니다.
 
 ## 객체화가 아닌 것
 
@@ -106,6 +110,8 @@ metric을 함께 넣어야 한다.
 실패 원인이 object 누락이 아니라 local relation 누락이라면, WPU는 retrieval budget을
 넓히거나 dense recompute로 가기 전에 relation repair를 시도할 수 있다. 단 repair
 자체는 relation precision/recall과 downstream prediction loss로 평가해야 한다.
+Frontier recall만으로는 부족하다. Spurious relation은 `K`를 키우고 prediction을
+악화시킬 수 있다.
 
 ## 물리적 근사와의 관계
 

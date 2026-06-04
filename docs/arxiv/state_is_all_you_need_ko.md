@@ -73,7 +73,10 @@ collapse가 더 심해진다. Hand-written type gate는 type name이 gate와 맞
 precision을 유지한다. 작은 learned scorer는 role/affordance variable이 보존되면
 aliased type name을 넘어 transfer하지만, type과 role 정보가 모두 제거되면 실패한다.
 따라서 객체화의 경계는 반증 가능하다. WPU가 필요한 것은 이름만 붙은 객체가 아니라
-relation hypothesis를 지탱할 persistent state variable이다.
+relation hypothesis를 지탱할 persistent state variable이다. Toy downstream diagnostic은
+첫 repair-to-prediction loop를 닫는다. Role-aware learned repair는 aliased-type branch
+accuracy를 0.343750에서 0.671875로 올리고 loss를 1.319667에서 0.885275로 낮춘다.
+반대로 ungated dense-distractor repair는 frontier recall을 복구하지만 loss를 악화시킨다.
 정식 정의는 `docs/objectification.ko.md`에 둔다.
 
 ## 2. 선행연구와 차별성

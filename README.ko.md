@@ -156,7 +156,10 @@ geometry-inferred relation patch를 추가할 수 있다. 이것은 state repair
 learned relation scorer는 type gate와 같은 결과를 내고, 더 조밀한 distractor에서도
 precision을 유지하며, role/affordance state variable이 보존되면 aliased type name을
 넘어 transfer한다. 반대로 type과 role 정보가 모두 제거되면 실패하므로, 객체화의
-경계가 측정 가능해진다.
+경계가 측정 가능해진다. 같은 toy probe는 downstream branch prediction도 측정한다.
+Role-aware learned repair는 aliased-type accuracy를 `0.343750`에서 `0.671875`로
+올리고 loss를 `1.319667`에서 `0.885275`로 낮춘다. Ungated dense-distractor repair는
+frontier recall을 복구하지만 loss를 악화시킨다.
 
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 

@@ -30,7 +30,11 @@ only while type names match the gate. A small learned scorer transfers across
 aliased type names when role/affordance variables are preserved, but fails when
 both type and role information are removed. This makes the objectification
 boundary falsifiable: WPU does not need names alone; it needs persistent state
-variables that can support relation hypotheses.
+variables that can support relation hypotheses. A toy downstream diagnostic
+closes the first repair-to-prediction loop: role-aware learned repair improves
+aliased-type branch accuracy from `0.343750` to `0.671875` and lowers loss from
+`1.319667` to `0.885275`, while ungated dense-distractor repair restores frontier
+recall but worsens loss.
 
 The WPU claim is therefore operational rather than representational:
 

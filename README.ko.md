@@ -62,7 +62,9 @@ overlay 비용을 계측하며 regime을 찾는 단계다.
 
 v1 reference model은 event-driven sparse propagation과 dense tensor recompute
 fallback을 함께 사용한다. Scheduler는 affected-state ratio, fanout, propagation
-depth, branch pressure를 보고 sparse/hybrid/dense path를 선택한다.
+depth, branch pressure를 보고 sparse/hybrid/dense path를 선택한다. Scheduler는
+objectification score도 사용한다. Identity/relation/delta 품질이 낮으면 blind
+sparse routing을 피하고 hybrid 또는 dense recompute로 올린다.
 
 ```text
 rho = (DeltaN * fanout^depth * branches) / N
@@ -129,14 +131,19 @@ event = create_touch_event()
 event_delta = wpu.StateStore(state).apply_event(event)
 sparse_delta = wpu.SparsePropagationEngine(max_depth=1).sparse_propagate(state, event).delta
 dense_delta = wpu.DenseRecomputeEngine().dense_recompute(state, region=["cup_001"]).delta
+objectification = wpu.evaluate_objectification(state, delta=event_delta)
 
 print(event_delta.object_updates["cup_001"])
 print(sparse_delta.object_updates["cup_001"])
 print(dense_delta.object_updates["cup_001"])
+print(objectification.contract_score)
 ```
 
 이것이 v1의 의도된 interface다. Explicit world state는 event delta로 patch되고,
 local propagation을 거친 뒤, 필요하면 제한된 dense region에서 recompute된다.
+`evaluate_objectification`은 propagation 전에 supplied state가 WPU object contract를
+만족하는지 검사한다. 즉 stable identity, valid relation endpoint, confidence,
+valid delta, optional causal-working-set locality를 확인한다.
 
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 
@@ -162,6 +169,8 @@ model = wpu.create_model(
   accuracy drop은 `0.0250`이고, Graph Transformer는 `0.3438` 떨어진다.
 - 하지만 `N=204` 같은 large-N regime에서는 현재 WPU accuracy가 무너지고
   graph/token baseline이 더 강하다.
+- 객체화는 이제 public API에서 측정 가능한 contract가 되었지만, 실제
+  perception-to-state adapter의 객체화 품질 benchmark는 아직 필요하다.
 
 v1의 핵심 목표는 명확하다.
 

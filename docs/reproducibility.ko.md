@@ -42,6 +42,7 @@ python -c "import wpu; wpu.create_model('wpu-cws-indexed', hidden_dim=16, layers
 현재 test suite가 확인하는 항목:
 
 - state model JSON과 delta overlay;
+- objectification contract reporting;
 - scheduler behavior;
 - sparse/dense/model shape path;
 - rollout probability normalization;
@@ -105,6 +106,8 @@ Generated result를 `docs/experiments/`로 승격하기 전 확인할 것:
 
 - 의도한 모든 seed가 완료되었는지;
 - matched-baseline claim을 위한 model parameter scale이 비교 가능한지;
+- explicit object state, sparse retrieval, perception/state adapter에 의존하는
+  claim이면 `ObjectificationReport` metric을 함께 기록했는지;
 - 모든 `Source CSV` 또는 `Source CSVs` entry가 `docs/experiments/` 아래에서
   git-tracked 상태이고 비어 있지 않은지;
 - 해석이 `docs/claims.ko.md`의 claim boundary를 따르는지;

@@ -11,6 +11,20 @@ and the arXiv manuscript as the authoritative summary.
 
 ## Implemented V2 Components
 
+### Objectification Contract
+
+Added `wpu.core.objectification.evaluate_objectification` and
+`ObjectificationReport`. This makes objectification a measurable contract rather
+than a prose-only definition. The report checks identity coverage, relation
+endpoint validity, object/relation confidence, delta validity, and optional
+delta locality against an expected causal working set.
+
+The scheduler now accepts an `objectification_score`. Low scores escalate
+execution away from blind sparse routing toward hybrid or dense recompute. This
+does not solve perception-to-state construction, but it gives WPU a concrete
+failure boundary: if the supplied objects/relations/deltas are unreliable,
+sparse state propagation should not be trusted.
+
 ### Causal Index
 
 Added `wpu.core.causal_index.CausalIndex`, a first state-indexed retrieval

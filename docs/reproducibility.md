@@ -43,6 +43,7 @@ python -c "import wpu; wpu.create_model('wpu-cws-indexed', hidden_dim=16, layers
 The test suite covers:
 
 - state model JSON and delta overlays;
+- objectification contract reporting;
 - scheduler behavior;
 - sparse/dense/model shape paths;
 - rollout probability normalization;
@@ -111,6 +112,8 @@ Promote a generated result into `docs/experiments/` only after checking:
 
 - all intended seeds completed;
 - model parameter scales are comparable for matched-baseline claims;
+- `ObjectificationReport` metrics are logged when a claim depends on explicit
+  object state, sparse retrieval, or perception/state adapters;
 - every `Source CSV` or `Source CSVs` entry is git-tracked under
   `docs/experiments/` and nonempty;
 - interpretation follows `docs/claims.md`;

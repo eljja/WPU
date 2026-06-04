@@ -83,7 +83,14 @@ simulator export, database state, or tracker output is converted into
 persistent, addressable objects with typed attributes, typed relations,
 uncertainty, admissible deltas, and branch-local overlays. Objectification is
 not a claim that perception is solved; it is the contract that defines the
-state substrate consumed by WPU.
+state substrate consumed by WPU. The reference implementation treats this as a
+measurable contract rather than a slogan: identity coverage, relation endpoint
+validity, confidence, delta validity, and causal-working-set locality can be
+reported before propagation. This separates a WPU failure caused by poor
+objectification from a failure caused by the propagation model itself. In the
+current scheduler, the same contract can act as a safety signal: low
+objectification quality escalates execution away from blind sparse propagation
+toward hybrid or dense recomputation.
 
 We introduce the World-State Processing Unit (WPU) as both a model family and an
 execution abstraction. It is not proposed as a replacement for GPUs, TPUs, or
@@ -106,8 +113,9 @@ This paper makes four contributions. First, it formulates a token-state
 non-equivalence claim in operational rather than representational terms: tokens
 can serialize state, but serialization does not preserve state operations as
 invariants. Second, it defines objectification as the construction of persistent
-state objects and propagation as the central operation over their relations,
-relating this to simplified local physical causality.
+state objects, makes objectification quality measurable as a pre-propagation
+contract, and treats propagation as the central operation over object
+relations, relating this to simplified local physical causality.
 Third, it proposes a WPU architecture with sparse, hybrid, and dense execution
 paths selected by an affected-state crossover metric. Fourth, it provides a
 minimal reference implementation and small-scale validation task, intended as a

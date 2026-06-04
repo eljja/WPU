@@ -55,7 +55,9 @@ state-native execution is useful.
 The v1 reference model implements WPU as event-driven sparse propagation with a
 dense tensor recompute fallback. A scheduler estimates the affected-state ratio,
 fanout, propagation depth, and branch complexity, then routes execution through
-sparse, hybrid, or dense paths.
+sparse, hybrid, or dense paths. The scheduler also accepts an objectification
+score; low identity/relation/delta quality disables blind sparse routing and
+escalates execution to hybrid or dense recompute.
 
 ![WPU hybrid sparse-dense execution architecture](docs/figures/wpu_hybrid_architecture.svg)
 
@@ -121,15 +123,20 @@ event = create_touch_event()
 event_delta = wpu.StateStore(state).apply_event(event)
 sparse_delta = wpu.SparsePropagationEngine(max_depth=1).sparse_propagate(state, event).delta
 dense_delta = wpu.DenseRecomputeEngine().dense_recompute(state, region=["cup_001"]).delta
+objectification = wpu.evaluate_objectification(state, delta=event_delta)
 
 print(event_delta.object_updates["cup_001"])
 print(sparse_delta.object_updates["cup_001"])
 print(dense_delta.object_updates["cup_001"])
+print(objectification.contract_score)
 ```
 
 This is the intended v1 interface: explicit world state is patched by event
 deltas, propagated locally, and optionally recomputed over a bounded dense
-region.
+region. `evaluate_objectification` checks whether the supplied state satisfies
+the WPU object contract before propagation: stable identities, valid relation
+endpoints, usable confidence, valid deltas, and optional causal-working-set
+locality.
 
 The current v2 working-set models are also available from the package root
 through the model factory:
@@ -212,6 +219,8 @@ The current evidence supports a regime hypothesis, not universal dominance.
   token baselines remain stronger there.
 - Fixed `rho` routing thresholds are useful for exposing route regimes but are
   not sufficient as a final scheduler.
+- Objectification is now a measured contract in the public API, but its quality
+  has not yet been benchmarked for real perception-to-state adapters.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

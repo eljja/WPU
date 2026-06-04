@@ -204,7 +204,7 @@ def test_experiment_source_csv_references_are_nonempty() -> None:
 
 
 def test_claim_ledgers_have_matching_claim_ids() -> None:
-    expected_ids = [f"C{index}" for index in range(1, 11)]
+    expected_ids = [f"C{index}" for index in range(1, 12)]
     issues: list[str] = []
     for ledger_path in (ROOT / "docs" / "claims.md", ROOT / "docs" / "claims.ko.md"):
         ids = [

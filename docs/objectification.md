@@ -45,6 +45,12 @@ A WPU object should satisfy the following contract:
 The current code expresses this contract through `WorldObject`, `Relation`,
 `Event`, `DeltaState`, `Branch`, and `WorldState`.
 
+The public API also exposes `evaluate_objectification(state, ...)`, which
+returns an `ObjectificationReport`. The report measures whether a supplied
+state satisfies the operational contract before propagation: identity coverage,
+relation endpoint validity, object/relation confidence, delta validity, and
+optional delta locality against an expected causal working set.
+
 ## What Objectification Is Not
 
 Objectification does not mean that WPU already solves perception. The current
@@ -78,6 +84,11 @@ The relevant metrics are therefore not raw token/sec but:
 - state-patch latency;
 - bytes moved per causal update;
 - accuracy retained at the sparse runtime crossover.
+
+Objectification quality is a prerequisite for these metrics. If identity is
+unstable, relation endpoints are invalid, or deltas hit non-causal objects, WPU
+can spend less compute while becoming less correct. Therefore performance
+reports should include both execution metrics and objectification metrics.
 
 ## Relation to Physical Approximation
 
@@ -129,7 +140,8 @@ program, not as a current result.
 
 The concrete path to improve WPU through objectification is:
 
-1. Strengthen object contracts with schema validation and state-integrity tests.
+1. Strengthen object contracts with schema validation, `ObjectificationReport`,
+   and state-integrity tests.
 2. Add relation families for contact, support, containment, flow, dependency,
    ownership, and constraint.
 3. Train propagation with local conservation, consistency, and no-spurious-delta
@@ -140,7 +152,12 @@ The concrete path to improve WPU through objectification is:
    available.
 6. Learn candidate relations from object histories and evaluate whether they
    improve prediction under held-out regimes.
-7. Report failures where objectification is wrong: missed objects, identity
+7. Couple retriever/projection budgets to objectification quality: low relation
+   validity or poor delta locality should trigger wider retrieval, dense
+   recompute, or state repair rather than blind sparse propagation. The current
+   scheduler implements a first version by escalating low objectification
+   scores away from sparse routing.
+8. Report failures where objectification is wrong: missed objects, identity
    swaps, relation hallucinations, and global events where `K` is not small.
 
 ## Claim Boundary

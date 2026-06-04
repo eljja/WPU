@@ -58,7 +58,13 @@ primitive에 관한 주장이다.
 addressable한 객체로 바꾸고, 그 객체에 typed attribute, typed relation,
 uncertainty, admissible delta, branch-local overlay를 부여하는 것이다. 객체화는
 perception이 해결되었다는 주장이 아니라, WPU core가 소비하는 state substrate의
-계약이다. 정식 정의는 `docs/objectification.ko.md`에 둔다.
+계약이다. Reference implementation은 이 계약을 단순 구호가 아니라 측정 가능한
+pre-propagation report로 다룬다. Identity coverage, relation endpoint validity,
+confidence, delta validity, causal-working-set locality를 보고할 수 있어야 한다.
+그래야 WPU 실패가 객체화 실패인지 propagation model 실패인지 분리할 수 있다.
+현재 scheduler는 이 contract를 safety signal로도 사용한다. 객체화 품질이 낮으면
+blind sparse propagation이 아니라 hybrid 또는 dense recomputation으로 올린다.
+정식 정의는 `docs/objectification.ko.md`에 둔다.
 
 ## 2. 선행연구와 차별성
 

@@ -5,6 +5,12 @@ paper and the v1-to-v2 evidence trail. The paper claim is intentionally
 regime-specific: WPU is not shown to be universally superior to token or graph
 baselines.
 
+For new experiments, objectified state is now a measured input contract. When a
+result depends on explicit objects, sparse retrieval, or a perception/state
+adapter, log `ObjectificationReport` fields alongside accuracy, loss, latency,
+work proxy, calibration, and route statistics. This separates propagation
+failure from objectification failure.
+
 ## Current Evidence Hierarchy
 
 Use these reports for paper-level claims:

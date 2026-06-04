@@ -41,6 +41,12 @@ WPU 객체는 다음 계약을 만족해야 한다.
 현재 코드는 이 계약을 `WorldObject`, `Relation`, `Event`, `DeltaState`,
 `Branch`, `WorldState`로 표현한다.
 
+Public API는 `evaluate_objectification(state, ...)`도 제공한다. 이 함수는
+`ObjectificationReport`를 반환하며, propagation 전에 supplied state가 operational
+contract를 만족하는지 측정한다. 측정 항목은 identity coverage, relation endpoint
+validity, object/relation confidence, delta validity, expected causal working
+set 대비 optional delta locality다.
+
 ## 객체화가 아닌 것
 
 객체화는 WPU가 이미 perception을 해결했다는 뜻이 아니다. 현재 WPU core는 simulator,
@@ -72,6 +78,11 @@ efficiency, memory traffic을 개선할 수 있다.
 - state-patch latency;
 - bytes moved per causal update;
 - sparse runtime crossover에서 유지되는 accuracy.
+
+객체화 품질은 이러한 metric의 전제 조건이다. identity가 불안정하거나 relation
+endpoint가 깨져 있거나 delta가 non-causal object를 갱신하면, WPU는 계산량을 줄이면서
+동시에 더 틀릴 수 있다. 따라서 성능 보고에는 execution metric과 objectification
+metric을 함께 넣어야 한다.
 
 ## 물리적 근사와의 관계
 
@@ -122,13 +133,14 @@ observed object histories
 
 객체화에 기반해 WPU를 개선하는 구체적 경로는 다음이다.
 
-1. Schema validation과 state-integrity test로 object contract를 강화한다.
+1. Schema validation, `ObjectificationReport`, state-integrity test로 object contract를 강화한다.
 2. Contact, support, containment, flow, dependency, ownership, constraint relation family를 추가한다.
 3. Domain knowledge가 있을 때 local conservation, consistency, no-spurious-delta loss로 propagation을 학습한다.
 4. 반복 delta 이후에도 object identity와 relation consistency가 유지되는지 long-horizon rollout test를 추가한다.
 5. Ground-truth object/relation이 있는 simulator-backed benchmark를 추가한다.
 6. Object history에서 candidate relation을 학습하고 held-out regime에서 prediction을 개선하는지 평가한다.
-7. 객체화 실패도 보고한다. Missed object, identity swap, relation hallucination, `K`가 작지 않은 global event가 포함된다.
+7. Retriever/projection budget을 객체화 품질에 연결한다. 낮은 relation validity나 낮은 delta locality는 blind sparse propagation이 아니라 wider retrieval, dense recompute, state repair를 trigger해야 한다. 현재 scheduler는 낮은 objectification score를 sparse routing에서 hybrid/dense로 올리는 첫 버전을 구현한다.
+8. 객체화 실패도 보고한다. Missed object, identity swap, relation hallucination, `K`가 작지 않은 global event가 포함된다.
 
 ## 주장 경계
 

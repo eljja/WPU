@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import torch
 
+from wpu.core.objectification import evaluate_objectification
 from wpu.core.state import Event, Relation, WorldState
 from wpu.engines.scheduler import SchedulerMetrics
 
@@ -72,6 +73,7 @@ class StateGraphBatch:
                     branches=3,
                     total_n=max(len(state.objects), 1),
                     uncertainty_growth=max(0.0, 1.0 - event.confidence),
+                    objectification_score=evaluate_objectification(state).contract_score,
                 )
             )
 

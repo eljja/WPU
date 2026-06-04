@@ -1,5 +1,6 @@
 """World-State Processing Unit research prototype."""
 
+from wpu.core.objectification import ObjectificationReport, evaluate_objectification
 from wpu.core.state import Branch, DeltaState, Event, Relation, WorldObject, WorldState
 from wpu.engines import DenseRecomputeEngine, ExecutionPath, Scheduler, SchedulerMetrics, SparsePropagationEngine, rollout
 from wpu.memory import DeltaStore, MemoryEstimate, StateStore, estimate_memory
@@ -15,6 +16,7 @@ __all__ = [
     "ExecutionPath",
     "MODEL_NAMES",
     "MemoryEstimate",
+    "ObjectificationReport",
     "Relation",
     "Scheduler",
     "SchedulerMetrics",
@@ -26,6 +28,7 @@ __all__ = [
     "WorldState",
     "WorldStateProcessor",
     "create_model",
+    "evaluate_objectification",
     "estimate_memory",
     "rollout",
 ]

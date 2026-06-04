@@ -43,6 +43,13 @@ relation precision/recall `0.987500` on held-out `hidden_field`, improving
 downstream accuracy from `0.494531` to `0.992188`. This is still synthetic
 evidence; it is not a claim of physical-law discovery.
 
+A third toy probe tests relation-to-law transfer. A history-derived relation
+selector plus an interpretable inverse-distance local law transfers to renamed
+held-out `hidden_inverse`, reaching five-seed mean relation precision/recall
+`0.988281` and delta MSE `0.000828` versus `0.445909` for no relation or type
+prior. This is a controlled synthetic bridge from objectification to approximate
+local theory, not evidence of unknown-law discovery.
+
 The WPU claim is therefore operational rather than representational:
 
 ```text

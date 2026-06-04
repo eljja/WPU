@@ -234,6 +234,40 @@ def test_object_history_hidden_mechanism_probe_multiseed_summary_runs(tmp_path: 
     assert "hidden_mechanism_probe row_type=summary" in result.stdout
 
 
+def test_object_relation_law_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "object_relation_law.csv"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/object_relation_law_probe.py",
+            "--train-samples",
+            "16",
+            "--eval-samples",
+            "8",
+            "--train-steps",
+            "4",
+            "--candidates",
+            "4",
+            "--seeds",
+            "3",
+            "5",
+            "--out",
+            str(output),
+        ],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    text = output.read_text(encoding="utf-8")
+    assert "summary,all,hidden_inverse,history_relation_law" in text
+    assert "delta_mse" in text
+    assert "object_relation_law_probe row_type=summary" in result.stdout
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

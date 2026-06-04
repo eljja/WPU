@@ -37,6 +37,12 @@ Use these reports for paper-level claims:
   `support_transfer` reaches five-seed mean relation precision/recall `0.987500`
   on held-out `hidden_field`, improving downstream accuracy from `0.494531` to
   `0.992188`.
+- `object_relation_law_probe_results.md`: toy local-law probe showing the next
+  step after relation discovery. A history-derived relation selector plus an
+  interpretable inverse-distance law transfers to renamed held-out
+  `hidden_inverse`, reaching five-seed mean relation precision/recall `0.988281`
+  and delta MSE `0.000828` versus `0.445909` for no relation or type prior. This
+  is still synthetic and does not establish real physical-law discovery.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.

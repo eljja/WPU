@@ -163,6 +163,14 @@ scorer trained on `contact_transfer` and `support_transfer` transfers to held-ou
 or type prior. This is a synthetic hidden-mechanism diagnostic, not evidence of
 real physical-law discovery.
 
+A third toy probe tests the next rung: fitting a simple local law on top of
+objectified relation histories. A history-derived relation selector plus an
+interpretable inverse-distance law transfers to renamed held-out
+`hidden_inverse`, reaching five-seed mean relation precision/recall `0.988281`
+and delta MSE `0.000828` versus `0.445909` for no relation or type prior. This
+shows a controlled path from objectification to approximate local theory, but it
+is still generated synthetic evidence.
+
 The current v2 working-set models are also available from the package root
 through the model factory:
 

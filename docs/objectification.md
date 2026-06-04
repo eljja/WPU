@@ -176,6 +176,15 @@ object types. Over five seeds, it reaches mean relation precision/recall
 transfer beyond names in a synthetic setting. It is not evidence of real
 physical-law discovery.
 
+A follow-up local-law probe adds one rung between relation discovery and theory
+discovery. A history-derived relation selector is combined with an interpretable
+inverse-distance law and evaluated on renamed held-out `hidden_inverse`. Over
+five seeds it reaches mean relation precision/recall `0.988281` and delta MSE
+`0.000828`, compared with `0.445909` for no relation or type prior. This shows
+that objectified histories can support approximate local law fitting in a
+controlled synthetic setting. It does not show that unknown physical laws have
+been discovered.
+
 The development ladder is therefore:
 
 ```text
@@ -183,6 +192,7 @@ measured object contract
   -> deterministic relation repair
   -> learned relation candidates
   -> held-out-rule prediction gain
+  -> interpretable local-law fit
   -> falsifiable revised relation theory
 ```
 

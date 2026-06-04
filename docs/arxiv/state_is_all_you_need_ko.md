@@ -82,6 +82,12 @@ family로 transfer할 수 있는지 테스트한다. `contact_transfer`와 `supp
 학습한 history scorer는 held-out `hidden_field`에서 5개 seed 평균 relation
 precision/recall 0.987500을 기록하고 downstream accuracy를 0.494531에서
 0.992188로 올린다. 이것도 synthetic evidence이며 물리 법칙 발견 주장이 아니다.
+세 번째 toy probe는 relation-to-law transfer를 테스트한다. History-derived relation
+selector와 해석 가능한 inverse-distance local law를 결합하면 object type name이 바뀐
+held-out `hidden_inverse`에서 5개 seed 평균 relation precision/recall 0.988281,
+delta MSE 0.000828을 기록한다. No-relation 또는 type prior의 delta MSE는
+0.445909다. 이는 객체화에서 approximate local theory로 가는 controlled synthetic
+bridge이지 unknown-law discovery 증거는 아니다.
 정식 정의는 `docs/objectification.ko.md`에 둔다.
 
 ## 2. 선행연구와 차별성

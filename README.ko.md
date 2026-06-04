@@ -168,6 +168,13 @@ history에서 relation candidate를 학습하는 방식이다. `contact_transfer
 `0.992188`를 기록한다. No-relation 또는 type prior는 `0.494531`에 머문다.
 이것은 synthetic hidden-mechanism diagnostic이지 실제 물리 법칙 발견 증거는 아니다.
 
+세 번째 toy probe는 다음 단계를 테스트한다. Object history에서 찾은 relation 위에
+해석 가능한 inverse-distance local law를 fit하고, object type name이 바뀐 held-out
+`hidden_inverse`로 transfer한다. 5개 seed 평균 relation precision/recall `0.988281`,
+delta MSE `0.000828`를 기록하며, no-relation 또는 type prior의 `0.445909`보다 낮다.
+이는 객체화가 approximate local theory로 이어질 수 있는 controlled path를 보이지만,
+여전히 generated synthetic evidence다.
+
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 
 ```python

@@ -38,10 +38,10 @@ recall but worsens loss.
 
 A second toy probe tests whether relation candidates can be learned from object
 histories and transferred to a held-out mechanism family. A history scorer
-trained on `contact_transfer` and `support_transfer` reaches relation
-precision/recall `0.988281` on held-out `hidden_field`, improving downstream
-accuracy from `0.496094` to `0.996094`. This is still synthetic evidence; it is
-not a claim of physical-law discovery.
+trained on `contact_transfer` and `support_transfer` reaches five-seed mean
+relation precision/recall `0.987500` on held-out `hidden_field`, improving
+downstream accuracy from `0.494531` to `0.992188`. This is still synthetic
+evidence; it is not a claim of physical-law discovery.
 
 The WPU claim is therefore operational rather than representational:
 

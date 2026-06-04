@@ -16,18 +16,20 @@ Source CSV: `docs/experiments/object_history_hidden_mechanism_probe.csv`
 Reproduce:
 
 ```bash
-python scripts/object_history_hidden_mechanism_probe.py --train-samples 512 --eval-samples 256 --seed 23 --candidates 8 --history-steps 12 --train-steps 160 --threshold 0.5 --out docs/experiments/object_history_hidden_mechanism_probe.csv
+python scripts/object_history_hidden_mechanism_probe.py --train-samples 512 --eval-samples 256 --seeds 23 29 31 37 41 --candidates 8 --history-steps 12 --train-steps 160 --threshold 0.5 --out docs/experiments/object_history_hidden_mechanism_probe.csv
 ```
 
 ## Result
 
+The table reports five-seed means over 1,280 held-out `hidden_field` samples.
+
 | policy | relation_precision | relation_recall | mean_selected_k | downstream_accuracy | downstream_loss |
 |---|---:|---:|---:|---:|---:|
-| no_relation | 0.000000 | 0.000000 | 0.000000 | 0.496094 | 0.693147 |
-| geometry_only | 0.137369 | 0.460938 | 3.355469 | 0.765625 | 0.565862 |
-| type_prior | 0.000000 | 0.000000 | 0.000000 | 0.496094 | 0.693147 |
-| history_scorer | 0.988281 | 0.988281 | 1.000000 | 0.996094 | 0.275466 |
-| oracle_relation | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 0.270057 |
+| no_relation | 0.000000 | 0.000000 | 0.000000 | 0.494531 | 0.693147 |
+| geometry_only | 0.128422 | 0.440625 | 3.430469 | 0.732812 | 0.576752 |
+| type_prior | 0.000000 | 0.000000 | 0.000000 | 0.494531 | 0.693147 |
+| history_scorer | 0.987500 | 0.987500 | 1.000000 | 0.992188 | 0.273800 |
+| oracle_relation | 1.000000 | 1.000000 | 1.000000 | 1.000000 | 0.268181 |
 
 ## Interpretation
 
@@ -37,8 +39,8 @@ repair probe. The learned history scorer is trained on two visible mechanism
 families and evaluated on a renamed held-out mechanism. Type prior fails because
 the evaluation types are unseen. Geometry-only retrieval partially helps but
 selects too many distractors. The history scorer nearly matches the oracle by
-using lagged object influence, improving downstream accuracy from `0.496094` to
-`0.996094` and lowering loss from `0.693147` to `0.275466`.
+using lagged object influence, improving five-seed mean downstream accuracy from
+`0.494531` to `0.992188` and lowering loss from `0.693147` to `0.273800`.
 
 The result supports a bounded next-step claim: objectification can expose
 history-derived relation variables that are more transferable than nominal type

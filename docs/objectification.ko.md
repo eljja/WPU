@@ -160,9 +160,9 @@ observed object histories
 
 현재 저장소에는 이 방향을 위한 toy hidden-mechanism probe가 추가되어 있다.
 `contact_transfer`와 `support_transfer`의 object history로 학습한 relation scorer를
-object type name이 바뀐 held-out `hidden_field`에서 평가한다. 이 scorer는 relation
-precision/recall `0.988281`, downstream accuracy `0.996094`를 기록하지만, type prior는
-`0.496094`에 머문다. 이는 synthetic setting에서 history-derived relation variable이
+object type name이 바뀐 held-out `hidden_field`에서 평가한다. 이 scorer는 5개 seed 평균
+relation precision/recall `0.987500`, downstream accuracy `0.992188`를 기록하지만,
+type prior는 `0.494531`에 머문다. 이는 synthetic setting에서 history-derived relation variable이
 이름을 넘어 transfer할 수 있음을 보여주는 증거다. 실제 물리 법칙 발견 증거는 아니다.
 
 따라서 개발 단계는 다음과 같다.

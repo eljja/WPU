@@ -170,10 +170,11 @@ program, not as a current result.
 The current repository now includes a toy hidden-mechanism probe for this
 direction. A relation scorer trained from object histories on `contact_transfer`
 and `support_transfer` is evaluated on held-out `hidden_field` with renamed
-object types. It reaches relation precision/recall `0.988281` and downstream
-accuracy `0.996094`, while type prior remains at `0.496094`. This is evidence
-that history-derived relation variables can transfer beyond names in a synthetic
-setting. It is not evidence of real physical-law discovery.
+object types. Over five seeds, it reaches mean relation precision/recall
+`0.987500` and downstream accuracy `0.992188`, while type prior remains at
+`0.494531`. This is evidence that history-derived relation variables can
+transfer beyond names in a synthetic setting. It is not evidence of real
+physical-law discovery.
 
 The development ladder is therefore:
 

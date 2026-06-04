@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import defaultdict
 import csv
 from dataclasses import dataclass
 import math
@@ -16,6 +17,13 @@ import torch  # noqa: E402
 TRAIN_MECHANISMS = ("contact_transfer", "support_transfer")
 EVAL_MECHANISMS = ("hidden_field",)
 POLICIES = ("no_relation", "geometry_only", "type_prior", "history_scorer", "oracle_relation")
+SUMMARY_COLUMNS = (
+    "relation_precision",
+    "relation_recall",
+    "mean_selected_k",
+    "downstream_accuracy",
+    "downstream_loss",
+)
 
 
 @dataclass(slots=True)
@@ -51,6 +59,7 @@ def main() -> None:
     parser.add_argument("--train-samples", type=int, default=512)
     parser.add_argument("--eval-samples", type=int, default=256)
     parser.add_argument("--seed", type=int, default=23)
+    parser.add_argument("--seeds", type=int, nargs="*", help="Optional explicit seed list for a multi-seed run.")
     parser.add_argument("--candidates", type=int, default=8)
     parser.add_argument("--history-steps", type=int, default=12)
     parser.add_argument("--train-steps", type=int, default=160)
@@ -62,21 +71,29 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    scorer = train_history_scorer(
-        samples=args.train_samples,
-        seed=args.seed,
-        candidates=args.candidates,
-        history_steps=args.history_steps,
-        train_steps=args.train_steps,
-    )
-    rows = run_probe(
-        scorer=scorer,
-        samples=args.eval_samples,
-        seed=args.seed + 100_000,
-        candidates=args.candidates,
-        history_steps=args.history_steps,
-        threshold=args.threshold,
-    )
+    seeds = args.seeds if args.seeds else [args.seed]
+    rows: list[dict[str, str]] = []
+    for seed in seeds:
+        scorer = train_history_scorer(
+            samples=args.train_samples,
+            seed=seed,
+            candidates=args.candidates,
+            history_steps=args.history_steps,
+            train_steps=args.train_steps,
+        )
+        seed_rows = run_probe(
+            scorer=scorer,
+            samples=args.eval_samples,
+            seed=seed + 100_000,
+            candidates=args.candidates,
+            history_steps=args.history_steps,
+            threshold=args.threshold,
+        )
+        for row in seed_rows:
+            rows.append({"row_type": "seed", "seed": str(seed), **row, "seed_count": "1"})
+    if len(seeds) > 1:
+        rows.extend(summarize_seed_rows(rows, seeds=seeds))
+
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -84,8 +101,11 @@ def main() -> None:
         writer.writerows(rows)
 
     for row in rows:
+        if len(seeds) > 1 and row["row_type"] != "summary":
+            continue
         print(
             "hidden_mechanism_probe "
+            f"row_type={row['row_type']} "
             f"policy={row['policy']} "
             f"mechanism={row['mechanism']} "
             f"relation_recall={row['relation_recall']} "
@@ -156,6 +176,30 @@ def run_probe(
                 )
             )
     return rows
+
+
+def summarize_seed_rows(rows: list[dict[str, str]], *, seeds: list[int]) -> list[dict[str, str]]:
+    groups: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        groups[(row["mechanism"], row["policy"])].append(row)
+
+    summaries: list[dict[str, str]] = []
+    for (mechanism, policy), group in sorted(groups.items()):
+        first = group[0]
+        summary = {
+            "row_type": "summary",
+            "seed": "all",
+            "mechanism": mechanism,
+            "policy": policy,
+            "samples": str(sum(int(row["samples"]) for row in group)),
+            "candidate_count": first["candidate_count"],
+        }
+        for column in SUMMARY_COLUMNS:
+            values = [float(row[column]) for row in group]
+            summary[column] = f"{sum(values) / len(values):.6f}"
+        summary["seed_count"] = str(len(seeds))
+        summaries.append(summary)
+    return summaries
 
 
 def evaluate_policy(

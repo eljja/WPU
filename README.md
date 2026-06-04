@@ -158,10 +158,10 @@ repair restores frontier recall but worsens loss.
 A second toy probe tests the longer-term objectification direction: learning
 relation candidates from object histories rather than from type names. A history
 scorer trained on `contact_transfer` and `support_transfer` transfers to held-out
-`hidden_field`, reaching relation precision/recall `0.988281` and downstream
-accuracy `0.996094` versus `0.496094` for no relation or type prior. This is a
-synthetic hidden-mechanism diagnostic, not evidence of real physical-law
-discovery.
+`hidden_field`. Over five seeds it reaches mean relation precision/recall
+`0.987500` and downstream accuracy `0.992188` versus `0.494531` for no relation
+or type prior. This is a synthetic hidden-mechanism diagnostic, not evidence of
+real physical-law discovery.
 
 The current v2 working-set models are also available from the package root
 through the model factory:

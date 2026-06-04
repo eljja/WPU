@@ -58,7 +58,9 @@ exists but relation extraction missed local connectivity. This makes relation
 repair explicit and auditable instead of silently falling back to token or dense
 processing. Repair can be type-gated: geometry-only repair may recover recall
 while adding spurious distractor edges, so typed object identity is part of the
-repair contract.
+repair contract. The current probe also includes a small learned relation
+scorer that matches the hand-written type gate in a controlled distractor
+distribution.
 
 ## What Objectification Is Not
 

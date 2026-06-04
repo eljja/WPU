@@ -150,7 +150,9 @@ Object identity는 있지만 local relation extraction이 edge를 놓친 경우,
 geometry-inferred relation patch를 추가할 수 있다. 이것은 state repair heuristic이지
 물리 법칙을 해결했다는 주장이 아니다. Repair probe는 typed objectification이 왜
 중요한지 보여준다. Geometry-only repair는 frontier recall을 복구하지만 distractor를
-붙일 수 있고, type-gated repair는 controlled case에서 precision을 유지한다.
+붙일 수 있고, type-gated repair는 controlled case에서 precision을 유지한다. 작은
+learned relation scorer도 같은 controlled distribution에서 type gate와 같은 결과를
+낸다.
 
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 

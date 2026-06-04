@@ -23,7 +23,8 @@ Use these reports for paper-level claims:
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid
-  distractor-induced spurious edges.
+  distractor-induced spurious edges; a small learned relation scorer matches the
+  type gate in the controlled distribution.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.

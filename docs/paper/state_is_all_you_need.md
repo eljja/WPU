@@ -24,7 +24,9 @@ can also apply conservative geometry-derived relation repair. Repaired edges are
 logged hypotheses, not ground-truth physics. A controlled repair probe shows
 that type information is necessary: ungated geometry repair recovers frontier
 recall but can attach distractors, while type-gated repair preserves precision
-in the tested setting.
+in the tested setting. A small learned scorer matches the type gate in this
+controlled distribution, but transfer under hidden-rule or shifted distractor
+regimes remains open.
 
 The WPU claim is therefore operational rather than representational:
 

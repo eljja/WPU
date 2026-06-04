@@ -144,7 +144,8 @@ relation patches before sparse propagation. This is a state repair heuristic,
 not a claim that physical law has been solved. The repair probe shows why typed
 objectification matters: geometry-only repair restores frontier recall but can
 attach distractors, while type-gated repair preserves precision in the
-controlled case.
+controlled case. A small learned relation scorer now matches that type gate in
+the same controlled distribution.
 
 The current v2 working-set models are also available from the package root
 through the model factory:

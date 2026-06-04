@@ -69,7 +69,9 @@ Object identity는 있지만 local relation extraction이 edge를 놓친 경우,
 복구를 위한 hypothesis이지 발견된 물리 법칙이 아니다. Controlled repair probe는
 typed objectification이 단순 장식이 아님을 보여준다. Ungated geometry repair는
 frontier recall을 복구하지만 distractor를 붙일 수 있고, type-gated repair는 tested
-setting에서 precision을 유지한다.
+setting에서 precision을 유지한다. 작은 learned relation scorer도 같은 controlled
+distribution에서는 type gate와 같은 결과를 내지만, shifted/hidden-rule regime으로의
+transfer는 아직 future evidence다.
 정식 정의는 `docs/objectification.ko.md`에 둔다.
 
 ## 2. 선행연구와 차별성

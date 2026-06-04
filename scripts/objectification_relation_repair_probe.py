@@ -2,15 +2,20 @@ from __future__ import annotations
 
 import argparse
 import csv
+from dataclasses import dataclass
 from pathlib import Path
 import random
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import torch  # noqa: E402
 import wpu  # noqa: E402
-from wpu.core.state import Event, WorldObject, WorldState  # noqa: E402
+from wpu.core.state import Event, Relation, WorldObject, WorldState  # noqa: E402
 from wpu.engines.sparse_engine import SparsePropagationEngine  # noqa: E402
+
+TYPE_VOCAB = ["background_object", "cup", "robot_hand", "table", "table_edge"]
+RELATION_VOCAB = ["near", "touching"]
 
 
 def main() -> None:
@@ -21,6 +26,9 @@ def main() -> None:
     parser.add_argument("--contact-distance", type=float, default=0.08)
     parser.add_argument("--background-objects", type=int, default=32)
     parser.add_argument("--near-distractors", type=int, default=8)
+    parser.add_argument("--train-samples", type=int, default=128)
+    parser.add_argument("--learned-steps", type=int, default=80)
+    parser.add_argument("--learned-threshold", type=float, default=0.5)
     parser.add_argument(
         "--out",
         type=Path,
@@ -35,6 +43,9 @@ def main() -> None:
         contact_distance=args.contact_distance,
         background_objects=args.background_objects,
         near_distractors=args.near_distractors,
+        train_samples=args.train_samples,
+        learned_steps=args.learned_steps,
+        learned_threshold=args.learned_threshold,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="", encoding="utf-8") as handle:
@@ -62,11 +73,29 @@ def run_probe(
     contact_distance: float,
     background_objects: int,
     near_distractors: int,
+    train_samples: int,
+    learned_steps: int,
+    learned_threshold: float,
 ) -> list[dict[str, str]]:
+    learned_scorer = _train_relation_scorer(
+        samples=train_samples,
+        seed=seed + 10_000,
+        near_distance=near_distance,
+        contact_distance=contact_distance,
+        background_objects=background_objects,
+        near_distractors=near_distractors,
+        steps=learned_steps,
+    )
     rows: list[dict[str, str]] = []
-    for repair_policy, allowed_type_pairs in (
-        ("ungated", None),
-        ("type_gated", _core_allowed_type_pairs()),
+    for repair_policy, allowed_type_pairs, learned_filter in (
+        ("ungated", None, None),
+        ("type_gated", _core_allowed_type_pairs(), None),
+        (
+            "learned_scorer",
+            None,
+            lambda state, relation, scorer=learned_scorer: _score_relation_candidate(state, relation, scorer)
+            >= learned_threshold,
+        ),
     ):
         rows.append(
             _run_policy(
@@ -78,6 +107,7 @@ def run_probe(
                 near_distractors=near_distractors,
                 repair_policy=repair_policy,
                 allowed_type_pairs=allowed_type_pairs,
+                learned_filter=learned_filter,
             )
         )
     return rows
@@ -93,6 +123,7 @@ def _run_policy(
     near_distractors: int,
     repair_policy: str,
     allowed_type_pairs: set[tuple[str, str]] | None,
+    learned_filter,
 ) -> dict[str, str]:
     rng = random.Random(seed)
     sparse = SparsePropagationEngine(max_depth=2)
@@ -121,12 +152,20 @@ def _run_policy(
         )
 
         before = sparse.sparse_propagate(state, event)
-        repaired, repair_report = wpu.repair_objectification_relations(
-            state,
-            near_distance=near_distance,
-            contact_distance=contact_distance,
-            allowed_type_pairs=allowed_type_pairs,
-        )
+        if learned_filter is None:
+            repaired, repair_report = wpu.repair_objectification_relations(
+                state,
+                near_distance=near_distance,
+                contact_distance=contact_distance,
+                allowed_type_pairs=allowed_type_pairs,
+            )
+        else:
+            repaired, repair_report = _repair_with_learned_filter(
+                state,
+                near_distance=near_distance,
+                contact_distance=contact_distance,
+                learned_filter=learned_filter,
+            )
         after = sparse.sparse_propagate(repaired, event)
         repaired_edges = {
             _edge_key(relation.src, relation.dst, relation.type)
@@ -191,6 +230,115 @@ def _state_with_missing_relations(rng: random.Random, *, background_objects: int
     return state
 
 
+@dataclass(slots=True)
+class LinearRelationScorer:
+    weights: torch.Tensor
+    bias: torch.Tensor
+
+
+def _train_relation_scorer(
+    *,
+    samples: int,
+    seed: int,
+    near_distance: float,
+    contact_distance: float,
+    background_objects: int,
+    near_distractors: int,
+    steps: int,
+) -> LinearRelationScorer:
+    rng = random.Random(seed)
+    features: list[torch.Tensor] = []
+    labels: list[float] = []
+    for _ in range(samples):
+        state = _state_with_missing_relations(
+            rng,
+            background_objects=background_objects,
+            near_distractors=near_distractors,
+        )
+        expected = _expected_near_edges(state, near_distance=near_distance, contact_distance=contact_distance)
+        for relation in _candidate_relations(state, near_distance=near_distance, contact_distance=contact_distance):
+            features.append(_relation_candidate_features(state, relation))
+            labels.append(1.0 if _edge_key(relation.src, relation.dst, relation.type) in expected else 0.0)
+
+    x = torch.stack(features)
+    y = torch.tensor(labels, dtype=torch.float32).unsqueeze(1)
+    weights = torch.zeros((x.size(1), 1), dtype=torch.float32, requires_grad=True)
+    bias = torch.zeros((1,), dtype=torch.float32, requires_grad=True)
+    optimizer = torch.optim.Adam([weights, bias], lr=0.08)
+    positive_count = max(float(y.sum().item()), 1.0)
+    negative_count = max(float(y.numel() - y.sum().item()), 1.0)
+    pos_weight = torch.tensor([negative_count / positive_count], dtype=torch.float32)
+    loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+
+    for _ in range(steps):
+        optimizer.zero_grad()
+        logits = x @ weights + bias
+        loss = loss_fn(logits, y)
+        loss.backward()
+        optimizer.step()
+
+    return LinearRelationScorer(weights=weights.detach().squeeze(1), bias=bias.detach())
+
+
+def _repair_with_learned_filter(
+    state: WorldState,
+    *,
+    near_distance: float,
+    contact_distance: float,
+    learned_filter,
+) -> tuple[WorldState, wpu.ObjectificationRepairReport]:
+    delta = wpu.DeltaState(time=state.time, metadata={"objectification_repair": "learned_scorer"})
+    added_types: dict[str, int] = {}
+    candidate_pair_count = 0
+    for relation in _candidate_relations(state, near_distance=near_distance, contact_distance=contact_distance):
+        candidate_pair_count += 1
+        if not learned_filter(state, relation):
+            continue
+        delta.relation_updates.append(relation)
+        added_types[relation.type] = added_types.get(relation.type, 0) + 1
+    report = wpu.ObjectificationRepairReport(
+        added_relation_count=len(delta.relation_updates),
+        added_relation_types=added_types,
+        candidate_pair_count=candidate_pair_count,
+    )
+    return state.apply_delta(delta), report
+
+
+def _candidate_relations(state: WorldState, *, near_distance: float, contact_distance: float) -> list[Relation]:
+    relations: list[Relation] = []
+    object_ids = list(state.objects)
+    for left_index, left_id in enumerate(object_ids):
+        left = _position_or_none(state, left_id)
+        if left is None:
+            continue
+        for right_id in object_ids[left_index + 1 :]:
+            right = _position_or_none(state, right_id)
+            if right is None:
+                continue
+            distance = _distance(left, right)
+            if distance <= near_distance:
+                relations.append(
+                    Relation(
+                        left_id,
+                        right_id,
+                        "near",
+                        strength=max(0.05, 1.0 - distance / near_distance),
+                        confidence=0.55,
+                    )
+                )
+            if distance <= contact_distance:
+                relations.append(
+                    Relation(
+                        left_id,
+                        right_id,
+                        "touching",
+                        strength=max(0.05, 1.0 - distance / max(contact_distance, 1e-6)),
+                        confidence=0.55,
+                    )
+                )
+    return relations
+
+
 def _core_allowed_type_pairs() -> set[tuple[str, str]]:
     return {
         ("cup", "robot_hand"),
@@ -217,9 +365,54 @@ def _expected_near_edges(state: WorldState, *, near_distance: float, contact_dis
     return expected
 
 
+def _score_relation_candidate(state: WorldState, relation: Relation, scorer: LinearRelationScorer) -> float:
+    feature = _relation_candidate_features(state, relation)
+    return float(torch.sigmoid(feature @ scorer.weights + scorer.bias).item())
+
+
+def _relation_candidate_features(state: WorldState, relation: Relation) -> torch.Tensor:
+    left = _position(state, relation.src)
+    right = _position(state, relation.dst)
+    distance = _distance(left, right)
+    left_type = state.objects[relation.src].type
+    right_type = state.objects[relation.dst].type
+    type_features = _type_features(left_type, right_type)
+    relation_features = [1.0 if relation.type == value else 0.0 for value in RELATION_VOCAB]
+    return torch.tensor(
+        [
+            distance,
+            relation.strength,
+            1.0 if "background_object" in {left_type, right_type} else 0.0,
+            *relation_features,
+            *type_features,
+        ],
+        dtype=torch.float32,
+    )
+
+
+def _type_features(left_type: str, right_type: str) -> list[float]:
+    counts = {value: 0.0 for value in TYPE_VOCAB}
+    if left_type in counts:
+        counts[left_type] += 1.0
+    if right_type in counts:
+        counts[right_type] += 1.0
+    return [counts[value] for value in TYPE_VOCAB]
+
+
 def _position(state: WorldState, object_id: str) -> tuple[float, float, float]:
     value = state.objects[object_id].attributes["position"]
     return float(value[0]), float(value[1]), float(value[2])
+
+
+def _position_or_none(state: WorldState, object_id: str) -> tuple[float, float, float] | None:
+    value = state.objects[object_id].attributes.get("position")
+    if not isinstance(value, (list, tuple)) or len(value) < 3:
+        return None
+    return float(value[0]), float(value[1]), float(value[2])
+
+
+def _distance(left: tuple[float, float, float], right: tuple[float, float, float]) -> float:
+    return ((left[0] - right[0]) ** 2 + (left[1] - right[1]) ** 2 + (left[2] - right[2]) ** 2) ** 0.5
 
 
 def _edge_key(src: str, dst: str, relation_type: str) -> tuple[str, str, str]:

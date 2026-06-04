@@ -53,7 +53,9 @@ connectivity를 놓친 경우, 약한 `near`, `touching` 같은 geometry-derived
 patch를 보수적으로 추가한다. 즉 relation repair를 token fallback이나 silent dense
 fallback이 아니라 명시적이고 audit 가능한 hypothesis로 만든다. Repair는 type-gated
 될 수 있다. Geometry-only repair는 recall은 복구하면서 spurious distractor edge를
-많이 만들 수 있으므로, typed object identity는 repair contract의 일부다.
+많이 만들 수 있으므로, typed object identity는 repair contract의 일부다. 현재 probe는
+작은 learned relation scorer도 포함하며, controlled distractor distribution에서는
+hand-written type gate와 같은 결과를 낸다.
 
 ## 객체화가 아닌 것
 

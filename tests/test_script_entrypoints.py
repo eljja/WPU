@@ -126,6 +126,40 @@ def test_readme_core_scripts_run_as_direct_scripts(tmp_path: Path) -> None:
     assert checkpoint.exists()
 
 
+def test_objectification_relation_repair_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "relation_repair.csv"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/objectification_relation_repair_probe.py",
+            "--samples",
+            "4",
+            "--train-samples",
+            "8",
+            "--learned-steps",
+            "2",
+            "--near-distractors",
+            "2",
+            "--background-objects",
+            "2",
+            "--out",
+            str(output),
+        ],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output.exists()
+    text = output.read_text(encoding="utf-8")
+    assert "ungated" in text
+    assert "type_gated" in text
+    assert "learned_scorer" in text
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

@@ -1,3 +1,4 @@
 repair_policy,samples,seed,near_distance,contact_distance,background_objects,near_distractors,mean_before_frontier_recall,mean_after_frontier_recall,mean_added_relations,mean_candidate_pairs,mean_skipped_pairs,repair_precision,repair_recall
 ungated,64,17,0.250000,0.080000,32,8,0.250000,1.000000,97.515625,946.000000,0.000000,0.078994,1.000000
 type_gated,64,17,0.250000,0.080000,32,8,0.250000,1.000000,7.703125,6.000000,940.000000,1.000000,1.000000
+learned_scorer,64,17,0.250000,0.080000,32,8,0.250000,1.000000,7.703125,97.515625,0.000000,1.000000,1.000000

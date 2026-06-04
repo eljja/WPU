@@ -65,3 +65,29 @@ def test_geometry_repair_adds_missing_relation_frontier_edges() -> None:
     assert repair_report.added_relation_types == {"near": 1}
     assert "hand_001" in after.affected_objects
     assert repair_report.to_dict()["added_relation_count"] == 1
+
+
+def test_type_gated_repair_rejects_near_background_distractors() -> None:
+    state = WorldState()
+    state.add_object(WorldObject("cup_001", "cup", {"position": [0.0, 0.0, 0.0]}, confidence=0.9))
+    state.add_object(WorldObject("hand_001", "robot_hand", {"position": [0.12, 0.0, 0.0]}, confidence=0.9))
+    state.add_object(WorldObject("context_0001", "background_object", {"position": [0.05, 0.0, 0.0]}, confidence=0.7))
+
+    ungated_delta, ungated = wpu.infer_missing_relations(state, near_distance=0.2)
+    gated_delta, gated = wpu.infer_missing_relations(
+        state,
+        near_distance=0.2,
+        allowed_type_pairs={("cup", "robot_hand")},
+    )
+
+    assert ungated.added_relation_count == 5
+    assert ungated.added_relation_types == {"near": 3, "touching": 2}
+    assert {relation.dst for relation in ungated_delta.relation_updates if relation.src == "cup_001"} >= {
+        "hand_001",
+        "context_0001",
+    }
+    assert gated.added_relation_count == 1
+    assert gated.skipped_pair_count == 2
+    assert [(relation.src, relation.dst, relation.type) for relation in gated_delta.relation_updates] == [
+        ("cup_001", "hand_001", "near")
+    ]

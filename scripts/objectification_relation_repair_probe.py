@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("--near-distance", type=float, default=0.25)
     parser.add_argument("--contact-distance", type=float, default=0.08)
     parser.add_argument("--background-objects", type=int, default=32)
+    parser.add_argument("--near-distractors", type=int, default=8)
     parser.add_argument(
         "--out",
         type=Path,
@@ -33,6 +34,7 @@ def main() -> None:
         near_distance=args.near_distance,
         contact_distance=args.contact_distance,
         background_objects=args.background_objects,
+        near_distractors=args.near_distractors,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="", encoding="utf-8") as handle:
@@ -40,15 +42,16 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    summary = rows[-1]
-    print(
-        "relation_repair_probe "
-        f"samples={summary['samples']} "
-        f"before_recall={summary['mean_before_frontier_recall']} "
-        f"after_recall={summary['mean_after_frontier_recall']} "
-        f"repair_precision={summary['repair_precision']} "
-        f"repair_recall={summary['repair_recall']}"
-    )
+    for summary in rows:
+        print(
+            "relation_repair_probe "
+            f"policy={summary['repair_policy']} "
+            f"samples={summary['samples']} "
+            f"before_recall={summary['mean_before_frontier_recall']} "
+            f"after_recall={summary['mean_after_frontier_recall']} "
+            f"repair_precision={summary['repair_precision']} "
+            f"repair_recall={summary['repair_recall']}"
+        )
 
 
 def run_probe(
@@ -58,7 +61,39 @@ def run_probe(
     near_distance: float,
     contact_distance: float,
     background_objects: int,
+    near_distractors: int,
 ) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for repair_policy, allowed_type_pairs in (
+        ("ungated", None),
+        ("type_gated", _core_allowed_type_pairs()),
+    ):
+        rows.append(
+            _run_policy(
+                samples=samples,
+                seed=seed,
+                near_distance=near_distance,
+                contact_distance=contact_distance,
+                background_objects=background_objects,
+                near_distractors=near_distractors,
+                repair_policy=repair_policy,
+                allowed_type_pairs=allowed_type_pairs,
+            )
+        )
+    return rows
+
+
+def _run_policy(
+    *,
+    samples: int,
+    seed: int,
+    near_distance: float,
+    contact_distance: float,
+    background_objects: int,
+    near_distractors: int,
+    repair_policy: str,
+    allowed_type_pairs: set[tuple[str, str]] | None,
+) -> dict[str, str]:
     rng = random.Random(seed)
     sparse = SparsePropagationEngine(max_depth=2)
     totals = {
@@ -66,12 +101,17 @@ def run_probe(
         "after_recall": 0.0,
         "added": 0,
         "candidate_pairs": 0,
+        "skipped_pairs": 0,
         "true_positive_edges": 0,
         "expected_edges": 0,
     }
 
     for index in range(samples):
-        state = _state_with_missing_relations(rng, background_objects=background_objects)
+        state = _state_with_missing_relations(
+            rng,
+            background_objects=background_objects,
+            near_distractors=near_distractors,
+        )
         event = Event("hand_touched_cup", "cup_001", {"force": 0.4}, confidence=0.9)
         expected_objects = {"cup_001", "hand_001", "edge_001", "table_001"}
         expected_edges = _expected_near_edges(
@@ -85,6 +125,7 @@ def run_probe(
             state,
             near_distance=near_distance,
             contact_distance=contact_distance,
+            allowed_type_pairs=allowed_type_pairs,
         )
         after = sparse.sparse_propagate(repaired, event)
         repaired_edges = {
@@ -97,29 +138,31 @@ def run_probe(
         totals["after_recall"] += len(after.affected_objects & expected_objects) / len(expected_objects)
         totals["added"] += repair_report.added_relation_count
         totals["candidate_pairs"] += repair_report.candidate_pair_count
+        totals["skipped_pairs"] += repair_report.skipped_pair_count
         totals["true_positive_edges"] += len(repaired_edges & expected_edges)
         totals["expected_edges"] += len(expected_edges)
 
     repair_precision = totals["true_positive_edges"] / max(totals["added"], 1)
     repair_recall = totals["true_positive_edges"] / max(totals["expected_edges"], 1)
-    return [
-        {
-            "samples": str(samples),
-            "seed": str(seed),
-            "near_distance": f"{near_distance:.6f}",
-            "contact_distance": f"{contact_distance:.6f}",
-            "background_objects": str(background_objects),
-            "mean_before_frontier_recall": f"{totals['before_recall'] / samples:.6f}",
-            "mean_after_frontier_recall": f"{totals['after_recall'] / samples:.6f}",
-            "mean_added_relations": f"{totals['added'] / samples:.6f}",
-            "mean_candidate_pairs": f"{totals['candidate_pairs'] / samples:.6f}",
-            "repair_precision": f"{repair_precision:.6f}",
-            "repair_recall": f"{repair_recall:.6f}",
-        }
-    ]
+    return {
+        "repair_policy": repair_policy,
+        "samples": str(samples),
+        "seed": str(seed),
+        "near_distance": f"{near_distance:.6f}",
+        "contact_distance": f"{contact_distance:.6f}",
+        "background_objects": str(background_objects),
+        "near_distractors": str(near_distractors),
+        "mean_before_frontier_recall": f"{totals['before_recall'] / samples:.6f}",
+        "mean_after_frontier_recall": f"{totals['after_recall'] / samples:.6f}",
+        "mean_added_relations": f"{totals['added'] / samples:.6f}",
+        "mean_candidate_pairs": f"{totals['candidate_pairs'] / samples:.6f}",
+        "mean_skipped_pairs": f"{totals['skipped_pairs'] / samples:.6f}",
+        "repair_precision": f"{repair_precision:.6f}",
+        "repair_recall": f"{repair_recall:.6f}",
+    }
 
 
-def _state_with_missing_relations(rng: random.Random, *, background_objects: int) -> WorldState:
+def _state_with_missing_relations(rng: random.Random, *, background_objects: int, near_distractors: int) -> WorldState:
     hand_x = rng.uniform(0.08, 0.18)
     edge_x = rng.uniform(0.16, 0.22)
     state = WorldState(metadata={"scenario": "objectification_relation_repair_probe"})
@@ -127,6 +170,15 @@ def _state_with_missing_relations(rng: random.Random, *, background_objects: int
     state.add_object(WorldObject("hand_001", "robot_hand", {"position": [hand_x, 0.0, 0.82]}, confidence=0.92))
     state.add_object(WorldObject("edge_001", "table_edge", {"position": [edge_x, 0.0, 0.82]}, confidence=0.94))
     state.add_object(WorldObject("table_001", "table", {"position": [0.02, 0.0, 0.75]}, confidence=0.98))
+    for index in range(near_distractors):
+        state.add_object(
+            WorldObject(
+                f"near_context_{index:04d}",
+                "background_object",
+                {"position": [rng.uniform(0.02, 0.22), rng.uniform(-0.04, 0.04), 0.82]},
+                confidence=0.75,
+            )
+        )
     for index in range(background_objects):
         state.add_object(
             WorldObject(
@@ -137,6 +189,17 @@ def _state_with_missing_relations(rng: random.Random, *, background_objects: int
             )
         )
     return state
+
+
+def _core_allowed_type_pairs() -> set[tuple[str, str]]:
+    return {
+        ("cup", "robot_hand"),
+        ("cup", "table"),
+        ("cup", "table_edge"),
+        ("robot_hand", "table"),
+        ("robot_hand", "table_edge"),
+        ("table", "table_edge"),
+    }
 
 
 def _expected_near_edges(state: WorldState, *, near_distance: float, contact_distance: float = 0.08) -> set[tuple[str, str, str]]:

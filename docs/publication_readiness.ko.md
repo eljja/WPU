@@ -49,7 +49,7 @@ construction을 검증했다는 뜻은 아니다.
 | hardware claim이 뒷받침되지 않음 | Processing unit 주장은 PyTorch 모델만으로 부족하고 systems evidence가 필요하다. | 현재 코드는 reference implementation이다. | sparse frontier kernel profiling, memory-traffic accounting, branch-overlay memory measurement, matched-accuracy speedup. |
 | calibration/uncertainty가 얕음 | branch probability는 distribution shift에서 calibration이 맞아야 의미가 있다. | v1/v2는 branch accuracy와 일부 calibration 논의가 있으나 완전한 uncertainty benchmark는 아니다. | ECE/Brier/NLL multi-step rollout, branch collapse test, uncertainty-gated recompute experiment. |
 | 객체화 품질 benchmark가 없음 | WPU 성능은 올바른 identity, relation, delta construction에 의존한다. | `evaluate_objectification`은 object contract를 측정하지만, 현재 실험은 여전히 synthetic object state가 주어지는 조건이 많다. | missed object, identity swap, relation error, downstream propagation loss를 측정하는 object construction benchmark. |
-| relation repair가 false hypothesis를 추가할 수 있음 | Repair는 누락된 local connectivity를 복구할 수 있지만, spurious edge는 `K`를 키우고 sparse precision을 낮출 수 있다. | `repair_objectification_relations`는 deterministic이며 최소 frontier-recovery case에서만 테스트됐다. | simulator relation 대비 repair precision/recall, repair 전후 downstream loss, harmful repaired edge를 reject하는 gate. |
+| relation repair가 false hypothesis를 추가할 수 있음 | Repair는 누락된 local connectivity를 복구할 수 있지만, spurious edge는 `K`를 키우고 sparse precision을 낮출 수 있다. | relation-repair probe는 near distractor가 있을 때 ungated repair가 frontier recall은 복구하지만 precision이 `0.078994`로 떨어지고, type-gated repair는 controlled case에서 precision을 `1.000000`으로 회복함을 보인다. | simulator relation 대비 repair precision/recall, repair 전후 downstream loss, harmful repaired edge를 reject하는 learned gate. |
 | unknown-theory discovery는 장기 연구 프로그램일 뿐임 | 아직 모르는 규칙성을 드러내는 learned relation은 알려진 relation 사용보다 훨씬 강한 주장이다. | 현재 작업은 hand-designed synthetic relation과 learned selector를 사용한다. | learned object relation이 held-out rule 또는 hidden-mechanism benchmark에서 prediction을 개선하고 반증 가능한 새 구조를 제시하는 증거. |
 
 ## 즉시 개선 우선순위
@@ -61,7 +61,7 @@ construction을 검증했다는 뜻은 아니다.
 5. calibrated branch/uncertainty metric을 주요 결과로 보고한다.
 6. sparse frontier와 branch-overlay memory cost를 dense tensor compute와 분리해 profile한다.
 7. `ObjectificationReport`를 실험 log에 포함하고, identity stability, relation precision/recall, delta locality, objectification mistake로 인한 downstream error benchmark를 추가한다.
-8. Repaired edge를 유용하다고 간주하기 전에 relation repair precision/recall과 downstream impact를 평가한다.
+8. Repaired edge를 유용하다고 간주하기 전에 relation repair precision/recall과 downstream impact를 평가한다. Ungated, type-gated, learned candidate scoring을 비교한다.
 9. generator가 relation family를 직접 주지 않는 hidden-rule benchmark를 추가한다.
 
 ## 외부 커뮤니케이션 규칙

@@ -56,7 +56,9 @@ The API also exposes `infer_missing_relations` and
 relation patches such as weak `near` and `touching` edges when object identity
 exists but relation extraction missed local connectivity. This makes relation
 repair explicit and auditable instead of silently falling back to token or dense
-processing.
+processing. Repair can be type-gated: geometry-only repair may recover recall
+while adding spurious distractor edges, so typed object identity is part of the
+repair contract.
 
 ## What Objectification Is Not
 
@@ -98,7 +100,8 @@ can spend less compute while becoming less correct. Therefore performance
 reports should include both execution metrics and objectification metrics.
 If the failure is a missing local relation rather than a missing object, WPU can
 attempt relation repair before widening the retrieval budget or invoking dense
-recompute.
+recompute. The repair itself must be evaluated by relation precision/recall and
+downstream prediction loss.
 
 ## Relation to Physical Approximation
 

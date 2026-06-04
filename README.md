@@ -141,7 +141,10 @@ locality.
 If object identity exists but relation extraction missed local edges,
 `repair_objectification_relations` can add conservative geometry-inferred
 relation patches before sparse propagation. This is a state repair heuristic,
-not a claim that physical law has been solved.
+not a claim that physical law has been solved. The repair probe shows why typed
+objectification matters: geometry-only repair restores frontier recall but can
+attach distractors, while type-gated repair preserves precision in the
+controlled case.
 
 The current v2 working-set models are also available from the package root
 through the model factory:

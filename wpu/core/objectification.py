@@ -52,12 +52,14 @@ class ObjectificationRepairReport:
     added_relation_count: int
     added_relation_types: dict[str, int]
     candidate_pair_count: int
+    skipped_pair_count: int = 0
 
     def to_dict(self) -> dict[str, int | dict[str, int]]:
         return {
             "added_relation_count": self.added_relation_count,
             "added_relation_types": dict(self.added_relation_types),
             "candidate_pair_count": self.candidate_pair_count,
+            "skipped_pair_count": self.skipped_pair_count,
         }
 
 
@@ -141,6 +143,7 @@ def infer_missing_relations(
     near_distance: float = 0.35,
     contact_distance: float = 0.08,
     confidence: float = 0.55,
+    allowed_type_pairs: set[tuple[str, str]] | None = None,
 ) -> tuple[DeltaState, ObjectificationRepairReport]:
     """Infer conservative relation patches from object attributes.
 
@@ -148,7 +151,8 @@ def infer_missing_relations(
     physics solver. It adds weak `near` and `touching` candidate relations when
     typed object positions make the relation locally plausible. The intended use
     is to recover sparse frontier connectivity when object identity exists but
-    relation extraction missed an edge.
+    relation extraction missed an edge. `allowed_type_pairs` is a type-aware
+    safety gate for avoiding geometry-only edges to distractor objects.
     """
 
     if near_distance <= 0.0:
@@ -161,12 +165,23 @@ def infer_missing_relations(
     delta = DeltaState(time=state.time, metadata={"objectification_repair": "geometry"})
     added_types: dict[str, int] = {}
     candidate_pair_count = 0
+    skipped_pair_count = 0
+    normalized_allowed = (
+        {_type_pair_key(left, right) for left, right in allowed_type_pairs}
+        if allowed_type_pairs is not None
+        else None
+    )
 
     for left_index, left_id in enumerate(object_ids):
         left_position = _position3(state, left_id)
         if left_position is None:
             continue
         for right_id in object_ids[left_index + 1 :]:
+            if normalized_allowed is not None:
+                type_pair = _type_pair_key(state.objects[left_id].type, state.objects[right_id].type)
+                if type_pair not in normalized_allowed:
+                    skipped_pair_count += 1
+                    continue
             right_position = _position3(state, right_id)
             if right_position is None:
                 continue
@@ -193,6 +208,7 @@ def infer_missing_relations(
         added_relation_count=len(delta.relation_updates),
         added_relation_types=added_types,
         candidate_pair_count=candidate_pair_count,
+        skipped_pair_count=skipped_pair_count,
     )
 
 
@@ -202,6 +218,7 @@ def repair_objectification_relations(
     near_distance: float = 0.35,
     contact_distance: float = 0.08,
     confidence: float = 0.55,
+    allowed_type_pairs: set[tuple[str, str]] | None = None,
 ) -> tuple[WorldState, ObjectificationRepairReport]:
     """Return a state with conservative geometry-inferred relation patches."""
 
@@ -210,6 +227,7 @@ def repair_objectification_relations(
         near_distance=near_distance,
         contact_distance=contact_distance,
         confidence=confidence,
+        allowed_type_pairs=allowed_type_pairs,
     )
     return state.apply_delta(delta), report
 
@@ -244,6 +262,10 @@ def _relation_key(src: str, dst: str, relation_type: str) -> tuple[str, str, str
     if relation_type in SYMMETRIC_RELATIONS and dst < src:
         return dst, src, relation_type
     return src, dst, relation_type
+
+
+def _type_pair_key(left_type: str, right_type: str) -> tuple[str, str]:
+    return (left_type, right_type) if left_type <= right_type else (right_type, left_type)
 
 
 def _position3(state: WorldState, object_id: str) -> tuple[float, float, float] | None:

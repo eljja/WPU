@@ -21,7 +21,10 @@ The implementation now treats this as a measurable contract through
 invalid deltas, and poor causal locality are reported before propagation.
 When identity exists but local relation extraction misses edges, the prototype
 can also apply conservative geometry-derived relation repair. Repaired edges are
-logged hypotheses, not ground-truth physics.
+logged hypotheses, not ground-truth physics. A controlled repair probe shows
+that type information is necessary: ungated geometry repair recovers frontier
+recall but can attach distractors, while type-gated repair preserves precision
+in the tested setting.
 
 The WPU claim is therefore operational rather than representational:
 

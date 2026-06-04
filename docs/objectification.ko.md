@@ -51,7 +51,9 @@ Public API는 `infer_missing_relations`와 `repair_objectification_relations`도
 제공한다. 이 함수들은 object identity는 있지만 relation extraction이 local
 connectivity를 놓친 경우, 약한 `near`, `touching` 같은 geometry-derived relation
 patch를 보수적으로 추가한다. 즉 relation repair를 token fallback이나 silent dense
-fallback이 아니라 명시적이고 audit 가능한 hypothesis로 만든다.
+fallback이 아니라 명시적이고 audit 가능한 hypothesis로 만든다. Repair는 type-gated
+될 수 있다. Geometry-only repair는 recall은 복구하면서 spurious distractor edge를
+많이 만들 수 있으므로, typed object identity는 repair contract의 일부다.
 
 ## 객체화가 아닌 것
 
@@ -90,7 +92,8 @@ endpoint가 깨져 있거나 delta가 non-causal object를 갱신하면, WPU는 
 동시에 더 틀릴 수 있다. 따라서 성능 보고에는 execution metric과 objectification
 metric을 함께 넣어야 한다.
 실패 원인이 object 누락이 아니라 local relation 누락이라면, WPU는 retrieval budget을
-넓히거나 dense recompute로 가기 전에 relation repair를 시도할 수 있다.
+넓히거나 dense recompute로 가기 전에 relation repair를 시도할 수 있다. 단 repair
+자체는 relation precision/recall과 downstream prediction loss로 평가해야 한다.
 
 ## 물리적 근사와의 관계
 

@@ -222,6 +222,7 @@ def test_core_bilingual_docs_stay_paired_and_linked() -> None:
     pairs = [
         (ROOT / "README.md", ROOT / "README.ko.md"),
         (ROOT / "docs" / "claims.md", ROOT / "docs" / "claims.ko.md"),
+        (ROOT / "docs" / "objectification.md", ROOT / "docs" / "objectification.ko.md"),
         (ROOT / "docs" / "reproducibility.md", ROOT / "docs" / "reproducibility.ko.md"),
         (ROOT / "docs" / "publication_readiness.md", ROOT / "docs" / "publication_readiness.ko.md"),
     ]
@@ -241,6 +242,7 @@ def test_core_bilingual_docs_stay_paired_and_linked() -> None:
     for required in (
         "README.ko.md",
         "docs/claims.md",
+        "docs/objectification.md",
         "docs/publication_readiness.md",
         "docs/reproducibility.md",
     ):
@@ -248,6 +250,7 @@ def test_core_bilingual_docs_stay_paired_and_linked() -> None:
             issues.append(f"README.md missing {required}")
     for required in (
         "docs/claims.ko.md",
+        "docs/objectification.ko.md",
         "docs/publication_readiness.ko.md",
         "docs/reproducibility.ko.md",
     ):

@@ -1,0 +1,142 @@
+# WPU에서의 객체화
+
+이 문서는 WPU에서 말하는 객체화(objectification)를 정의하고, 왜 이것이
+state-native world processing의 중심인지 설명한다. 또한 장기 연구 목표를
+명확히 한다. 객체화된 state entity들 사이의 관계는 먼저 알려진 국소 물리 이론의
+근사에 도달해야 하며, 궁극적으로는 아직 명시적으로 이해하지 못한 규칙성까지
+학습 가능한 구조로 드러내야 한다.
+
+## 정의
+
+WPU에서 객체화란 관측되었거나 시뮬레이션된 세계를 지속적이고 주소 지정 가능한
+state entity로 변환하는 것이다.
+
+```text
+Objectification(x) =
+  identity
+  + typed attributes
+  + typed relations
+  + time/history
+  + uncertainty
+  + admissible deltas
+  + branch-local overlays
+```
+
+객체화된 entity는 단순한 detection region, token span, table row, embedding이
+아니다. 그것은 query되고, patch되고, relation을 따라 propagation되고, 여러 미래로
+branch되며, 시간에 따라 consistency를 검사할 수 있는 state-bearing unit이다.
+
+## 최소 객체 계약
+
+WPU 객체는 다음 계약을 만족해야 한다.
+
+- `identity`: 사건과 시간 step이 바뀌어도 같은 객체로 참조될 수 있다.
+- `attributes`: 위치, 속도, 역할, 상태, 소유권, 온도, confidence 같은 typed state를 가진다.
+- `relations`: `on`, `near`, `touching`, `supports`, `connected_to`, `causes`,
+  `depends_on` 같은 typed edge에 참여한다.
+- `uncertainty`: 객체와 속성은 불확실할 수 있다.
+- `delta semantics`: event는 전체 world를 다시 쓰지 않고 explicit patch로 객체를 갱신한다.
+- `branch semantics`: 여러 미래는 같은 base object 위에 서로 다른 delta를 overlay할 수 있다.
+
+현재 코드는 이 계약을 `WorldObject`, `Relation`, `Event`, `DeltaState`,
+`Branch`, `WorldState`로 표현한다.
+
+## 객체화가 아닌 것
+
+객체화는 WPU가 이미 perception을 해결했다는 뜻이 아니다. 현재 WPU core는 simulator,
+database, supervised state extractor, tracker, 또는 미래의 perception adapter가
+object state를 제공한다고 가정한다.
+
+객체화는 token이 객체 정보를 설명할 수 없다는 뜻도 아니다. Token은 객체 정보를
+encode할 수 있다. WPU의 주장은 operational claim이다. Explicit object는 identity,
+update, relation traversal, delta overlay, branch-local state를 1차 연산으로 만든다.
+
+## 성능에서 왜 중요한가
+
+객체화는 sparse execution을 의미 있게 만든다. 전체 world state 크기가 `N`이지만
+하나의 event가 causal working set `K`만 건드린다면, WPU는 다음을 실행하려 한다.
+
+```text
+retrieve(K) + propagate(K) + patch(K)
+```
+
+즉 매번 전체 `N`을 처리하지 않는다. 이 방식은 `K << N`이고 `K`를 전체 scan 없이
+식별할 수 있을 때 event latency, effective state-update throughput, branch-rollout
+efficiency, memory traffic을 개선할 수 있다.
+
+따라서 관련 metric은 raw token/sec가 아니라 다음이다.
+
+- event/sec;
+- useful causal state updates/sec;
+- branch rollout/sec;
+- state-patch latency;
+- bytes moved per causal update;
+- sparse runtime crossover에서 유지되는 accuracy.
+
+## 물리적 근사와의 관계
+
+WPU propagation은 단순화된 local-causality prior로 이해해야 한다. 이것은 물리 법칙을
+해결했다는 뜻이 아니다. 많은 세계 변화가 persistent entity 사이의 relation,
+즉 contact, support, containment, proximity, connectivity, ownership, dependency,
+constraint를 통해 매개된다는 가정이다.
+
+가까운 과학적 목표는 다음이다.
+
+```text
+object relations + learned propagation
+  -> approximate local physical rules
+  -> maintain predictive accuracy under sparse state updates
+```
+
+예시는 다음과 같다.
+
+- 접촉과 힘 전달;
+- 지지와 낙하;
+- containment와 spill risk;
+- 연결성과 flow;
+- 충돌과 local constraint violation;
+- dependency와 cascading failure.
+
+이는 단순 물리 모델이 제한된 regime에서 유용한 근사를 제공하는 것과 비슷하다.
+WPU는 이 근사를 명시적이고 측정 가능하며 반증 가능하게 만들어야 한다.
+
+## 장기 목표: 아직 모르는 규칙성
+
+더 강한 장기 목표는 모든 relation을 사람이 손으로 정의하는 것이 아니다. Object
+history에서 유용한 latent regularity를 드러내는 object-relation structure를 학습하는
+것이다.
+
+```text
+observed object histories
+  -> candidate relations
+  -> propagation rules
+  -> falsifiable predictions
+  -> revised object/relation theory
+```
+
+알려진 domain에서는 이러한 learned relation이 물리 이론을 근사할 수 있다. 아직 잘
+이해하지 못한 domain에서는 인간이 이름 붙이기 전의 안정적인 interaction pattern을
+드러낼 수도 있다. 이것은 현재 결과가 아니라 연구 프로그램으로 취급해야 한다.
+
+## 개선 경로
+
+객체화에 기반해 WPU를 개선하는 구체적 경로는 다음이다.
+
+1. Schema validation과 state-integrity test로 object contract를 강화한다.
+2. Contact, support, containment, flow, dependency, ownership, constraint relation family를 추가한다.
+3. Domain knowledge가 있을 때 local conservation, consistency, no-spurious-delta loss로 propagation을 학습한다.
+4. 반복 delta 이후에도 object identity와 relation consistency가 유지되는지 long-horizon rollout test를 추가한다.
+5. Ground-truth object/relation이 있는 simulator-backed benchmark를 추가한다.
+6. Object history에서 candidate relation을 학습하고 held-out regime에서 prediction을 개선하는지 평가한다.
+7. 객체화 실패도 보고한다. Missed object, identity swap, relation hallucination, `K`가 작지 않은 global event가 포함된다.
+
+## 주장 경계
+
+현재 WPU evidence는 객체화를 explicit computational interface로 지지한다. 아직 다음을
+증명하지는 않는다.
+
+- end-to-end perception-to-object construction;
+- broad physical understanding;
+- unknown physical law discovery;
+- hardware-level energy 또는 speed advantage;
+- token 또는 graph model 대비 보편적 accuracy 우월성.

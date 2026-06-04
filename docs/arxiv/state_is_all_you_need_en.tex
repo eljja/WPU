@@ -78,6 +78,13 @@ branch sharing first-class operations. A state-native model should not merely
 retrieve relevant positions; it should update persistent entities and propagate
 the consequences through a structured world memory.
 
+We call the required conversion \emph{objectification}: an observation,
+simulator export, database state, or tracker output is converted into
+persistent, addressable objects with typed attributes, typed relations,
+uncertainty, admissible deltas, and branch-local overlays. Objectification is
+not a claim that perception is solved; it is the contract that defines the
+state substrate consumed by WPU.
+
 We introduce the World-State Processing Unit (WPU) as both a model family and an
 execution abstraction. It is not proposed as a replacement for GPUs, TPUs, or
 NPUs as general numerical accelerators. Instead, it is a workload definition for
@@ -98,8 +105,9 @@ operationally explicit.
 This paper makes four contributions. First, it formulates a token-state
 non-equivalence claim in operational rather than representational terms: tokens
 can serialize state, but serialization does not preserve state operations as
-invariants. Second, it defines propagation as the central operation of
-world-state processing and relates it to simplified local physical causality.
+invariants. Second, it defines objectification as the construction of persistent
+state objects and propagation as the central operation over their relations,
+relating this to simplified local physical causality.
 Third, it proposes a WPU architecture with sparse, hybrid, and dense execution
 paths selected by an affected-state crossover metric. Fourth, it provides a
 minimal reference implementation and small-scale validation task, intended as a

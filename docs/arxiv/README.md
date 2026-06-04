@@ -4,6 +4,8 @@
 - `state_is_all_you_need_en.pdf`: generated English PDF.
 - `state_is_all_you_need_ko.md`: Korean companion manuscript with the same
   thesis, narrowed claim boundary, and current experiment interpretation.
+- `../objectification.md`: formal WPU objectification definition used by the
+  manuscript and claim ledger.
 
 The English manuscript is the submission-oriented source. The Korean manuscript
 is intended for review, discussion, and translation alignment.
@@ -19,6 +21,7 @@ and the CI paper build.
 The main paper keeps the argument compact:
 
 - token versus state primitives;
+- objectification as the construction of persistent, addressable state objects;
 - relation to object-centric, graph, world-model, and accelerator literature;
 - WPU architecture and sparse/hybrid/dense routing;
 - propagation as the state analogue of attention;

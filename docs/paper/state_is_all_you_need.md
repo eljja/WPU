@@ -12,6 +12,11 @@ uncertainty, and multiple possible futures. A token sequence can describe these
 objects, but serialization does not make object identity, relation traversal,
 delta update, or branch overlay first-class operations.
 
+WPU calls the required conversion **objectification**: a world observation or
+simulator/database state is converted into persistent, addressable objects with
+typed attributes, relations, uncertainty, admissible deltas, and branch-local
+overlays. The formal definition is maintained in `docs/objectification.md`.
+
 The WPU claim is therefore operational rather than representational:
 
 ```text
@@ -43,10 +48,10 @@ branch sharing
 accuracy-compute-memory regime surface
 ```
 
-Slot Attention or IODINE can be used as perception-to-state front ends. Graph
-Network-based Simulators can be used as propagation cores. Set/Graph
+Slot Attention or IODINE can be used as perception-to-object-state front ends.
+Graph Network-based Simulators can be used as propagation cores. Set/Graph
 Transformers can be used as dense fallback or baselines. WPU asks what execution
-substrate is appropriate once the system must repeatedly update an explicit
+substrate is appropriate once the system must repeatedly update objectified
 world state rather than only process a fresh sequence.
 
 In this framing, perception-to-state is an adapter problem rather than a solved

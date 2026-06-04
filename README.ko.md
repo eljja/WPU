@@ -12,6 +12,10 @@ chip design도 아니다. 현재 목표는 world processing을 token sequence가
 명시적 world state의 유지, 갱신, 전파, 분기 문제로 다루는 reference implementation과
 실험 scaffold를 만드는 것이다.
 
+중심 primitive는 **객체화(objectification)** 다. 즉 세계를 persistent하고 addressable한
+객체로 변환하고, 그 객체의 state, relation, uncertainty, delta, branch overlay를 직접
+갱신할 수 있게 만드는 것이다. 정의는 `docs/objectification.ko.md`에 둔다.
+
 ## 핵심 주장
 
 Token sequence는 세계를 설명할 수 있지만, world-state operation을 first-class로
@@ -202,6 +206,7 @@ retriever-propagator joint training이다.
 - Korean companion: `docs/arxiv/state_is_all_you_need_ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
 - Claim ledger: `docs/claims.ko.md`
+- Objectification definition: `docs/objectification.ko.md`
 - Publication readiness / gap register: `docs/publication_readiness.ko.md`
 - Reproducibility guide: `docs/reproducibility.ko.md`
 - Experiment index: `docs/experiments/README.md`

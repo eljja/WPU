@@ -13,6 +13,10 @@ scaffold for a state-native execution model: worlds are represented as
 persistent objects, typed relations, time, uncertainty, events, deltas, and
 future branches.
 
+The central primitive is **objectification**: converting a world into
+persistent, addressable objects whose state, relations, uncertainty, deltas, and
+branch overlays can be updated directly. See `docs/objectification.md`.
+
 ## Compute Context
 
 WPU is positioned as a proposed world-state processing workload and execution
@@ -182,6 +186,7 @@ Key reports:
 - Korean README: `README.ko.md`
 - Compact research brief: `docs/paper/state_is_all_you_need.md`
 - Claim ledger: `docs/claims.md`
+- Objectification definition: `docs/objectification.md`
 - Publication readiness and gap register: `docs/publication_readiness.md`
 - Reproducibility guide: `docs/reproducibility.md`
 - Review response and differentiation: `docs/Review/review_response_and_differentiation.md`

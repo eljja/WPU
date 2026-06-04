@@ -21,8 +21,8 @@ explicit and falsifiable.
 The current defensible claim is:
 
 ```text
-WPU is a state-native execution model for explicit world state. It is useful in
-regimes where total state N is large, the causal working set K is small and
+WPU is a state-native execution model for objectified world state. It is useful
+in regimes where total state N is large, the causal working set K is small and
 identifiable before tensorization, updates are local and relation-mediated, and
 branch/uncertainty state is reused across events.
 ```
@@ -30,6 +30,12 @@ branch/uncertainty state is reused across events.
 This claim is supported by the implementation, v1 regime studies, and v2
 working-set-control experiments. It does not imply that WPU is generally more
 accurate than token, graph, or latent world models.
+
+The objectification definition is maintained in `docs/objectification.md`.
+Objectification is the step that turns raw observations or simulator state into
+persistent objects with attributes, relations, uncertainty, deltas, and branch
+overlays. Without this step, WPU reduces to ordinary tensor processing over
+unstructured inputs.
 
 ## Gap Register
 
@@ -43,6 +49,8 @@ accurate than token, graph, or latent world models.
 | Perception-to-state is not solved | WPU assumes explicit state exists; external users will ask how pixels become objects and relations. | Documents correctly frame perception adapters as future work. | Object-state adapter baseline using supervised segmentation, slot discovery, or simulator-provided object labels. |
 | Hardware claims are unsupported | WPU as a processing unit requires systems evidence, not only PyTorch models. | Current code is a reference implementation. | Sparse frontier kernel profiling, memory-traffic accounting, branch-overlay memory measurements, and matched-accuracy speedups. |
 | Calibration and uncertainty are shallow | Branch probabilities matter only if calibrated under distribution shift. | v1/v2 reports include branch accuracy and some calibration discussion, but not a full uncertainty benchmark. | ECE/Brier/NLL over multi-step rollouts, branch collapse tests, and uncertainty-gated recompute experiments. |
+| Objectification quality is not benchmarked | WPU performance depends on correct identity, relation, and delta construction. | Current experiments use synthetic object state where objectification is mostly given. | Object construction benchmarks measuring missed objects, identity swaps, relation errors, and downstream propagation loss. |
+| Unknown-theory discovery is only a long-term program | Learning relations that expose unknown regularities is a stronger claim than using known object relations. | Current work uses hand-designed synthetic relations and learned selectors. | Held-out-rule or hidden-mechanism benchmarks where learned object relations improve prediction and produce falsifiable new structure. |
 
 ## Immediate Improvement Priorities
 
@@ -52,6 +60,11 @@ accurate than token, graph, or latent world models.
 4. Expand cross-seed evaluation into cross-generator-family evaluation.
 5. Add calibrated branch/uncertainty metrics as first-class reported outputs.
 6. Profile sparse frontier and branch-overlay memory costs separately from dense tensor compute.
+7. Add objectification-quality metrics: identity stability, relation precision,
+   relation recall, delta locality, and downstream error from objectification
+   mistakes.
+8. Add hidden-rule benchmarks where the model must infer relation families not
+   supplied by the generator.
 
 ## Public Communication Rules
 
@@ -60,6 +73,8 @@ accurate than token, graph, or latent world models.
 - Say "local-causal propagation prior," not "real physical understanding."
 - Say "candidate-oracle gap remains," not "retrieval is solved."
 - Say "large `N` helps only when `K` is small and identifiable," not "WPU wins when `N` is large."
+- Say "objectified state is required," not "raw images or tokens are WPU input."
+- Say "unknown-theory discovery is a long-term target," not "WPU has discovered new laws."
 
 ## Minimum Bar for the Next Stronger Claim
 

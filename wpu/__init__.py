@@ -1,9 +1,12 @@
 """World-State Processing Unit research prototype."""
 
 from wpu.core.objectification import (
+    LawRevisionReport,
+    LocalLawHypothesis,
     ObjectificationRepairReport,
     ObjectificationReport,
     evaluate_objectification,
+    evaluate_law_revision,
     infer_missing_relations,
     repair_objectification_relations,
 )
@@ -22,6 +25,8 @@ __all__ = [
     "ExecutionPath",
     "MODEL_NAMES",
     "MemoryEstimate",
+    "LawRevisionReport",
+    "LocalLawHypothesis",
     "ObjectificationRepairReport",
     "ObjectificationReport",
     "Relation",
@@ -36,6 +41,7 @@ __all__ = [
     "WorldStateProcessor",
     "create_model",
     "evaluate_objectification",
+    "evaluate_law_revision",
     "estimate_memory",
     "infer_missing_relations",
     "repair_objectification_relations",

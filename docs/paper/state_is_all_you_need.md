@@ -63,6 +63,10 @@ setting. With 64 calibration samples, gain calibration reduces
 reduces `hidden_power_shift` MSE from `0.054596` to `0.008887`. Oracle-relation
 form revision reaches `0.000232`, identifying the remaining gap as relation
 selection and calibration noise rather than only law-form capacity.
+The implementation exposes this loop as reporting primitives:
+`LocalLawHypothesis` stores an interpretable rule candidate, and
+`LawRevisionReport` records base/revised error, revision decision, and optional
+relation-selection versus law-residual attribution.
 
 The WPU claim is therefore operational rather than representational:
 

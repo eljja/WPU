@@ -200,6 +200,14 @@ to `0.008887`. The oracle-relation form revision reaches `0.000232`, showing
 that the remaining gap is relation selection and calibration noise, not only the
 candidate law family.
 
+The public API now represents this step explicitly. `LocalLawHypothesis` records
+the relation type, expression, input fields, parameters, evidence, and status of
+a candidate local rule. `evaluate_law_revision` produces a `LawRevisionReport`
+with base/revised error, relative improvement, accept/collect-more decision,
+and optional relation-selection versus law-residual gap. This is a reporting
+contract for falsifiable theory revision; it does not execute a full physics
+engine.
+
 The development ladder is therefore:
 
 ```text

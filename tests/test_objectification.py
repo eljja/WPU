@@ -91,3 +91,51 @@ def test_type_gated_repair_rejects_near_background_distractors() -> None:
     assert [(relation.src, relation.dst, relation.type) for relation in gated_delta.relation_updates] == [
         ("cup_001", "hand_001", "near")
     ]
+
+
+def test_law_revision_report_accepts_useful_objectified_rule_revision() -> None:
+    hypothesis = wpu.LocalLawHypothesis(
+        name="inverse_distance_revision",
+        relation_type="influences",
+        expression="gain * impulse / (distance^2 + c)",
+        input_fields=("current_impulse", "distance", "relation_history"),
+        parameters={"gain": 0.9, "c": 0.2},
+        evidence={"calibration_mse": 0.001},
+        status="revised",
+    )
+
+    report = wpu.evaluate_law_revision(
+        base_error=0.115978,
+        revised_error=0.000342,
+        oracle_relation_error=0.000229,
+        selected_hypothesis=hypothesis,
+        calibration_samples=64,
+    )
+
+    assert report.decision == "accept_revision"
+    assert report.relative_improvement > 0.99
+    assert report.relation_selection_gap == pytest.approx(0.000113)
+    assert report.law_residual_gap == pytest.approx(0.000229)
+    assert report.to_dict()["selected_hypothesis"]["status"] == "revised"
+
+
+def test_law_revision_report_rejects_weak_revision() -> None:
+    hypothesis = wpu.LocalLawHypothesis(
+        name="weak_revision",
+        relation_type="influences",
+        expression="gain * impulse",
+        input_fields=("current_impulse",),
+        parameters={"gain": 0.1},
+        evidence={},
+    )
+
+    report = wpu.evaluate_law_revision(
+        base_error=1.0,
+        revised_error=0.95,
+        selected_hypothesis=hypothesis,
+        calibration_samples=8,
+        min_relative_improvement=0.10,
+    )
+
+    assert report.decision == "keep_base_or_collect_data"
+    assert report.relative_improvement == pytest.approx(0.05)

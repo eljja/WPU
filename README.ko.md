@@ -186,6 +186,10 @@ Revision probe는 작은 calibration set으로 이 loop를 닫는다. Gain calib
 `hidden_power_shift` MSE를 `0.054596`에서 `0.008887`로 낮춘다. Oracle-relation form
 revision은 `0.000232`에 도달하므로, 남은 gap은 law form만이 아니라 relation selection과
 noisy calibration에도 있다.
+Package는 이를 magic이 아니라 metadata/report API로 노출한다. `LocalLawHypothesis`는
+해석 가능한 rule candidate를 기록하고, `evaluate_law_revision`은 stress-driven revision을
+accept할지와 oracle-relation evidence가 있을 때 relation-selection gap 및 law-residual gap을
+보고한다.
 
 현재 v2 working-set 모델도 package root의 model factory에서 생성할 수 있다.
 

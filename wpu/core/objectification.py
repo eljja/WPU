@@ -63,6 +63,110 @@ class ObjectificationRepairReport:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class LocalLawHypothesis:
+    """Interpretable local rule attached to objectified relations.
+
+    This is a metadata contract, not a physics solver. It records the current
+    best local rule, the object/relation variables it depends on, and the
+    evidence accumulated so far so experiments can revise or reject the rule.
+    """
+
+    name: str
+    relation_type: str
+    expression: str
+    input_fields: tuple[str, ...]
+    parameters: dict[str, float]
+    evidence: dict[str, float]
+    status: str = "candidate"
+
+    def to_dict(self) -> dict[str, str | tuple[str, ...] | dict[str, float]]:
+        return {
+            "name": self.name,
+            "relation_type": self.relation_type,
+            "expression": self.expression,
+            "input_fields": self.input_fields,
+            "parameters": dict(self.parameters),
+            "evidence": dict(self.evidence),
+            "status": self.status,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class LawRevisionReport:
+    """Report for stress-driven local-law revision over objectified relations."""
+
+    base_error: float
+    revised_error: float
+    relative_improvement: float
+    decision: str
+    selected_hypothesis: LocalLawHypothesis
+    calibration_samples: int
+    oracle_relation_error: float | None = None
+    relation_selection_gap: float | None = None
+    law_residual_gap: float | None = None
+
+    def to_dict(self) -> dict[str, float | int | str | None | dict[str, object]]:
+        return {
+            "base_error": self.base_error,
+            "revised_error": self.revised_error,
+            "relative_improvement": self.relative_improvement,
+            "decision": self.decision,
+            "selected_hypothesis": self.selected_hypothesis.to_dict(),
+            "calibration_samples": self.calibration_samples,
+            "oracle_relation_error": self.oracle_relation_error,
+            "relation_selection_gap": self.relation_selection_gap,
+            "law_residual_gap": self.law_residual_gap,
+        }
+
+
+def evaluate_law_revision(
+    *,
+    base_error: float,
+    revised_error: float,
+    selected_hypothesis: LocalLawHypothesis,
+    calibration_samples: int,
+    oracle_relation_error: float | None = None,
+    min_relative_improvement: float = 0.10,
+) -> LawRevisionReport:
+    """Evaluate whether a local-law revision should be accepted.
+
+    `base_error` and `revised_error` are downstream errors measured on the same
+    held-out objectified state distribution. If `oracle_relation_error` is
+    provided, the report separates error caused by imperfect relation selection
+    from error left by the candidate law family itself.
+    """
+
+    if base_error < 0.0 or revised_error < 0.0:
+        raise ValueError("errors must be non-negative")
+    if oracle_relation_error is not None and oracle_relation_error < 0.0:
+        raise ValueError("oracle_relation_error must be non-negative")
+    if calibration_samples < 0:
+        raise ValueError("calibration_samples must be non-negative")
+
+    improvement = max(0.0, base_error - revised_error)
+    relative_improvement = improvement / base_error if base_error > 0.0 else 0.0
+    decision = "accept_revision" if relative_improvement >= min_relative_improvement else "keep_base_or_collect_data"
+
+    relation_selection_gap: float | None = None
+    law_residual_gap: float | None = None
+    if oracle_relation_error is not None:
+        relation_selection_gap = max(0.0, revised_error - oracle_relation_error)
+        law_residual_gap = oracle_relation_error
+
+    return LawRevisionReport(
+        base_error=base_error,
+        revised_error=revised_error,
+        relative_improvement=relative_improvement,
+        decision=decision,
+        selected_hypothesis=selected_hypothesis,
+        calibration_samples=calibration_samples,
+        oracle_relation_error=oracle_relation_error,
+        relation_selection_gap=relation_selection_gap,
+        law_residual_gap=law_residual_gap,
+    )
+
+
 def evaluate_objectification(
     state: WorldState,
     *,

@@ -182,6 +182,10 @@ calibration reduces `hidden_inverse_gain_shift` MSE from `0.115978` to
 `0.000342`; form revision reduces `hidden_power_shift` MSE from `0.054596` to
 `0.008887`. The oracle-relation form revision reaches `0.000232`, showing the
 remaining gap is relation selection and noisy calibration, not only law form.
+The package exposes this as metadata, not magic: `LocalLawHypothesis` records an
+interpretable rule candidate and `evaluate_law_revision` reports whether a
+stress-driven revision should be accepted, plus the relation-selection and
+law-residual gaps when oracle-relation evidence is available.
 
 The current v2 working-set models are also available from the package root
 through the model factory:

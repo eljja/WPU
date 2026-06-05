@@ -1,0 +1,348 @@
+from __future__ import annotations
+
+import argparse
+import csv
+from pathlib import Path
+import statistics
+
+
+ROOT = Path("docs/experiments")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Build a conservative WPU v2 priority dashboard from existing experiment CSVs."
+    )
+    parser.add_argument("--out-csv", type=Path, default=ROOT / "wpu_v2_priority_dashboard.csv")
+    parser.add_argument("--out-md", type=Path, default=ROOT / "wpu_v2_priority_dashboard.md")
+    parser.add_argument("--out-ko-md", type=Path, default=ROOT / "wpu_v2_priority_dashboard.ko.md")
+    args = parser.parse_args()
+
+    rows = [
+        _priority_candidate_oracle_gap(),
+        _priority_state_integrity(),
+        _priority_simulator_grounding(),
+        _priority_shift_generalization(),
+        _priority_calibration(),
+        _priority_systems_profile(),
+        _priority_objectification_quality(),
+    ]
+    args.out_csv.parent.mkdir(parents=True, exist_ok=True)
+    _write_csv(args.out_csv, rows)
+    args.out_md.write_text(_render_markdown(rows, korean=False), encoding="utf-8")
+    args.out_ko_md.write_text(_render_markdown(rows, korean=True), encoding="utf-8")
+    print(f"wrote={args.out_csv}")
+    print(f"wrote={args.out_md}")
+    print(f"wrote={args.out_ko_md}")
+
+
+def _priority_candidate_oracle_gap() -> dict[str, object]:
+    path = ROOT / "wpu_v2_candidate_oracle_gap_v2.csv"
+    rows = _read_rows(path)
+    target_rows = [
+        row
+        for row in rows
+        if row["feature_variant"] == "role_geometry_family"
+        and row["policy"] == "risk_adjusted_selected_mechanism"
+    ]
+    best = max(float(row["gap_closure_fraction"]) for row in target_rows)
+    mean = statistics.fmean(float(row["gap_closure_fraction"]) for row in target_rows)
+    return _row(
+        1,
+        "Candidate-oracle gap",
+        "fail" if best < 0.5 else "partial",
+        best,
+        0.5,
+        "gap_closure_fraction",
+        path,
+        f"Best deployed closure is {best:.6f} and mean closure is {mean:.6f}; most oracle headroom remains unused.",
+        "Train candidate scoring from downstream regret, add selector uncertainty, and require cross-seed no-harm checks.",
+    )
+
+
+def _priority_state_integrity() -> dict[str, object]:
+    path = ROOT / "pybullet_state_integrity_audit.csv"
+    rows = _read_rows(path)
+    wpu_h25 = [
+        row
+        for row in rows
+        if row["model"].startswith("wpu-") and int(row["horizon"]) == 25
+    ]
+    best = max(float(row["state_integrity_score"]) for row in wpu_h25)
+    sparse_clipped = next(
+        float(row["state_integrity_score"])
+        for row in wpu_h25
+        if row["run_label"] == "clipped" and row["model"] == "wpu-cws-indexed-sparse"
+    )
+    return _row(
+        2,
+        "Long-horizon state integrity",
+        "fail" if best < 0.8 else "partial",
+        best,
+        0.8,
+        "best_wpu_h25_integrity",
+        path,
+        f"Best WPU H=25 integrity is {best:.6f}; clipped sparse is only {sparse_clipped:.6f}.",
+        "Add rollout-consistency loss, unsafe-delta rejection, rollback, correction, and uncertainty escalation.",
+    )
+
+
+def _priority_simulator_grounding() -> dict[str, object]:
+    path = ROOT / "pybullet_cup_benchmark.csv"
+    rows = _read_rows(path)
+    seed_rows = _rows_of_type(rows, "seed")
+    summary_rows = _rows_of_type(rows, "summary")
+    seed_count = len({row["seed"] for row in seed_rows})
+    max_background = max(int(float(row["background_objects"])) for row in summary_rows)
+    status = "partial" if seed_count >= 2 and max_background >= 128 else "fail"
+    return _row(
+        3,
+        "Simulator-backed benchmark",
+        status,
+        float(seed_count),
+        5.0,
+        "seed_count",
+        path,
+        f"PyBullet benchmark exists with {seed_count} seeds and background up to N_bg={max_background}, but it is still small.",
+        "Increase seeds, mechanisms, training scale, and long-horizon simulator rollouts.",
+    )
+
+
+def _priority_shift_generalization() -> dict[str, object]:
+    path = ROOT / "pybullet_shift_generalization.csv"
+    rows = _rows_of_type(_read_rows(path), "summary")
+    shifts = sorted({row["eval_mechanism"] for row in rows if row["eval_mechanism"] != "nominal"})
+    wins = 0
+    notes: list[str] = []
+    for mechanism in shifts:
+        group = [row for row in rows if row["eval_mechanism"] == mechanism]
+        best_wpu = max(float(row["branch_accuracy"]) for row in group if row["model"].startswith("wpu-"))
+        best_baseline = max(float(row["branch_accuracy"]) for row in group if not row["model"].startswith("wpu-"))
+        if best_wpu >= best_baseline:
+            wins += 1
+        notes.append(f"{mechanism}: WPU {best_wpu:.6f} vs baseline {best_baseline:.6f}")
+    win_rate = wins / max(1, len(shifts))
+    status = "partial" if 0.0 < win_rate < 1.0 else ("pass" if win_rate == 1.0 else "fail")
+    return _row(
+        4,
+        "Mechanism-family shift generalization",
+        status,
+        win_rate,
+        1.0,
+        "wpu_shift_win_rate",
+        path,
+        "; ".join(notes),
+        "Add leave-family-out training, harder shifts, and mechanism-aware branch priors.",
+    )
+
+
+def _priority_calibration() -> dict[str, object]:
+    path = ROOT / "pybullet_shift_generalization.csv"
+    rows = _rows_of_type(_read_rows(path), "summary")
+    wpu_ece = statistics.fmean(float(row["ece"]) for row in rows if row["model"].startswith("wpu-"))
+    baseline_ece = statistics.fmean(float(row["ece"]) for row in rows if not row["model"].startswith("wpu-"))
+    ratio = wpu_ece / baseline_ece if baseline_ece > 0 else float("inf")
+    status = "partial" if ratio <= 1.1 else "fail"
+    return _row(
+        5,
+        "Calibration and uncertainty",
+        status,
+        ratio,
+        1.0,
+        "wpu_ece_over_baseline_ece",
+        path,
+        f"Mean WPU ECE is {wpu_ece:.6f}; mean baseline ECE is {baseline_ece:.6f}; ratio is {ratio:.6f}.",
+        "Add temperature heads, branch calibration loss, multi-step ECE/Brier/NLL, and uncertainty-gated recompute.",
+    )
+
+
+def _priority_systems_profile() -> dict[str, object]:
+    path = ROOT / "pybullet_system_profile.csv"
+    rows = _rows_of_type(_read_rows(path), "summary")
+    max_reduction = max(float(row["tensor_byte_reduction"]) for row in rows)
+    max_n = max(float(row["total_objects"]) for row in rows)
+    status = "partial" if max_reduction >= 0.95 else "fail"
+    return _row(
+        6,
+        "Systems profile and memory traffic",
+        status,
+        max_reduction,
+        0.95,
+        "max_tensor_byte_reduction",
+        path,
+        f"Proxy tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; real hardware data is absent.",
+        "Measure real CPU/GPU latency, CUDA memory, allocator traffic, sparse-kernel behavior, and matched-accuracy speedups.",
+    )
+
+
+def _priority_objectification_quality() -> dict[str, object]:
+    path = ROOT / "pybullet_objectification_quality.csv"
+    rows = _rows_of_type(_read_rows(path), "summary")
+    combined = [row for row in rows if row["corruption"] == "combined"]
+    clean = [row for row in rows if row["corruption"] == "clean"]
+    combined_score = statistics.fmean(float(row["objectification_score"]) for row in combined)
+    clean_score = statistics.fmean(float(row["objectification_score"]) for row in clean)
+    frontier = statistics.fmean(float(row["frontier_recall"]) for row in combined)
+    status = "partial" if combined_score < clean_score and frontier < 1.0 else "fail"
+    return _row(
+        7,
+        "Objectification quality to propagation loss",
+        status,
+        combined_score,
+        clean_score,
+        "combined_objectification_score",
+        path,
+        f"Clean score {clean_score:.6f}, combined-corruption score {combined_score:.6f}, combined frontier recall {frontier:.6f}. Metrics exist, but downstream loss coupling is incomplete.",
+        "Train/evaluate propagation under controlled objectification corruption and regress loss against report components.",
+    )
+
+
+def _row(
+    priority: int,
+    name: str,
+    status: str,
+    observed: float,
+    target: float,
+    metric: str,
+    source: Path,
+    interpretation: str,
+    next_action: str,
+) -> dict[str, object]:
+    return {
+        "priority": priority,
+        "name": name,
+        "status": status,
+        "observed": round(observed, 6),
+        "target": round(target, 6),
+        "metric": metric,
+        "source": source.as_posix(),
+        "interpretation": interpretation,
+        "next_action": next_action,
+    }
+
+
+def _read_rows(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _rows_of_type(rows: list[dict[str, str]], row_type: str) -> list[dict[str, str]]:
+    if not rows or "row_type" not in rows[0]:
+        return rows
+    typed = [row for row in rows if row.get("row_type") == row_type]
+    return typed or rows
+
+
+def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _render_markdown(rows: list[dict[str, object]], *, korean: bool) -> str:
+    if korean:
+        title = "# WPU v2 우선순위 대시보드"
+        intro = (
+            "이 문서는 기존 실험 CSV에서 v2 우선순위 1~7의 현재 상태를 "
+            "보수적으로 재계산한다. 목적은 WPU 주장이 실험 증거를 초과하지 "
+            "않도록 만드는 것이다."
+        )
+        headers = "| 우선순위 | 항목 | 상태 | 관측값 | 목표 | 지표 |"
+        sep = "|---:|---|---|---:|---:|---|"
+        interp = "## 해석"
+        next_title = "## 다음 조치"
+        boundary = (
+            "현재 dashboard는 WPU v2가 유망하지만 아직 완결된 우월성 주장이 "
+            "아님을 보여준다. 가장 강한 주장은 large-N 자체가 아니라, "
+            "objectified state에서 작은 causal working set K를 tensorization 전에 "
+            "식별할 수 있을 때 WPU가 계산량과 메모리 측면에서 유리해진다는 "
+            "조건부 주장이다."
+        )
+    else:
+        title = "# WPU v2 Priority Dashboard"
+        intro = (
+            "This dashboard conservatively recomputes the current status of v2 "
+            "priorities 1-7 from existing experiment CSVs. Its purpose is to keep "
+            "WPU claims aligned with evidence."
+        )
+        headers = "| Priority | Item | Status | Observed | Target | Metric |"
+        sep = "|---:|---|---|---:|---:|---|"
+        interp = "## Interpretation"
+        next_title = "## Next Actions"
+        boundary = (
+            "The dashboard shows that WPU v2 is promising but not a completed "
+            "superiority claim. The strongest claim remains conditional: WPU can "
+            "reduce compute and memory when objectified state exposes a small "
+            "causal working set K before tensorization. Large N alone is not enough."
+        )
+
+    lines = [title, "", intro, "", headers, sep]
+    for row in rows:
+        name = _ko_name(int(row["priority"])) if korean else str(row["name"])
+        status = _ko_status(str(row["status"])) if korean else str(row["status"])
+        lines.append(
+            f"| {row['priority']} | {name} | {status} | "
+            f"{float(row['observed']):.6f} | {float(row['target']):.6f} | `{row['metric']}` |"
+        )
+    lines.extend(["", interp, "", boundary, ""])
+    for row in rows:
+        if korean:
+            lines.append(f"- P{row['priority']} {_ko_name(int(row['priority']))}: {_ko_interpretation(int(row['priority']))}")
+        else:
+            lines.append(f"- P{row['priority']} {row['name']}: {row['interpretation']}")
+    lines.extend(["", next_title, ""])
+    for row in rows:
+        if korean:
+            lines.append(f"- P{row['priority']}: {_ko_next_action(int(row['priority']))}")
+        else:
+            lines.append(f"- P{row['priority']}: {row['next_action']}")
+    return "\n".join(lines) + "\n"
+
+
+def _ko_name(priority: int) -> str:
+    return {
+        1: "Candidate-oracle gap",
+        2: "장기 state integrity",
+        3: "Simulator-backed benchmark",
+        4: "Mechanism-family shift generalization",
+        5: "Calibration과 uncertainty",
+        6: "Systems profile과 memory traffic",
+        7: "Objectification quality와 propagation loss",
+    }[priority]
+
+
+def _ko_status(status: str) -> str:
+    return {
+        "pass": "pass",
+        "partial": "partial",
+        "fail": "fail",
+    }[status]
+
+
+def _ko_interpretation(priority: int) -> str:
+    return {
+        1: "최고 deployed closure는 0.244220이고 평균 closure는 0.160601이다. Candidate pool 안에는 아직 더 좋은 선택지가 많이 남아 있다.",
+        2: "최고 WPU H=25 integrity는 0.719139이며 clipped sparse는 0.201757에 그친다. 반복 delta overlay 안정성은 아직 해결되지 않았다.",
+        3: "PyBullet benchmark는 2개 seed와 background N_bg=128까지 존재하지만, 논문급 강한 주장에는 seed와 mechanism 수가 부족하다.",
+        4: "WPU는 edge_shift에서 앞서지만 high_force와 catch_heavy에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.",
+        5: "평균 WPU ECE는 0.236226, baseline ECE는 0.221034로 WPU가 약 1.068727배 높다. Calibration은 측정됐지만 개선됐다고 보기 어렵다.",
+        6: "Proxy tensor-byte reduction은 mean total objects 2052.6에서 0.997454까지 도달한다. 다만 실제 hardware/runtime/energy 증거는 아직 없다.",
+        7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
+    }[priority]
+
+
+def _ko_next_action(priority: int) -> str:
+    return {
+        1: "Downstream regret 기반 candidate scoring, selector uncertainty, cross-seed no-harm check를 추가한다.",
+        2: "Rollout-consistency loss, unsafe-delta rejection, rollback, correction, uncertainty escalation을 추가한다.",
+        3: "Seed, mechanism, training scale, long-horizon simulator rollout을 늘린다.",
+        4: "Leave-family-out training, 더 어려운 shift, mechanism-aware branch prior를 추가한다.",
+        5: "Temperature head, branch calibration loss, multi-step ECE/Brier/NLL, uncertainty-gated recompute를 추가한다.",
+        6: "실제 CPU/GPU latency, CUDA memory, allocator traffic, sparse-kernel behavior, matched-accuracy speedup을 측정한다.",
+        7: "Controlled objectification corruption에서 propagation을 학습/평가하고 report component와 downstream loss의 관계를 회귀 분석한다.",
+    }[priority]
+
+
+if __name__ == "__main__":
+    main()

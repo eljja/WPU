@@ -55,6 +55,22 @@ that does not yet validate perception-to-state construction.
 | Relation repair can add false hypotheses | Repair can recover missing local connectivity, but spurious edges can expand `K` and hurt sparse precision. | The relation-repair probe shows ungated repair recovers frontier recall but drops precision to `0.078994` with near distractors and `0.013244` with dense distractors. Type-gated and learned-scorer repair restore precision to `1.000000` in-distribution. The learned scorer transfers across aliased type names when role/affordance state is preserved and improves toy downstream branch accuracy from `0.343750` to `0.671875`, but fails when both type and role information are removed. Ungated dense-distractor repair restores frontier recall but worsens downstream loss. | Repair precision/recall against simulator relations, downstream loss with and without repair, and learned gates that reject harmful repaired edges under cross-generator and hidden-mechanism shift. |
 | Unknown-theory discovery is only a long-term program | Learning relations that expose unknown regularities is a stronger claim than using known object relations. | Synthetic evidence now covers relation transfer, local-law transfer, OOD stress, and revision. The revision probe reduces gain-shift MSE from `0.115978` to `0.000342` and power-shift MSE from `0.054596` to `0.008887`, while oracle relation revision reaches `0.000232`. | Simulator-backed held-out-rule or hidden-mechanism benchmarks where learned object relations improve prediction and produce falsifiable new structure. |
 
+## V2 Priority Dashboard
+
+The current machine-generated dashboard is
+`docs/experiments/wpu_v2_priority_dashboard.md`. It should be regenerated after
+material v2 experiments:
+
+```bash
+python scripts/audit_v2_priority_dashboard.py
+```
+
+Current status is conservative: priority 1 candidate-oracle gap and priority 2
+long-horizon state integrity still fail the dashboard thresholds. Priorities 3
+to 7 are partial rather than solved. This is the correct publication posture:
+the repository supports a falsifiable WPU regime hypothesis, not a completed
+claim of broad superiority.
+
 ## Immediate Improvement Priorities
 
 1. Close the candidate-oracle gap beyond the current best gap-closure fraction

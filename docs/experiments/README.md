@@ -16,10 +16,29 @@ repair precision/recall when ground truth is available, and downstream loss
 with and without repair. Repaired edges are hypotheses for frontier recovery,
 not ground-truth physical relations.
 
+## V2 Priority Dashboard
+
+Use `wpu_v2_priority_dashboard.md` as the conservative status summary for the
+current v2 program. It recomputes priorities 1-7 from committed CSV evidence and
+marks unresolved items explicitly. The current dashboard is intentionally not a
+success-only table: candidate-oracle gap closure and long-horizon state
+integrity remain failing criteria, while simulator grounding, shift
+generalization, calibration, systems profiling, and objectification quality are
+partial.
+
+Reproduce it with:
+
+```bash
+python scripts/audit_v2_priority_dashboard.py
+```
+
 ## Current Evidence Hierarchy
 
 Use these reports for paper-level claims:
 
+- `wpu_v2_priority_dashboard.md` and `wpu_v2_priority_dashboard.ko.md`:
+  conservative cross-experiment dashboard for v2 priorities 1-7. It is the
+  fastest way to see which claims are ready, partial, or still failing.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

@@ -184,6 +184,12 @@ python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse 
 python scripts/analyze_candidate_oracle_gap.py --input docs/experiments/wpu_v2_retriever_invariant_set_scorer.csv --out-csv docs/experiments/wpu_v2_candidate_oracle_gap_v2.csv --out-md docs/experiments/wpu_v2_candidate_oracle_gap_v2_results.md
 ```
 
+보수적인 v2 우선순위 dashboard는 다음 명령으로 재현할 수 있다.
+
+```bash
+python scripts/audit_v2_priority_dashboard.py
+```
+
 ## 현재 제출 경계
 
 `docs/claims.ko.md`를 authoritative claim boundary로 사용한다. 현재 저장소가

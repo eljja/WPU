@@ -52,6 +52,21 @@ construction을 검증했다는 뜻은 아니다.
 | relation repair가 false hypothesis를 추가할 수 있음 | Repair는 누락된 local connectivity를 복구할 수 있지만, spurious edge는 `K`를 키우고 sparse precision을 낮출 수 있다. | relation-repair probe는 ungated repair가 frontier recall은 복구하지만 near distractor에서 precision `0.078994`, dense distractor에서 `0.013244`로 떨어짐을 보인다. Type-gated 및 learned-scorer repair는 in-distribution에서 precision `1.000000`을 회복한다. Learned scorer는 role/affordance state가 보존되면 aliased type name을 넘어 transfer하고 toy downstream branch accuracy를 `0.343750`에서 `0.671875`로 올리지만, type과 role 정보가 모두 제거되면 실패한다. Ungated dense-distractor repair는 frontier recall을 복구해도 downstream loss를 악화시킨다. | simulator relation 대비 repair precision/recall, repair 전후 downstream loss, cross-generator 및 hidden-mechanism shift에서 harmful repaired edge를 reject하는 learned gate. |
 | unknown-theory discovery는 장기 연구 프로그램일 뿐임 | 아직 모르는 규칙성을 드러내는 learned relation은 알려진 relation 사용보다 훨씬 강한 주장이다. | Synthetic evidence는 이제 relation transfer, local-law transfer, OOD stress, revision을 포함한다. Revision probe는 gain-shift MSE를 `0.115978`에서 `0.000342`로, power-shift MSE를 `0.054596`에서 `0.008887`로 낮춘다. Oracle relation revision은 `0.000232`에 도달한다. | simulator-backed held-out rule 또는 hidden-mechanism benchmark에서 learned object relation이 prediction을 개선하고 반증 가능한 새 구조를 제시하는 증거. |
 
+## V2 Priority Dashboard
+
+현재 machine-generated dashboard는
+`docs/experiments/wpu_v2_priority_dashboard.ko.md`다. 중요한 v2 실험을 추가한
+뒤에는 다음 명령으로 재생성한다.
+
+```bash
+python scripts/audit_v2_priority_dashboard.py
+```
+
+현재 상태는 보수적이다. Priority 1 candidate-oracle gap과 priority 2
+long-horizon state integrity는 dashboard threshold를 통과하지 못한다.
+Priority 3~7도 solved가 아니라 partial이다. 따라서 올바른 외부 공표 태도는
+보편 우월성 주장이 아니라 반증 가능한 WPU regime hypothesis다.
+
 ## 즉시 개선 우선순위
 
 1. token processing으로 돌아가지 않고 현재 best gap-closure fraction `0.244220`을

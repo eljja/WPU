@@ -193,6 +193,12 @@ The latest candidate-oracle gap audit can be reproduced with:
 python scripts/analyze_candidate_oracle_gap.py --input docs/experiments/wpu_v2_retriever_invariant_set_scorer.csv --out-csv docs/experiments/wpu_v2_candidate_oracle_gap_v2.csv --out-md docs/experiments/wpu_v2_candidate_oracle_gap_v2_results.md
 ```
 
+The conservative v2 priority dashboard can be reproduced with:
+
+```bash
+python scripts/audit_v2_priority_dashboard.py
+```
+
 ## Current Submission Boundary
 
 Use `docs/claims.md` as the authoritative claim boundary. The current repository

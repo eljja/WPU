@@ -12,6 +12,8 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_regularized.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_rejected.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_consistency.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_validity.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_validity_strong.csv`
 
 Derived CSV:
 
@@ -43,6 +45,10 @@ Derived CSV:
 | rejected | graph-transformer | 25 | 0.271666 | 3.406922 | 0.053819 | 0.359166 | 0.720577 |
 | rejected | wpu-cws-indexed-local-dense | 25 | 0.499166 | 2.277815 | 0.055556 | 0.000000 | 0.634624 |
 | rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.076389 | 0.640000 | 0.530270 |
+| validity | wpu-cws-indexed-local-dense | 25 | 0.605833 | 2.222097 | 0.054688 | 0.000000 | 0.578081 |
+| validity | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.084722 |
+| validity_strong | wpu-cws-indexed-local-dense | 25 | 0.710833 | 2.212986 | 0.055556 | 0.000000 | 0.520476 |
+| validity_strong | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.084722 |
 
 ## 해석
 
@@ -66,6 +72,13 @@ raw transition model이 안정적이라는 증거가 아니라, memory layer가 
 Rollout-consistency run은 학습 중 두 번째 step의 delta growth를 줄이도록 penalty를
 추가했다. 현재 결과에서는 sparse H=25 integrity가 `0.084549`로 raw `0.084722`와
 거의 같아 naive consistency penalty가 raw-delta instability를 해결하지 못한다.
+
+State-validity run은 예측된 다음 상태가 position/velocity bound와 cup floor bound를
+위반하지 않도록 training loss를 추가했다. 그러나 sparse H=25 integrity는 `0.084722`로
+raw와 같고, strong-validity에서도 개선되지 않았다. Local-dense도 `0.578081` 및
+`0.520476`으로 raw `0.618283`보다 낮다. 따라서 현재 v2 증거에서는 단순 validity
+regularization만으로는 long-horizon state 안정성을 만들 수 없고, guarded projection,
+unsafe-delta rejection, rollback/correction 같은 memory-layer safety가 필요하다.
 
 따라서 state integrity는 WPU의 first-class metric이어야 한다.
 

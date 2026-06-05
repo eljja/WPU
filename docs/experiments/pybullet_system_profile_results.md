@@ -8,6 +8,7 @@ cost, and branch-overlay memory cost.
 Source CSV:
 
 - `docs/experiments/pybullet_system_profile.csv`
+- `docs/experiments/pybullet_system_profile_cuda.csv`
 
 ## Protocol
 
@@ -32,6 +33,8 @@ Source CSV:
   - `sparse_forward_latency_reduction`: random untrained CPU forward-latency
     proxy comparing full-state `graph-transformer` with selected-state
     `wpu-cws-indexed-sparse`.
+  - `sparse_peak_memory_reduction`: CUDA peak allocated-memory reduction for
+    the same random untrained forward proxy when the CUDA profile is used.
 
 ## Summary
 
@@ -68,10 +71,18 @@ The branch result is also aligned with the WPU memory thesis. At `B=8`, storing
 `BaseState + branch deltas` reduces the branch memory proxy by `0.874128` at
 the largest `N` relative to full state copies.
 
-This does not prove hardware speedup, lower power, or matched-accuracy
-speedup. It is still a Python-level CPU measurement with random untrained
-models and does not include irregular sparse-kernel overhead, cache behavior,
-GPU occupancy, or real energy. The defensible claim is narrower:
+The CUDA profile strengthens the latency side of this claim. At `N≈2052.4`, a
+random full-state `graph-transformer` forward pass takes about `579 ms`, while
+the selected-state sparse WPU pass takes about `2.2 ms`, giving a sparse
+forward latency reduction of `0.996216`. The selected local-dense WPU pass is
+about `3.24 ms`, giving `0.994417` reduction. Peak allocated CUDA memory is a
+weaker result: sparse peak-memory reduction is only `0.304080`, so allocator
+and model-parameter memory do not shrink as aggressively as forward latency.
+
+This does not prove lower power or matched-accuracy speedup. It is still a
+random untrained model measurement and does not include energy, trained
+accuracy parity, custom sparse kernels, or full GPU occupancy analysis. The
+defensible claim is narrower:
 
 ```text
 If the causal working set K is selected before tensorization, WPU exposes a
@@ -81,9 +92,9 @@ unless they implement an equivalent state index.
 
 ## Issues Found
 
-- The profiler now measures CPU tensorization latency and a random untrained
-  CPU forward proxy, but not trained matched-accuracy latency, CUDA allocator
-  traffic, or energy.
+- The profiler now measures CPU tensorization latency, a random untrained CPU
+  forward proxy, and a random untrained CUDA forward/peak-memory proxy, but not
+  trained matched-accuracy latency, CUDA allocator traffic, or energy.
 - `sys.getsizeof`-based state memory is a Python-object approximation, not an
   allocator-level memory measurement.
 - The indexed frontier is relation-derived and easy in this PyBullet scene.
@@ -93,8 +104,8 @@ unless they implement an equivalent state index.
 
 ## Next Steps
 
-- Add trained matched-accuracy forward latency and CUDA memory measurements for
-  the same `N` settings.
+- Add trained matched-accuracy forward latency, CUDA allocator traffic, and
+  energy measurements for the same `N` settings.
 - Add objectification corruption to measure how relation errors change selected
   `K`, tensor reduction, and downstream loss.
 - Replace Python-object memory estimates with serialized byte size and

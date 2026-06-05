@@ -125,6 +125,18 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "state-validity objective or correction mechanism before it can",
             "replace guarded memory safety.",
         ]
+    validity_note = []
+    if "validity" in labels or "validity_strong" in labels:
+        validity_note = [
+            "",
+            "The state-validity runs add training losses for predicted position,",
+            "velocity, and cup-floor bounds. In the current evidence they also",
+            "do not solve sparse raw-delta instability: both validity and",
+            "strong-validity sparse H=25 integrity remain at 0.084722.",
+            "Local-dense validity also falls below the raw local-dense score.",
+            "Validity losses therefore need rollback/correction and uncertainty",
+            "escalation rather than acting as a standalone fix.",
+        ]
     lines = [
         "# PyBullet State-Integrity Audit",
         "",
@@ -173,6 +185,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             *regularized_note,
             *rejection_note,
             *consistency_note,
+            *validity_note,
             "",
             "This makes state integrity a first-class WPU metric:",
             "",

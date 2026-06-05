@@ -161,7 +161,9 @@ python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse w
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --delta-norm-penalty 0.05 --delta-target-norm-slack 0.5 --out docs/experiments/pybullet_closed_loop_rollout_regularized.csv
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --unsafe-delta-reject-norm 10.0 --out docs/experiments/pybullet_closed_loop_rollout_rejected.csv
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --rollout-consistency-penalty 0.01 --rollout-consistency-slack 0.5 --out docs/experiments/pybullet_closed_loop_rollout_consistency.csv
-python scripts/analyze_state_integrity.py --inputs docs/experiments/pybullet_closed_loop_rollout.csv docs/experiments/pybullet_closed_loop_rollout_clipped.csv docs/experiments/pybullet_closed_loop_rollout_guarded.csv docs/experiments/pybullet_closed_loop_rollout_regularized.csv docs/experiments/pybullet_closed_loop_rollout_rejected.csv docs/experiments/pybullet_closed_loop_rollout_consistency.csv --labels raw clipped guarded regularized rejected consistency --out-csv docs/experiments/pybullet_state_integrity_audit.csv --out-md docs/experiments/pybullet_state_integrity_audit_results.md
+python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --state-validity-penalty 0.01 --out docs/experiments/pybullet_closed_loop_rollout_validity.csv
+python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --state-validity-penalty 0.1 --out docs/experiments/pybullet_closed_loop_rollout_validity_strong.csv
+python scripts/analyze_state_integrity.py --inputs docs/experiments/pybullet_closed_loop_rollout.csv docs/experiments/pybullet_closed_loop_rollout_clipped.csv docs/experiments/pybullet_closed_loop_rollout_guarded.csv docs/experiments/pybullet_closed_loop_rollout_regularized.csv docs/experiments/pybullet_closed_loop_rollout_rejected.csv docs/experiments/pybullet_closed_loop_rollout_consistency.csv docs/experiments/pybullet_closed_loop_rollout_validity.csv docs/experiments/pybullet_closed_loop_rollout_validity_strong.csv --labels raw clipped guarded regularized rejected consistency validity validity_strong --out-csv docs/experiments/pybullet_state_integrity_audit.csv --out-md docs/experiments/pybullet_state_integrity_audit_results.md
 ```
 
 PyBullet local-law revision probe는 다음 명령으로 재현할 수 있다.
@@ -174,12 +176,14 @@ PyBullet systems profile은 다음 명령으로 재현할 수 있다.
 
 ```bash
 python scripts/pybullet_system_profile.py --samples 8 --seeds 11 13 --background-objects 0 32 128 512 2048 --branch-counts 1 3 8 --sim-steps 24 --forward-repeats 3 --hidden-dim 64 --layers 2 --num-heads 4 --out docs/experiments/pybullet_system_profile.csv
+python scripts/pybullet_system_profile.py --samples 4 --seeds 11 13 --background-objects 0 32 128 512 2048 --branch-counts 1 3 8 --sim-steps 24 --forward-repeats 5 --hidden-dim 64 --layers 2 --num-heads 4 --device cuda --out docs/experiments/pybullet_system_profile_cuda.csv
 ```
 
 PyBullet shift-generalization 및 calibration benchmark는 다음 명령으로 재현할 수 있다.
 
 ```bash
 python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 17 19 23 29 31 --background-objects 32 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_shift_generalization.csv
+python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --train-mechanisms nominal high_force edge_shift catch_heavy --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 17 --background-objects 32 --steps 16 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --calibrate-temperature --calibration-samples 48 --temperature-steps 30 --out docs/experiments/pybullet_shift_generalization_mixture_calibrated.csv
 ```
 
 최신 candidate-oracle gap audit은 다음 명령으로 재현할 수 있다.
@@ -207,6 +211,8 @@ Direct candidate-regret gate probe와 요약은 다음 명령으로 재현할 �
 ```bash
 python scripts/retriever_cross_seed_candidate_regret_gate_probe.py
 python scripts/analyze_candidate_regret_gate.py
+python scripts/retriever_cross_seed_candidate_regret_gate_probe.py --harmful-accept-weight 0.5 --safe-ranking-weight 0.1 --out docs/experiments/wpu_v2_candidate_regret_gate_penalty.csv
+python scripts/analyze_candidate_regret_gate.py --input docs/experiments/wpu_v2_candidate_regret_gate_penalty.csv --out-csv docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv --out-md docs/experiments/wpu_v2_candidate_regret_gate_penalty_results.md --out-ko-md docs/experiments/wpu_v2_candidate_regret_gate_penalty_results.ko.md
 ```
 
 보수적인 v2 우선순위 dashboard는 다음 명령으로 재현할 수 있다.

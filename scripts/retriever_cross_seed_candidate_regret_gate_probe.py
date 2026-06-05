@@ -77,6 +77,8 @@ def main() -> None:
     parser.add_argument("--no-harm-margin", type=float, default=0.0)
     parser.add_argument("--bce-weight", type=float, default=0.25)
     parser.add_argument("--variance-weight", type=float, default=0.05)
+    parser.add_argument("--harmful-accept-weight", type=float, default=0.0)
+    parser.add_argument("--safe-ranking-weight", type=float, default=0.0)
     parser.add_argument("--samples", type=int, default=90)
     parser.add_argument("--validation-samples", type=int, default=180)
     parser.add_argument("--batch-size", type=int, default=10)
@@ -189,6 +191,13 @@ def _train_gate(
         nll = 0.5 * (pred_log_var + (regrets - pred_mean).pow(2) / pred_var).mean()
         no_harm = F.binary_cross_entropy_with_logits(-pred_mean, safe)
         loss = regression + args.variance_weight * nll + args.bce_weight * no_harm
+        if args.harmful_accept_weight > 0.0:
+            unsafe = (regrets > args.no_harm_margin).float()
+            accept_probability = torch.sigmoid(-pred_mean)
+            loss = loss + args.harmful_accept_weight * (accept_probability * unsafe).mean()
+        if args.safe_ranking_weight > 0.0:
+            best_indices = regrets.argmin(dim=1)
+            loss = loss + args.safe_ranking_weight * F.cross_entropy(-pred_mean, best_indices)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()

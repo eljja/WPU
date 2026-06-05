@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import ConcatDataset, DataLoader
 
 from wpu.data.pybullet_cup import PyBulletCupDataset, PyBulletCupSample, collate_indexed_pybullet_cup_samples, collate_pybullet_cup_samples
 from wpu.models.causal_working_set_processor import CausalWorkingSetProcessor
@@ -51,6 +51,7 @@ MECHANISMS = {
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate PyBullet cross-mechanism generalization and calibration.")
     parser.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
+    parser.add_argument("--train-mechanisms", nargs="+", default=["nominal"])
     parser.add_argument("--eval-mechanisms", nargs="+", default=list(MECHANISMS))
     parser.add_argument("--seeds", type=int, nargs="+", default=[11, 13])
     parser.add_argument("--background-objects", type=int, default=32)
@@ -64,6 +65,10 @@ def main() -> None:
     parser.add_argument("--working-set-size", type=int, default=12)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--calibrate-temperature", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--calibration-samples", type=int, default=96)
+    parser.add_argument("--temperature-steps", type=int, default=80)
+    parser.add_argument("--temperature-lr", type=float, default=5e-2)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--index-depth", type=int, default=1)
@@ -72,24 +77,27 @@ def main() -> None:
     args = parser.parse_args()
 
     unknown = [mechanism for mechanism in args.eval_mechanisms if mechanism not in MECHANISMS]
+    unknown.extend(mechanism for mechanism in args.train_mechanisms if mechanism not in MECHANISMS)
     if unknown:
         raise ValueError(f"unknown mechanisms: {unknown}")
 
     rows: list[dict[str, object]] = []
     for model_name in args.models:
         for seed in args.seeds:
-            print(f"train nominal model={model_name} seed={seed}", flush=True)
-            model = _train_nominal(model_name, seed, args)
+            train_label = "+".join(args.train_mechanisms)
+            print(f"train {train_label} model={model_name} seed={seed}", flush=True)
+            model = _train_model(model_name, seed, args)
+            temperature = _fit_temperature(model, model_name, seed, args) if args.calibrate_temperature else 1.0
             for mechanism in args.eval_mechanisms:
                 print(f"eval model={model_name} seed={seed} mechanism={mechanism}", flush=True)
-                rows.append(_evaluate(model, model_name, seed, mechanism, args))
+                rows.append(_evaluate(model, model_name, seed, mechanism, temperature, args))
                 _write_csv(args.out, rows)
     rows.extend(_summary(rows))
     _write_csv(args.out, rows)
     print(f"wrote={args.out}", flush=True)
 
 
-def _train_nominal(model_name: str, seed: int, args: argparse.Namespace) -> torch.nn.Module:
+def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.nn.Module:
     torch.manual_seed(seed)
     device = torch.device(args.device)
     model = create_model(
@@ -100,13 +108,7 @@ def _train_nominal(model_name: str, seed: int, args: argparse.Namespace) -> torc
         working_set_size=args.working_set_size,
     ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
-    train_dataset = _dataset(
-        mechanism="nominal",
-        samples=max(args.steps * args.batch_size, args.batch_size),
-        seed=seed,
-        args=args,
-        balanced_labels=args.balanced_labels,
-    )
+    train_dataset = _training_dataset(seed, args)
     loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args, model_name))
     class_weights = _class_weights(train_dataset).to(device) if args.class_weights else None
     model.train()
@@ -125,11 +127,59 @@ def _train_nominal(model_name: str, seed: int, args: argparse.Namespace) -> torc
     return model
 
 
+def _training_dataset(seed: int, args: argparse.Namespace):
+    total_samples = max(args.steps * args.batch_size, args.batch_size)
+    per_mechanism = max(args.batch_size, total_samples // max(len(args.train_mechanisms), 1))
+    datasets = [
+        _dataset(
+            mechanism=mechanism,
+            samples=per_mechanism,
+            seed=seed + 101 * index,
+            args=args,
+            balanced_labels=args.balanced_labels,
+        )
+        for index, mechanism in enumerate(args.train_mechanisms)
+    ]
+    return datasets[0] if len(datasets) == 1 else ConcatDataset(datasets)
+
+
+def _fit_temperature(model: torch.nn.Module, model_name: str, seed: int, args: argparse.Namespace) -> float:
+    device = torch.device(args.device)
+    dataset = _dataset(
+        mechanism=args.train_mechanisms[0],
+        samples=args.calibration_samples,
+        seed=seed + 30_000,
+        args=args,
+        balanced_labels=False,
+    )
+    loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args, model_name))
+    log_temperature = torch.zeros((), device=device, requires_grad=True)
+    optimizer = torch.optim.AdamW([log_temperature], lr=args.temperature_lr)
+    model.eval()
+    for _ in range(args.temperature_steps):
+        total_loss = torch.zeros((), device=device)
+        total_count = 0
+        for batch, _, labels, _ in loader:
+            batch = _move_batch(batch, device)
+            labels = labels.to(device)
+            with torch.no_grad():
+                logits = model(batch, num_branches=3, route_branches=3).branch_logits.detach()
+            temperature = log_temperature.exp().clamp(0.25, 8.0)
+            total_loss = total_loss + F.cross_entropy(logits / temperature, labels, reduction="sum")
+            total_count += int(labels.numel())
+        loss = total_loss / max(total_count, 1)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    return round(float(log_temperature.detach().exp().clamp(0.25, 8.0).cpu().item()), 6)
+
+
 def _evaluate(
     model: torch.nn.Module,
     model_name: str,
     seed: int,
     mechanism: str,
+    temperature: float,
     args: argparse.Namespace,
 ) -> dict[str, object]:
     device = torch.device(args.device)
@@ -159,7 +209,7 @@ def _evaluate(
             target_delta = target_delta.to(device)
             labels = labels.to(device)
             prediction = model(batch, num_branches=3, route_branches=3)
-            probabilities = prediction.branch_probabilities
+            probabilities = F.softmax(prediction.branch_logits / max(float(temperature), 1e-6), dim=-1)
             predicted = probabilities.argmax(dim=-1)
             batch_total = int(labels.numel())
             total += batch_total
@@ -181,8 +231,9 @@ def _evaluate(
         "row_type": "seed",
         "model": model_name,
         "seed": seed,
-        "train_mechanism": "nominal",
+        "train_mechanism": "+".join(args.train_mechanisms),
         "eval_mechanism": mechanism,
+        "temperature": temperature,
         "background_objects": args.background_objects,
         "total_objects_n": args.background_objects + 5,
         "samples": args.samples,
@@ -275,11 +326,11 @@ def _working_set_stats(model: torch.nn.Module, causal_k: torch.Tensor) -> tuple[
 
 
 def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    grouped: dict[tuple[str, str], list[dict[str, object]]] = {}
+    grouped: dict[tuple[str, str, str], list[dict[str, object]]] = {}
     for row in rows:
         if row["row_type"] != "seed":
             continue
-        grouped.setdefault((str(row["model"]), str(row["eval_mechanism"])), []).append(row)
+        grouped.setdefault((str(row["model"]), str(row["train_mechanism"]), str(row["eval_mechanism"])), []).append(row)
     output: list[dict[str, object]] = []
     numeric_fields = [
         "branch_accuracy",
@@ -291,13 +342,14 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
         "selected_k_mean",
         "causal_recall_mean",
         "dense_compute_ratio",
+        "temperature",
     ]
-    for (model, mechanism), group in sorted(grouped.items()):
+    for (model, train_mechanism, mechanism), group in sorted(grouped.items()):
         row = {
             "row_type": "summary",
             "model": model,
             "seed": "all",
-            "train_mechanism": "nominal",
+            "train_mechanism": train_mechanism,
             "eval_mechanism": mechanism,
             "background_objects": group[0]["background_objects"],
             "total_objects_n": group[0]["total_objects_n"],

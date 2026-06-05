@@ -298,7 +298,9 @@ The current evidence supports a regime hypothesis, not universal dominance.
   than a solved dynamics model. Unsafe-delta rejection raises sparse integrity
   to `0.530270` only by rejecting `0.640000` of updates, so rejection rate must
   be reported next to integrity. A naive rollout-consistency penalty gives
-  sparse H=25 integrity `0.084549`, so it does not solve raw delta instability.
+  sparse H=25 integrity `0.084549`, and state-validity regularization remains
+  at `0.084722`, so training-time validity penalties alone do not solve raw
+  delta instability.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
@@ -306,12 +308,17 @@ The current evidence supports a regime hypothesis, not universal dominance.
   unknown physical-law discovery.
 - The PyBullet systems profile separates state/tensor/branch-memory costs:
   with background state up to `N≈2052.6`, indexed WPU tensorizes only `K≈4.6`
-  objects and reduces tensor bytes by `0.997454`. This is cost-proxy evidence
-  for pre-tensor state indexing, not proof of hardware speed or power.
+  objects and reduces tensor bytes by `0.997454`. A random-model CUDA profile
+  shows sparse-forward latency reduction `0.996216`, but peak-memory reduction
+  is only `0.304080`; this is systems evidence for pre-tensor state indexing,
+  not proof of energy or matched-accuracy speedup.
 - The PyBullet shift-generalization benchmark adds calibration metrics under
   held-out mechanism families. In the 7-seed rerun, WPU local-dense leads on
   `catch_heavy`, but serialized-token remains stronger on `edge_shift` and
-  `high_force`, so robust world-state generalization remains unsolved.
+  `high_force`, so robust world-state generalization remains unsolved. A 3-seed
+  calibrated mixture-training probe improves WPU on `edge_shift` but loses
+  `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc
+  temperature calibration is not enough.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

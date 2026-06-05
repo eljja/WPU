@@ -104,8 +104,8 @@ Use these reports for paper-level claims:
   violations at horizon 25. Delta clipping reduces violations but does not fix
   the underlying raw prediction instability.
 - `pybullet_state_integrity_audit_results.md`: derived audit over raw, clipped,
-  guarded, regularized, unsafe-delta-rejected, and consistency-regularized
-  PyBullet closed-loop rollouts.
+  guarded, regularized, unsafe-delta-rejected, consistency-regularized, and
+  state-validity-regularized PyBullet closed-loop rollouts.
   It turns state integrity into a first-class score combining constraint
   validity, bounded applied-delta drift, branch stability, and rejection rate.
   Raw WPU sparse drops to integrity `0.084722` at horizon 25. Guarded state-store
@@ -113,7 +113,9 @@ Use these reports for paper-level claims:
   delta instability remains. A target-relative delta-norm regularized raw
   rollout only raises sparse H=25 integrity to `0.087153`; unsafe-delta
   rejection raises sparse integrity to `0.530270` only by rejecting `0.640000`
-  of updates; naive rollout-consistency reaches only `0.084549`.
+  of updates; naive rollout-consistency reaches only `0.084549`; state-validity
+  and strong state-validity regularization both remain at `0.084722` for sparse
+  H=25.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -122,17 +124,26 @@ Use these reports for paper-level claims:
   physical-law discovery.
 - `pybullet_system_profile_results.md`: PyBullet-derived systems profile that
   separates full-state tensorization, pre-tensor indexed WPU tensorization,
-  branch-overlay memory proxies, and a random CPU forward-latency proxy. It
+  branch-overlay memory proxies, a random CPU forward-latency proxy, and a
+  random CUDA forward/peak-memory proxy. It
   shows tensor-byte reduction rising to `0.997454` at `N≈2052.6` while selected
-  `K≈4.6`, sparse-forward latency reduction reaching `0.996975`, and
-  branch-overlay memory proxy reduction reaching `0.874128` at `B=8`. This is
-  systems evidence, not hardware speed, energy, or matched-accuracy proof.
+  `K≈4.6`, sparse-forward latency reduction reaching `0.996975`, and CUDA
+  sparse-forward latency reduction reaching `0.996216`. CUDA peak-memory
+  reduction is much weaker at `0.304080`, and branch-overlay memory proxy
+  reduction reaches `0.874128` at `B=8`. This is systems evidence, not energy
+  or matched-accuracy proof.
 - `pybullet_shift_generalization_results.md`: PyBullet mechanism-family shift
   benchmark. Models train on nominal dynamics and evaluate on `high_force`,
   `edge_shift`, and `catch_heavy`, with ECE/Brier/NLL as first-class calibration
   outputs. In the 7-seed rerun it shows a WPU-positive `catch_heavy` regime and
   WPU-negative `edge_shift`/`high_force` regimes where serialized-token remains
   stronger.
+- `pybullet_shift_generalization_mixture_calibrated_results.md`: 3-seed
+  calibrated mixture-training probe. It shows that mixture training helps WPU
+  on `edge_shift` but not on `catch_heavy`, and that post-hoc temperature
+  calibration can worsen aggregate WPU-vs-baseline ECE ratio to `1.133834`.
+- `pybullet_shift_generalization_mixture_calibrated_results.ko.md`: Korean
+  companion for the calibrated mixture-training probe.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -224,6 +235,11 @@ Use these reports for paper-level claims:
   only when predicted regret is favorable. The current deployment reaches
   `0.329950` in the test sweep and `0.328025` under train-selected deployment,
   but remains below the `0.5` threshold.
+- `wpu_v2_candidate_regret_gate_penalty_results.md` and
+  `wpu_v2_candidate_regret_gate_penalty_results.ko.md`: harmful-accept/ranking
+  penalty variant. It lowers train-selected harmful accept to `0.088889` but
+  collapses train-selected closure to `0.081253`, showing that safety penalties
+  alone do not solve P1.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter

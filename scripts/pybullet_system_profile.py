@@ -34,6 +34,7 @@ def main() -> None:
     parser.add_argument("--hidden-dim", type=int, default=64)
     parser.add_argument("--layers", type=int, default=2)
     parser.add_argument("--num-heads", type=int, default=4)
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--out", type=Path, default=Path("docs/experiments/pybullet_system_profile.csv"))
     args = parser.parse_args()
 
@@ -162,33 +163,39 @@ def _profile_sample(
         "selected_local_dense_forward_ms": f"{forward_profile['selected_local_dense_forward_ms']:.6f}",
         "sparse_forward_latency_reduction": f"{_safe_reduction(forward_profile['full_graph_forward_ms'], forward_profile['selected_sparse_forward_ms']):.6f}",
         "local_dense_forward_latency_reduction": f"{_safe_reduction(forward_profile['full_graph_forward_ms'], forward_profile['selected_local_dense_forward_ms']):.6f}",
+        "full_graph_peak_memory_bytes": f"{forward_profile['full_graph_peak_memory_bytes']:.3f}",
+        "selected_sparse_peak_memory_bytes": f"{forward_profile['selected_sparse_peak_memory_bytes']:.3f}",
+        "selected_local_dense_peak_memory_bytes": f"{forward_profile['selected_local_dense_peak_memory_bytes']:.3f}",
+        "sparse_peak_memory_reduction": f"{_safe_reduction(forward_profile['full_graph_peak_memory_bytes'], forward_profile['selected_sparse_peak_memory_bytes']):.6f}",
+        "local_dense_peak_memory_reduction": f"{_safe_reduction(forward_profile['full_graph_peak_memory_bytes'], forward_profile['selected_local_dense_peak_memory_bytes']):.6f}",
         "sample_count": "1",
     }
     return row
 
 
 def _make_forward_models(args: argparse.Namespace) -> dict[str, torch.nn.Module]:
+    device = torch.device(args.device)
     models = {
         "graph-transformer": wpu.create_model(
             "graph-transformer",
             hidden_dim=args.hidden_dim,
             layers=args.layers,
             num_heads=args.num_heads,
-        ).eval(),
+        ).to(device).eval(),
         "wpu-cws-indexed-sparse": wpu.create_model(
             "wpu-cws-indexed-sparse",
             hidden_dim=args.hidden_dim,
             layers=args.layers,
             num_heads=args.num_heads,
             working_set_size=args.max_nodes,
-        ).eval(),
+        ).to(device).eval(),
         "wpu-cws-indexed-local-dense": wpu.create_model(
             "wpu-cws-indexed-local-dense",
             hidden_dim=args.hidden_dim,
             layers=args.layers,
             num_heads=args.num_heads,
             working_set_size=args.max_nodes,
-        ).eval(),
+        ).to(device).eval(),
     }
     return models
 
@@ -205,21 +212,54 @@ def _forward_profile(
             "full_graph_forward_ms": 0.0,
             "selected_sparse_forward_ms": 0.0,
             "selected_local_dense_forward_ms": 0.0,
+            "full_graph_peak_memory_bytes": 0.0,
+            "selected_sparse_peak_memory_bytes": 0.0,
+            "selected_local_dense_peak_memory_bytes": 0.0,
         }
+    device = next(models["graph-transformer"].parameters()).device
+    full_batch = _move_batch(full_batch, device)
+    selected_batch = _move_batch(selected_batch, device)
+    full_latency, full_memory = _measure_forward(models["graph-transformer"], full_batch, repeats)
+    sparse_latency, sparse_memory = _measure_forward(models["wpu-cws-indexed-sparse"], selected_batch, repeats)
+    local_dense_latency, local_dense_memory = _measure_forward(models["wpu-cws-indexed-local-dense"], selected_batch, repeats)
     return {
-        "full_graph_forward_ms": _measure_forward_ms(models["graph-transformer"], full_batch, repeats),
-        "selected_sparse_forward_ms": _measure_forward_ms(models["wpu-cws-indexed-sparse"], selected_batch, repeats),
-        "selected_local_dense_forward_ms": _measure_forward_ms(models["wpu-cws-indexed-local-dense"], selected_batch, repeats),
+        "full_graph_forward_ms": full_latency,
+        "selected_sparse_forward_ms": sparse_latency,
+        "selected_local_dense_forward_ms": local_dense_latency,
+        "full_graph_peak_memory_bytes": full_memory,
+        "selected_sparse_peak_memory_bytes": sparse_memory,
+        "selected_local_dense_peak_memory_bytes": local_dense_memory,
     }
 
 
-def _measure_forward_ms(model: torch.nn.Module, batch: StateGraphBatch, repeats: int) -> float:
+def _measure_forward(model: torch.nn.Module, batch: StateGraphBatch, repeats: int) -> tuple[float, float]:
+    device = next(model.parameters()).device
     with torch.no_grad():
         model(batch, num_branches=3, route_branches=3)
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+            torch.cuda.reset_peak_memory_stats(device)
         start = time.perf_counter()
         for _ in range(repeats):
             model(batch, num_branches=3, route_branches=3)
-        return (time.perf_counter() - start) * 1000.0 / max(repeats, 1)
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+            peak_memory = float(torch.cuda.max_memory_allocated(device))
+        else:
+            peak_memory = 0.0
+        return (time.perf_counter() - start) * 1000.0 / max(repeats, 1), peak_memory
+
+
+def _move_batch(batch: StateGraphBatch, device: torch.device) -> StateGraphBatch:
+    batch.object_features = batch.object_features.to(device)
+    batch.relation_indices = batch.relation_indices.to(device)
+    batch.relation_features = batch.relation_features.to(device)
+    batch.event_features = batch.event_features.to(device)
+    batch.object_mask = batch.object_mask.to(device)
+    batch.relation_mask = batch.relation_mask.to(device)
+    batch.target_indices = batch.target_indices.to(device)
+    batch.time_features = batch.time_features.to(device)
+    return batch
 
 
 def _batch_tensor_bytes(batch: StateGraphBatch) -> int:
@@ -302,6 +342,11 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, str]]:
         "selected_local_dense_forward_ms",
         "sparse_forward_latency_reduction",
         "local_dense_forward_latency_reduction",
+        "full_graph_peak_memory_bytes",
+        "selected_sparse_peak_memory_bytes",
+        "selected_local_dense_peak_memory_bytes",
+        "sparse_peak_memory_reduction",
+        "local_dense_peak_memory_reduction",
     ]
     for (background_objects, branch_count), group in sorted(groups.items(), key=lambda item: (int(item[0][0]), int(item[0][1]))):
         row = {

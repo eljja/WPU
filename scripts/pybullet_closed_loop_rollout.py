@@ -55,6 +55,7 @@ def main() -> None:
     parser.add_argument("--delta-target-norm-slack", type=float, default=0.5)
     parser.add_argument("--rollout-consistency-penalty", type=float, default=0.0)
     parser.add_argument("--rollout-consistency-slack", type=float, default=0.5)
+    parser.add_argument("--state-validity-penalty", type=float, default=0.0)
     parser.add_argument("--unsafe-delta-reject-norm", type=float, default=0.0)
     parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-position-norm", type=float, default=25.0)
@@ -119,6 +120,14 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
                 prediction.object_delta,
                 target_delta,
                 slack=args.rollout_consistency_slack,
+            )
+        if args.state_validity_penalty > 0.0:
+            loss = loss + args.state_validity_penalty * _state_validity_loss(
+                batch,
+                prediction.object_delta,
+                max_position_norm=args.max_position_norm,
+                max_velocity_norm=args.max_velocity_norm,
+                min_cup_z=args.min_cup_z,
             )
         optimizer.zero_grad()
         loss.backward()
@@ -218,6 +227,7 @@ def _rollout_condition(
         "delta_clip": args.delta_clip,
         "delta_norm_penalty": args.delta_norm_penalty,
         "delta_target_norm_slack": args.delta_target_norm_slack,
+        "state_validity_penalty": args.state_validity_penalty,
         "unsafe_delta_reject_norm": args.unsafe_delta_reject_norm,
         "integrity_projection": bool(args.integrity_projection),
     }
@@ -255,6 +265,27 @@ def _rollout_consistency_loss(
     second_norm = second_prediction.object_delta[..., 1:7].norm(dim=-1)
     target_norm = target_delta[..., 1:7].norm(dim=-1).detach()
     return F.relu(second_norm - target_norm - slack).pow(2).mean()
+
+
+def _state_validity_loss(
+    batch: StateGraphBatch,
+    prediction_delta: torch.Tensor,
+    *,
+    max_position_norm: float,
+    max_velocity_norm: float,
+    min_cup_z: float,
+) -> torch.Tensor:
+    next_features = batch.object_features + prediction_delta
+    object_mask = batch.object_mask.float()
+    position_norm = next_features[..., 1:4].norm(dim=-1)
+    velocity_norm = next_features[..., 4:7].norm(dim=-1)
+    position_excess = F.relu(position_norm - max_position_norm).pow(2) * object_mask
+    velocity_excess = F.relu(velocity_norm - max_velocity_norm).pow(2) * object_mask
+    target_index = batch.target_indices.clamp(min=0, max=next_features.size(1) - 1)
+    batch_index = torch.arange(next_features.size(0), device=next_features.device)
+    target_z = next_features[batch_index, target_index, 3]
+    cup_floor = F.relu(min_cup_z - target_z).pow(2)
+    return position_excess.mean() + velocity_excess.mean() + cup_floor.mean()
 
 
 def _apply_predicted_delta(

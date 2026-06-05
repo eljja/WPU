@@ -16,20 +16,20 @@ This dashboard conservatively recomputes the current status of v2 priorities 1-7
 
 The dashboard shows that WPU v2 is promising but not a completed superiority claim. The strongest claim remains conditional: WPU can reduce compute and memory when objectified state exposes a small causal working set K before tensorization. Large N alone is not enough.
 
-- P1 Candidate-oracle gap: Best deployed closure is 0.328025; previous aggregate-policy best is 0.244220 and mean aggregate closure is 0.160601. Sample-level no-harm/margin gates were also audited; best closure is 0.082804, so margin gating is not the missing fix. Direct candidate-regret gating reaches 0.329950 unconstrained and 0.327146 under harmful-accept <= 0.25; train-selected deployment reaches 0.328025 with harmful-accept 0.251111. The selected deployment harmful-accept rate is 0.251111.
-- P2 Long-horizon state integrity: Best WPU H=25 integrity is 0.964322; guarded sparse is 0.958508, clipped sparse is 0.201757, regularized raw sparse is 0.087153, rollout-consistency sparse is 0.084549, and unsafe-delta rejected sparse is 0.530270 with rejection rate 0.640000.
+- P1 Candidate-oracle gap: Best deployed closure is 0.328025; previous aggregate-policy best is 0.244220 and mean aggregate closure is 0.160601. Sample-level no-harm/margin gates were also audited; best closure is 0.082804, so margin gating is not the missing fix. Direct candidate-regret gating reaches 0.329950 unconstrained and 0.327146 under harmful-accept <= 0.25; train-selected deployment reaches 0.328025 with harmful-accept 0.251111. The selected deployment harmful-accept rate is 0.251111. Harmful-accept/ranking-penalty training is safer but weaker: train-selected closure 0.081253 with harmful-accept 0.088889.
+- P2 Long-horizon state integrity: Best WPU H=25 integrity is 0.964322; guarded sparse is 0.958508, clipped sparse is 0.201757, regularized raw sparse is 0.087153, rollout-consistency sparse is 0.084549, validity sparse is 0.084722, strong-validity sparse is 0.084722, and unsafe-delta rejected sparse is 0.530270 with rejection rate 0.640000.
 - P3 Simulator-backed benchmark: PyBullet benchmark exists with 5 seeds and background up to N_bg=128, but it is still small.
-- P4 Mechanism-family shift generalization: catch_heavy: WPU 0.408730 vs baseline 0.349206; edge_shift: WPU 0.527778 vs baseline 0.571428; high_force: WPU 0.432540 vs baseline 0.460318
-- P5 Calibration and uncertainty: Mean WPU ECE is 0.211243; mean baseline ECE is 0.219257; ratio is 0.963449.
-- P6 Systems profile and memory traffic: Tensor-byte reduction reaches 0.997454 at mean total objects 2052.6; CPU tensorization latency reduction reaches 0.996035; random-model CPU sparse-forward latency reduction reaches 0.996975. GPU/energy and matched-accuracy data remain absent.
+- P4 Mechanism-family shift generalization: catch_heavy: WPU 0.408730 vs baseline 0.349206; edge_shift: WPU 0.527778 vs baseline 0.571428; high_force: WPU 0.432540 vs baseline 0.460318; 3-seed calibrated mixture probe: mixture catch_heavy: WPU 0.333333 vs baseline 0.481481; mixture edge_shift: WPU 0.546297 vs baseline 0.388889; mixture high_force: WPU 0.444444 vs baseline 0.444444
+- P5 Calibration and uncertainty: Mean WPU ECE is 0.211243; mean baseline ECE is 0.219257; ratio is 0.963449. A 3-seed calibrated mixture probe gives WPU ECE 0.208404, baseline ECE 0.183805, ratio 1.133834.
+- P6 Systems profile and memory traffic: Tensor-byte reduction reaches 0.997454 at mean total objects 2052.6; CPU tensorization latency reduction reaches 0.996035; random-model CPU sparse-forward latency reduction reaches 0.996975. CUDA random-model sparse-forward latency reduction reaches 0.996216 and sparse peak-memory reduction reaches 0.304080 at mean total objects 2052.4. Energy and matched-accuracy data remain absent.
 - P7 Objectification quality to propagation loss: Clean score 0.957711, combined-corruption score 0.821712, combined frontier recall 0.742361. Metrics exist, but downstream loss coupling is incomplete.
 
 ## Next Actions
 
 - P1: Strengthen candidate-regret training with calibrated uncertainty, harmful-accept penalties, and cross-seed perturbations.
-- P2: Simple delta-norm and naive rollout-consistency regularization are insufficient; add state-validity loss, rollback, correction, and uncertainty escalation.
+- P2: Simple delta-norm, rollout-consistency, and validity regularization are insufficient; add rollback, correction, and uncertainty escalation.
 - P3: Increase seeds, mechanisms, training scale, and long-horizon simulator rollouts.
 - P4: Add leave-family-out training, harder shifts, and mechanism-aware branch priors.
 - P5: Add temperature heads, branch calibration loss, multi-step ECE/Brier/NLL, and uncertainty-gated recompute.
-- P6: Measure CUDA memory, allocator traffic, sparse-kernel behavior, energy, and matched-accuracy speedups.
+- P6: Measure energy, allocator traffic, sparse-kernel behavior, and matched-accuracy speedups.
 - P7: Train/evaluate propagation under controlled objectification corruption and regress loss against report components.

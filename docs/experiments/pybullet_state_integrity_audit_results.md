@@ -13,6 +13,8 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_regularized.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_rejected.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_consistency.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_validity.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_validity_strong.csv`
 
 Derived CSV:
 
@@ -44,6 +46,10 @@ Derived CSV:
 | rejected | graph-transformer | 25 | 0.271666 | 3.406922 | 0.053819 | 0.359166 | 0.720577 |
 | rejected | wpu-cws-indexed-local-dense | 25 | 0.499166 | 2.277815 | 0.055556 | 0.000000 | 0.634624 |
 | rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.076389 | 0.640000 | 0.530270 |
+| validity | wpu-cws-indexed-local-dense | 25 | 0.605833 | 2.222097 | 0.054688 | 0.000000 | 0.578081 |
+| validity | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.084722 |
+| validity_strong | wpu-cws-indexed-local-dense | 25 | 0.710833 | 2.212986 | 0.055556 | 0.000000 | 0.520476 |
+| validity_strong | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.084722 |
 
 ## Interpretation
 
@@ -72,6 +78,14 @@ during training. In the current evidence it does not solve sparse
 raw-delta instability, so rollout consistency needs a stronger
 state-validity objective or correction mechanism before it can
 replace guarded memory safety.
+
+The state-validity runs add training losses for predicted position,
+velocity, and cup-floor bounds. In the current evidence they also
+do not solve sparse raw-delta instability: both validity and
+strong-validity sparse H=25 integrity remain at 0.084722.
+Local-dense validity also falls below the raw local-dense score.
+Validity losses therefore need rollback/correction and uncertainty
+escalation rather than acting as a standalone fix.
 
 This makes state integrity a first-class WPU metric:
 

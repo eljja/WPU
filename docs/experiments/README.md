@@ -104,7 +104,8 @@ Use these reports for paper-level claims:
   violations at horizon 25. Delta clipping reduces violations but does not fix
   the underlying raw prediction instability.
 - `pybullet_state_integrity_audit_results.md`: derived audit over raw, clipped,
-  guarded, regularized, and unsafe-delta-rejected PyBullet closed-loop rollouts.
+  guarded, regularized, unsafe-delta-rejected, and consistency-regularized
+  PyBullet closed-loop rollouts.
   It turns state integrity into a first-class score combining constraint
   validity, bounded applied-delta drift, branch stability, and rejection rate.
   Raw WPU sparse drops to integrity `0.084722` at horizon 25. Guarded state-store
@@ -112,7 +113,7 @@ Use these reports for paper-level claims:
   delta instability remains. A target-relative delta-norm regularized raw
   rollout only raises sparse H=25 integrity to `0.087153`; unsafe-delta
   rejection raises sparse integrity to `0.530270` only by rejecting `0.640000`
-  of updates.
+  of updates; naive rollout-consistency reaches only `0.084549`.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -120,16 +121,18 @@ Use these reports for paper-level claims:
   gaps. This supports revisable bounded local-law hypotheses, not unknown
   physical-law discovery.
 - `pybullet_system_profile_results.md`: PyBullet-derived systems profile that
-  separates full-state tensorization, pre-tensor indexed WPU tensorization, and
-  branch-overlay memory proxies. It shows tensor-byte reduction rising to
-  `0.997454` at `N≈2052.6` while selected `K≈4.6`, and branch-overlay memory
-  proxy reduction reaching `0.874128` at `B=8`. This is systems evidence, not
-  hardware speed or energy proof.
+  separates full-state tensorization, pre-tensor indexed WPU tensorization,
+  branch-overlay memory proxies, and a random CPU forward-latency proxy. It
+  shows tensor-byte reduction rising to `0.997454` at `N≈2052.6` while selected
+  `K≈4.6`, sparse-forward latency reduction reaching `0.996975`, and
+  branch-overlay memory proxy reduction reaching `0.874128` at `B=8`. This is
+  systems evidence, not hardware speed, energy, or matched-accuracy proof.
 - `pybullet_shift_generalization_results.md`: PyBullet mechanism-family shift
   benchmark. Models train on nominal dynamics and evaluate on `high_force`,
   `edge_shift`, and `catch_heavy`, with ECE/Brier/NLL as first-class calibration
-  outputs. It shows a WPU-positive `edge_shift` regime and a WPU-negative
-  `catch_heavy` regime where serialized-token remains stronger.
+  outputs. In the 7-seed rerun it shows a WPU-positive `catch_heavy` regime and
+  WPU-negative `edge_shift`/`high_force` regimes where serialized-token remains
+  stronger.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -218,9 +221,9 @@ Use these reports for paper-level claims:
 - `wpu_v2_candidate_regret_gate_results.md` and
   `wpu_v2_candidate_regret_gate_results.ko.md`: direct candidate-regret gate
   probe. It predicts `candidate_loss - learned_loss` and deploys a candidate
-  only when predicted regret is favorable. The current deployment sweep reaches
-  `0.329950` unconstrained and `0.327146` under harmful-accept <= `0.25`, but
-  remains below the `0.5` threshold.
+  only when predicted regret is favorable. The current deployment reaches
+  `0.329950` in the test sweep and `0.328025` under train-selected deployment,
+  but remains below the `0.5` threshold.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -378,10 +381,10 @@ Historical or preliminary reports:
 - The candidate no-harm gate audit narrows that bottleneck further: margin-only
   sample-level gates are not sufficient, because their confidence is not
   reliably aligned with held-out downstream regret.
-- Direct candidate-regret supervision improves the P1 conservative closure to
-  `0.327146`, with an unconstrained best of `0.329950`. It is still a fail:
-  no-harm rejection is weak and the candidate oracle remains substantially
-  stronger.
+- Direct candidate-regret supervision improves P1 to `0.328025` under
+  train-selected deployment, with a test-sweep best of `0.329950`. It is still
+  a fail: no-harm rejection is weak and the candidate oracle remains
+  substantially stronger.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy
@@ -393,17 +396,20 @@ Historical or preliminary reports:
   consistency to `0.675541`.
 - The PyBullet systems profile is the clearest current cost-separation result:
   when PyBullet background state grows to `N≈2052.6`, indexed WPU still
-  tensorizes only `K≈4.6`, reducing tensor bytes by `0.997454`. This supports
-  the state-indexing premise but remains a proxy, not a hardware-power result.
+  tensorizes only `K≈4.6`, reducing tensor bytes by `0.997454`; the random CPU
+  sparse-forward proxy reaches `0.996975` reduction. This supports the
+  state-indexing premise but remains a proxy, not a hardware-power or
+  matched-accuracy result.
 - The PyBullet state-integrity audit turns closed-loop rollout stability into
   a tracked metric. It confirms that guarded state-store projection can protect
   applied state, but it remains a safety layer, not a solution to raw WPU sparse
-  delta instability. The regularized raw rollout confirms that simple delta-norm
-  penalties are insufficient, and unsafe-delta rejection must be reported with
-  rejection rate because it can protect state by declining unsafe updates.
+  delta instability. The regularized and consistency-regularized raw rollouts
+  confirm that simple delta penalties are insufficient, and unsafe-delta
+  rejection must be reported with rejection rate because it can protect state by
+  declining unsafe updates.
 - The PyBullet shift benchmark adds the first mechanism-family generalization
-  and calibration table. It is mixed: WPU sparse leads on `edge_shift`, but
-  `serialized-token` is stronger on `catch_heavy`.
+  and calibration table. It is mixed: WPU local-dense leads on `catch_heavy`,
+  but `serialized-token` is stronger on `edge_shift` and `high_force`.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

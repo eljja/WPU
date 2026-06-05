@@ -12,6 +12,7 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_guarded.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_regularized.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_rejected.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_consistency.csv`
 
 Derived CSV:
 
@@ -24,6 +25,8 @@ Derived CSV:
 | clipped | graph-transformer | 25 | 0.253333 | 8.363635 | 0.054688 | 0.000000 | 0.557002 |
 | clipped | wpu-cws-indexed-local-dense | 25 | 0.314167 | 2.809900 | 0.048611 | 0.000000 | 0.719139 |
 | clipped | wpu-cws-indexed-sparse | 25 | 0.785000 | 1939290.233702 | 0.082465 | 0.000000 | 0.201757 |
+| consistency | wpu-cws-indexed-local-dense | 25 | 0.811667 | 1.965078 | 0.059896 | 0.000000 | 0.472827 |
+| consistency | wpu-cws-indexed-sparse | 25 | 3.360834 | 1775082.311771 | 0.077257 | 0.000000 | 0.084549 |
 | guarded | graph-transformer | 25 | 0.000000 | 2.096666 | 0.054688 | 0.000000 | 0.915679 |
 | guarded | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.741597 | 0.048611 | 0.000000 | 0.964322 |
 | guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.083334 | 0.000000 | 0.958508 |
@@ -63,6 +66,12 @@ not proof that the raw transition model is stable. It must be
 reported together with rejection rate: high integrity with high
 rejection means the memory layer protected the state by declining
 unsafe updates.
+
+The rollout-consistency run adds a second-step delta-growth penalty
+during training. In the current evidence it does not solve sparse
+raw-delta instability, so rollout consistency needs a stronger
+state-validity objective or correction mechanism before it can
+replace guarded memory safety.
 
 This makes state integrity a first-class WPU metric:
 

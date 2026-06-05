@@ -241,7 +241,8 @@ model = wpu.create_model(
   올리지만, raw delta norm은 여전히 불안정하므로 이는 dynamics model 해결이 아니라
   safety layer다. Unsafe-delta rejection은 sparse integrity를 `0.530270`까지
   올리지만 update의 `0.640000`을 거부하므로, integrity 옆에 rejection rate를
-  반드시 함께 보고해야 한다.
+  반드시 함께 보고해야 한다. Naive rollout-consistency penalty는 sparse H=25
+  integrity `0.084549`에 그쳐 raw delta instability를 해결하지 못한다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이
@@ -252,8 +253,9 @@ model = wpu.create_model(
   tensor byte를 `0.997454` 줄인다. 이것은 pre-tensor state indexing에 대한 cost-proxy
   evidence이지 hardware speed 또는 power 증명은 아니다.
 - PyBullet shift-generalization benchmark는 held-out mechanism family에서 calibration
-  metric을 추가했다. WPU sparse는 `edge_shift`에서 앞서지만, `catch_heavy`에서는
-  serialized-token이 더 강하므로 robust world-state generalization은 아직 해결되지 않았다.
+  metric을 추가했다. 7-seed 재실행에서 WPU local-dense는 `catch_heavy`에서 앞서지만,
+  `edge_shift`와 `high_force`에서는 serialized-token이 더 강하므로 robust world-state
+  generalization은 아직 해결되지 않았다.
 
 v1의 핵심 목표는 명확하다.
 
@@ -290,10 +292,11 @@ intervention point를 자연스럽게 제공하지 않는다.
 score-margin gate, strict no-harm seed-stable gate만으로는 충분하지 않았다. 다음 v2
 최신 gap audit은 이를 직접 수치화한다. Risk-adjusted mechanism routing은 available
 candidate-oracle gain 중 최대 `0.244220`만 회수하고, `K=32`에서는 `0.042131`만 회수한다.
-Direct candidate-regret deployment는 harmful-accept <= `0.25` 조건에서 conservative
-closure `0.327146`까지 올리고 unconstrained closure `0.329950`에 도달했지만, candidate
-oracle은 여전히 훨씬 강하다. 따라서 다음 v2 목표는 invariant candidate descriptor,
-risk-adjusted mechanism routing, 그리고 retriever-propagator joint training이다.
+Direct candidate-regret deployment는 train-selected deployment 기준 `0.328025`,
+test sweep 기준 `0.329950`까지 도달했지만, candidate oracle은 여전히 훨씬 강하고
+harmful accept도 safety limit 근처에 남아 있다. 따라서 다음 v2 목표는 invariant
+candidate descriptor, risk-adjusted mechanism routing, 그리고 retriever-propagator
+joint training이다.
 
 ## 논문 및 문서
 

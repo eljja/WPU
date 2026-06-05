@@ -30,9 +30,14 @@ def main() -> None:
     parser.add_argument("--max-nodes", type=int, default=12)
     parser.add_argument("--max-depth", type=int, default=1)
     parser.add_argument("--sim-steps", type=int, default=120)
+    parser.add_argument("--forward-repeats", type=int, default=0)
+    parser.add_argument("--hidden-dim", type=int, default=64)
+    parser.add_argument("--layers", type=int, default=2)
+    parser.add_argument("--num-heads", type=int, default=4)
     parser.add_argument("--out", type=Path, default=Path("docs/experiments/pybullet_system_profile.csv"))
     args = parser.parse_args()
 
+    forward_models = _make_forward_models(args) if args.forward_repeats > 0 else {}
     rows: list[dict[str, str]] = []
     for seed in args.seeds:
         for background in args.background_objects:
@@ -56,6 +61,8 @@ def main() -> None:
                             event=sample.event,
                             max_nodes=args.max_nodes,
                             max_depth=args.max_depth,
+                            forward_models=forward_models,
+                            forward_repeats=args.forward_repeats,
                         )
                     )
 
@@ -88,6 +95,8 @@ def _profile_sample(
     event: wpu.Event,
     max_nodes: int,
     max_depth: int,
+    forward_models: dict[str, torch.nn.Module],
+    forward_repeats: int,
 ) -> dict[str, str]:
     selected_ids = _indexed_object_ids(state, event, max_nodes=max_nodes, max_depth=max_depth)
     selected_state = _project_state(state, selected_ids)
@@ -114,8 +123,14 @@ def _profile_sample(
     selected_relations = len(selected_state.relations)
     dense_object_work_proxy = total_objects * total_objects * branch_count
     sparse_object_work_proxy = max(selected_objects, 1) * max(selected_relations, 1) * branch_count
+    forward_profile = _forward_profile(
+        full_batch=full_batch,
+        selected_batch=selected_batch,
+        models=forward_models,
+        repeats=forward_repeats,
+    )
 
-    return {
+    row = {
         "row_type": "sample",
         "seed": str(seed),
         "sample_index": str(sample_index),
@@ -142,8 +157,69 @@ def _profile_sample(
         "dense_object_work_proxy": str(dense_object_work_proxy),
         "sparse_object_work_proxy": str(sparse_object_work_proxy),
         "work_proxy_reduction": f"{_safe_reduction(dense_object_work_proxy, sparse_object_work_proxy):.6f}",
+        "full_graph_forward_ms": f"{forward_profile['full_graph_forward_ms']:.6f}",
+        "selected_sparse_forward_ms": f"{forward_profile['selected_sparse_forward_ms']:.6f}",
+        "selected_local_dense_forward_ms": f"{forward_profile['selected_local_dense_forward_ms']:.6f}",
+        "sparse_forward_latency_reduction": f"{_safe_reduction(forward_profile['full_graph_forward_ms'], forward_profile['selected_sparse_forward_ms']):.6f}",
+        "local_dense_forward_latency_reduction": f"{_safe_reduction(forward_profile['full_graph_forward_ms'], forward_profile['selected_local_dense_forward_ms']):.6f}",
         "sample_count": "1",
     }
+    return row
+
+
+def _make_forward_models(args: argparse.Namespace) -> dict[str, torch.nn.Module]:
+    models = {
+        "graph-transformer": wpu.create_model(
+            "graph-transformer",
+            hidden_dim=args.hidden_dim,
+            layers=args.layers,
+            num_heads=args.num_heads,
+        ).eval(),
+        "wpu-cws-indexed-sparse": wpu.create_model(
+            "wpu-cws-indexed-sparse",
+            hidden_dim=args.hidden_dim,
+            layers=args.layers,
+            num_heads=args.num_heads,
+            working_set_size=args.max_nodes,
+        ).eval(),
+        "wpu-cws-indexed-local-dense": wpu.create_model(
+            "wpu-cws-indexed-local-dense",
+            hidden_dim=args.hidden_dim,
+            layers=args.layers,
+            num_heads=args.num_heads,
+            working_set_size=args.max_nodes,
+        ).eval(),
+    }
+    return models
+
+
+def _forward_profile(
+    *,
+    full_batch: StateGraphBatch,
+    selected_batch: StateGraphBatch,
+    models: dict[str, torch.nn.Module],
+    repeats: int,
+) -> dict[str, float]:
+    if repeats <= 0 or not models:
+        return {
+            "full_graph_forward_ms": 0.0,
+            "selected_sparse_forward_ms": 0.0,
+            "selected_local_dense_forward_ms": 0.0,
+        }
+    return {
+        "full_graph_forward_ms": _measure_forward_ms(models["graph-transformer"], full_batch, repeats),
+        "selected_sparse_forward_ms": _measure_forward_ms(models["wpu-cws-indexed-sparse"], selected_batch, repeats),
+        "selected_local_dense_forward_ms": _measure_forward_ms(models["wpu-cws-indexed-local-dense"], selected_batch, repeats),
+    }
+
+
+def _measure_forward_ms(model: torch.nn.Module, batch: StateGraphBatch, repeats: int) -> float:
+    with torch.no_grad():
+        model(batch, num_branches=3, route_branches=3)
+        start = time.perf_counter()
+        for _ in range(repeats):
+            model(batch, num_branches=3, route_branches=3)
+        return (time.perf_counter() - start) * 1000.0 / max(repeats, 1)
 
 
 def _batch_tensor_bytes(batch: StateGraphBatch) -> int:
@@ -221,6 +297,11 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, str]]:
         "dense_object_work_proxy",
         "sparse_object_work_proxy",
         "work_proxy_reduction",
+        "full_graph_forward_ms",
+        "selected_sparse_forward_ms",
+        "selected_local_dense_forward_ms",
+        "sparse_forward_latency_reduction",
+        "local_dense_forward_latency_reduction",
     ]
     for (background_objects, branch_count), group in sorted(groups.items(), key=lambda item: (int(item[0][0]), int(item[0][1]))):
         row = {

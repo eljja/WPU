@@ -53,6 +53,8 @@ def main() -> None:
     parser.add_argument("--delta-clip", type=float, default=0.0)
     parser.add_argument("--delta-norm-penalty", type=float, default=0.0)
     parser.add_argument("--delta-target-norm-slack", type=float, default=0.5)
+    parser.add_argument("--rollout-consistency-penalty", type=float, default=0.0)
+    parser.add_argument("--rollout-consistency-slack", type=float, default=0.5)
     parser.add_argument("--unsafe-delta-reject-norm", type=float, default=0.0)
     parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-position-norm", type=float, default=25.0)
@@ -109,6 +111,14 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
                 prediction.object_delta,
                 target_delta,
                 slack=args.delta_target_norm_slack,
+            )
+        if args.rollout_consistency_penalty > 0.0:
+            loss = loss + args.rollout_consistency_penalty * _rollout_consistency_loss(
+                model,
+                batch,
+                prediction.object_delta,
+                target_delta,
+                slack=args.rollout_consistency_slack,
             )
         optimizer.zero_grad()
         loss.backward()
@@ -217,6 +227,34 @@ def _delta_norm_excess_loss(prediction_delta: torch.Tensor, target_delta: torch.
     prediction_norm = prediction_delta[..., 1:7].norm(dim=-1)
     target_norm = target_delta[..., 1:7].norm(dim=-1)
     return F.relu(prediction_norm - target_norm - slack).pow(2).mean()
+
+
+def _rollout_consistency_loss(
+    model: torch.nn.Module,
+    batch: StateGraphBatch,
+    prediction_delta: torch.Tensor,
+    target_delta: torch.Tensor,
+    *,
+    slack: float,
+) -> torch.Tensor:
+    next_features = batch.object_features.clone()
+    next_features[..., 1:7] = next_features[..., 1:7] + prediction_delta[..., 1:7]
+    next_batch = StateGraphBatch(
+        object_features=next_features,
+        relation_indices=batch.relation_indices,
+        relation_features=batch.relation_features,
+        event_features=batch.event_features,
+        object_mask=batch.object_mask,
+        relation_mask=batch.relation_mask,
+        target_indices=batch.target_indices,
+        time_features=batch.time_features,
+        scheduler_metrics=batch.scheduler_metrics,
+        object_ids=batch.object_ids,
+    )
+    second_prediction = model(next_batch, num_branches=3, route_branches=3)
+    second_norm = second_prediction.object_delta[..., 1:7].norm(dim=-1)
+    target_norm = target_delta[..., 1:7].norm(dim=-1).detach()
+    return F.relu(second_norm - target_norm - slack).pow(2).mean()
 
 
 def _apply_predicted_delta(

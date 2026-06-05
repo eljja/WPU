@@ -62,19 +62,33 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
     regret_safe_best = None
     regret_unconstrained_best = None
     regret_best_harmful_accept = None
+    regret_train_selected_best = None
+    regret_train_selected_harmful_accept = None
     if regret_path.exists():
         regret_rows = _read_rows(regret_path)
         regret_unconstrained = max(regret_rows, key=lambda row: float(row["gap_closure_fraction"]))
         safe_regret_rows = [row for row in regret_rows if float(row.get("mean_harmful_accept_rate", 1.0)) <= 0.25]
-        regret_best_row = (
-            max(safe_regret_rows, key=lambda row: float(row["gap_closure_fraction"]))
-            if safe_regret_rows
-            else regret_unconstrained
-        )
+        train_selected_rows = [row for row in regret_rows if row["policy"] == "train_selected_candidate_regret_gate"]
+        train_selected_safe_rows = [
+            row for row in train_selected_rows if float(row.get("mean_harmful_accept_rate", 1.0)) <= 0.25
+        ]
+        regret_best_row = None
+        if train_selected_safe_rows:
+            regret_best_row = max(train_selected_safe_rows, key=lambda row: float(row["gap_closure_fraction"]))
+        elif train_selected_rows:
+            regret_best_row = max(train_selected_rows, key=lambda row: float(row["gap_closure_fraction"]))
+        elif safe_regret_rows:
+            regret_best_row = max(safe_regret_rows, key=lambda row: float(row["gap_closure_fraction"]))
+        else:
+            regret_best_row = regret_unconstrained
         regret_best = float(regret_best_row["gap_closure_fraction"])
         regret_safe_best = max(float(row["gap_closure_fraction"]) for row in safe_regret_rows) if safe_regret_rows else None
         regret_unconstrained_best = float(regret_unconstrained["gap_closure_fraction"])
         regret_best_harmful_accept = float(regret_best_row.get("mean_harmful_accept_rate", 0.0))
+        if train_selected_rows:
+            train_selected_best_row = max(train_selected_rows, key=lambda row: float(row["gap_closure_fraction"]))
+            regret_train_selected_best = float(train_selected_best_row["gap_closure_fraction"])
+            regret_train_selected_harmful_accept = float(train_selected_best_row.get("mean_harmful_accept_rate", 0.0))
     if regret_best is not None:
         safe_text = (
             f"{regret_safe_best:.6f} under harmful-accept <= 0.25"
@@ -83,8 +97,15 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         )
         regret_note = (
             f" Direct candidate-regret gating reaches {regret_unconstrained_best:.6f} unconstrained and "
-            f"{safe_text}; the selected conservative harmful-accept rate is {regret_best_harmful_accept:.6f}."
+            f"{safe_text}; the selected deployment harmful-accept rate is {regret_best_harmful_accept:.6f}."
         )
+        if regret_train_selected_best is not None:
+            regret_note = (
+                f" Direct candidate-regret gating reaches {regret_unconstrained_best:.6f} unconstrained and "
+                f"{safe_text}; train-selected deployment reaches {regret_train_selected_best:.6f} "
+                f"with harmful-accept {regret_train_selected_harmful_accept:.6f}. "
+                f"The selected deployment harmful-accept rate is {regret_best_harmful_accept:.6f}."
+            )
     else:
         regret_note = ""
     best = max(value for value in [aggregate_best, noharm_best, regret_best] if value is not None)
@@ -148,6 +169,14 @@ def _priority_state_integrity() -> dict[str, object]:
         ),
         0.0,
     )
+    sparse_consistency = next(
+        (
+            float(row["state_integrity_score"])
+            for row in wpu_h25
+            if row["run_label"] == "consistency" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
     return _row(
         2,
         "Long-horizon state integrity",
@@ -156,8 +185,8 @@ def _priority_state_integrity() -> dict[str, object]:
         0.8,
         "best_wpu_h25_integrity",
         path,
-        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, regularized raw sparse is {sparse_regularized:.6f}, and unsafe-delta rejected sparse is {sparse_rejected:.6f} with rejection rate {sparse_rejection_rate:.6f}.",
-        "Simple delta-norm regularization is insufficient; add rollout-consistency loss, unsafe-delta rejection, rollback, correction, and uncertainty escalation.",
+        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, regularized raw sparse is {sparse_regularized:.6f}, rollout-consistency sparse is {sparse_consistency:.6f}, and unsafe-delta rejected sparse is {sparse_rejected:.6f} with rejection rate {sparse_rejection_rate:.6f}.",
+        "Simple delta-norm and naive rollout-consistency regularization are insufficient; add state-validity loss, rollback, correction, and uncertainty escalation.",
     )
 
 
@@ -235,6 +264,7 @@ def _priority_systems_profile() -> dict[str, object]:
     rows = _rows_of_type(_read_rows(path), "summary")
     max_reduction = max(float(row["tensor_byte_reduction"]) for row in rows)
     max_latency_reduction = max(float(row.get("tensorize_latency_reduction", 0.0)) for row in rows)
+    max_forward_reduction = max(float(row.get("sparse_forward_latency_reduction", 0.0)) for row in rows)
     max_n = max(float(row["total_objects"]) for row in rows)
     status = "partial" if max_reduction >= 0.95 else "fail"
     return _row(
@@ -245,8 +275,8 @@ def _priority_systems_profile() -> dict[str, object]:
         0.95,
         "max_tensor_byte_reduction",
         path,
-        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}, but model-forward/GPU/energy data is absent.",
-        "Measure model forward latency, CUDA memory, allocator traffic, sparse-kernel behavior, and matched-accuracy speedups.",
+        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}; random-model CPU sparse-forward latency reduction reaches {max_forward_reduction:.6f}. GPU/energy and matched-accuracy data remain absent.",
+        "Measure CUDA memory, allocator traffic, sparse-kernel behavior, energy, and matched-accuracy speedups.",
     )
 
 
@@ -397,12 +427,12 @@ def _ko_status(status: str) -> str:
 
 def _ko_interpretation(priority: int) -> str:
     return {
-        1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, conservative 기준에서는 harmful accept를 0.25 이하로 제한한 closure를 사용한다. 따라서 P1은 단순 최고 closure가 아니라 candidate-oracle gap closure와 harmful accept 억제를 동시에 만족해야 하며, 현재는 목표 closure 0.5에 도달하지 못해 fail이다.",
-        2: "최고 WPU H=25 integrity는 guarded state-store projection에서 나온다. Unsafe-delta rejection은 sparse raw 폭주를 완화하지만 rejection rate가 높기 때문에, 이는 transition model 안정성의 증거가 아니라 memory layer가 위험한 update를 거부했다는 증거다. 따라서 P2는 applied-state integrity와 raw delta stability를 분리해서 주장해야 한다.",
+        1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 목표 0.5에 못 미치고 harmful accept도 threshold 근처에 남아 있어 P1은 fail이다.",
+        2: "최고 WPU H=25 integrity는 guarded state-store projection에서 나온다. Unsafe-delta rejection은 sparse raw 폭주를 완화하지만 rejection rate가 높고, naive rollout-consistency penalty도 sparse raw 안정성을 해결하지 못한다. 따라서 P2는 applied-state integrity와 raw delta stability를 분리해서 주장해야 한다.",
         3: "PyBullet benchmark는 5개 seed와 background N_bg=128까지 확장됐다. 다만 mechanism 다양성, training scale, long-horizon simulator rollout은 아직 부족하다.",
-        4: "5-seed shift benchmark에서 WPU는 catch_heavy에서 앞서지만 edge_shift와 high_force에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.",
-        5: "5-seed 평균 WPU ECE는 0.213693, baseline ECE는 0.244135로 ratio가 0.875306까지 개선됐다. 하지만 multi-step/shift calibration이 해결된 것은 아니므로 partial로 유지한다.",
-        6: "Tensor-byte reduction은 mean total objects 2052.6에서 0.997454까지 도달하고 CPU tensorization latency reduction도 0.995549까지 도달한다. 다만 model-forward/GPU/energy 증거는 아직 없다.",
+        4: "7-seed shift benchmark에서 WPU는 catch_heavy에서 앞서지만 edge_shift와 high_force에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.",
+        5: "7-seed 평균 WPU ECE는 0.211243, baseline ECE는 0.219257로 ratio가 0.963449다. 약한 calibration advantage는 있지만 multi-step/shift calibration이 해결된 것은 아니므로 partial로 유지한다.",
+        6: "Tensor-byte reduction은 mean total objects 2052.6에서 0.997454까지 도달하고 CPU tensorization latency reduction도 0.996035까지 도달한다. Random-model CPU sparse-forward latency reduction도 0.996975까지 관측됐지만, GPU/energy 및 matched-accuracy speedup 증거는 아직 없다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
     }[priority]
 
@@ -414,7 +444,7 @@ def _ko_next_action(priority: int) -> str:
         3: "Seed, mechanism, training scale, long-horizon simulator rollout을 늘린다.",
         4: "Leave-family-out training, 더 어려운 shift, mechanism-aware branch prior를 추가한다.",
         5: "Temperature head, branch calibration loss, multi-step ECE/Brier/NLL, uncertainty-gated recompute를 추가한다.",
-        6: "Model forward latency, CUDA memory, allocator traffic, sparse-kernel behavior, matched-accuracy speedup을 측정한다.",
+        6: "CUDA memory, allocator traffic, sparse-kernel behavior, energy, matched-accuracy speedup을 측정한다.",
         7: "Controlled objectification corruption에서 propagation을 학습/평가하고 report component와 downstream loss의 관계를 회귀 분석한다.",
     }[priority]
 

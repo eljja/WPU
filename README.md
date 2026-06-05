@@ -297,7 +297,8 @@ The current evidence supports a regime hypothesis, not universal dominance.
   WPU, but the raw delta norm remains unstable, so this is a safety layer rather
   than a solved dynamics model. Unsafe-delta rejection raises sparse integrity
   to `0.530270` only by rejecting `0.640000` of updates, so rejection rate must
-  be reported next to integrity.
+  be reported next to integrity. A naive rollout-consistency penalty gives
+  sparse H=25 integrity `0.084549`, so it does not solve raw delta instability.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
@@ -308,9 +309,9 @@ The current evidence supports a regime hypothesis, not universal dominance.
   objects and reduces tensor bytes by `0.997454`. This is cost-proxy evidence
   for pre-tensor state indexing, not proof of hardware speed or power.
 - The PyBullet shift-generalization benchmark adds calibration metrics under
-  held-out mechanism families. WPU sparse leads on `edge_shift`, but
-  serialized-token is stronger on `catch_heavy`, so robust world-state
-  generalization remains unsolved.
+  held-out mechanism families. In the 7-seed rerun, WPU local-dense leads on
+  `catch_heavy`, but serialized-token remains stronger on `edge_shift` and
+  `high_force`, so robust world-state generalization remains unsolved.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.
@@ -346,8 +347,9 @@ The latest gap audit quantifies this directly: risk-adjusted mechanism routing
 closes only `0.244220` of the available candidate-oracle gain at best, and only
 `0.042131` at `K=32`.
 Direct candidate-regret deployment improves the conservative closure to
-`0.327146` under harmful-accept <= `0.25` (`0.329950` unconstrained), but the
-candidate oracle remains substantially stronger.
+`0.328025` under train-selected deployment (`0.329950` in the test sweep), but
+the candidate oracle remains substantially stronger and harmful accepts remain
+near the safety limit.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than

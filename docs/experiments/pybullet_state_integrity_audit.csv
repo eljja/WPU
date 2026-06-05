@@ -2,6 +2,8 @@ run_label,model,horizon,seed_count,constraint_violations_per_step,delta_norm_mea
 clipped,graph-transformer,25,2,0.253333,8.363635,0.883979,0.054688,36.416667,0.0,0.557002
 clipped,wpu-cws-indexed-local-dense,25,2,0.314167,2.8099,0.866729,0.048611,4.416667,0.0,0.719139
 clipped,wpu-cws-indexed-sparse,25,2,0.785,1939290.233702,0.435631,0.082465,4.416667,0.0,0.201757
+consistency,wpu-cws-indexed-local-dense,25,2,0.811667,1.965078,0.872328,0.059896,4.416667,0.0,0.472827
+consistency,wpu-cws-indexed-sparse,25,2,3.360834,1775082.311771,0.423205,0.077257,4.416667,0.0,0.084549
 guarded,graph-transformer,25,2,0.0,2.096666,0.883981,0.054688,36.416667,0.0,0.915679
 guarded,wpu-cws-indexed-local-dense,25,2,0.0,0.741597,0.866728,0.048611,4.416667,0.0,0.964322
 guarded,wpu-cws-indexed-sparse,25,2,0.0,0.709288,0.435698,0.083334,4.416667,0.0,0.958508

@@ -73,6 +73,7 @@ def main() -> None:
     parser.add_argument("--reject-margin", type=float, default=0.0)
     parser.add_argument("--sweep-reject-margins", type=float, nargs="+", default=[0.0025, 0.005, 0.01, 0.02, 0.05])
     parser.add_argument("--sweep-risk-penalties", type=float, nargs="+", default=[0.75, 1.0, 1.5, 2.0, 3.0])
+    parser.add_argument("--selection-harmful-limit", type=float, default=0.25)
     parser.add_argument("--no-harm-margin", type=float, default=0.0)
     parser.add_argument("--bce-weight", type=float, default=0.25)
     parser.add_argument("--variance-weight", type=float, default=0.05)
@@ -254,39 +255,53 @@ def _summarize(
     risk_modes, risk_metrics = _predict_modes(test_examples, gate, candidate_names, args, risk_adjusted=True)
     train_regret_modes, train_regret_metrics = _predict_modes(train_examples, gate, candidate_names, args, risk_adjusted=False)
     train_risk_modes, train_risk_metrics = _predict_modes(train_examples, gate, candidate_names, args, risk_adjusted=True)
+    deployment_configs = _deployment_configs(args)
+    selected_config, selected_train_metrics = _select_train_deployment(
+        train_examples,
+        gate,
+        candidate_names,
+        args,
+        deployment_configs,
+    )
+    selected_modes, selected_metrics = _predict_modes(
+        test_examples,
+        gate,
+        candidate_names,
+        args,
+        risk_adjusted=selected_config["risk_adjusted"],
+        reject_margin=selected_config["reject_margin"],
+        risk_penalty=selected_config["risk_penalty"],
+    )
+    selected_metrics.update(
+        {
+            "selection_train_loss": selected_train_metrics["loss"],
+            "selection_train_gap_closure": selected_train_metrics["gap_closure"],
+            "selection_train_accept_rate": selected_train_metrics["accept_rate"],
+            "selection_train_harmful_accept_rate": selected_train_metrics["harmful_accept_rate"],
+            "selection_train_policy": selected_config["name"],
+        }
+    )
 
     policies = [
         ("static_learned_interaction", static_modes, {}),
         ("candidate_regret_gate", regret_modes, regret_metrics),
         ("uncertainty_regret_gate", risk_modes, risk_metrics),
+        ("train_selected_candidate_regret_gate", selected_modes, selected_metrics),
         ("generated_plus_composition_oracle", oracle_modes, {}),
     ]
-    for margin in _unique_floats([args.reject_margin, *args.sweep_reject_margins]):
-        if margin == args.reject_margin:
+    for config in deployment_configs:
+        if config["name"] in {"candidate_regret_gate", "uncertainty_regret_gate"}:
             continue
         modes, metrics = _predict_modes(
             test_examples,
             gate,
             candidate_names,
             args,
-            risk_adjusted=False,
-            reject_margin=margin,
+            risk_adjusted=config["risk_adjusted"],
+            reject_margin=config["reject_margin"],
+            risk_penalty=config["risk_penalty"],
         )
-        policies.append((f"candidate_regret_gate_m{_float_token(margin)}", modes, metrics))
-    for risk_penalty in _unique_floats([args.risk_penalty, *args.sweep_risk_penalties]):
-        for margin in _unique_floats([args.reject_margin, *args.sweep_reject_margins]):
-            if risk_penalty == args.risk_penalty and margin == args.reject_margin:
-                continue
-            modes, metrics = _predict_modes(
-                test_examples,
-                gate,
-                candidate_names,
-                args,
-                risk_adjusted=True,
-                reject_margin=margin,
-                risk_penalty=risk_penalty,
-            )
-            policies.append((f"uncertainty_regret_gate_r{_float_token(risk_penalty)}_m{_float_token(margin)}", modes, metrics))
+        policies.append((config["name"], modes, metrics))
     rows = []
     for policy, modes, metrics in policies:
         row = _policy_row(test_examples, policy, modes, candidate_names)
@@ -298,6 +313,85 @@ def _summarize(
         row["train_uncertainty_regret_accept_rate"] = train_risk_metrics["accept_rate"]
         rows.append(row)
     return rows
+
+
+def _deployment_configs(args: argparse.Namespace) -> list[dict[str, object]]:
+    configs: list[dict[str, object]] = [
+        {
+            "name": "candidate_regret_gate",
+            "risk_adjusted": False,
+            "reject_margin": float(args.reject_margin),
+            "risk_penalty": float(args.risk_penalty),
+        },
+        {
+            "name": "uncertainty_regret_gate",
+            "risk_adjusted": True,
+            "reject_margin": float(args.reject_margin),
+            "risk_penalty": float(args.risk_penalty),
+        },
+    ]
+    for margin in _unique_floats([args.reject_margin, *args.sweep_reject_margins]):
+        if margin == args.reject_margin:
+            continue
+        configs.append(
+            {
+                "name": f"candidate_regret_gate_m{_float_token(margin)}",
+                "risk_adjusted": False,
+                "reject_margin": margin,
+                "risk_penalty": float(args.risk_penalty),
+            }
+        )
+    for risk_penalty in _unique_floats([args.risk_penalty, *args.sweep_risk_penalties]):
+        for margin in _unique_floats([args.reject_margin, *args.sweep_reject_margins]):
+            if risk_penalty == args.risk_penalty and margin == args.reject_margin:
+                continue
+            configs.append(
+                {
+                    "name": f"uncertainty_regret_gate_r{_float_token(risk_penalty)}_m{_float_token(margin)}",
+                    "risk_adjusted": True,
+                    "reject_margin": margin,
+                    "risk_penalty": risk_penalty,
+                }
+            )
+    return configs
+
+
+def _select_train_deployment(
+    train_examples: list[dict[str, object]],
+    gate: CandidateRegretGate,
+    candidate_names: list[str],
+    args: argparse.Namespace,
+    configs: list[dict[str, object]],
+) -> tuple[dict[str, object], dict[str, float]]:
+    static_loss = _mean_policy_loss(train_examples, ["learned"] * len(train_examples))
+    oracle_modes = [str(example["best_mode"]) for example in train_examples]
+    oracle_loss = _mean_policy_loss(train_examples, oracle_modes)
+    oracle_gap = max(static_loss - oracle_loss, 1e-8)
+    evaluated: list[tuple[dict[str, object], dict[str, float]]] = []
+    for config in configs:
+        modes, metrics = _predict_modes(
+            train_examples,
+            gate,
+            candidate_names,
+            args,
+            risk_adjusted=bool(config["risk_adjusted"]),
+            reject_margin=float(config["reject_margin"]),
+            risk_penalty=float(config["risk_penalty"]),
+        )
+        loss = _mean_policy_loss(train_examples, modes)
+        metrics = dict(metrics)
+        metrics["loss"] = round(loss, 6)
+        metrics["gap_closure"] = round((static_loss - loss) / oracle_gap, 6)
+        evaluated.append((config, metrics))
+
+    safe = [
+        item
+        for item in evaluated
+        if item[1]["harmful_accept_rate"] <= args.selection_harmful_limit
+        and item[1]["gap_closure"] > 0.0
+    ]
+    candidates = safe or evaluated
+    return max(candidates, key=lambda item: (item[1]["gap_closure"], -item[1]["harmful_accept_rate"]))
 
 
 def _unique_floats(values: list[float]) -> list[float]:

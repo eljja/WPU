@@ -115,6 +115,16 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "rejection means the memory layer protected the state by declining",
             "unsafe updates.",
         ]
+    consistency_note = []
+    if "consistency" in labels:
+        consistency_note = [
+            "",
+            "The rollout-consistency run adds a second-step delta-growth penalty",
+            "during training. In the current evidence it does not solve sparse",
+            "raw-delta instability, so rollout consistency needs a stronger",
+            "state-validity objective or correction mechanism before it can",
+            "replace guarded memory safety.",
+        ]
     lines = [
         "# PyBullet State-Integrity Audit",
         "",
@@ -162,6 +172,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "raw model deltas from guarded state-store deltas.",
             *regularized_note,
             *rejection_note,
+            *consistency_note,
             "",
             "This makes state integrity a first-class WPU metric:",
             "",

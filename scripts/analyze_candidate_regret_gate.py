@@ -86,6 +86,8 @@ def _summarize(rows: list[dict[str, str]], source: Path) -> list[dict[str, objec
                     "mean_harmful_accept_rate": _mean_optional(policy_rows, "harmful_accept_rate"),
                     "mean_regret_corr": _mean_optional(policy_rows, "regret_corr"),
                     "mean_predicted_sigma": _mean_optional(policy_rows, "predicted_sigma_mean"),
+                    "mean_selection_train_gap_closure": _mean_optional(policy_rows, "selection_train_gap_closure"),
+                    "mean_selection_train_harmful_accept_rate": _mean_optional(policy_rows, "selection_train_harmful_accept_rate"),
                     "seed_count": len({int(row["seed"]) for row in policy_rows}),
                     "failure_mode": _failure_mode(gap_closure, _mean_optional(policy_rows, "harmful_accept_rate")),
                 }
@@ -119,6 +121,12 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
+    train_selected_rows = [row for row in rows if row["policy"] == "train_selected_candidate_regret_gate"]
+    train_selected_best = (
+        max(train_selected_rows, key=lambda row: float(row["gap_closure_fraction"]))
+        if train_selected_rows
+        else None
+    )
     best_by_k = []
     for causal_k in sorted({int(row["causal_k"]) for row in rows}):
         group = [row for row in rows if int(row["causal_k"]) == causal_k]
@@ -141,6 +149,12 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
                 f"(`{safe_best['policy']}`)다."
                 if safe_best is not None
                 else " Harmful accept <= `0.25` 조건을 만족하는 deployed policy는 없다."
+            )
+            + (
+                f" Train-selected deployed best는 `{float(train_selected_best['gap_closure_fraction']):.6f}` "
+                f"(`K={train_selected_best['causal_k']}`)다."
+                if train_selected_best is not None
+                else ""
             )
         )
         notes_title = "## 해석"
@@ -167,6 +181,12 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
                 f"(`{safe_best['policy']}`)."
                 if safe_best is not None
                 else " No deployed policy satisfies harmful-accept <= `0.25`."
+            )
+            + (
+                f" The train-selected deployed best is `{float(train_selected_best['gap_closure_fraction']):.6f}` "
+                f"(`K={train_selected_best['causal_k']}`)."
+                if train_selected_best is not None
+                else ""
             )
         )
         notes_title = "## Interpretation"

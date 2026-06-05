@@ -168,7 +168,8 @@ python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse w
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --delta-clip 0.25 --integrity-projection --out docs/experiments/pybullet_closed_loop_rollout_guarded.csv
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --delta-norm-penalty 0.05 --delta-target-norm-slack 0.5 --out docs/experiments/pybullet_closed_loop_rollout_regularized.csv
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --unsafe-delta-reject-norm 10.0 --out docs/experiments/pybullet_closed_loop_rollout_rejected.csv
-python scripts/analyze_state_integrity.py --inputs docs/experiments/pybullet_closed_loop_rollout.csv docs/experiments/pybullet_closed_loop_rollout_clipped.csv docs/experiments/pybullet_closed_loop_rollout_guarded.csv docs/experiments/pybullet_closed_loop_rollout_regularized.csv docs/experiments/pybullet_closed_loop_rollout_rejected.csv --labels raw clipped guarded regularized rejected --out-csv docs/experiments/pybullet_state_integrity_audit.csv --out-md docs/experiments/pybullet_state_integrity_audit_results.md
+python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --rollout-consistency-penalty 0.01 --rollout-consistency-slack 0.5 --out docs/experiments/pybullet_closed_loop_rollout_consistency.csv
+python scripts/analyze_state_integrity.py --inputs docs/experiments/pybullet_closed_loop_rollout.csv docs/experiments/pybullet_closed_loop_rollout_clipped.csv docs/experiments/pybullet_closed_loop_rollout_guarded.csv docs/experiments/pybullet_closed_loop_rollout_regularized.csv docs/experiments/pybullet_closed_loop_rollout_rejected.csv docs/experiments/pybullet_closed_loop_rollout_consistency.csv --labels raw clipped guarded regularized rejected consistency --out-csv docs/experiments/pybullet_state_integrity_audit.csv --out-md docs/experiments/pybullet_state_integrity_audit_results.md
 ```
 
 The PyBullet local-law revision probe can be reproduced with:
@@ -180,14 +181,14 @@ python scripts/pybullet_local_law_revision.py --train-samples 64 --calibration-s
 The PyBullet systems profile can be reproduced with:
 
 ```bash
-python scripts/pybullet_system_profile.py --samples 8 --seeds 11 13 --background-objects 0 32 128 512 2048 --branch-counts 1 3 8 --sim-steps 24 --out docs/experiments/pybullet_system_profile.csv
+python scripts/pybullet_system_profile.py --samples 8 --seeds 11 13 --background-objects 0 32 128 512 2048 --branch-counts 1 3 8 --sim-steps 24 --forward-repeats 3 --hidden-dim 64 --layers 2 --num-heads 4 --out docs/experiments/pybullet_system_profile.csv
 ```
 
 The PyBullet shift-generalization and calibration benchmark can be reproduced
 with:
 
 ```bash
-python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 --background-objects 32 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_shift_generalization.csv
+python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 17 19 23 29 31 --background-objects 32 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_shift_generalization.csv
 ```
 
 The latest candidate-oracle gap audit can be reproduced with:

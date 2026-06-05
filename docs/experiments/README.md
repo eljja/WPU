@@ -66,6 +66,11 @@ Use these reports for paper-level claims:
   objectification score detects confidence degradation but not missing expected
   causal frontier edges or semantic identity swaps; the benchmark therefore logs
   pre-projection `frontier_causal_recall_mean`.
+- `pybullet_matched_baseline_benchmark_results.md`: parameter-matched PyBullet
+  pilot using `--target-params`. At an approximate 50k-parameter budget, WPU
+  sparse preserves branch accuracy from background N=0 to N=128 while full-state
+  graph/token baselines drop in this short run. The latency result remains
+  mixed because the serialized-token baseline is still fastest at this scale.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -188,6 +193,8 @@ Historical or preliminary reports:
   simulator-grounded PyBullet cup benchmark.
 - `pybullet_objectification_stress_results.ko.md`: Korean companion for the
   PyBullet objectification corruption stress benchmark.
+- `pybullet_matched_baseline_benchmark_results.ko.md`: Korean companion for the
+  parameter-matched PyBullet benchmark.
 - `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
   useful for provenance, not a result claim by itself.
 - `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;

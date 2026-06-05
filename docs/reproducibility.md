@@ -147,6 +147,12 @@ The PyBullet objectification-corruption stress can be reproduced with:
 python scripts/pybullet_objectification_stress.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer --corruptions clean drop_relations_light drop_relations_heavy position_noise low_confidence identity_swap combined --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_objectification_stress.csv
 ```
 
+The parameter-matched PyBullet pilot can be reproduced with:
+
+```bash
+python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 0 128 --seeds 11 13 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --target-params 50000 --num-heads 4 --working-set-size 12 --runtime-repeats 5 --balanced-labels --out docs/experiments/pybullet_matched_baseline_benchmark.csv
+```
+
 ## Current Submission Boundary
 
 Use `docs/claims.md` as the authoritative claim boundary. The current repository

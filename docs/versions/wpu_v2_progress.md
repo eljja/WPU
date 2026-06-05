@@ -379,6 +379,45 @@ semantic identity consistency, not only valid IDs, valid relation endpoints,
 and confidence ranges.
 ```
 
+### Simulator Matched-Baseline Correction
+
+Output:
+
+- `scripts/pybullet_cup_benchmark.py --target-params`
+- `docs/experiments/pybullet_matched_baseline_benchmark.csv`
+- `docs/experiments/pybullet_matched_baseline_benchmark_results.md`
+
+Question:
+
+```text
+Does the PyBullet result survive an approximate parameter-budget match?
+```
+
+Result:
+
+The benchmark now supports per-model hidden-dimension search to match a target
+parameter count. At an approximate 50k parameter budget, the two-seed PyBullet
+pilot shows:
+
+| background objects | model | params | accuracy | latency ms/sample |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | graph-transformer | 47,622 | 0.528 | 2.199 |
+| 0 | serialized-token | 58,530 | 0.569 | 0.145 |
+| 0 | wpu-cws-indexed-sparse | 52,924 | 0.569 | 1.299 |
+| 128 | graph-transformer | 47,622 | 0.472 | 41.766 |
+| 128 | serialized-token | 58,530 | 0.472 | 0.294 |
+| 128 | wpu-cws-indexed-sparse | 52,924 | 0.569 | 2.177 |
+
+Interpretation:
+
+This strengthens the regime-specific WPU claim but not a universal performance
+claim. With matched parameter scale, sparse indexed WPU preserves accuracy as
+irrelevant background state grows, while full-state baselines drop in this
+short pilot. But serialized-token remains faster at this scale, so WPU should
+not claim blanket latency dominance. The defensible claim is that pre-tensor
+state retrieval can avoid full-state graph processing cost while preserving
+accuracy when the causal working set is small and identifiable.
+
 ### Priority 6: Local Dense Hybrid
 
 Implemented as:

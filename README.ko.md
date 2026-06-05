@@ -223,6 +223,10 @@ model = wpu.create_model(
 - 첫 PyBullet objectification stress는 causal-frontier relation 누락이 propagation
   이전에 WPU selected K를 줄인다는 점을 보였다. 또한 현재 objectification score에는
   frontier completeness와 semantic identity check가 추가되어야 한다.
+- Parameter-matched PyBullet pilot에서는 약 50k parameter 조건에서 WPU sparse가
+  background N=0에서 N=128까지 accuracy를 유지했고 full-state baseline은 하락했다.
+  하지만 serialized-token은 이 규모에서 여전히 더 빠르므로, 주장은 보편 latency
+  dominance가 아니라 regime-specific claim이다.
 
 v1의 핵심 목표는 명확하다.
 

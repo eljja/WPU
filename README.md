@@ -278,6 +278,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   relations reduce WPU selected K before propagation. It also shows that the
   current objectification score must be extended with frontier completeness and
   semantic identity checks.
+- A parameter-matched PyBullet pilot shows WPU sparse preserving accuracy from
+  background N=0 to N=128 at roughly 50k parameters, while full-state baselines
+  drop in this short run. Serialized-token remains faster at this scale, so the
+  claim is regime-specific rather than universal latency dominance.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

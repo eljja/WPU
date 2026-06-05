@@ -40,6 +40,7 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=96)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--hidden-dim", type=int, default=128)
+    parser.add_argument("--target-params", type=int, default=0)
     parser.add_argument("--layers", type=int, default=2)
     parser.add_argument("--num-heads", type=int, default=4)
     parser.add_argument("--working-set-size", type=int, default=12)
@@ -73,9 +74,10 @@ def _run_condition(
 ) -> dict[str, object]:
     torch.manual_seed(seed)
     device = torch.device(args.device)
+    hidden_dim = _matched_hidden_dim(model_name, args)
     model = create_model(
         model_name,
-        hidden_dim=args.hidden_dim,
+        hidden_dim=hidden_dim,
         layers=args.layers,
         num_heads=args.num_heads,
         working_set_size=args.working_set_size,
@@ -112,7 +114,9 @@ def _run_condition(
         "model": model_name,
         "seed": seed,
         "params": _count_parameters(model),
-        "hidden_dim": args.hidden_dim,
+        "hidden_dim": hidden_dim,
+        "target_params": args.target_params,
+        "param_match_error": abs(_count_parameters(model) - args.target_params) if args.target_params > 0 else 0,
         "layers": args.layers,
         "total_objects_n": background_objects + 5,
         "background_objects": background_objects,
@@ -263,6 +267,34 @@ def _working_set_stats(model: torch.nn.Module, causal_k: torch.Tensor) -> tuple[
 
 def _count_parameters(model: torch.nn.Module) -> int:
     return sum(parameter.numel() for parameter in model.parameters() if parameter.requires_grad)
+
+
+def _matched_hidden_dim(model_name: str, args: argparse.Namespace) -> int:
+    if args.target_params <= 0:
+        return args.hidden_dim
+    candidates = [
+        hidden_dim
+        for hidden_dim in range(max(args.num_heads, 8), 513, max(args.num_heads, 8))
+        if hidden_dim % args.num_heads == 0
+    ]
+    best_hidden = args.hidden_dim
+    best_error: int | None = None
+    for hidden_dim in candidates:
+        try:
+            model = create_model(
+                model_name,
+                hidden_dim=hidden_dim,
+                layers=args.layers,
+                num_heads=args.num_heads,
+                working_set_size=args.working_set_size,
+            )
+        except ValueError:
+            continue
+        error = abs(_count_parameters(model) - args.target_params)
+        if best_error is None or error < best_error:
+            best_hidden = hidden_dim
+            best_error = error
+    return best_hidden
 
 
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:

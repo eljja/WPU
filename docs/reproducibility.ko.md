@@ -172,6 +172,12 @@ PyBullet systems profile은 다음 명령으로 재현할 수 있다.
 python scripts/pybullet_system_profile.py --samples 8 --seeds 11 13 --background-objects 0 32 128 512 2048 --branch-counts 1 3 8 --sim-steps 24 --out docs/experiments/pybullet_system_profile.csv
 ```
 
+PyBullet shift-generalization 및 calibration benchmark는 다음 명령으로 재현할 수 있다.
+
+```bash
+python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 --background-objects 32 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_shift_generalization.csv
+```
+
 최신 candidate-oracle gap audit은 다음 명령으로 재현할 수 있다.
 
 ```bash

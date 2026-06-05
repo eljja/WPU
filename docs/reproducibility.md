@@ -180,6 +180,13 @@ The PyBullet systems profile can be reproduced with:
 python scripts/pybullet_system_profile.py --samples 8 --seeds 11 13 --background-objects 0 32 128 512 2048 --branch-counts 1 3 8 --sim-steps 24 --out docs/experiments/pybullet_system_profile.csv
 ```
 
+The PyBullet shift-generalization and calibration benchmark can be reproduced
+with:
+
+```bash
+python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 --background-objects 32 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_shift_generalization.csv
+```
+
 The latest candidate-oracle gap audit can be reproduced with:
 
 ```bash

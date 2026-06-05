@@ -101,6 +101,11 @@ Use these reports for paper-level claims:
   `0.997454` at `N≈2052.6` while selected `K≈4.6`, and branch-overlay memory
   proxy reduction reaching `0.874128` at `B=8`. This is systems evidence, not
   hardware speed or energy proof.
+- `pybullet_shift_generalization_results.md`: PyBullet mechanism-family shift
+  benchmark. Models train on nominal dynamics and evaluate on `high_force`,
+  `edge_shift`, and `catch_heavy`, with ECE/Brier/NLL as first-class calibration
+  outputs. It shows a WPU-positive `edge_shift` regime and a WPU-negative
+  `catch_heavy` regime where serialized-token remains stronger.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -240,6 +245,8 @@ Historical or preliminary reports:
   PyBullet local-law revision probe.
 - `pybullet_system_profile_results.ko.md`: Korean companion for the PyBullet
   systems profile.
+- `pybullet_shift_generalization_results.ko.md`: Korean companion for the
+  PyBullet shift-generalization and calibration benchmark.
 - `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
   useful for provenance, not a result claim by itself.
 - `wpu_v2_candidate_oracle_gap_v2_results.ko.md`: Korean companion for the
@@ -342,6 +349,9 @@ Historical or preliminary reports:
 - The PyBullet state-integrity audit turns closed-loop rollout stability into
   a tracked metric. It confirms that clipping is a safety layer, not a solution
   to raw WPU sparse delta instability.
+- The PyBullet shift benchmark adds the first mechanism-family generalization
+  and calibration table. It is mixed: WPU sparse leads on `edge_shift`, but
+  `serialized-token` is stronger on `catch_heavy`.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

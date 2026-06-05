@@ -247,6 +247,9 @@ model = wpu.create_model(
   Background state가 `N≈2052.6`까지 커져도 indexed WPU는 `K≈4.6` 객체만 tensorize하며
   tensor byte를 `0.997454` 줄인다. 이것은 pre-tensor state indexing에 대한 cost-proxy
   evidence이지 hardware speed 또는 power 증명은 아니다.
+- PyBullet shift-generalization benchmark는 held-out mechanism family에서 calibration
+  metric을 추가했다. WPU sparse는 `edge_shift`에서 앞서지만, `catch_heavy`에서는
+  serialized-token이 더 강하므로 robust world-state generalization은 아직 해결되지 않았다.
 
 v1의 핵심 목표는 명확하다.
 

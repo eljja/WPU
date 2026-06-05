@@ -303,6 +303,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   with background state up to `N≈2052.6`, indexed WPU tensorizes only `K≈4.6`
   objects and reduces tensor bytes by `0.997454`. This is cost-proxy evidence
   for pre-tensor state indexing, not proof of hardware speed or power.
+- The PyBullet shift-generalization benchmark adds calibration metrics under
+  held-out mechanism families. WPU sparse leads on `edge_shift`, but
+  serialized-token is stronger on `catch_heavy`, so robust world-state
+  generalization remains unsolved.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

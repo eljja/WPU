@@ -151,3 +151,16 @@ def test_pybullet_objectification_quality_help_runs() -> None:
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_pybullet_shift_generalization_help_runs() -> None:
+    result = subprocess.run(
+        [sys.executable, "scripts/pybullet_shift_generalization.py", "--help"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stderr

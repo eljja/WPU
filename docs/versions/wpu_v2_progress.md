@@ -634,6 +634,37 @@ clipping reduces constraint violations, yet raw delta magnitude remains
 unstable for sparse WPU. The next implementation target is rollback,
 correction, uncertainty escalation, and rollout-consistency training.
 
+### PyBullet Shift Generalization and Calibration
+
+Output:
+
+- `scripts/pybullet_shift_generalization.py`
+- `docs/experiments/pybullet_shift_generalization.csv`
+- `docs/experiments/pybullet_shift_generalization_results.md`
+
+Question:
+
+```text
+Does a nominally trained WPU generalize across PyBullet mechanism families, and
+are branch probabilities calibrated under those shifts?
+```
+
+Result:
+
+| mechanism | best WPU sparse accuracy | serialized-token accuracy | WPU sparse ECE | token ECE |
+| --- | ---: | ---: | ---: | ---: |
+| nominal | 0.486111 | 0.402778 | 0.216639 | 0.100940 |
+| high_force | 0.444445 | 0.458334 | 0.110487 | 0.188049 |
+| edge_shift | 0.597222 | 0.472222 | 0.171235 | 0.119432 |
+| catch_heavy | 0.194445 | 0.402778 | 0.248698 | 0.198037 |
+
+Interpretation:
+
+Priorities 4 and 5 are now instrumented. The result is mixed: sparse WPU is
+strongest on `edge_shift`, but it fails badly on `catch_heavy`. Calibration is
+also not solved. The next version needs mechanism-aware branch priors,
+shift-aware calibration, and uncertainty-gated fallback.
+
 ### Priority 6: Local Dense Hybrid
 
 Implemented as:

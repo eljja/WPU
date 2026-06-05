@@ -286,6 +286,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
   repeated WPU sparse deltas can explode by horizon 25. Delta clipping reduces
   violations but does not fix raw prediction instability, so WPU needs explicit
   state-integrity verification and correction.
+- The first PyBullet local-law revision probe shows a bounded positive regime:
+  simple object-state laws reduce cup-delta MSE under `high_force` and
+  `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
+  candidate-selection gaps. The claim is revisable local hypotheses, not
+  unknown physical-law discovery.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

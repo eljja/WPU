@@ -76,6 +76,12 @@ Use these reports for paper-level claims:
   long-horizon WPU sparse failure: raw delta explosion and high constraint
   violations at horizon 25. Delta clipping reduces violations but does not fix
   the underlying raw prediction instability.
+- `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
+  revision probe. Simple candidate laws over objectified simulator state reduce
+  cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
+  nominal and `catch_heavy` cases expose overfitting and candidate-selection
+  gaps. This supports revisable bounded local-law hypotheses, not unknown
+  physical-law discovery.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -202,6 +208,8 @@ Historical or preliminary reports:
   parameter-matched PyBullet benchmark.
 - `pybullet_closed_loop_rollout_results.ko.md`: Korean companion for the
   PyBullet closed-loop rollout diagnostic.
+- `pybullet_local_law_revision_results.ko.md`: Korean companion for the
+  PyBullet local-law revision probe.
 - `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
   useful for provenance, not a result claim by itself.
 - `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;

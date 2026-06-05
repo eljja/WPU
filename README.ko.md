@@ -231,6 +231,11 @@ model = wpu.create_model(
   반복 적용하면 horizon 25에서 state가 폭발할 수 있다. Delta clipping은 violation을
   줄이지만 raw prediction instability를 해결하지 않으므로, WPU에는 명시적
   state-integrity verification과 correction이 필요하다.
+- 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
+  Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
+  낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이
+  드러났다. 주장은 unknown physical-law discovery가 아니라 revisable local
+  hypothesis다.
 
 v1의 핵심 목표는 명확하다.
 

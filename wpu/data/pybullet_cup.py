@@ -51,6 +51,9 @@ class PyBulletCupDataset(Dataset):
         time_step: float = 1.0 / 120.0,
         catch_probability: float = 0.45,
         balanced_labels: bool = False,
+        cup_x_range: tuple[float, float] = (0.62, 0.96),
+        hand_x_range: tuple[float, float] = (0.18, 0.58),
+        force_range: tuple[float, float] = (0.2, 1.8),
     ) -> None:
         self.size = size
         self.seed = seed
@@ -59,6 +62,9 @@ class PyBulletCupDataset(Dataset):
         self.time_step = time_step
         self.catch_probability = catch_probability
         self.balanced_labels = balanced_labels
+        self.cup_x_range = cup_x_range
+        self.hand_x_range = hand_x_range
+        self.force_range = force_range
         try:
             import pybullet as pybullet
         except ImportError as error:  # pragma: no cover - exercised when optional dep is absent.
@@ -92,9 +98,9 @@ class PyBulletCupDataset(Dataset):
 
     def _make_sample(self, index: int) -> PyBulletCupSample:
         rng = random.Random(self.seed + index)
-        cup_x = rng.uniform(0.62, 0.96)
-        hand_x = rng.uniform(0.18, 0.58)
-        force = rng.uniform(0.2, 1.8)
+        cup_x = rng.uniform(*self.cup_x_range)
+        hand_x = rng.uniform(*self.hand_x_range)
+        force = rng.uniform(*self.force_range)
         catch_action = rng.random() < self.catch_probability
         lateral_noise = rng.uniform(-0.08, 0.08)
 

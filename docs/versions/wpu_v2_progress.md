@@ -454,6 +454,46 @@ uncertainty escalation, and rollout-consistency losses. One-step branch
 accuracy is not enough evidence for a world-state processor.
 ```
 
+### PyBullet Local-Law Revision Probe
+
+Output:
+
+- `scripts/pybullet_local_law_revision.py`
+- `docs/experiments/pybullet_local_law_revision.csv`
+- `docs/experiments/pybullet_local_law_revision_results.md`
+
+Question:
+
+```text
+Can simulator-derived objectified state support explicit local-law revision,
+rather than only black-box next-state prediction?
+```
+
+Result:
+
+| mechanism | base MSE | best deployable MSE | oracle candidate MSE |
+| --- | ---: | ---: | ---: |
+| nominal | 0.025154 | 0.025154 | 0.010712 |
+| high_force | 0.086944 | 0.037060 | 0.018673 |
+| edge_shift | 0.680045 | 0.563311 | 0.086721 |
+| catch_heavy | 0.012977 | 0.012939 | 0.009083 |
+
+Interpretation:
+
+This is a useful but bounded v2 step. Objectified simulator state makes local
+law hypotheses explicit enough to fit, stress, revise, and reject. The positive
+regimes are `high_force` and `edge_shift`, where revision reduces delta MSE.
+The negative regimes are equally important: `nominal` and `catch_heavy` show
+that small calibration sets can overfit or fail to select the oracle form.
+
+V2 implication:
+
+```text
+WPU should expose local laws as revisable state-level hypotheses, but it must
+pair revision with risk-adjusted selection, validation, and closed-loop
+state-integrity checks before claiming physical-law discovery.
+```
+
 ### Priority 6: Local Dense Hybrid
 
 Implemented as:

@@ -160,6 +160,12 @@ python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse w
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --delta-clip 0.25 --out docs/experiments/pybullet_closed_loop_rollout_clipped.csv
 ```
 
+The PyBullet local-law revision probe can be reproduced with:
+
+```bash
+python scripts/pybullet_local_law_revision.py --train-samples 64 --calibration-samples 24 --eval-samples 48 --seeds 11 13 --background-objects 16 --sim-steps 120 --mechanisms nominal high_force edge_shift catch_heavy --out docs/experiments/pybullet_local_law_revision.csv
+```
+
 ## Current Submission Boundary
 
 Use `docs/claims.md` as the authoritative claim boundary. The current repository

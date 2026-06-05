@@ -192,6 +192,13 @@ docs/experiments/wpu_v2_candidate_oracle_gap_decomposition.csv
 docs/experiments/wpu_v2_candidate_oracle_gap_decomposition.md
 ```
 
+Candidate no-harm gate 요약은 conservative set-evaluator CSV에서 다음 명령으로
+재현할 수 있다.
+
+```bash
+python scripts/analyze_candidate_noharm_gate.py
+```
+
 보수적인 v2 우선순위 dashboard는 다음 명령으로 재현할 수 있다.
 
 ```bash

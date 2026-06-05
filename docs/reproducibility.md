@@ -201,6 +201,13 @@ docs/experiments/wpu_v2_candidate_oracle_gap_decomposition.csv
 docs/experiments/wpu_v2_candidate_oracle_gap_decomposition.md
 ```
 
+The candidate no-harm gate summary can be reproduced from the conservative
+set-evaluator CSV with:
+
+```bash
+python scripts/analyze_candidate_noharm_gate.py
+```
+
 The conservative v2 priority dashboard can be reproduced with:
 
 ```bash

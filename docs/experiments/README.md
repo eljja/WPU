@@ -206,6 +206,11 @@ Use these reports for paper-level claims:
   by feature variant, `K`, and deployed policy family. It shows that the gap is
   not caused by omitting one aggregate policy: the best non-oracle closure
   remains `0.244220`, and K=32 is selection-signal weak.
+- `wpu_v2_candidate_noharm_gate_results.md` and
+  `wpu_v2_candidate_noharm_gate_results.ko.md`: sample-level no-harm/margin
+  gate audit over the conservative set evaluator. It rejects threshold-only
+  gating as the missing P1 fix: best closure is only `0.082804`, and K=8/16
+  show negative closure under held-out seeds.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -360,6 +365,9 @@ Historical or preliminary reports:
 - The latest candidate-oracle gap audit makes the remaining headroom explicit:
   risk-adjusted mechanism routing closes only `0.244220` of the available
   oracle gain at best, so candidate scoring remains the priority-1 bottleneck.
+- The candidate no-harm gate audit narrows that bottleneck further: margin-only
+  sample-level gates are not sufficient, because their confidence is not
+  reliably aligned with held-out downstream regret.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

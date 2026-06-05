@@ -16,7 +16,7 @@
 
 현재 dashboard는 WPU v2가 유망하지만 아직 완결된 우월성 주장이 아님을 보여준다. 가장 강한 주장은 large-N 자체가 아니라, objectified state에서 작은 causal working set K를 tensorization 전에 식별할 수 있을 때 WPU가 계산량과 메모리 측면에서 유리해진다는 조건부 주장이다.
 
-- P1 Candidate-oracle gap: 최고 deployed closure는 0.244220이고 평균 closure는 0.160601이다. Decomposition 결과 aggregate policy 하나를 더 고르는 방식으로는 gap이 닫히지 않는다.
+- P1 Candidate-oracle gap: 최고 deployed closure는 0.244220이고 평균 closure는 0.160601이다. Decomposition 결과 aggregate policy 하나를 더 고르는 방식으로는 gap이 닫히지 않는다. Sample-level no-harm/margin gate도 감사했지만 최고 closure는 0.082804에 그쳐 margin gating이 누락된 해법이 아님을 보인다.
 - P2 장기 state integrity: 최고 WPU H=25 integrity는 0.964322이고 guarded sparse는 0.958508이다. 하지만 raw sparse는 0.084722로 남아 있어 state-store guard가 적용 state를 보호한 것이지 raw delta model 안정성이 해결된 것은 아니다.
 - P3 Simulator-backed benchmark: PyBullet benchmark는 2개 seed와 background N_bg=128까지 존재하지만, 논문급 강한 주장에는 seed와 mechanism 수가 부족하다.
 - P4 Mechanism-family shift generalization: WPU는 edge_shift에서 앞서지만 high_force와 catch_heavy에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.
@@ -26,7 +26,7 @@
 
 ## 다음 조치
 
-- P1: Aggregate policy selection 아래로 내려가 per-candidate uncertainty, sample-level no-harm gate, regret target을 추가한다.
+- P1: Aggregate policy selection 아래로 내려가 per-candidate uncertainty, calibrated regret target, sample-level no-harm rejection loss를 추가한다.
 - P2: Guarded state-store projection을 유지하되, rollout-consistency loss와 unsafe-delta rejection을 학습 단계로 끌어올린다.
 - P3: Seed, mechanism, training scale, long-horizon simulator rollout을 늘린다.
 - P4: Leave-family-out training, 더 어려운 shift, mechanism-aware branch prior를 추가한다.

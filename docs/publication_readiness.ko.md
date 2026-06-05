@@ -41,7 +41,7 @@ construction을 검증했다는 뜻은 아니다.
 | Gap | 왜 중요한가 | 현재 증거 | 필요한 다음 증거 |
 |---|---|---|---|
 | broad baseline superiority가 없음 | matched token/graph/world-model baseline 없이 보편 우월 주장은 reject될 가능성이 높다. | v1은 large `N`에서 WPU가 지는 결과를 보였고, v2는 working-set-control gain은 보이나 broad dominance는 아니다. | `N`, `K`, branch count, horizon을 통제한 parameter-matched, compute-matched token/graph baseline. |
-| candidate-oracle gap이 남아 있음 | v2는 유용한 control surface를 보여주지만 deployed selector는 oracle 성능을 충분히 사용하지 못한다. | 최신 gap audit은 risk-adjusted mechanism routing이 `K=8,16,32`에서 oracle gain의 `0.195451`, `0.244220`, `0.042131`만 회수함을 보인다. | joint retriever-propagator training, calibrated regret target, selector uncertainty, transfer-stable candidate scoring. |
+| candidate-oracle gap이 남아 있음 | v2는 유용한 control surface를 보여주지만 deployed selector는 oracle 성능을 충분히 사용하지 못한다. | 최신 gap audit은 risk-adjusted mechanism routing이 `K=8,16,32`에서 oracle gain의 `0.195451`, `0.244220`, `0.042131`만 회수함을 보인다. Decomposition audit은 이것이 aggregate policy 하나를 누락했기 때문이 아님을 보인다. Best non-oracle closure는 여전히 `0.244220`이고 K=32는 selection signal이 약하거나 miscalibrated다. | joint retriever-propagator training, calibrated regret target, selector uncertainty, sample-level no-harm gate, transfer-stable candidate scoring. |
 | cross-seed/cross-task transfer가 불완전함 | synthetic gain은 generator artifact에 overfit될 수 있다. | 여러 cross-seed reranker/gate가 실패하거나 부분 개선에 그쳤다. PyBullet mechanism-family shift benchmark는 mixed result를 보인다. WPU sparse는 `edge_shift`에서 앞서지만 `catch_heavy`에서는 크게 진다. | 더 큰 seed sweep, 새 synthetic generator, leave-generator-family-out validation, mechanism-aware branch prior. |
 | long-horizon state integrity가 증명되지 않음 | persistent state는 delta overlay가 장기적으로 망가지지 않을 때만 장점이다. | PyBullet state-integrity audit이 constraint validity, bounded delta drift, branch stability를 추적한다. Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어진다. Guarded state-store projection은 sparse WPU의 applied-state integrity를 `0.958508`, local-dense WPU를 `0.964322`까지 올리지만 raw delta instability는 남아 있다. | rollback, correction, calibration, uncertainty escalation, state-consistency loss를 포함한 rollout training. |
 | real-world 또는 simulator-backed grounding이 없음 | world processing claim은 toy object physics 밖의 증거가 필요하다. | 현재 evidence는 synthetic robot-cup 및 CWS data다. | MuJoCo/Isaac/robotics/game-server/digital-twin benchmark와 explicit state extraction. |
@@ -71,7 +71,9 @@ projection 덕분에 fail에서 partial로 올라갔지만 raw delta instability
 ## 즉시 개선 우선순위
 
 1. token processing으로 돌아가지 않고 현재 best gap-closure fraction `0.244220`을
-   넘어 candidate-oracle gap을 줄인다.
+   넘어 candidate-oracle gap을 줄인다. Decomposition audit에 따르면 aggregate
+   policy selection만으로는 부족하므로 per-candidate uncertainty와 sample-level
+   regret/no-harm target이 필요하다.
 2. long-horizon state integrity를 단순히 보고하는 것을 넘어 rollback, correction,
    uncertainty escalation, consistency loss로 개선한다.
 3. explicit object state를 사용할 수 있는 simulator-backed benchmark를 추가한다.

@@ -44,7 +44,7 @@ that does not yet validate perception-to-state construction.
 | Gap | Why it matters | Current evidence | Required next evidence |
 |---|---|---|---|
 | Broad baseline superiority is not shown | Reviewers will reject universal WPU claims without matched token/graph/world-model baselines. | v1 shows WPU loses at large `N`; v2 shows working-set-control gains but not broad dominance. | Parameter-matched, compute-matched token/graph baselines over controlled `N`, `K`, branch count, and horizon. |
-| Candidate-oracle gap remains open | WPU v2 exposes a useful control surface, but deployed selectors still leave substantial oracle performance unused. | The latest gap audit shows risk-adjusted mechanism routing closes only `0.195451`, `0.244220`, and `0.042131` of the oracle gain at `K=8,16,32`. | Joint retriever-propagator training, calibrated regret targets, selector uncertainty, and transfer-stable candidate scoring. |
+| Candidate-oracle gap remains open | WPU v2 exposes a useful control surface, but deployed selectors still leave substantial oracle performance unused. | The latest gap audit shows risk-adjusted mechanism routing closes only `0.195451`, `0.244220`, and `0.042131` of the oracle gain at `K=8,16,32`. The decomposition audit shows that this is not caused by omitting one aggregate policy: best non-oracle closure remains `0.244220`, and K=32 has weak or miscalibrated selection signal. | Joint retriever-propagator training, calibrated regret targets, selector uncertainty, sample-level no-harm gates, and transfer-stable candidate scoring. |
 | Cross-seed and cross-task transfer is incomplete | Synthetic gains can be seed-specific if selection policies overfit generation artifacts. | Several cross-seed rerankers and gates fail or only partially improve. A PyBullet mechanism-family shift benchmark now exists and shows mixed results: WPU sparse leads on `edge_shift` but loses badly on `catch_heavy`. | Larger seed sweeps, new synthetic generators, leave-generator-family-out validation, and mechanism-aware branch priors. |
 | Long-horizon state integrity is not proven | Persistent state is only valuable if delta overlays do not accumulate unrecoverable corruption. | A PyBullet state-integrity audit now tracks constraint validity, bounded delta drift, and branch stability. Raw WPU sparse falls to integrity `0.084722` at horizon 25. Guarded state-store projection raises applied-state integrity to `0.958508` for sparse WPU and `0.964322` for local-dense WPU, but raw delta instability remains. | Rollout training with rollback, correction, calibration, uncertainty escalation, and state-consistency losses. |
 | Real-world or simulator-backed grounding is absent | A world-processing claim needs evidence beyond toy object physics. | Current evidence is synthetic robot-cup and CWS data. | MuJoCo/Isaac/robotics/game-server/digital-twin benchmarks with explicit state extraction. |
@@ -76,7 +76,9 @@ claim of broad superiority.
 ## Immediate Improvement Priorities
 
 1. Close the candidate-oracle gap beyond the current best gap-closure fraction
-   of `0.244220` without returning to token processing.
+   of `0.244220` without returning to token processing. The decomposition audit
+   suggests this must happen below aggregate policy selection, through
+   per-candidate uncertainty and sample-level regret/no-harm targets.
 2. Improve long-horizon state integrity, not only report it: add rollback,
    correction, uncertainty escalation, and consistency losses.
 3. Add a simulator-backed benchmark where explicit object state is available.

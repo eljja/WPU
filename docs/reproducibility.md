@@ -194,6 +194,13 @@ The latest candidate-oracle gap audit can be reproduced with:
 python scripts/analyze_candidate_oracle_gap.py --input docs/experiments/wpu_v2_retriever_invariant_set_scorer.csv --out-csv docs/experiments/wpu_v2_candidate_oracle_gap_v2.csv --out-md docs/experiments/wpu_v2_candidate_oracle_gap_v2_results.md
 ```
 
+The same command also emits the priority 1 decomposition:
+
+```text
+docs/experiments/wpu_v2_candidate_oracle_gap_decomposition.csv
+docs/experiments/wpu_v2_candidate_oracle_gap_decomposition.md
+```
+
 The conservative v2 priority dashboard can be reproduced with:
 
 ```bash

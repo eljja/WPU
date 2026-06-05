@@ -1,0 +1,7 @@
+feature_variant,causal_k,candidate_oracle_gain_over_static,best_non_oracle_policy,best_non_oracle_loss,best_non_oracle_closure,risk_adjusted_loss,risk_adjusted_closure,risk_adjusted_oracle_match_rate,policy_count,negative_closure_policy_count,failure_mode
+role_geometry_family,8,0.032895,risk_adjusted_selected_mechanism,0.982002,0.195451,0.982002,0.195451,0.228889,6,0,partial_gap_closure_only
+role_geometry_family,16,0.061174,risk_adjusted_selected_mechanism,0.951243,0.24422,0.951243,0.24422,0.077778,6,0,partial_gap_closure_only
+role_geometry_family,32,0.035547,risk_adjusted_selected_mechanism,1.002597,0.042131,1.002597,0.042131,0.113333,6,3,selection_signal_absent_or_miscalibrated
+role_geometry_only,8,0.032895,risk_adjusted_selected_mechanism,0.984696,0.113548,0.984696,0.113548,0.14,6,0,partial_gap_closure_only
+role_geometry_only,16,0.061174,risk_adjusted_selected_mechanism,0.951243,0.24422,0.951243,0.24422,0.077778,6,2,partial_gap_closure_only
+role_geometry_only,32,0.035547,train_selected_mechanism,1.002418,0.047178,1.004529,-0.012226,0.142222,6,4,selection_signal_absent_or_miscalibrated

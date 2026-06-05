@@ -55,8 +55,8 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         0.5,
         "gap_closure_fraction",
         path,
-        f"Best deployed closure is {best:.6f} and mean closure is {mean:.6f}; most oracle headroom remains unused.",
-        "Train candidate scoring from downstream regret, add selector uncertainty, and require cross-seed no-harm checks.",
+        f"Best deployed closure is {best:.6f} and mean closure is {mean:.6f}; decomposition shows no omitted aggregate policy closes the gap.",
+        "Move below aggregate policy selection: add per-candidate uncertainty, sample-level no-harm gating, and regret targets.",
     )
 
 
@@ -330,7 +330,7 @@ def _ko_status(status: str) -> str:
 
 def _ko_interpretation(priority: int) -> str:
     return {
-        1: "최고 deployed closure는 0.244220이고 평균 closure는 0.160601이다. Candidate pool 안에는 아직 더 좋은 선택지가 많이 남아 있다.",
+        1: "최고 deployed closure는 0.244220이고 평균 closure는 0.160601이다. Decomposition 결과 aggregate policy 하나를 더 고르는 방식으로는 gap이 닫히지 않는다.",
         2: "최고 WPU H=25 integrity는 0.964322이고 guarded sparse는 0.958508이다. 하지만 raw sparse는 0.084722로 남아 있어 state-store guard가 적용 state를 보호한 것이지 raw delta model 안정성이 해결된 것은 아니다.",
         3: "PyBullet benchmark는 2개 seed와 background N_bg=128까지 존재하지만, 논문급 강한 주장에는 seed와 mechanism 수가 부족하다.",
         4: "WPU는 edge_shift에서 앞서지만 high_force와 catch_heavy에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.",
@@ -342,7 +342,7 @@ def _ko_interpretation(priority: int) -> str:
 
 def _ko_next_action(priority: int) -> str:
     return {
-        1: "Downstream regret 기반 candidate scoring, selector uncertainty, cross-seed no-harm check를 추가한다.",
+        1: "Aggregate policy selection 아래로 내려가 per-candidate uncertainty, sample-level no-harm gate, regret target을 추가한다.",
         2: "Guarded state-store projection을 유지하되, rollout-consistency loss와 unsafe-delta rejection을 학습 단계로 끌어올린다.",
         3: "Seed, mechanism, training scale, long-horizon simulator rollout을 늘린다.",
         4: "Leave-family-out training, 더 어려운 shift, mechanism-aware branch prior를 추가한다.",

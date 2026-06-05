@@ -201,6 +201,11 @@ Use these reports for paper-level claims:
   recovers only part of the available oracle gain: gap closure is `0.195451`
   at `K=8`, `0.244220` at `K=16`, and `0.042131` at `K=32`. This makes the
   remaining selector gap a required metric, not a prose caveat.
+- `wpu_v2_candidate_oracle_gap_decomposition.md` and
+  `wpu_v2_candidate_oracle_gap_decomposition.ko.md`: priority-1 decomposition
+  by feature variant, `K`, and deployed policy family. It shows that the gap is
+  not caused by omitting one aggregate policy: the best non-oracle closure
+  remains `0.244220`, and K=32 is selection-signal weak.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -271,6 +276,8 @@ Historical or preliminary reports:
   useful for provenance, not a result claim by itself.
 - `wpu_v2_candidate_oracle_gap_v2_results.ko.md`: Korean companion for the
   latest candidate-oracle gap audit.
+- `wpu_v2_candidate_oracle_gap_decomposition.ko.md`: Korean companion for the
+  priority-1 gap decomposition.
 - `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;
   superseded by staged regret and verifier experiments.
 - `wpu_v2_clipped_diagnostic_probe_results.md`: clipped residual diagnostic

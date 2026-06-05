@@ -12,7 +12,8 @@ DEFAULT_OUT_MD = Path("docs/experiments/wpu_v2_candidate_regret_gate_results.md"
 DEFAULT_OUT_KO_MD = Path("docs/experiments/wpu_v2_candidate_regret_gate_results.ko.md")
 
 
-DEPLOYED_POLICIES = ["candidate_regret_gate", "uncertainty_regret_gate"]
+NON_DEPLOYED_POLICIES = {"static_learned_interaction", "generated_plus_composition_oracle"}
+MAX_MARKDOWN_ROWS = 18
 
 
 def main() -> None:
@@ -61,7 +62,8 @@ def _summarize(rows: list[dict[str, str]], source: Path) -> list[dict[str, objec
         static_loss = losses["static_learned_interaction"]
         oracle_loss = losses["generated_plus_composition_oracle"]
         oracle_gap = static_loss - oracle_loss
-        for policy in DEPLOYED_POLICIES:
+        deployed_policies = [policy for policy in policies if policy not in NON_DEPLOYED_POLICIES]
+        for policy in deployed_policies:
             policy_rows = [row for row in group if row["policy"] == policy]
             deployed_gain = static_loss - losses[policy]
             gap_closure = deployed_gain / oracle_gap if oracle_gap > 0 else 0.0
@@ -115,6 +117,13 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
 
 def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: bool) -> str:
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
+    safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
+    safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
+    best_by_k = []
+    for causal_k in sorted({int(row["causal_k"]) for row in rows}):
+        group = [row for row in rows if int(row["causal_k"]) == causal_k]
+        best_by_k.append(max(group, key=lambda row: float(row["gap_closure_fraction"])))
+    table_rows = _top_rows(rows, best_by_k)
     if korean:
         title = "# Candidate Regret Gate 결과"
         intro = (
@@ -123,15 +132,22 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         )
         conclusion = (
             f"최고 closure는 `{float(best['gap_closure_fraction']):.6f}` "
-            f"(`K={best['causal_k']}`, `{best['policy']}`)다. 이는 이전 best `0.244220`을 "
-            "넘지만 P1 목표 `0.5`에는 못 미친다. 특히 harmful accept rate가 높아 "
-            "regret 예측은 candidate-oracle gap을 줄이기 시작했지만 no-harm rejection은 아직 약하다."
+            f"(`K={best['causal_k']}`, `{best['policy']}`)다. P1 목표 `0.5`를 기준으로 "
+            "candidate-regret deployment가 candidate-oracle gap을 충분히 닫는지와 "
+            "harmful accept를 억제하는지를 동시에 본다."
+            + (
+                f" Harmful accept <= `0.25` 조건의 conservative best는 "
+                f"`{float(safe_best['gap_closure_fraction']):.6f}` "
+                f"(`{safe_best['policy']}`)다."
+                if safe_best is not None
+                else " Harmful accept <= `0.25` 조건을 만족하는 deployed policy는 없다."
+            )
         )
         notes_title = "## 해석"
         notes = [
-            "Candidate-regret target은 margin-only gate보다 강한 신호다.",
-            "K=16에서는 closure가 개선됐지만 K=8/32 generalization은 충분하지 않다.",
-            "다음 개선은 accept/reject calibration, harmful-candidate penalty, seed/domain perturbation을 학습 objective에 더 강하게 넣는 것이다.",
+            "CSV에는 모든 reject-margin/risk-penalty deployment sweep을 보존한다.",
+            "아래 표는 K별 최고 정책과 전체 상위 정책만 보여준다.",
+            "좋은 정책은 closure만 높으면 부족하고, harmful accept도 낮아야 한다.",
         ]
     else:
         title = "# Candidate Regret Gate Results"
@@ -142,16 +158,22 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         )
         conclusion = (
             f"The best closure is `{float(best['gap_closure_fraction']):.6f}` "
-            f"(`K={best['causal_k']}`, `{best['policy']}`). This improves over the "
-            "previous best `0.244220`, but it remains below the P1 target `0.5`. "
-            "The high harmful-accept rate shows that candidate-regret prediction "
-            "starts to close the gap, while no-harm rejection remains weak."
+            f"(`K={best['causal_k']}`, `{best['policy']}`). P1 evaluates whether "
+            "candidate-regret deployment closes the candidate-oracle gap while "
+            "controlling harmful accepts."
+            + (
+                f" The conservative best under harmful-accept <= `0.25` is "
+                f"`{float(safe_best['gap_closure_fraction']):.6f}` "
+                f"(`{safe_best['policy']}`)."
+                if safe_best is not None
+                else " No deployed policy satisfies harmful-accept <= `0.25`."
+            )
         )
         notes_title = "## Interpretation"
         notes = [
-            "Candidate-regret targets provide a stronger signal than margin-only gating.",
-            "K=16 improves, but K=8/32 generalization is still insufficient.",
-            "The next improvement should strengthen accept/reject calibration, harmful-candidate penalties, and seed/domain perturbation in the learning objective.",
+            "The CSV keeps all reject-margin/risk-penalty deployment sweep points.",
+            "The table below shows the best policy per K and the strongest overall policies.",
+            "A useful deployed policy needs both high closure and low harmful accepts.",
         ]
 
     lines = [
@@ -166,7 +188,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         "| K | Policy | Loss | Accuracy | Oracle gain | Deployed gain | Closure | Accept | Harmful accept | Regret corr | Failure mode |",
         "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
-    for row in rows:
+    for row in table_rows:
         lines.append(
             f"| {row['causal_k']} | `{row['policy']}` | {float(row['policy_loss']):.6f} | "
             f"{float(row['policy_accuracy']):.6f} | {float(row['candidate_oracle_gain_over_static']):.6f} | "
@@ -177,6 +199,20 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     lines.extend(["", notes_title, ""])
     lines.extend(f"- {note}" for note in notes)
     return "\n".join(lines) + "\n"
+
+
+def _top_rows(rows: list[dict[str, object]], best_by_k: list[dict[str, object]]) -> list[dict[str, object]]:
+    selected: list[dict[str, object]] = []
+    selected_keys: set[tuple[int, str]] = set()
+    for row in [*best_by_k, *sorted(rows, key=lambda item: float(item["gap_closure_fraction"]), reverse=True)]:
+        key = (int(row["causal_k"]), str(row["policy"]))
+        if key in selected_keys:
+            continue
+        selected.append(row)
+        selected_keys.add(key)
+        if len(selected) >= MAX_MARKDOWN_ROWS:
+            break
+    return selected
 
 
 if __name__ == "__main__":

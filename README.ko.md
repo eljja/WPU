@@ -239,7 +239,9 @@ model = wpu.create_model(
   Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어진다. Guarded
   state-store projection은 sparse WPU의 applied-state integrity를 `0.958508`까지
   올리지만, raw delta norm은 여전히 불안정하므로 이는 dynamics model 해결이 아니라
-  safety layer다.
+  safety layer다. Unsafe-delta rejection은 sparse integrity를 `0.530270`까지
+  올리지만 update의 `0.640000`을 거부하므로, integrity 옆에 rejection rate를
+  반드시 함께 보고해야 한다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이
@@ -288,8 +290,10 @@ intervention point를 자연스럽게 제공하지 않는다.
 score-margin gate, strict no-harm seed-stable gate만으로는 충분하지 않았다. 다음 v2
 최신 gap audit은 이를 직접 수치화한다. Risk-adjusted mechanism routing은 available
 candidate-oracle gain 중 최대 `0.244220`만 회수하고, `K=32`에서는 `0.042131`만 회수한다.
-따라서 다음 v2 목표는 invariant candidate descriptor, risk-adjusted mechanism routing,
-그리고 retriever-propagator joint training이다.
+Direct candidate-regret deployment는 harmful-accept <= `0.25` 조건에서 conservative
+closure `0.327146`까지 올리고 unconstrained closure `0.329950`에 도달했지만, candidate
+oracle은 여전히 훨씬 강하다. 따라서 다음 v2 목표는 invariant candidate descriptor,
+risk-adjusted mechanism routing, 그리고 retriever-propagator joint training이다.
 
 ## 논문 및 문서
 

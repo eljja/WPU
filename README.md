@@ -295,7 +295,9 @@ The current evidence supports a regime hypothesis, not universal dominance.
   raw WPU sparse falls to integrity `0.084722` at horizon 25. A guarded
   state-store projection raises applied-state integrity to `0.958508` for sparse
   WPU, but the raw delta norm remains unstable, so this is a safety layer rather
-  than a solved dynamics model.
+  than a solved dynamics model. Unsafe-delta rejection raises sparse integrity
+  to `0.530270` only by rejecting `0.640000` of updates, so rejection rate must
+  be reported next to integrity.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
@@ -343,6 +345,9 @@ score-margin gates, and strict no-harm seed-stable gates are not sufficient.
 The latest gap audit quantifies this directly: risk-adjusted mechanism routing
 closes only `0.244220` of the available candidate-oracle gain at best, and only
 `0.042131` at `K=32`.
+Direct candidate-regret deployment improves the conservative closure to
+`0.327146` under harmful-accept <= `0.25` (`0.329950` unconstrained), but the
+candidate oracle remains substantially stronger.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than

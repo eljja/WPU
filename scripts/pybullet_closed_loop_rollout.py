@@ -53,6 +53,7 @@ def main() -> None:
     parser.add_argument("--delta-clip", type=float, default=0.0)
     parser.add_argument("--delta-norm-penalty", type=float, default=0.0)
     parser.add_argument("--delta-target-norm-slack", type=float, default=0.5)
+    parser.add_argument("--unsafe-delta-reject-norm", type=float, default=0.0)
     parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-position-norm", type=float, default=25.0)
     parser.add_argument("--max-velocity-norm", type=float, default=25.0)
@@ -140,6 +141,8 @@ def _rollout_condition(
     entropy_values: list[float] = []
     delta_norm_values: list[float] = []
     raw_delta_norm_values: list[float] = []
+    rejected_delta_count = 0
+    total_delta_count = 0
     selected_k_values: list[float] = []
     final_branch_counts: Counter[int] = Counter()
     with torch.no_grad():
@@ -167,7 +170,12 @@ def _rollout_condition(
                 final_branch_counts[branch] += int(step_index == horizon - 1)
                 selected_k_values.append(_selected_k(model, batch))
                 delta = prediction.object_delta[0].detach().cpu()
-                raw_delta_norm_values.append(float(delta.norm().item()))
+                raw_delta_norm = float(delta.norm().item())
+                raw_delta_norm_values.append(raw_delta_norm)
+                total_delta_count += 1
+                if args.unsafe_delta_reject_norm > 0.0 and raw_delta_norm > args.unsafe_delta_reject_norm:
+                    delta = torch.zeros_like(delta)
+                    rejected_delta_count += 1
                 object_ids = batch.object_ids[0] if batch.object_ids is not None else list(current.state.objects)
                 applied_delta_norm = _apply_predicted_delta(
                     current,
@@ -194,11 +202,13 @@ def _rollout_condition(
         "branch_entropy_mean": round(_mean(entropy_values), 6),
         "delta_norm_mean": round(_mean(delta_norm_values), 6),
         "raw_delta_norm_mean": round(_mean(raw_delta_norm_values), 6),
+        "unsafe_delta_rejection_rate": round(rejected_delta_count / max(total_delta_count, 1), 6),
         "selected_k_mean": round(_mean(selected_k_values), 6),
         "final_majority_branch_ratio": round(max(final_branch_counts.values(), default=0) / max(args.samples, 1), 6),
         "delta_clip": args.delta_clip,
         "delta_norm_penalty": args.delta_norm_penalty,
         "delta_target_norm_slack": args.delta_target_norm_slack,
+        "unsafe_delta_reject_norm": args.unsafe_delta_reject_norm,
         "integrity_projection": bool(args.integrity_projection),
     }
 

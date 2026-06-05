@@ -48,6 +48,7 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         entropy = _mean(group, "branch_entropy_mean")
         flip_rate = _mean(group, "branch_flip_rate")
         selected_k = _mean(group, "selected_k_mean")
+        rejection_rate = _mean_optional(group, "unsafe_delta_rejection_rate")
         integrity_score = _integrity_score(violations, delta_norm, flip_rate)
         output.append(
             {
@@ -60,6 +61,7 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "branch_entropy_mean": round(entropy, 6),
                 "branch_flip_rate": round(flip_rate, 6),
                 "selected_k_mean": round(selected_k, 6),
+                "unsafe_delta_rejection_rate": round(rejection_rate, 6),
                 "state_integrity_score": round(integrity_score, 6),
             }
         )
@@ -68,6 +70,11 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
 
 def _mean(rows: list[dict[str, str]], field: str) -> float:
     return statistics.fmean(float(row[field]) for row in rows)
+
+
+def _mean_optional(rows: list[dict[str, str]], field: str) -> float:
+    values = [float(row[field]) for row in rows if row.get(field) not in {None, ""}]
+    return statistics.fmean(values) if values else 0.0
 
 
 def _integrity_score(violations: float, delta_norm: float, flip_rate: float) -> float:
@@ -98,6 +105,16 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "improves raw WPU sparse H=25 integrity, so simple delta-norm",
             "regularization is not sufficient to solve model-delta instability.",
         ]
+    rejection_note = []
+    if any(float(row.get("unsafe_delta_rejection_rate", 0.0)) > 0.0 for row in rows):
+        rejection_note = [
+            "",
+            "The unsafe-delta rejection run is a state-store safety mechanism,",
+            "not proof that the raw transition model is stable. It must be",
+            "reported together with rejection rate: high integrity with high",
+            "rejection means the memory layer protected the state by declining",
+            "unsafe updates.",
+        ]
     lines = [
         "# PyBullet State-Integrity Audit",
         "",
@@ -119,8 +136,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "",
             "## Summary",
             "",
-            "| run | model | H | violations/step | delta norm | flip rate | integrity score |",
-            "|---|---|---:|---:|---:|---:|---:|",
+            "| run | model | H | violations/step | delta norm | flip rate | reject rate | integrity score |",
+            "|---|---|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in rows:
@@ -128,6 +145,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             f"| {row['run_label']} | {row['model']} | {row['horizon']} | "
             f"{float(row['constraint_violations_per_step']):.6f} | "
             f"{float(row['delta_norm_mean']):.6f} | {float(row['branch_flip_rate']):.6f} | "
+            f"{float(row['unsafe_delta_rejection_rate']):.6f} | "
             f"{float(row['state_integrity_score']):.6f} |"
         )
     lines.extend(
@@ -143,6 +161,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "the underlying delta model is stable. Future reports must distinguish",
             "raw model deltas from guarded state-store deltas.",
             *regularized_note,
+            *rejection_note,
             "",
             "This makes state integrity a first-class WPU metric:",
             "",

@@ -41,9 +41,9 @@ construction을 검증했다는 뜻은 아니다.
 | Gap | 왜 중요한가 | 현재 증거 | 필요한 다음 증거 |
 |---|---|---|---|
 | broad baseline superiority가 없음 | matched token/graph/world-model baseline 없이 보편 우월 주장은 reject될 가능성이 높다. | v1은 large `N`에서 WPU가 지는 결과를 보였고, v2는 working-set-control gain은 보이나 broad dominance는 아니다. | `N`, `K`, branch count, horizon을 통제한 parameter-matched, compute-matched token/graph baseline. |
-| candidate-oracle gap이 남아 있음 | v2는 유용한 control surface를 보여주지만 deployed selector는 oracle 성능을 충분히 사용하지 못한다. | Risk-adjusted mechanism routing의 기존 최고 closure는 `0.244220`이었다. Margin-only sample-level gate는 최고 `0.082804`로 실패했다. Direct candidate-regret gate는 K=16에서 최고 closure를 `0.308651`까지 올렸지만 목표 `0.5`에는 못 미치며 harmful candidate를 자주 accept한다. | joint retriever-propagator training, 더 강한 calibrated candidate-regret target, selector uncertainty, harmful-accept penalty, no-harm rejection loss, transfer-stable candidate scoring. |
+| candidate-oracle gap이 남아 있음 | v2는 유용한 control surface를 보여주지만 deployed selector는 oracle 성능을 충분히 사용하지 못한다. | Risk-adjusted mechanism routing의 기존 최고 closure는 `0.244220`이었다. Margin-only sample-level gate는 최고 `0.082804`로 실패했다. Direct candidate-regret deployment는 unconstrained closure `0.329950`, harmful-accept <= `0.25` 조건의 conservative closure `0.327146`까지 도달했지만 목표 `0.5`에는 못 미친다. | joint retriever-propagator training, 더 강한 calibrated candidate-regret target, selector uncertainty, harmful-accept penalty, no-harm rejection loss, transfer-stable candidate scoring. |
 | cross-seed/cross-task transfer가 불완전함 | synthetic gain은 generator artifact에 overfit될 수 있다. | 여러 cross-seed reranker/gate가 실패하거나 부분 개선에 그쳤다. 5-seed PyBullet mechanism-family shift benchmark도 mixed result다. WPU local-dense는 `catch_heavy`에서 앞서지만 `edge_shift`와 `high_force`에서는 baseline에 밀린다. | 더 큰 seed sweep, 새 synthetic generator, leave-generator-family-out validation, mechanism-aware branch prior. |
-| long-horizon state integrity가 증명되지 않음 | persistent state는 delta overlay가 장기적으로 망가지지 않을 때만 장점이다. | PyBullet state-integrity audit이 constraint validity, bounded delta drift, branch stability를 추적한다. Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어진다. Guarded state-store projection은 sparse WPU의 applied-state integrity를 `0.958508`, local-dense WPU를 `0.964322`까지 올리지만 raw delta instability는 남아 있다. Target-relative delta-norm regularized raw rollout도 sparse H=25 integrity를 `0.087153`까지만 올린다. | rollback, correction, calibration, uncertainty escalation, unsafe-delta rejection, state-consistency loss를 포함한 rollout training. |
+| long-horizon state integrity가 증명되지 않음 | persistent state는 delta overlay가 장기적으로 망가지지 않을 때만 장점이다. | PyBullet state-integrity audit이 constraint validity, bounded delta drift, branch stability, unsafe-delta rejection을 추적한다. Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어진다. Guarded state-store projection은 sparse WPU의 applied-state integrity를 `0.958508`, local-dense WPU를 `0.964322`까지 올리지만 raw delta instability는 남아 있다. Target-relative delta-norm regularized raw rollout도 sparse H=25 integrity를 `0.087153`까지만 올린다. Unsafe-delta rejection은 sparse integrity를 `0.530270`까지 올리지만 update의 `0.640000`을 거부한다. | rollback, correction, calibration, uncertainty escalation, unsafe-delta rejection, state-consistency loss를 포함한 rollout training. |
 | real-world 또는 simulator-backed grounding이 없음 | world processing claim은 toy object physics 밖의 증거가 필요하다. | 현재 evidence는 synthetic robot-cup 및 CWS data다. | MuJoCo/Isaac/robotics/game-server/digital-twin benchmark와 explicit state extraction. |
 | perception-to-state가 해결되지 않음 | WPU는 explicit state가 있다고 가정한다. 외부 사용자는 pixels가 어떻게 object/relation이 되는지 물을 것이다. | 문서에서는 perception adapter를 future work로 제한하고 있다. | supervised segmentation, slot discovery, simulator-provided object label 기반 object-state adapter baseline. |
 | hardware claim이 뒷받침되지 않음 | Processing unit 주장은 PyTorch 모델만으로 부족하고 systems evidence가 필요하다. | PyBullet systems profile이 full-state tensorization, indexed WPU tensorization, sparse work proxy, branch-overlay memory proxy, CPU tensorization latency를 분리했다. `N≈2052.6`에서 indexed tensor byte는 `0.997454` 줄고 `K≈4.6`을 유지하며, CPU tensorization latency reduction은 `0.995549`에 도달한다. 하지만 아직 model-forward, GPU, power, hardware evidence는 아니다. | sparse frontier kernel profiling, 실제 memory-traffic accounting, allocator-level branch-overlay measurement, CUDA/model-forward profiling, matched-accuracy speedup. |
@@ -70,10 +70,11 @@ projection 덕분에 fail에서 partial로 올라갔지만 raw delta instability
 
 ## 즉시 개선 우선순위
 
-1. token processing으로 돌아가지 않고 현재 best gap-closure fraction `0.308651`을
-   넘어 candidate-oracle gap을 줄인다. Candidate-regret target은 aggregate
-   policy selection보다 개선됐지만 harmful accept가 너무 많다. 다음 단계는 더 강한
-   accept/reject calibration, harmful-candidate penalty, cross-seed perturbation이다.
+1. token processing으로 돌아가지 않고 현재 conservative gap-closure fraction
+   `0.327146`을 넘어 candidate-oracle gap을 줄인다. Candidate-regret target은
+   aggregate policy selection보다 개선됐지만 harmful accept가 아직 많다. 다음
+   단계는 더 강한 accept/reject calibration, harmful-candidate penalty,
+   cross-seed perturbation이다.
 2. long-horizon state integrity를 단순히 보고하는 것을 넘어 개선한다. 단순
    delta-norm regularization은 부족하므로 rollback, correction, uncertainty
    escalation, unsafe-delta rejection, consistency loss가 필요하다.

@@ -4,7 +4,7 @@ This dashboard conservatively recomputes the current status of v2 priorities 1-7
 
 | Priority | Item | Status | Observed | Target | Metric |
 |---:|---|---|---:|---:|---|
-| 1 | Candidate-oracle gap | fail | 0.308651 | 0.500000 | `gap_closure_fraction` |
+| 1 | Candidate-oracle gap | fail | 0.327146 | 0.500000 | `gap_closure_fraction` |
 | 2 | Long-horizon state integrity | partial | 0.964322 | 0.800000 | `best_wpu_h25_integrity` |
 | 3 | Simulator-backed benchmark | partial | 5.000000 | 5.000000 | `seed_count` |
 | 4 | Mechanism-family shift generalization | partial | 0.333333 | 1.000000 | `wpu_shift_win_rate` |
@@ -16,8 +16,8 @@ This dashboard conservatively recomputes the current status of v2 priorities 1-7
 
 The dashboard shows that WPU v2 is promising but not a completed superiority claim. The strongest claim remains conditional: WPU can reduce compute and memory when objectified state exposes a small causal working set K before tensorization. Large N alone is not enough.
 
-- P1 Candidate-oracle gap: Best deployed closure is 0.308651; previous aggregate-policy best is 0.244220 and mean aggregate closure is 0.160601. Sample-level no-harm/margin gates were also audited; best closure is 0.082804, so margin gating is not the missing fix. Direct candidate-regret gating improves best closure to 0.308651, but it remains below threshold and has harmful accepts.
-- P2 Long-horizon state integrity: Best WPU H=25 integrity is 0.964322; guarded sparse is 0.958508, clipped sparse is 0.201757, and regularized raw sparse is 0.087153.
+- P1 Candidate-oracle gap: Best deployed closure is 0.327146; previous aggregate-policy best is 0.244220 and mean aggregate closure is 0.160601. Sample-level no-harm/margin gates were also audited; best closure is 0.082804, so margin gating is not the missing fix. Direct candidate-regret gating reaches 0.329950 unconstrained and 0.327146 under harmful-accept <= 0.25; the selected conservative harmful-accept rate is 0.235556.
+- P2 Long-horizon state integrity: Best WPU H=25 integrity is 0.964322; guarded sparse is 0.958508, clipped sparse is 0.201757, regularized raw sparse is 0.087153, and unsafe-delta rejected sparse is 0.530270 with rejection rate 0.640000.
 - P3 Simulator-backed benchmark: PyBullet benchmark exists with 5 seeds and background up to N_bg=128, but it is still small.
 - P4 Mechanism-family shift generalization: catch_heavy: WPU 0.366667 vs baseline 0.327778; edge_shift: WPU 0.522222 vs baseline 0.555555; high_force: WPU 0.416667 vs baseline 0.433333
 - P5 Calibration and uncertainty: Mean WPU ECE is 0.213693; mean baseline ECE is 0.244135; ratio is 0.875306.

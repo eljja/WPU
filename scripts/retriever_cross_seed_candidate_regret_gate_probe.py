@@ -71,6 +71,8 @@ def main() -> None:
     parser.add_argument("--gate-lr", type=float, default=3e-3)
     parser.add_argument("--risk-penalty", type=float, default=0.5)
     parser.add_argument("--reject-margin", type=float, default=0.0)
+    parser.add_argument("--sweep-reject-margins", type=float, nargs="+", default=[0.0025, 0.005, 0.01, 0.02, 0.05])
+    parser.add_argument("--sweep-risk-penalties", type=float, nargs="+", default=[0.75, 1.0, 1.5, 2.0, 3.0])
     parser.add_argument("--no-harm-margin", type=float, default=0.0)
     parser.add_argument("--bce-weight", type=float, default=0.25)
     parser.add_argument("--variance-weight", type=float, default=0.05)
@@ -199,19 +201,23 @@ def _predict_modes(
     args: argparse.Namespace,
     *,
     risk_adjusted: bool,
+    reject_margin: float | None = None,
+    risk_penalty: float | None = None,
 ) -> tuple[list[str], dict[str, float]]:
     features = _candidate_features(examples, candidate_names)
     regrets = _regret_targets(examples, candidate_names)
     with torch.no_grad():
         pred_mean, pred_log_var = gate(features)
     sigma = (0.5 * pred_log_var).exp()
-    score = pred_mean + args.risk_penalty * sigma if risk_adjusted else pred_mean
+    deployed_risk_penalty = args.risk_penalty if risk_penalty is None else risk_penalty
+    deployed_reject_margin = args.reject_margin if reject_margin is None else reject_margin
+    score = pred_mean + deployed_risk_penalty * sigma if risk_adjusted else pred_mean
     selected_indices = score.argmin(dim=1)
     selected_modes: list[str] = []
     accepted = []
     harmful = []
     for row_index, candidate_index in enumerate(selected_indices.tolist()):
-        use_candidate = float(score[row_index, candidate_index].item()) < -args.reject_margin
+        use_candidate = float(score[row_index, candidate_index].item()) < -deployed_reject_margin
         selected_modes.append(candidate_names[candidate_index] if use_candidate else "learned")
         accepted.append(float(use_candidate))
         harmful.append(float(use_candidate and float(regrets[row_index, candidate_index].item()) > 0.0))
@@ -229,6 +235,9 @@ def _predict_modes(
         "regret_corr": round(corr, 6),
         "predicted_regret_mean": round(float(pred_mean.mean().item()), 6),
         "predicted_sigma_mean": round(float(sigma.mean().item()), 6),
+        "deployment_reject_margin": round(float(deployed_reject_margin), 6),
+        "deployment_risk_penalty": round(float(deployed_risk_penalty), 6),
+        "deployment_risk_adjusted": float(risk_adjusted),
     }
 
 
@@ -252,6 +261,32 @@ def _summarize(
         ("uncertainty_regret_gate", risk_modes, risk_metrics),
         ("generated_plus_composition_oracle", oracle_modes, {}),
     ]
+    for margin in _unique_floats([args.reject_margin, *args.sweep_reject_margins]):
+        if margin == args.reject_margin:
+            continue
+        modes, metrics = _predict_modes(
+            test_examples,
+            gate,
+            candidate_names,
+            args,
+            risk_adjusted=False,
+            reject_margin=margin,
+        )
+        policies.append((f"candidate_regret_gate_m{_float_token(margin)}", modes, metrics))
+    for risk_penalty in _unique_floats([args.risk_penalty, *args.sweep_risk_penalties]):
+        for margin in _unique_floats([args.reject_margin, *args.sweep_reject_margins]):
+            if risk_penalty == args.risk_penalty and margin == args.reject_margin:
+                continue
+            modes, metrics = _predict_modes(
+                test_examples,
+                gate,
+                candidate_names,
+                args,
+                risk_adjusted=True,
+                reject_margin=margin,
+                risk_penalty=risk_penalty,
+            )
+            policies.append((f"uncertainty_regret_gate_r{_float_token(risk_penalty)}_m{_float_token(margin)}", modes, metrics))
     rows = []
     for policy, modes, metrics in policies:
         row = _policy_row(test_examples, policy, modes, candidate_names)
@@ -263,6 +298,20 @@ def _summarize(
         row["train_uncertainty_regret_accept_rate"] = train_risk_metrics["accept_rate"]
         rows.append(row)
     return rows
+
+
+def _unique_floats(values: list[float]) -> list[float]:
+    out: list[float] = []
+    for value in values:
+        rounded = round(float(value), 6)
+        if rounded not in out:
+            out.append(rounded)
+    return out
+
+
+def _float_token(value: float) -> str:
+    text = f"{float(value):.6g}".replace("-", "neg").replace(".", "p")
+    return text
 
 
 if __name__ == "__main__":

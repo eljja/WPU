@@ -4,7 +4,7 @@
 
 | 우선순위 | 항목 | 상태 | 관측값 | 목표 | 지표 |
 |---:|---|---|---:|---:|---|
-| 1 | Candidate-oracle gap | fail | 0.308651 | 0.500000 | `gap_closure_fraction` |
+| 1 | Candidate-oracle gap | fail | 0.327146 | 0.500000 | `gap_closure_fraction` |
 | 2 | 장기 state integrity | partial | 0.964322 | 0.800000 | `best_wpu_h25_integrity` |
 | 3 | Simulator-backed benchmark | partial | 5.000000 | 5.000000 | `seed_count` |
 | 4 | Mechanism-family shift generalization | partial | 0.333333 | 1.000000 | `wpu_shift_win_rate` |
@@ -16,8 +16,8 @@
 
 현재 dashboard는 WPU v2가 유망하지만 아직 완결된 우월성 주장이 아님을 보여준다. 가장 강한 주장은 large-N 자체가 아니라, objectified state에서 작은 causal working set K를 tensorization 전에 식별할 수 있을 때 WPU가 계산량과 메모리 측면에서 유리해진다는 조건부 주장이다.
 
-- P1 Candidate-oracle gap: 최고 deployed closure는 candidate-regret gate의 0.308651로 개선됐다. 이전 aggregate-policy best는 0.244220이고 평균 aggregate closure는 0.160601이다. Sample-level no-harm/margin gate는 최고 0.082804에 그쳤으므로 threshold만으로는 부족하다. Candidate-regret target은 효과가 있지만 harmful accept가 높아 P1은 아직 fail이다.
-- P2 장기 state integrity: 최고 WPU H=25 integrity는 0.964322이고 guarded sparse는 0.958508이다. Regularized raw sparse는 0.087153으로 raw sparse 0.084722보다 거의 개선되지 않는다. 따라서 state-store guard가 적용 state를 보호한 것이지 raw delta model 안정성이 해결된 것은 아니다.
+- P1 Candidate-oracle gap: Candidate-regret deployment sweep은 margin-only gate보다 강하지만, conservative 기준에서는 harmful accept를 0.25 이하로 제한한 closure를 사용한다. 따라서 P1은 단순 최고 closure가 아니라 candidate-oracle gap closure와 harmful accept 억제를 동시에 만족해야 하며, 현재는 목표 closure 0.5에 도달하지 못해 fail이다.
+- P2 장기 state integrity: 최고 WPU H=25 integrity는 guarded state-store projection에서 나온다. Unsafe-delta rejection은 sparse raw 폭주를 완화하지만 rejection rate가 높기 때문에, 이는 transition model 안정성의 증거가 아니라 memory layer가 위험한 update를 거부했다는 증거다. 따라서 P2는 applied-state integrity와 raw delta stability를 분리해서 주장해야 한다.
 - P3 Simulator-backed benchmark: PyBullet benchmark는 5개 seed와 background N_bg=128까지 확장됐다. 다만 mechanism 다양성, training scale, long-horizon simulator rollout은 아직 부족하다.
 - P4 Mechanism-family shift generalization: 5-seed shift benchmark에서 WPU는 catch_heavy에서 앞서지만 edge_shift와 high_force에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.
 - P5 Calibration과 uncertainty: 5-seed 평균 WPU ECE는 0.213693, baseline ECE는 0.244135로 ratio가 0.875306까지 개선됐다. 하지만 multi-step/shift calibration이 해결된 것은 아니므로 partial로 유지한다.

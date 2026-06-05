@@ -418,6 +418,42 @@ not claim blanket latency dominance. The defensible claim is that pre-tensor
 state retrieval can avoid full-state graph processing cost while preserving
 accuracy when the causal working set is small and identifiable.
 
+### PyBullet Closed-Loop Rollout Diagnostic
+
+Output:
+
+- `scripts/pybullet_closed_loop_rollout.py`
+- `docs/experiments/pybullet_closed_loop_rollout.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_clipped.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_results.md`
+
+Question:
+
+```text
+Does one-step PyBullet state prediction remain stable when model deltas are
+repeatedly applied back into WorldState?
+```
+
+Result:
+
+The answer is no for the current sparse WPU. At horizon 25, unclipped
+`wpu-cws-indexed-sparse` reaches `3.374` constraint violations per step and a
+raw delta norm of about `1.96e6`, despite using only `K ~= 4.4` selected
+objects. Local-dense WPU is more stable than sparse WPU but still accumulates
+more violations than the graph baseline in the unclipped run.
+
+Delta clipping at norm `0.25` reduces horizon-25 WPU sparse violations from
+`3.374` to `0.785`, but raw delta predictions remain unstable. Therefore
+clipping is a safety layer, not a solution.
+
+V2 implication:
+
+```text
+WPU needs state-integrity verification, unsafe-delta rejection or clipping,
+uncertainty escalation, and rollout-consistency losses. One-step branch
+accuracy is not enough evidence for a world-state processor.
+```
+
 ### Priority 6: Local Dense Hybrid
 
 Implemented as:

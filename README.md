@@ -282,6 +282,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   background N=0 to N=128 at roughly 50k parameters, while full-state baselines
   drop in this short run. Serialized-token remains faster at this scale, so the
   claim is regime-specific rather than universal latency dominance.
+- The first PyBullet closed-loop rollout is a negative stability result:
+  repeated WPU sparse deltas can explode by horizon 25. Delta clipping reduces
+  violations but does not fix raw prediction instability, so WPU needs explicit
+  state-integrity verification and correction.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

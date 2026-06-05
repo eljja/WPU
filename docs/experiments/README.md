@@ -71,6 +71,11 @@ Use these reports for paper-level claims:
   sparse preserves branch accuracy from background N=0 to N=128 while full-state
   graph/token baselines drop in this short run. The latency result remains
   mixed because the serialized-token baseline is still fastest at this scale.
+- `pybullet_closed_loop_rollout_results.md`: first PyBullet-derived closed-loop
+  `WorldState` rollout diagnostic. Repeated delta application exposes a
+  long-horizon WPU sparse failure: raw delta explosion and high constraint
+  violations at horizon 25. Delta clipping reduces violations but does not fix
+  the underlying raw prediction instability.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -195,6 +200,8 @@ Historical or preliminary reports:
   PyBullet objectification corruption stress benchmark.
 - `pybullet_matched_baseline_benchmark_results.ko.md`: Korean companion for the
   parameter-matched PyBullet benchmark.
+- `pybullet_closed_loop_rollout_results.ko.md`: Korean companion for the
+  PyBullet closed-loop rollout diagnostic.
 - `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
   useful for provenance, not a result claim by itself.
 - `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;

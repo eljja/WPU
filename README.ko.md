@@ -227,6 +227,10 @@ model = wpu.create_model(
   background N=0에서 N=128까지 accuracy를 유지했고 full-state baseline은 하락했다.
   하지만 serialized-token은 이 규모에서 여전히 더 빠르므로, 주장은 보편 latency
   dominance가 아니라 regime-specific claim이다.
+- 첫 PyBullet closed-loop rollout은 부정적 stability 결과다. WPU sparse delta를
+  반복 적용하면 horizon 25에서 state가 폭발할 수 있다. Delta clipping은 violation을
+  줄이지만 raw prediction instability를 해결하지 않으므로, WPU에는 명시적
+  state-integrity verification과 correction이 필요하다.
 
 v1의 핵심 목표는 명확하다.
 

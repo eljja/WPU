@@ -1,0 +1,7 @@
+background_objects,branch_entropy_mean,branch_flip_rate,constraint_violations_per_step,delta_clip,delta_norm_mean,final_majority_branch_ratio,horizon,model,samples,seed,selected_k_mean
+32,0.399656,0.059028,0.711667,0.25,1885269.285285,1.0,25,wpu-cws-indexed-sparse,24,11,4.416667
+32,0.471605,0.105903,0.858333,0.25,1993311.182118,1.0,25,wpu-cws-indexed-sparse,24,13,4.416667
+32,1.035972,0.032986,0.566667,0.25,2.285865,1.0,25,wpu-cws-indexed-local-dense,24,11,4.416667
+32,0.697485,0.064236,0.061667,0.25,3.333934,1.0,25,wpu-cws-indexed-local-dense,24,13,4.416667
+32,0.91027,0.060764,0.0,0.25,9.336463,1.0,25,graph-transformer,24,11,36.416667
+32,0.857688,0.048611,0.506667,0.25,7.390807,1.0,25,graph-transformer,24,13,36.416667

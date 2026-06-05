@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 import math
 import random
@@ -22,6 +23,15 @@ class PyBulletCupSample:
     branch_label: int
     causal_working_set_size: int
     simulator_metadata: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class ObjectificationCorruptionConfig:
+    relation_drop_rate: float = 0.0
+    non_target_object_drop_rate: float = 0.0
+    position_noise_std: float = 0.0
+    confidence_scale: float = 1.0
+    identity_swap_rate: float = 0.0
 
 
 class PyBulletCupDataset(Dataset):
@@ -243,6 +253,117 @@ def collate_indexed_pybullet_cup_samples(
     return _collate_targets(samples, batch, projected_targets=projected_targets)
 
 
+def corrupt_pybullet_cup_sample(
+    sample: PyBulletCupSample,
+    *,
+    config: ObjectificationCorruptionConfig,
+    seed: int,
+) -> PyBulletCupSample:
+    """Return a perception-like corrupted copy of a PyBullet cup sample.
+
+    The corruption is applied after simulator rollout and before WPU
+    tensorization. This isolates objectification quality from simulator physics:
+    labels and target deltas remain tied to the clean simulator trajectory, while
+    the model receives a degraded objectified state.
+    """
+
+    rng = random.Random(seed)
+    state = copy.deepcopy(sample.state)
+    original_ids = list(sample.state.objects)
+    original_index = {object_id: index for index, object_id in enumerate(original_ids)}
+    protected = {sample.event.target, "table_001"}
+
+    dropped_objects: set[str] = set()
+    if config.non_target_object_drop_rate > 0.0:
+        for object_id in list(state.objects):
+            if object_id in protected:
+                continue
+            if rng.random() < config.non_target_object_drop_rate:
+                dropped_objects.add(object_id)
+                del state.objects[object_id]
+        if dropped_objects:
+            state.relations = [
+                relation
+                for relation in state.relations
+                if relation.src not in dropped_objects and relation.dst not in dropped_objects
+            ]
+
+    dropped_relations = 0
+    if config.relation_drop_rate > 0.0:
+        retained_relations: list[Relation] = []
+        for relation in state.relations:
+            if relation.touches(sample.event.target) and rng.random() < config.relation_drop_rate:
+                dropped_relations += 1
+                continue
+            retained_relations.append(relation)
+        state.relations = retained_relations
+
+    noisy_positions = 0
+    if config.position_noise_std > 0.0:
+        for obj in state.objects.values():
+            position = obj.attributes.get("position")
+            if not isinstance(position, list) or len(position) < 3:
+                continue
+            obj.attributes["position"] = [
+                float(value) + rng.gauss(0.0, config.position_noise_std)
+                for value in position[:3]
+            ]
+            noisy_positions += 1
+
+    if config.confidence_scale != 1.0:
+        for obj in state.objects.values():
+            obj.confidence = max(0.0, min(1.0, obj.confidence * config.confidence_scale))
+        for relation in state.relations:
+            relation.confidence = max(0.0, min(1.0, relation.confidence * config.confidence_scale))
+
+    swapped_pairs = 0
+    if config.identity_swap_rate > 0.0:
+        candidates = [
+            object_id
+            for object_id in state.objects
+            if object_id not in protected and not object_id.startswith("context_")
+        ]
+        rng.shuffle(candidates)
+        for left_id, right_id in zip(candidates[0::2], candidates[1::2]):
+            if rng.random() >= config.identity_swap_rate:
+                continue
+            left = state.objects[left_id]
+            right = state.objects[right_id]
+            left.attributes, right.attributes = right.attributes, left.attributes
+            left.type, right.type = right.type, left.type
+            swapped_pairs += 1
+
+    target = torch.zeros((len(state.objects), OBJECT_FEATURE_DIM), dtype=torch.float32)
+    for index, object_id in enumerate(state.objects):
+        source_index = original_index.get(object_id)
+        if source_index is not None:
+            target[index] = sample.target_object_delta[source_index]
+
+    event = copy.deepcopy(sample.event)
+    metadata = {
+        **sample.simulator_metadata,
+        "corruption_relation_drop_rate": config.relation_drop_rate,
+        "corruption_non_target_object_drop_rate": config.non_target_object_drop_rate,
+        "corruption_position_noise_std": config.position_noise_std,
+        "corruption_confidence_scale": config.confidence_scale,
+        "corruption_identity_swap_rate": config.identity_swap_rate,
+        "dropped_object_count": len(dropped_objects),
+        "dropped_relation_count": dropped_relations,
+        "noisy_position_count": noisy_positions,
+        "identity_swap_pair_count": swapped_pairs,
+    }
+    state.metadata = {**state.metadata, "objectification_corrupted": True, **metadata}
+    causal_k = max(1, sample.causal_working_set_size - len(dropped_objects & _causal_object_ids()))
+    return PyBulletCupSample(
+        state=state,
+        event=event,
+        target_object_delta=target,
+        branch_label=sample.branch_label,
+        causal_working_set_size=causal_k,
+        simulator_metadata=metadata,
+    )
+
+
 def _collate_targets(
     samples: list[PyBulletCupSample],
     batch: StateGraphBatch,
@@ -257,6 +378,10 @@ def _collate_targets(
     for index, target in enumerate(source_targets):
         targets[index, : target.size(0)] = target
     return batch, targets, labels, causal_k
+
+
+def _causal_object_ids() -> set[str]:
+    return {"cup_001", "table_001", "hand_001", "edge_001", "catcher_001"}
 
 
 def _world_state_from_simulation(
@@ -349,8 +474,10 @@ def _quat_to_euler(quat: list[float]) -> tuple[float, float, float]:
 
 
 __all__ = [
+    "ObjectificationCorruptionConfig",
     "PyBulletCupDataset",
     "PyBulletCupSample",
     "collate_indexed_pybullet_cup_samples",
     "collate_pybullet_cup_samples",
+    "corrupt_pybullet_cup_sample",
 ]

@@ -8,7 +8,13 @@ import pytest
 import torch
 from torch.utils.data import DataLoader
 
-from wpu.data.pybullet_cup import PyBulletCupDataset, collate_indexed_pybullet_cup_samples
+from wpu.core.objectification import evaluate_objectification
+from wpu.data.pybullet_cup import (
+    ObjectificationCorruptionConfig,
+    PyBulletCupDataset,
+    collate_indexed_pybullet_cup_samples,
+    corrupt_pybullet_cup_sample,
+)
 from wpu.models.factory import create_model
 
 
@@ -46,9 +52,45 @@ def test_pybullet_cup_batch_backward_smoke() -> None:
     assert torch.isfinite(loss)
 
 
+def test_pybullet_cup_objectification_corruption_preserves_batch_alignment() -> None:
+    dataset = PyBulletCupDataset(size=2, seed=9, background_objects=4, steps=24, balanced_labels=True)
+    clean = dataset[0]
+    corrupted = corrupt_pybullet_cup_sample(
+        clean,
+        config=ObjectificationCorruptionConfig(
+            relation_drop_rate=1.0,
+            non_target_object_drop_rate=0.5,
+            position_noise_std=0.01,
+            confidence_scale=0.5,
+            identity_swap_rate=1.0,
+        ),
+        seed=123,
+    )
+    batch, target_delta, labels, causal_k = collate_indexed_pybullet_cup_samples([corrupted], max_nodes=8)
+    report = evaluate_objectification(corrupted.state)
+
+    assert batch.object_features.shape[:2] == target_delta.shape[:2]
+    assert labels.item() in {0, 1, 2}
+    assert causal_k.item() >= 1
+    assert report.contract_score < evaluate_objectification(clean.state).contract_score
+
+
 def test_pybullet_cup_benchmark_help_runs() -> None:
     result = subprocess.run(
         [sys.executable, "scripts/pybullet_cup_benchmark.py", "--help"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_pybullet_objectification_stress_help_runs() -> None:
+    result = subprocess.run(
+        [sys.executable, "scripts/pybullet_objectification_stress.py", "--help"],
         cwd=ROOT,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,

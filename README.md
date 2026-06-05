@@ -274,6 +274,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
 - The first PyBullet benchmark shows that simulator-generated rigid-body state
   can be objectified into `WorldState` and processed by the same WPU API. It is
   currently a systems/pipeline result, not an accuracy-dominance result.
+- The first PyBullet objectification stress shows that missing causal-frontier
+  relations reduce WPU selected K before propagation. It also shows that the
+  current objectification score must be extended with frontier completeness and
+  semantic identity checks.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

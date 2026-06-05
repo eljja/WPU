@@ -60,6 +60,12 @@ Use these reports for paper-level claims:
   pre-tensor indexed WPU keeps `K ~= 4-5` as background state grows, while the
   full-state graph transformer slows sharply. It does not yet support accuracy
   dominance over token or graph baselines.
+- `pybullet_objectification_stress_results.md`: first perception-like
+  robustness test on simulator-derived state. Clean-trained models are evaluated
+  on corrupted objectified state. The result exposes a missing metric: current
+  objectification score detects confidence degradation but not missing expected
+  causal frontier edges or semantic identity swaps; the benchmark therefore logs
+  pre-projection `frontier_causal_recall_mean`.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -180,6 +186,8 @@ Historical or preliminary reports:
   useful as a compute-realism diagnostic, not paper evidence.
 - `pybullet_cup_benchmark_results.ko.md`: Korean companion for the first
   simulator-grounded PyBullet cup benchmark.
+- `pybullet_objectification_stress_results.ko.md`: Korean companion for the
+  PyBullet objectification corruption stress benchmark.
 - `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
   useful for provenance, not a result claim by itself.
 - `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;

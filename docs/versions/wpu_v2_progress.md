@@ -340,6 +340,45 @@ small benchmark. The next simulator experiments must increase seeds, training
 scale, objectification corruption, and long-horizon rollout before this becomes
 a strong paper result.
 
+### Simulator Objectification Stress
+
+Output:
+
+- `scripts/pybullet_objectification_stress.py`
+- `docs/experiments/pybullet_objectification_stress.csv`
+- `docs/experiments/pybullet_objectification_stress_results.md`
+
+Question:
+
+```text
+When simulator state is corrupted in perception-like ways, does WPU fail
+through objectification, retrieval, or propagation?
+```
+
+Result:
+
+Clean-trained models were evaluated on corrupted `WorldState` inputs. Relation
+drop corruption lowers pre-projection frontier recall from `1.000` to `0.602`
+under the heavy setting, and WPU selected K drops from `4.463` to `2.700`.
+This exposes the expected WPU failure boundary: indexed sparse processing
+depends on relation connectivity before propagation begins.
+
+The result is diagnostic rather than decisive. Branch accuracy stays in a
+narrow range across WPU and graph models, so the current PyBullet branch task
+is not yet hard enough to convert objectification damage into strong accuracy
+separation. More importantly, the experiment found a metric gap:
+`ObjectificationReport.contract_score` detects low confidence but barely
+detects missing expected causal edges, and it does not detect semantic identity
+swaps when IDs remain syntactically valid.
+
+V2 implication:
+
+```text
+Objectification quality must include expected-frontier completeness and
+semantic identity consistency, not only valid IDs, valid relation endpoints,
+and confidence ranges.
+```
+
 ### Priority 6: Local Dense Hybrid
 
 Implemented as:

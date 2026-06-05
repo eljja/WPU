@@ -220,6 +220,9 @@ model = wpu.create_model(
 - 첫 PyBullet benchmark는 simulator가 생성한 rigid-body state를 `WorldState`로
   객체화하고 동일한 WPU API로 처리할 수 있음을 보였다. 현재는 systems/pipeline
   결과이지 accuracy dominance 결과는 아니다.
+- 첫 PyBullet objectification stress는 causal-frontier relation 누락이 propagation
+  이전에 WPU selected K를 줄인다는 점을 보였다. 또한 현재 objectification score에는
+  frontier completeness와 semantic identity check가 추가되어야 한다.
 
 v1의 핵심 목표는 명확하다.
 

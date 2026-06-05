@@ -236,8 +236,10 @@ model = wpu.create_model(
   줄이지만 raw prediction instability를 해결하지 않으므로, WPU에는 명시적
   state-integrity verification과 correction이 필요하다.
 - PyBullet state-integrity audit은 이 실패를 추적 가능한 metric으로 만들었다.
-  Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어지고, clipping은
-  score를 `0.201757`로 올리지만 raw delta instability를 해결하지는 않는다.
+  Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어진다. Guarded
+  state-store projection은 sparse WPU의 applied-state integrity를 `0.958508`까지
+  올리지만, raw delta norm은 여전히 불안정하므로 이는 dynamics model 해결이 아니라
+  safety layer다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이

@@ -103,11 +103,12 @@ Use these reports for paper-level claims:
   long-horizon WPU sparse failure: raw delta explosion and high constraint
   violations at horizon 25. Delta clipping reduces violations but does not fix
   the underlying raw prediction instability.
-- `pybullet_state_integrity_audit_results.md`: derived audit over raw and
-  clipped PyBullet closed-loop rollouts. It turns state integrity into a
-  first-class score combining constraint validity, bounded delta drift, and
-  branch stability. Raw WPU sparse drops to integrity `0.084722` at horizon 25;
-  clipping improves it to `0.201757` but does not solve raw delta instability.
+- `pybullet_state_integrity_audit_results.md`: derived audit over raw, clipped,
+  and guarded PyBullet closed-loop rollouts. It turns state integrity into a
+  first-class score combining constraint validity, bounded applied-delta drift,
+  and branch stability. Raw WPU sparse drops to integrity `0.084722` at horizon
+  25. Guarded state-store projection raises sparse WPU applied-state integrity
+  to `0.958508`, but raw delta instability remains.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -366,8 +367,9 @@ Historical or preliminary reports:
   tensorizes only `K≈4.6`, reducing tensor bytes by `0.997454`. This supports
   the state-indexing premise but remains a proxy, not a hardware-power result.
 - The PyBullet state-integrity audit turns closed-loop rollout stability into
-  a tracked metric. It confirms that clipping is a safety layer, not a solution
-  to raw WPU sparse delta instability.
+  a tracked metric. It confirms that guarded state-store projection can protect
+  applied state, but it remains a safety layer, not a solution to raw WPU sparse
+  delta instability.
 - The PyBullet shift benchmark adds the first mechanism-family generalization
   and calibration table. It is mixed: WPU sparse leads on `edge_shift`, but
   `serialized-token` is stronger on `catch_heavy`.

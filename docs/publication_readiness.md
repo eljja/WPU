@@ -46,7 +46,7 @@ that does not yet validate perception-to-state construction.
 | Broad baseline superiority is not shown | Reviewers will reject universal WPU claims without matched token/graph/world-model baselines. | v1 shows WPU loses at large `N`; v2 shows working-set-control gains but not broad dominance. | Parameter-matched, compute-matched token/graph baselines over controlled `N`, `K`, branch count, and horizon. |
 | Candidate-oracle gap remains open | WPU v2 exposes a useful control surface, but deployed selectors still leave substantial oracle performance unused. | The latest gap audit shows risk-adjusted mechanism routing closes only `0.195451`, `0.244220`, and `0.042131` of the oracle gain at `K=8,16,32`. | Joint retriever-propagator training, calibrated regret targets, selector uncertainty, and transfer-stable candidate scoring. |
 | Cross-seed and cross-task transfer is incomplete | Synthetic gains can be seed-specific if selection policies overfit generation artifacts. | Several cross-seed rerankers and gates fail or only partially improve. A PyBullet mechanism-family shift benchmark now exists and shows mixed results: WPU sparse leads on `edge_shift` but loses badly on `catch_heavy`. | Larger seed sweeps, new synthetic generators, leave-generator-family-out validation, and mechanism-aware branch priors. |
-| Long-horizon state integrity is not proven | Persistent state is only valuable if delta overlays do not accumulate unrecoverable corruption. | A PyBullet state-integrity audit now tracks constraint validity, bounded delta drift, and branch stability. Raw WPU sparse falls to integrity `0.084722` at horizon 25; clipping improves it to `0.201757` but does not solve delta instability. | Rollout training with rollback, correction, calibration, uncertainty escalation, and state-consistency losses. |
+| Long-horizon state integrity is not proven | Persistent state is only valuable if delta overlays do not accumulate unrecoverable corruption. | A PyBullet state-integrity audit now tracks constraint validity, bounded delta drift, and branch stability. Raw WPU sparse falls to integrity `0.084722` at horizon 25. Guarded state-store projection raises applied-state integrity to `0.958508` for sparse WPU and `0.964322` for local-dense WPU, but raw delta instability remains. | Rollout training with rollback, correction, calibration, uncertainty escalation, and state-consistency losses. |
 | Real-world or simulator-backed grounding is absent | A world-processing claim needs evidence beyond toy object physics. | Current evidence is synthetic robot-cup and CWS data. | MuJoCo/Isaac/robotics/game-server/digital-twin benchmarks with explicit state extraction. |
 | Perception-to-state is not solved | WPU assumes explicit state exists; external users will ask how pixels become objects and relations. | Documents correctly frame perception adapters as future work. | Object-state adapter baseline using supervised segmentation, slot discovery, or simulator-provided object labels. |
 | Hardware claims are unsupported | WPU as a processing unit requires systems evidence, not only PyTorch models. | A PyBullet systems profile now separates full-state tensorization, indexed WPU tensorization, sparse work proxy, and branch-overlay memory proxy; at `N≈2052.6`, indexed tensor bytes drop by `0.997454` while `K≈4.6`, but this is still a Python proxy. | Sparse frontier kernel profiling, real memory-traffic accounting, allocator-level branch-overlay measurements, and matched-accuracy speedups. |
@@ -65,9 +65,11 @@ material v2 experiments:
 python scripts/audit_v2_priority_dashboard.py
 ```
 
-Current status is conservative: priority 1 candidate-oracle gap and priority 2
-long-horizon state integrity still fail the dashboard thresholds. Priorities 3
-to 7 are partial rather than solved. This is the correct publication posture:
+Current status is conservative: priority 1 candidate-oracle gap still fails the
+dashboard threshold. Priority 2 long-horizon state integrity has moved from fail
+to partial because guarded state-store projection protects applied state, but it
+does not solve raw delta instability. Priorities 3 to 7 are partial rather than
+solved. This is the correct publication posture:
 the repository supports a falsifiable WPU regime hypothesis, not a completed
 claim of broad superiority.
 

@@ -5,7 +5,7 @@
 | 우선순위 | 항목 | 상태 | 관측값 | 목표 | 지표 |
 |---:|---|---|---:|---:|---|
 | 1 | Candidate-oracle gap | fail | 0.244220 | 0.500000 | `gap_closure_fraction` |
-| 2 | 장기 state integrity | fail | 0.719139 | 0.800000 | `best_wpu_h25_integrity` |
+| 2 | 장기 state integrity | partial | 0.964322 | 0.800000 | `best_wpu_h25_integrity` |
 | 3 | Simulator-backed benchmark | partial | 2.000000 | 5.000000 | `seed_count` |
 | 4 | Mechanism-family shift generalization | partial | 0.333333 | 1.000000 | `wpu_shift_win_rate` |
 | 5 | Calibration과 uncertainty | partial | 1.068727 | 1.000000 | `wpu_ece_over_baseline_ece` |
@@ -17,7 +17,7 @@
 현재 dashboard는 WPU v2가 유망하지만 아직 완결된 우월성 주장이 아님을 보여준다. 가장 강한 주장은 large-N 자체가 아니라, objectified state에서 작은 causal working set K를 tensorization 전에 식별할 수 있을 때 WPU가 계산량과 메모리 측면에서 유리해진다는 조건부 주장이다.
 
 - P1 Candidate-oracle gap: 최고 deployed closure는 0.244220이고 평균 closure는 0.160601이다. Candidate pool 안에는 아직 더 좋은 선택지가 많이 남아 있다.
-- P2 장기 state integrity: 최고 WPU H=25 integrity는 0.719139이며 clipped sparse는 0.201757에 그친다. 반복 delta overlay 안정성은 아직 해결되지 않았다.
+- P2 장기 state integrity: 최고 WPU H=25 integrity는 0.964322이고 guarded sparse는 0.958508이다. 하지만 raw sparse는 0.084722로 남아 있어 state-store guard가 적용 state를 보호한 것이지 raw delta model 안정성이 해결된 것은 아니다.
 - P3 Simulator-backed benchmark: PyBullet benchmark는 2개 seed와 background N_bg=128까지 존재하지만, 논문급 강한 주장에는 seed와 mechanism 수가 부족하다.
 - P4 Mechanism-family shift generalization: WPU는 edge_shift에서 앞서지만 high_force와 catch_heavy에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.
 - P5 Calibration과 uncertainty: 평균 WPU ECE는 0.236226, baseline ECE는 0.221034로 WPU가 약 1.068727배 높다. Calibration은 측정됐지만 개선됐다고 보기 어렵다.
@@ -27,7 +27,7 @@
 ## 다음 조치
 
 - P1: Downstream regret 기반 candidate scoring, selector uncertainty, cross-seed no-harm check를 추가한다.
-- P2: Rollout-consistency loss, unsafe-delta rejection, rollback, correction, uncertainty escalation을 추가한다.
+- P2: Guarded state-store projection을 유지하되, rollout-consistency loss와 unsafe-delta rejection을 학습 단계로 끌어올린다.
 - P3: Seed, mechanism, training scale, long-horizon simulator rollout을 늘린다.
 - P4: Leave-family-out training, 더 어려운 shift, mechanism-aware branch prior를 추가한다.
 - P5: Temperature head, branch calibration loss, multi-step ECE/Brier/NLL, uncertainty-gated recompute를 추가한다.

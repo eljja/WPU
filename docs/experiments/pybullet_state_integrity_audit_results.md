@@ -9,6 +9,7 @@ Source CSVs:
 
 - `docs/experiments/pybullet_closed_loop_rollout.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_clipped.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_guarded.csv`
 
 Derived CSV:
 
@@ -21,6 +22,9 @@ Derived CSV:
 | clipped | graph-transformer | 25 | 0.253333 | 8.363635 | 0.054688 | 0.557002 |
 | clipped | wpu-cws-indexed-local-dense | 25 | 0.314167 | 2.809900 | 0.048611 | 0.719139 |
 | clipped | wpu-cws-indexed-sparse | 25 | 0.785000 | 1939290.233702 | 0.082465 | 0.201757 |
+| guarded | graph-transformer | 25 | 0.000000 | 2.096666 | 0.054688 | 0.915679 |
+| guarded | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.741597 | 0.048611 | 0.964322 |
+| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.083334 | 0.958508 |
 | raw | graph-transformer | 5 | 0.045833 | 4.162467 | 0.062500 | 0.816605 |
 | raw | graph-transformer | 10 | 0.139583 | 6.106724 | 0.150463 | 0.679401 |
 | raw | graph-transformer | 25 | 0.272500 | 8.409911 | 0.056424 | 0.544493 |
@@ -35,9 +39,11 @@ Derived CSV:
 
 The audit confirms that one-step branch accuracy is not enough for a
 world-state processor. The sparse WPU path can keep a small selected
-`K`, but repeated raw deltas can still create invalid state. Delta
-clipping improves the integrity score by reducing violations, but it
-does not prove the underlying delta model is stable.
+`K`, but repeated raw deltas can still create invalid state. Guarded
+state-store projection can protect the applied state and lift WPU
+H=25 integrity above the dashboard threshold, but it does not prove
+the underlying delta model is stable. Future reports must distinguish
+raw model deltas from guarded state-store deltas.
 
 This makes state integrity a first-class WPU metric:
 

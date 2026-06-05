@@ -5,7 +5,7 @@ This dashboard conservatively recomputes the current status of v2 priorities 1-7
 | Priority | Item | Status | Observed | Target | Metric |
 |---:|---|---|---:|---:|---|
 | 1 | Candidate-oracle gap | fail | 0.244220 | 0.500000 | `gap_closure_fraction` |
-| 2 | Long-horizon state integrity | fail | 0.719139 | 0.800000 | `best_wpu_h25_integrity` |
+| 2 | Long-horizon state integrity | partial | 0.964322 | 0.800000 | `best_wpu_h25_integrity` |
 | 3 | Simulator-backed benchmark | partial | 2.000000 | 5.000000 | `seed_count` |
 | 4 | Mechanism-family shift generalization | partial | 0.333333 | 1.000000 | `wpu_shift_win_rate` |
 | 5 | Calibration and uncertainty | partial | 1.068727 | 1.000000 | `wpu_ece_over_baseline_ece` |
@@ -17,7 +17,7 @@ This dashboard conservatively recomputes the current status of v2 priorities 1-7
 The dashboard shows that WPU v2 is promising but not a completed superiority claim. The strongest claim remains conditional: WPU can reduce compute and memory when objectified state exposes a small causal working set K before tensorization. Large N alone is not enough.
 
 - P1 Candidate-oracle gap: Best deployed closure is 0.244220 and mean closure is 0.160601; most oracle headroom remains unused.
-- P2 Long-horizon state integrity: Best WPU H=25 integrity is 0.719139; clipped sparse is only 0.201757.
+- P2 Long-horizon state integrity: Best WPU H=25 integrity is 0.964322; guarded sparse is 0.958508, while clipped sparse without projection is 0.201757.
 - P3 Simulator-backed benchmark: PyBullet benchmark exists with 2 seeds and background up to N_bg=128, but it is still small.
 - P4 Mechanism-family shift generalization: catch_heavy: WPU 0.277778 vs baseline 0.402778; edge_shift: WPU 0.597222 vs baseline 0.472222; high_force: WPU 0.444445 vs baseline 0.458334
 - P5 Calibration and uncertainty: Mean WPU ECE is 0.236226; mean baseline ECE is 0.221034; ratio is 1.068727.

@@ -74,6 +74,14 @@ def _priority_state_integrity() -> dict[str, object]:
         for row in wpu_h25
         if row["run_label"] == "clipped" and row["model"] == "wpu-cws-indexed-sparse"
     )
+    sparse_guarded = next(
+        (
+            float(row["state_integrity_score"])
+            for row in wpu_h25
+            if row["run_label"] == "guarded" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
     return _row(
         2,
         "Long-horizon state integrity",
@@ -82,7 +90,7 @@ def _priority_state_integrity() -> dict[str, object]:
         0.8,
         "best_wpu_h25_integrity",
         path,
-        f"Best WPU H=25 integrity is {best:.6f}; clipped sparse is only {sparse_clipped:.6f}.",
+        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, while clipped sparse without projection is {sparse_clipped:.6f}.",
         "Add rollout-consistency loss, unsafe-delta rejection, rollback, correction, and uncertainty escalation.",
     )
 
@@ -323,7 +331,7 @@ def _ko_status(status: str) -> str:
 def _ko_interpretation(priority: int) -> str:
     return {
         1: "최고 deployed closure는 0.244220이고 평균 closure는 0.160601이다. Candidate pool 안에는 아직 더 좋은 선택지가 많이 남아 있다.",
-        2: "최고 WPU H=25 integrity는 0.719139이며 clipped sparse는 0.201757에 그친다. 반복 delta overlay 안정성은 아직 해결되지 않았다.",
+        2: "최고 WPU H=25 integrity는 0.964322이고 guarded sparse는 0.958508이다. 하지만 raw sparse는 0.084722로 남아 있어 state-store guard가 적용 state를 보호한 것이지 raw delta model 안정성이 해결된 것은 아니다.",
         3: "PyBullet benchmark는 2개 seed와 background N_bg=128까지 존재하지만, 논문급 강한 주장에는 seed와 mechanism 수가 부족하다.",
         4: "WPU는 edge_shift에서 앞서지만 high_force와 catch_heavy에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.",
         5: "평균 WPU ECE는 0.236226, baseline ECE는 0.221034로 WPU가 약 1.068727배 높다. Calibration은 측정됐지만 개선됐다고 보기 어렵다.",
@@ -335,7 +343,7 @@ def _ko_interpretation(priority: int) -> str:
 def _ko_next_action(priority: int) -> str:
     return {
         1: "Downstream regret 기반 candidate scoring, selector uncertainty, cross-seed no-harm check를 추가한다.",
-        2: "Rollout-consistency loss, unsafe-delta rejection, rollback, correction, uncertainty escalation을 추가한다.",
+        2: "Guarded state-store projection을 유지하되, rollout-consistency loss와 unsafe-delta rejection을 학습 단계로 끌어올린다.",
         3: "Seed, mechanism, training scale, long-horizon simulator rollout을 늘린다.",
         4: "Leave-family-out training, 더 어려운 shift, mechanism-aware branch prior를 추가한다.",
         5: "Temperature head, branch calibration loss, multi-step ECE/Brier/NLL, uncertainty-gated recompute를 추가한다.",

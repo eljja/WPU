@@ -292,8 +292,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   violations but does not fix raw prediction instability, so WPU needs explicit
   state-integrity verification and correction.
 - The PyBullet state-integrity audit makes that failure a tracked metric:
-  raw WPU sparse falls to integrity `0.084722` at horizon 25, while clipping
-  improves the score to `0.201757` without solving raw delta instability.
+  raw WPU sparse falls to integrity `0.084722` at horizon 25. A guarded
+  state-store projection raises applied-state integrity to `0.958508` for sparse
+  WPU, but the raw delta norm remains unstable, so this is a safety layer rather
+  than a solved dynamics model.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and

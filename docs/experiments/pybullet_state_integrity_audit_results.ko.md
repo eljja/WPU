@@ -8,6 +8,7 @@ Source CSVs:
 
 - `docs/experiments/pybullet_closed_loop_rollout.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_clipped.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_guarded.csv`
 
 Derived CSV:
 
@@ -20,6 +21,9 @@ Derived CSV:
 | clipped | graph-transformer | 25 | 0.253333 | 8.363635 | 0.054688 | 0.557002 |
 | clipped | wpu-cws-indexed-local-dense | 25 | 0.314167 | 2.809900 | 0.048611 | 0.719139 |
 | clipped | wpu-cws-indexed-sparse | 25 | 0.785000 | 1939290.233702 | 0.082465 | 0.201757 |
+| guarded | graph-transformer | 25 | 0.000000 | 2.096666 | 0.054688 | 0.915679 |
+| guarded | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.741597 | 0.048611 | 0.964322 |
+| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.083334 | 0.958508 |
 | raw | graph-transformer | 5 | 0.045833 | 4.162467 | 0.062500 | 0.816605 |
 | raw | graph-transformer | 10 | 0.139583 | 6.106724 | 0.150463 | 0.679401 |
 | raw | graph-transformer | 25 | 0.272500 | 8.409911 | 0.056424 | 0.544493 |
@@ -34,8 +38,10 @@ Derived CSV:
 
 이 audit은 one-step branch accuracy만으로 world-state processor를 평가할 수 없다는 점을
 확인한다. Sparse WPU path는 작은 selected `K`를 유지할 수 있지만, raw delta를 반복 적용하면
-invalid state를 만들 수 있다. Delta clipping은 violation을 줄여 integrity score를 개선하지만,
-underlying delta model이 안정적이라는 증거는 아니다.
+invalid state를 만들 수 있다. Guarded state-store projection은 applied state를 보호해 WPU
+H=25 integrity를 dashboard threshold 위로 올린다. 그러나 source CSV의 guarded sparse run은
+projection 이전 raw delta norm이 여전히 약 `1.9e6`임을 기록하므로, underlying delta model이
+안정적이라는 증거는 아니다.
 
 따라서 state integrity는 WPU의 first-class metric이어야 한다.
 
@@ -44,4 +50,4 @@ state-integrity = constraint validity + bounded delta drift + branch stability
 ```
 
 향후 WPU rollout claim은 accuracy와 latency 옆에 이 score 또는 그 구성 metric을 함께
-보고해야 한다.
+보고해야 하며, raw model delta와 guarded state-store delta를 구분해야 한다.

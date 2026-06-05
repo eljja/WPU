@@ -624,15 +624,19 @@ Representative result:
 | --- | --- | ---: | ---: | ---: | ---: |
 | raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.084722 |
 | clipped | wpu-cws-indexed-sparse | 25 | 0.785000 | 1939290.233702 | 0.201757 |
+| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.958508 |
 | raw | wpu-cws-indexed-local-dense | 25 | 0.499166 | 2.744688 | 0.618283 |
 | clipped | wpu-cws-indexed-local-dense | 25 | 0.314167 | 2.809900 | 0.719139 |
+| guarded | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.741597 | 0.964322 |
 
 Interpretation:
 
-Priority 2 now has a measurable audit, but not a solved mechanism. Delta
-clipping reduces constraint violations, yet raw delta magnitude remains
-unstable for sparse WPU. The next implementation target is rollback,
-correction, uncertainty escalation, and rollout-consistency training.
+Priority 2 has moved from a failing measurement to a partial safety mechanism.
+Guarded state-store projection protects the applied state and lifts H=25
+integrity above the dashboard threshold, but it does not prove the underlying
+delta model is stable: sparse WPU still emits extremely large raw deltas before
+projection. The next implementation target is to train this guard signal into
+the model through rollout-consistency and unsafe-delta losses.
 
 ### PyBullet Shift Generalization and Calibration
 

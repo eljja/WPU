@@ -51,6 +51,10 @@ def main() -> None:
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--delta-clip", type=float, default=0.0)
+    parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--max-position-norm", type=float, default=25.0)
+    parser.add_argument("--max-velocity-norm", type=float, default=25.0)
+    parser.add_argument("--min-cup-z", type=float, default=-0.2)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--out", type=Path, default=Path("docs/experiments/pybullet_closed_loop_rollout.csv"))
     args = parser.parse_args()
@@ -127,6 +131,7 @@ def _rollout_condition(
     violation_count = 0
     entropy_values: list[float] = []
     delta_norm_values: list[float] = []
+    raw_delta_norm_values: list[float] = []
     selected_k_values: list[float] = []
     final_branch_counts: Counter[int] = Counter()
     with torch.no_grad():
@@ -154,15 +159,20 @@ def _rollout_condition(
                 final_branch_counts[branch] += int(step_index == horizon - 1)
                 selected_k_values.append(_selected_k(model, batch))
                 delta = prediction.object_delta[0].detach().cpu()
+                raw_delta_norm_values.append(float(delta.norm().item()))
                 object_ids = batch.object_ids[0] if batch.object_ids is not None else list(current.state.objects)
-                delta_norm_values.append(float(delta.norm().item()))
-                _apply_predicted_delta(
+                applied_delta_norm = _apply_predicted_delta(
                     current,
                     object_ids,
                     delta,
                     time_step=sample.event.time,
                     delta_clip=args.delta_clip,
+                    integrity_projection=args.integrity_projection,
+                    max_position_norm=args.max_position_norm,
+                    max_velocity_norm=args.max_velocity_norm,
+                    min_cup_z=args.min_cup_z,
                 )
+                delta_norm_values.append(applied_delta_norm)
                 violation_count += _constraint_violations(current)
     model.train()
     return {
@@ -175,9 +185,11 @@ def _rollout_condition(
         "constraint_violations_per_step": round(violation_count / max(args.samples * horizon, 1), 6),
         "branch_entropy_mean": round(_mean(entropy_values), 6),
         "delta_norm_mean": round(_mean(delta_norm_values), 6),
+        "raw_delta_norm_mean": round(_mean(raw_delta_norm_values), 6),
         "selected_k_mean": round(_mean(selected_k_values), 6),
         "final_majority_branch_ratio": round(max(final_branch_counts.values(), default=0) / max(args.samples, 1), 6),
         "delta_clip": args.delta_clip,
+        "integrity_projection": bool(args.integrity_projection),
     }
 
 
@@ -188,7 +200,12 @@ def _apply_predicted_delta(
     *,
     time_step: float,
     delta_clip: float,
-) -> None:
+    integrity_projection: bool,
+    max_position_norm: float,
+    max_velocity_norm: float,
+    min_cup_z: float,
+) -> float:
+    applied_sq_norm = 0.0
     for index, object_id in enumerate(object_ids):
         if object_id not in sample.state.objects or index >= delta.size(0):
             continue
@@ -198,11 +215,22 @@ def _apply_predicted_delta(
         position = obj.attributes.get("position", [0.0, 0.0, 0.0])
         velocity = obj.attributes.get("velocity", [0.0, 0.0, 0.0])
         if isinstance(position, list) and len(position) >= 3:
-            obj.attributes["position"] = [float(position[axis]) + float(position_delta[axis]) for axis in range(3)]
+            projected_position = [float(position[axis]) + float(position_delta[axis]) for axis in range(3)]
+            if integrity_projection:
+                projected_position = _project_vector(projected_position, max_position_norm)
+                if object_id == "cup_001":
+                    projected_position[2] = max(float(projected_position[2]), min_cup_z)
+            obj.attributes["position"] = projected_position
+            applied_sq_norm += sum(float(position_delta[axis]) ** 2 for axis in range(3))
         if isinstance(velocity, list) and len(velocity) >= 3:
-            obj.attributes["velocity"] = [float(velocity[axis]) + float(velocity_delta[axis]) for axis in range(3)]
+            projected_velocity = [float(velocity[axis]) + float(velocity_delta[axis]) for axis in range(3)]
+            if integrity_projection:
+                projected_velocity = _project_vector(projected_velocity, max_velocity_norm)
+            obj.attributes["velocity"] = projected_velocity
+            applied_sq_norm += sum(float(velocity_delta[axis]) ** 2 for axis in range(3))
     sample.state.time += time_step
     sample.event.time = sample.state.time + time_step
+    return math.sqrt(applied_sq_norm)
 
 
 def _constraint_violations(sample: PyBulletCupSample) -> int:
@@ -229,6 +257,16 @@ def _clip_vector(values: torch.Tensor, max_norm: float) -> torch.Tensor:
     norm = values.norm().clamp_min(1e-8)
     scale = min(1.0, float(max_norm) / float(norm.item()))
     return values * scale
+
+
+def _project_vector(values: list[float], max_norm: float) -> list[float]:
+    if max_norm <= 0.0:
+        return values
+    norm = math.sqrt(sum(float(item) ** 2 for item in values))
+    if not math.isfinite(norm) or norm <= max_norm:
+        return values
+    scale = max_norm / max(norm, 1e-8)
+    return [float(item) * scale for item in values]
 
 
 def _class_weights(dataset: PyBulletCupDataset) -> torch.Tensor:

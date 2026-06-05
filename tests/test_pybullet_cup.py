@@ -114,6 +114,53 @@ def test_pybullet_closed_loop_rollout_help_runs() -> None:
     assert result.returncode == 0, result.stderr
 
 
+def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) -> None:
+    output = tmp_path / "guarded_rollout.csv"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/pybullet_closed_loop_rollout.py",
+            "--models",
+            "wpu-cws-indexed-sparse",
+            "--horizons",
+            "2",
+            "--background-objects",
+            "2",
+            "--seeds",
+            "3",
+            "--steps",
+            "1",
+            "--sim-steps",
+            "24",
+            "--samples",
+            "4",
+            "--batch-size",
+            "2",
+            "--hidden-dim",
+            "16",
+            "--num-heads",
+            "2",
+            "--working-set-size",
+            "8",
+            "--delta-clip",
+            "0.25",
+            "--integrity-projection",
+            "--out",
+            str(output),
+        ],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    text = output.read_text(encoding="utf-8")
+    assert "integrity_projection" in text
+    assert "raw_delta_norm_mean" in text
+
+
 def test_pybullet_local_law_revision_help_runs() -> None:
     result = subprocess.run(
         [sys.executable, "scripts/pybullet_local_law_revision.py", "--help"],

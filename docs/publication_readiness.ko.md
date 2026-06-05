@@ -43,7 +43,7 @@ construction을 검증했다는 뜻은 아니다.
 | broad baseline superiority가 없음 | matched token/graph/world-model baseline 없이 보편 우월 주장은 reject될 가능성이 높다. | v1은 large `N`에서 WPU가 지는 결과를 보였고, v2는 working-set-control gain은 보이나 broad dominance는 아니다. | `N`, `K`, branch count, horizon을 통제한 parameter-matched, compute-matched token/graph baseline. |
 | candidate-oracle gap이 남아 있음 | v2는 유용한 control surface를 보여주지만 deployed selector는 oracle 성능을 충분히 사용하지 못한다. | 최신 gap audit은 risk-adjusted mechanism routing이 `K=8,16,32`에서 oracle gain의 `0.195451`, `0.244220`, `0.042131`만 회수함을 보인다. | joint retriever-propagator training, calibrated regret target, selector uncertainty, transfer-stable candidate scoring. |
 | cross-seed/cross-task transfer가 불완전함 | synthetic gain은 generator artifact에 overfit될 수 있다. | 여러 cross-seed reranker/gate가 실패하거나 부분 개선에 그쳤다. PyBullet mechanism-family shift benchmark는 mixed result를 보인다. WPU sparse는 `edge_shift`에서 앞서지만 `catch_heavy`에서는 크게 진다. | 더 큰 seed sweep, 새 synthetic generator, leave-generator-family-out validation, mechanism-aware branch prior. |
-| long-horizon state integrity가 증명되지 않음 | persistent state는 delta overlay가 장기적으로 망가지지 않을 때만 장점이다. | PyBullet state-integrity audit이 constraint validity, bounded delta drift, branch stability를 추적한다. Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어지고 clipping은 `0.201757`로 개선하지만 delta instability를 해결하지 못한다. | rollback, correction, calibration, uncertainty escalation, state-consistency loss를 포함한 rollout training. |
+| long-horizon state integrity가 증명되지 않음 | persistent state는 delta overlay가 장기적으로 망가지지 않을 때만 장점이다. | PyBullet state-integrity audit이 constraint validity, bounded delta drift, branch stability를 추적한다. Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어진다. Guarded state-store projection은 sparse WPU의 applied-state integrity를 `0.958508`, local-dense WPU를 `0.964322`까지 올리지만 raw delta instability는 남아 있다. | rollback, correction, calibration, uncertainty escalation, state-consistency loss를 포함한 rollout training. |
 | real-world 또는 simulator-backed grounding이 없음 | world processing claim은 toy object physics 밖의 증거가 필요하다. | 현재 evidence는 synthetic robot-cup 및 CWS data다. | MuJoCo/Isaac/robotics/game-server/digital-twin benchmark와 explicit state extraction. |
 | perception-to-state가 해결되지 않음 | WPU는 explicit state가 있다고 가정한다. 외부 사용자는 pixels가 어떻게 object/relation이 되는지 물을 것이다. | 문서에서는 perception adapter를 future work로 제한하고 있다. | supervised segmentation, slot discovery, simulator-provided object label 기반 object-state adapter baseline. |
 | hardware claim이 뒷받침되지 않음 | Processing unit 주장은 PyTorch 모델만으로 부족하고 systems evidence가 필요하다. | PyBullet systems profile이 full-state tensorization, indexed WPU tensorization, sparse work proxy, branch-overlay memory proxy를 분리했다. `N≈2052.6`에서 indexed tensor byte는 `0.997454` 줄고 `K≈4.6`을 유지하지만, 아직 Python proxy다. | sparse frontier kernel profiling, 실제 memory-traffic accounting, allocator-level branch-overlay measurement, matched-accuracy speedup. |
@@ -62,9 +62,10 @@ construction을 검증했다는 뜻은 아니다.
 python scripts/audit_v2_priority_dashboard.py
 ```
 
-현재 상태는 보수적이다. Priority 1 candidate-oracle gap과 priority 2
-long-horizon state integrity는 dashboard threshold를 통과하지 못한다.
-Priority 3~7도 solved가 아니라 partial이다. 따라서 올바른 외부 공표 태도는
+현재 상태는 보수적이다. Priority 1 candidate-oracle gap은 dashboard threshold를
+통과하지 못한다. Priority 2 long-horizon state integrity는 guarded state-store
+projection 덕분에 fail에서 partial로 올라갔지만 raw delta instability를 해결한 것은
+아니다. Priority 3~7도 solved가 아니라 partial이다. 따라서 올바른 외부 공표 태도는
 보편 우월성 주장이 아니라 반증 가능한 WPU regime hypothesis다.
 
 ## 즉시 개선 우선순위

@@ -26,6 +26,9 @@ dev = [
   "matplotlib>=3.8",
   "pytest>=8",
 ]
+sim = [
+  "pybullet>=3.2.7",
+]
 
 [tool.setuptools.packages.find]
 include = ["wpu*"]

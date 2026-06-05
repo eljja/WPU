@@ -19,6 +19,12 @@ The default install pulls the standard PyTorch package. For CUDA-specific
 experiments, install the PyTorch build matching the local driver/CUDA stack
 first, then run the editable install.
 
+Simulator-grounded experiments require the optional PyBullet dependency:
+
+```bash
+python -m pip install -e ".[dev,sim]"
+```
+
 On Windows, `python` can resolve to the Microsoft Store alias instead of an
 installed interpreter. If so, create a virtual environment with the intended
 Python installation and run checks through the venv interpreter:
@@ -128,6 +134,12 @@ The 8M-class CWS GPU runner follows this policy:
 
 It writes generated outputs to `artifacts/causal_working_set_8m_gpu/` for review
 before promotion.
+
+The PyBullet simulator-grounded benchmark can be reproduced with:
+
+```bash
+python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 0 32 128 --seeds 11 13 --steps 30 --sim-steps 120 --samples 48 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --runtime-repeats 5 --balanced-labels --out docs/experiments/pybullet_cup_benchmark.csv
+```
 
 ## Current Submission Boundary
 

@@ -300,6 +300,46 @@ The current pre-tensor indexed path is still a synthetic relation-frontier
 index. It must be extended with spatial buckets, uncertainty hot sets, and
 harder distractor cases before being treated as a final result.
 
+### Simulator-Grounded PyBullet Benchmark
+
+Output:
+
+- `scripts/pybullet_cup_benchmark.py`
+- `wpu/data/pybullet_cup.py`
+- `docs/experiments/pybullet_cup_benchmark.csv`
+- `docs/experiments/pybullet_cup_benchmark_results.md`
+
+Question:
+
+```text
+Does the WPU object-state pipeline still work when the state comes from an
+independent rigid-body simulator rather than a hand-written synthetic label
+function?
+```
+
+Result:
+
+PyBullet rollouts are now converted into explicit `WorldState` objects and
+fed through the same `StateGraphBatch` interface as the synthetic experiments.
+The first balanced two-seed benchmark uses full simulator state for token/graph
+baselines and pre-tensor indexed retrieval only for WPU indexed models.
+
+| background objects | graph ms/sample | token ms/sample | WPU local-dense ms/sample | WPU selected K |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 2.211 | 0.139 | 1.432 | 4.44 |
+| 32 | 11.840 | 0.136 | 1.574 | 4.44 |
+| 128 | 42.716 | 0.303 | 1.550 | 4.44 |
+
+Interpretation:
+
+This is a systems-positive but accuracy-neutral result. It supports the claim
+that WPU can objectify simulator state and keep the neural working set small as
+irrelevant background state grows. It does not show broad accuracy dominance:
+branch accuracy is comparable across WPU, token, and graph baselines in this
+small benchmark. The next simulator experiments must increase seeds, training
+scale, objectification corruption, and long-horizon rollout before this becomes
+a strong paper result.
+
 ### Priority 6: Local Dense Hybrid
 
 Implemented as:

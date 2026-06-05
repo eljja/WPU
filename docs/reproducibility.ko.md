@@ -18,6 +18,12 @@ python -m pip install -e ".[dev]"
 driver/CUDA stack에 맞는 PyTorch build를 먼저 설치한 뒤 editable install을
 실행한다.
 
+Simulator-grounded 실험은 optional PyBullet dependency가 필요하다.
+
+```bash
+python -m pip install -e ".[dev,sim]"
+```
+
 Windows에서는 `python`이 실제 interpreter가 아니라 Microsoft Store alias로
 잡힐 수 있다. 이런 경우 의도한 Python 설치로 virtual environment를 만든 뒤 venv
 interpreter로 검증을 실행한다.
@@ -121,6 +127,12 @@ Generated result를 `docs/experiments/`로 승격하기 전 확인할 것:
 ```
 
 출력은 승격 전 검토를 위해 `artifacts/causal_working_set_8m_gpu/`에 생성된다.
+
+PyBullet simulator-grounded benchmark는 다음 명령으로 재현할 수 있다.
+
+```bash
+python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 0 32 128 --seeds 11 13 --steps 30 --sim-steps 120 --samples 48 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --runtime-repeats 5 --balanced-labels --out docs/experiments/pybullet_cup_benchmark.csv
+```
 
 ## 현재 제출 경계
 

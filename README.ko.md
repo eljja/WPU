@@ -217,6 +217,9 @@ model = wpu.create_model(
   graph/token baseline이 더 강하다.
 - 객체화는 이제 public API에서 측정 가능한 contract가 되었지만, 실제
   perception-to-state adapter의 객체화 품질 benchmark는 아직 필요하다.
+- 첫 PyBullet benchmark는 simulator가 생성한 rigid-body state를 `WorldState`로
+  객체화하고 동일한 WPU API로 처리할 수 있음을 보였다. 현재는 systems/pipeline
+  결과이지 accuracy dominance 결과는 아니다.
 
 v1의 핵심 목표는 명확하다.
 
@@ -265,6 +268,7 @@ retriever-propagator joint training이다.
 - Publication readiness / gap register: `docs/publication_readiness.ko.md`
 - Reproducibility guide: `docs/reproducibility.ko.md`
 - Experiment index: `docs/experiments/README.md`
+- PyBullet benchmark: `docs/experiments/pybullet_cup_benchmark_results.ko.md`
 - Review response: `docs/Review/review_response_and_differentiation.md`
 
 PDF build:

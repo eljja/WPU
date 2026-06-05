@@ -54,6 +54,12 @@ Use these reports for paper-level claims:
   `0.115978` to `0.000342`; form revision cuts `hidden_power_shift` MSE from
   `0.054596` to `0.008887`, while the oracle relation result `0.000232` exposes
   the remaining relation-selection gap.
+- `pybullet_cup_benchmark_results.md`: first simulator-grounded benchmark.
+  PyBullet rigid-body rollouts are converted into explicit `WorldState`
+  objects. The initial two-seed result supports a limited systems claim:
+  pre-tensor indexed WPU keeps `K ~= 4-5` as background state grows, while the
+  full-state graph transformer slows sharply. It does not yet support accuracy
+  dominance over token or graph baselines.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -172,6 +178,8 @@ Historical or preliminary reports:
 - `wpu_v2_geometry_hybrid_pilot_results.md`: two-seed CPU pipeline check for
   geometry-only local interaction features versus dense interaction hybrid;
   useful as a compute-realism diagnostic, not paper evidence.
+- `pybullet_cup_benchmark_results.ko.md`: Korean companion for the first
+  simulator-grounded PyBullet cup benchmark.
 - `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
   useful for provenance, not a result claim by itself.
 - `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;
@@ -253,6 +261,10 @@ Historical or preliminary reports:
   mechanism selection over explicit role/geometry/family descriptors. At
   `N=2048`, it improves held-out mean loss over static learned selection at
   `K=8,16,32`, but the candidate oracle remains substantially better.
+- The first PyBullet benchmark shows that the WPU state pipeline is not limited
+  to hand-written synthetic labels: simulator state can be objectified and fed
+  through the same WPU API. Current evidence is systems-level only; accuracy
+  remains comparable rather than dominant.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

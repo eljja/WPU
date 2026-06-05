@@ -233,6 +233,7 @@ Key reports:
 - `docs/experiments/b_sweep_v1_results.md`
 - `docs/experiments/step_sweep_v1_results.md`
 - `docs/experiments/controlled_stress_v1_results.md`
+- `docs/experiments/pybullet_cup_benchmark_results.md`
 
 ## Paper
 
@@ -270,6 +271,9 @@ The current evidence supports a regime hypothesis, not universal dominance.
   not sufficient as a final scheduler.
 - Objectification is now a measured contract in the public API, but its quality
   has not yet been benchmarked for real perception-to-state adapters.
+- The first PyBullet benchmark shows that simulator-generated rigid-body state
+  can be objectified into `WorldState` and processed by the same WPU API. It is
+  currently a systems/pipeline result, not an accuracy-dominance result.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

@@ -56,7 +56,12 @@ The public API also exposes `evaluate_objectification(state, ...)`, which
 returns an `ObjectificationReport`. The report measures whether a supplied
 state satisfies the operational contract before propagation: identity coverage,
 relation endpoint validity, object/relation confidence, delta validity, and
-optional delta locality against an expected causal working set.
+optional delta locality against an expected causal working set. When reference
+or event-local information is provided, the same report also measures
+frontier completeness and semantic identity consistency. These components are
+reported separately because an aggregate contract score alone cannot explain
+whether sparse propagation failed from missing event-frontier edges, semantic
+object drift, confidence degradation, or invalid deltas.
 
 The API also exposes `infer_missing_relations` and
 `repair_objectification_relations`. These add conservative geometry-derived

@@ -51,7 +51,11 @@ Public API는 `evaluate_objectification(state, ...)`도 제공한다. 이 함수
 `ObjectificationReport`를 반환하며, propagation 전에 supplied state가 operational
 contract를 만족하는지 측정한다. 측정 항목은 identity coverage, relation endpoint
 validity, object/relation confidence, delta validity, expected causal working
-set 대비 optional delta locality다.
+set 대비 optional delta locality다. Reference 또는 event-local 정보가 주어지면
+같은 report는 frontier completeness와 semantic identity consistency도 측정한다.
+이 component들은 별도로 보고해야 한다. Aggregate contract score만으로는 sparse
+propagation 실패가 missing event-frontier edge, semantic object drift, confidence
+degradation, invalid delta 중 어디에서 왔는지 설명할 수 없기 때문이다.
 
 Public API는 `infer_missing_relations`와 `repair_objectification_relations`도
 제공한다. 이 함수들은 object identity는 있지만 relation extraction이 local

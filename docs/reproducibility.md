@@ -165,6 +165,7 @@ The PyBullet closed-loop rollout diagnostic can be reproduced with:
 ```bash
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer --horizons 5 10 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_closed_loop_rollout.csv
 python scripts/pybullet_closed_loop_rollout.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer --horizons 25 --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --delta-clip 0.25 --out docs/experiments/pybullet_closed_loop_rollout_clipped.csv
+python scripts/analyze_state_integrity.py --inputs docs/experiments/pybullet_closed_loop_rollout.csv docs/experiments/pybullet_closed_loop_rollout_clipped.csv --labels raw clipped --out-csv docs/experiments/pybullet_state_integrity_audit.csv --out-md docs/experiments/pybullet_state_integrity_audit_results.md
 ```
 
 The PyBullet local-law revision probe can be reproduced with:
@@ -177,6 +178,12 @@ The PyBullet systems profile can be reproduced with:
 
 ```bash
 python scripts/pybullet_system_profile.py --samples 8 --seeds 11 13 --background-objects 0 32 128 512 2048 --branch-counts 1 3 8 --sim-steps 24 --out docs/experiments/pybullet_system_profile.csv
+```
+
+The latest candidate-oracle gap audit can be reproduced with:
+
+```bash
+python scripts/analyze_candidate_oracle_gap.py --input docs/experiments/wpu_v2_retriever_invariant_set_scorer.csv --out-csv docs/experiments/wpu_v2_candidate_oracle_gap_v2.csv --out-md docs/experiments/wpu_v2_candidate_oracle_gap_v2_results.md
 ```
 
 ## Current Submission Boundary

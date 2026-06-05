@@ -28,6 +28,33 @@ def test_objectification_report_scores_valid_state_contract() -> None:
     assert report.to_dict()["contract_score"] == pytest.approx(report.contract_score)
 
 
+def test_objectification_report_measures_frontier_and_semantic_consistency() -> None:
+    reference = WorldState()
+    reference.add_object(WorldObject("cup_001", "cup", {"position": [0.0, 0.0, 0.0]}, confidence=0.9))
+    reference.add_object(WorldObject("hand_001", "robot_hand", {"position": [0.1, 0.0, 0.0]}, confidence=0.9))
+    reference.add_object(WorldObject("edge_001", "table_edge", {"position": [0.4, 0.0, 0.0]}, confidence=0.9))
+    reference.add_relation(Relation("cup_001", "hand_001", "near", confidence=0.9))
+    reference.add_relation(Relation("cup_001", "edge_001", "near_edge", confidence=0.9))
+
+    corrupted = WorldState()
+    corrupted.add_object(WorldObject("cup_001", "cup", {"position": [0.0, 0.0, 0.0]}, confidence=0.9))
+    corrupted.add_object(WorldObject("hand_001", "robot_hand", {"position": [0.1, 0.0, 0.0]}, confidence=0.9))
+    corrupted.add_object(WorldObject("edge_001", "background_object", {"position": [4.0, 0.0, 0.0]}, confidence=0.9))
+    corrupted.add_relation(Relation("cup_001", "hand_001", "near", confidence=0.9))
+
+    report = wpu.evaluate_objectification(
+        corrupted,
+        expected_working_set={"cup_001", "hand_001", "edge_001"},
+        event_target="cup_001",
+        reference_state=reference,
+    )
+
+    assert report.frontier_completeness == pytest.approx(2 / 3)
+    assert report.semantic_identity_consistency == pytest.approx(2 / 3)
+    assert report.to_dict()["frontier_completeness"] == pytest.approx(2 / 3)
+    assert report.to_dict()["semantic_identity_consistency"] == pytest.approx(2 / 3)
+
+
 def test_objectification_report_penalizes_broken_identity_relation_and_delta() -> None:
     state = WorldState()
     state.objects["cup_001"] = WorldObject("different_id", "cup", confidence=1.4)

@@ -25,31 +25,32 @@ Source CSV:
 
 | corruption | contract score | identity recall | semantic consistency | relation recall | frontier recall |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| clean | 0.939715 | 1.000000 | 1.000000 | 1.000000 | 1.000000 |
-| combined | 0.837442 | 0.844246 | 0.814672 | 0.834180 | 0.716667 |
-| drop_objects_light | 0.939794 | 0.796720 | 0.796720 | 0.795459 | 0.866667 |
-| drop_relations_heavy | 0.938665 | 1.000000 | 1.000000 | 0.979556 | 0.585417 |
-| identity_swap | 0.939715 | 1.000000 | 0.984895 | 1.000000 | 1.000000 |
-| low_confidence | 0.786843 | 1.000000 | 1.000000 | 1.000000 | 1.000000 |
-| position_noise | 0.939715 | 1.000000 | 0.675541 | 1.000000 | 1.000000 |
+| clean | 0.956939 | 1.000000 | 1.000000 | 1.000000 | 1.000000 |
+| combined | 0.816935 | 0.844246 | 0.814672 | 0.834180 | 0.716667 |
+| drop_objects_light | 0.908908 | 0.796720 | 0.796720 | 0.795459 | 0.866667 |
+| drop_relations_heavy | 0.896963 | 1.000000 | 1.000000 | 0.979556 | 0.585417 |
+| identity_swap | 0.954781 | 1.000000 | 0.984895 | 1.000000 | 1.000000 |
+| low_confidence | 0.847745 | 1.000000 | 1.000000 | 1.000000 | 1.000000 |
+| position_noise | 0.910588 | 1.000000 | 0.675541 | 1.000000 | 1.000000 |
 
 ## Interpretation
 
 The result confirms that objectification must be evaluated as a multi-part
 contract, not a single scalar.
 
-`low_confidence` is correctly reflected in the existing contract score, which
-drops from `0.939715` to `0.786843` at background `N=128`.
+`low_confidence` is reflected in the contract score, which drops from
+`0.956939` to `0.847745` at background `N=128`.
 
-`drop_relations_heavy` exposes the opposite failure mode. The contract score is
-almost unchanged (`0.938665`), and global relation recall is still high
-(`0.979556`) because most background relations remain intact. But event-frontier
-recall falls to `0.585417`, which is the metric that matters for sparse WPU
-propagation.
+`drop_relations_heavy` exposes a different failure mode. The extended contract
+score now moves in the right direction (`0.896963`), but global relation recall
+is still high (`0.979556`) because most background relations remain intact. The
+component that matters for sparse WPU propagation is event-frontier recall,
+which falls to `0.585417`.
 
 `position_noise` also shows why semantic consistency should be separate from
 syntactic identity validity. Object IDs and relations remain valid, so the
-contract score stays high, but semantic consistency drops to `0.675541`.
+contract score alone does not explain the failure source; semantic consistency
+drops to `0.675541`.
 
 `identity_swap` is milder in this PyBullet scene because only a small number of
 role-bearing non-protected objects can be swapped. Even so, it is detected by
@@ -65,14 +66,12 @@ four measurable qualities:
 - relation precision/recall;
 - event-frontier completeness for the causal working set.
 
-The current `ObjectificationReport` is useful but incomplete. It should be
-extended or paired with task-specific quality metrics before sparse WPU claims
-are made under perception-like corruption.
+The public `ObjectificationReport` now includes frontier completeness and
+semantic identity consistency, but sparse WPU claims should still report the
+components rather than only the aggregate score.
 
 ## Next Steps
 
-- Add frontier completeness and semantic identity consistency to the public
-  objectification report.
 - Evaluate downstream branch loss as a function of each objectification metric.
 - Add simulator relation ground truth when available, not only clean-state
   relation comparison.

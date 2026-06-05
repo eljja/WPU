@@ -554,18 +554,18 @@ Representative result at background `N=128`:
 
 | corruption | contract score | semantic consistency | relation recall | frontier recall |
 | --- | ---: | ---: | ---: | ---: |
-| clean | 0.939715 | 1.000000 | 1.000000 | 1.000000 |
-| drop_relations_heavy | 0.938665 | 1.000000 | 0.979556 | 0.585417 |
-| position_noise | 0.939715 | 0.675541 | 1.000000 | 1.000000 |
-| low_confidence | 0.786843 | 1.000000 | 1.000000 | 1.000000 |
-| combined | 0.837442 | 0.814672 | 0.834180 | 0.716667 |
+| clean | 0.956939 | 1.000000 | 1.000000 | 1.000000 |
+| drop_relations_heavy | 0.896963 | 1.000000 | 0.979556 | 0.585417 |
+| position_noise | 0.910588 | 0.675541 | 1.000000 | 1.000000 |
+| low_confidence | 0.847745 | 1.000000 | 1.000000 | 1.000000 |
+| combined | 0.816935 | 0.814672 | 0.834180 | 0.716667 |
 
 Interpretation:
 
-The existing contract score correctly detects confidence degradation, but it
-does not by itself detect the frontier completeness needed by sparse WPU or the
-semantic consistency needed for stable object identity. This turns
-objectification from a prose dependency into a measurable failure surface.
+The public contract now includes frontier completeness and semantic consistency,
+but the component metrics remain necessary. They reveal whether a failure comes
+from confidence, missing event-frontier edges, or semantic object drift. This
+turns objectification from a prose dependency into a measurable failure surface.
 
 V2 implication:
 
@@ -573,6 +573,66 @@ V2 implication:
 Sparse WPU claims should report objectification score, semantic identity
 consistency, relation precision/recall, and event-frontier recall together.
 ```
+
+### Candidate-Oracle Gap Audit V2
+
+Output:
+
+- `scripts/analyze_candidate_oracle_gap.py`
+- `docs/experiments/wpu_v2_candidate_oracle_gap_v2.csv`
+- `docs/experiments/wpu_v2_candidate_oracle_gap_v2_results.md`
+
+Question:
+
+```text
+How much of the available candidate-pool oracle gain is recovered by the
+current deployed risk-adjusted mechanism selector?
+```
+
+Result for `role_geometry_family` at `N=2048`:
+
+| K | static loss | risk-adjusted loss | candidate oracle loss | gap closure |
+| --- | ---: | ---: | ---: | ---: |
+| 8 | 0.988432 | 0.982002 | 0.955536 | 0.195451 |
+| 16 | 0.966183 | 0.951243 | 0.905009 | 0.244220 |
+| 32 | 1.004095 | 1.002597 | 0.968548 | 0.042131 |
+
+Interpretation:
+
+Priority 1 is not solved. The current selector recovers part of the oracle
+gain without returning to token processing, but most candidate-pool headroom is
+still unused, especially at `K=32`. Future working-set-control experiments must
+report gap-closure fraction, not only loss deltas.
+
+### PyBullet State-Integrity Audit
+
+Output:
+
+- `scripts/analyze_state_integrity.py`
+- `docs/experiments/pybullet_state_integrity_audit.csv`
+- `docs/experiments/pybullet_state_integrity_audit_results.md`
+
+Question:
+
+```text
+Can long-horizon WPU rollout stability be tracked as a first-class state metric?
+```
+
+Representative result:
+
+| run | model | horizon | violations/step | delta norm | integrity score |
+| --- | --- | ---: | ---: | ---: | ---: |
+| raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.084722 |
+| clipped | wpu-cws-indexed-sparse | 25 | 0.785000 | 1939290.233702 | 0.201757 |
+| raw | wpu-cws-indexed-local-dense | 25 | 0.499166 | 2.744688 | 0.618283 |
+| clipped | wpu-cws-indexed-local-dense | 25 | 0.314167 | 2.809900 | 0.719139 |
+
+Interpretation:
+
+Priority 2 now has a measurable audit, but not a solved mechanism. Delta
+clipping reduces constraint violations, yet raw delta magnitude remains
+unstable for sparse WPU. The next implementation target is rollback,
+correction, uncertainty escalation, and rollout-consistency training.
 
 ### Priority 6: Local Dense Hybrid
 

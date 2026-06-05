@@ -6,10 +6,9 @@ import csv
 from pathlib import Path
 import statistics
 import sys
+import math
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-import math
 
 import wpu
 from wpu.data.pybullet_cup import (
@@ -131,7 +130,16 @@ def _measure(
     report = wpu.evaluate_objectification(
         corrupted.state,
         expected_working_set=clean_frontier,
+        event_target=corrupted.event.target,
+        reference_state=clean.state,
+        position_tolerance=position_tolerance,
     )
+    semantic_identity_consistency = (
+        report.semantic_identity_consistency
+        if report.semantic_identity_consistency is not None
+        else _semantic_identity_consistency(clean, corrupted, position_tolerance)
+    )
+    frontier_completeness = report.frontier_completeness if report.frontier_completeness is not None else 1.0
 
     return {
         "row_type": "sample",
@@ -142,10 +150,10 @@ def _measure(
         "total_objects": str(len(clean_ids)),
         "corrupted_objects": str(len(corrupted_ids)),
         "identity_recall": f"{_safe_ratio(len(shared_ids), len(clean_ids), 1.0):.6f}",
-        "semantic_identity_consistency": f"{_semantic_identity_consistency(clean, corrupted, position_tolerance):.6f}",
+        "semantic_identity_consistency": f"{semantic_identity_consistency:.6f}",
         "relation_precision": f"{_safe_ratio(len(clean_relations & corrupted_relations), len(corrupted_relations), 1.0):.6f}",
         "relation_recall": f"{_safe_ratio(len(clean_relations & corrupted_relations), len(clean_relations), 1.0):.6f}",
-        "frontier_recall": f"{_safe_ratio(len(clean_frontier & selected_ids), len(clean_frontier), 1.0):.6f}",
+        "frontier_recall": f"{frontier_completeness:.6f}",
         "selected_k": str(len(selected_ids)),
         "objectification_score": f"{report.contract_score:.6f}",
         "identity_coverage_report": f"{report.identity_coverage:.6f}",
@@ -153,6 +161,8 @@ def _measure(
         "object_confidence_report": f"{report.object_confidence:.6f}",
         "relation_confidence_report": f"{report.relation_confidence:.6f}",
         "delta_locality_report": f"{(report.delta_locality if report.delta_locality is not None else 1.0):.6f}",
+        "frontier_completeness_report": f"{frontier_completeness:.6f}",
+        "semantic_identity_consistency_report": f"{semantic_identity_consistency:.6f}",
         "sample_count": "1",
     }
 
@@ -225,6 +235,8 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, str]]:
         "object_confidence_report",
         "relation_confidence_report",
         "delta_locality_report",
+        "frontier_completeness_report",
+        "semantic_identity_consistency_report",
     ]
     summary: list[dict[str, str]] = []
     for (background, corruption), group in sorted(groups.items(), key=lambda item: (int(item[0][0]), item[0][1])):

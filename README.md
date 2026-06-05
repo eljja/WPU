@@ -279,9 +279,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   current objectification score must be extended with frontier completeness and
   semantic identity checks.
 - The PyBullet objectification-quality benchmark makes that gap explicit:
-  relation-drop can keep scalar contract score high while event-frontier recall
-  falls to `0.585417`, and position noise can reduce semantic consistency to
-  `0.675541` without invalidating object IDs or relations.
+  `ObjectificationReport` now includes frontier completeness and semantic
+  consistency, and the benchmark shows relation-drop driving event-frontier
+  recall to `0.585417` while position noise reduces semantic consistency to
+  `0.675541`.
 - A parameter-matched PyBullet pilot shows WPU sparse preserving accuracy from
   background N=0 to N=128 at roughly 50k parameters, while full-state baselines
   drop in this short run. Serialized-token remains faster at this scale, so the
@@ -290,6 +291,9 @@ The current evidence supports a regime hypothesis, not universal dominance.
   repeated WPU sparse deltas can explode by horizon 25. Delta clipping reduces
   violations but does not fix raw prediction instability, so WPU needs explicit
   state-integrity verification and correction.
+- The PyBullet state-integrity audit makes that failure a tracked metric:
+  raw WPU sparse falls to integrity `0.084722` at horizon 25, while clipping
+  improves the score to `0.201757` without solving raw delta instability.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
@@ -330,6 +334,9 @@ the scene, but they do not naturally expose this intervention point.
 
 The remaining v2 bottleneck is still the oracle gap. Opaque set evaluators,
 score-margin gates, and strict no-harm seed-stable gates are not sufficient.
+The latest gap audit quantifies this directly: risk-adjusted mechanism routing
+closes only `0.244220` of the available candidate-oracle gain at best, and only
+`0.042131` at `K=32`.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than

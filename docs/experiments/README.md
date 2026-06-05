@@ -70,10 +70,10 @@ Use these reports for paper-level claims:
   decomposition benchmark on PyBullet state. It compares corrupted state against
   clean simulator-derived state and records identity recall, semantic identity
   consistency, relation precision/recall, event-frontier recall, selected `K`,
-  and `ObjectificationReport` fields. It shows that relation-drop can leave the
-  scalar contract score almost unchanged while event-frontier recall falls to
-  `0.585417`, and that position noise can drop semantic consistency to
-  `0.675541` while syntactic identity/relation validity remains high.
+  and `ObjectificationReport` fields. The public report now includes frontier
+  completeness and semantic consistency, while the benchmark shows why the
+  components still matter: relation-drop drives event-frontier recall to
+  `0.585417`, and position noise drops semantic consistency to `0.675541`.
 - `pybullet_matched_baseline_benchmark_results.md`: parameter-matched PyBullet
   pilot using `--target-params`. At an approximate 50k-parameter budget, WPU
   sparse preserves branch accuracy from background N=0 to N=128 while full-state
@@ -84,6 +84,11 @@ Use these reports for paper-level claims:
   long-horizon WPU sparse failure: raw delta explosion and high constraint
   violations at horizon 25. Delta clipping reduces violations but does not fix
   the underlying raw prediction instability.
+- `pybullet_state_integrity_audit_results.md`: derived audit over raw and
+  clipped PyBullet closed-loop rollouts. It turns state integrity into a
+  first-class score combining constraint validity, bounded delta drift, and
+  branch stability. Raw WPU sparse drops to integrity `0.084722` at horizon 25;
+  clipping improves it to `0.201757` but does not solve raw delta instability.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -166,6 +171,11 @@ Use these reports for paper-level claims:
   with role/geometry/family descriptors and adds train-selected mechanism
   routing; descriptor-only scoring helps K=8/16, while risk-adjusted mechanism
   routing improves K=8/16/32.
+- `wpu_v2_candidate_oracle_gap_v2_results.md`: latest candidate-oracle gap
+  audit over the invariant-scorer experiment. Risk-adjusted mechanism routing
+  recovers only part of the available oracle gain: gap closure is `0.195451`
+  at `K=8`, `0.244220` at `K=16`, and `0.042131` at `K=32`. This makes the
+  remaining selector gap a required metric, not a prose caveat.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -224,12 +234,16 @@ Historical or preliminary reports:
   parameter-matched PyBullet benchmark.
 - `pybullet_closed_loop_rollout_results.ko.md`: Korean companion for the
   PyBullet closed-loop rollout diagnostic.
+- `pybullet_state_integrity_audit_results.ko.md`: Korean companion for the
+  PyBullet state-integrity audit.
 - `pybullet_local_law_revision_results.ko.md`: Korean companion for the
   PyBullet local-law revision probe.
 - `pybullet_system_profile_results.ko.md`: Korean companion for the PyBullet
   systems profile.
 - `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
   useful for provenance, not a result claim by itself.
+- `wpu_v2_candidate_oracle_gap_v2_results.ko.md`: Korean companion for the
+  latest candidate-oracle gap audit.
 - `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;
   superseded by staged regret and verifier experiments.
 - `wpu_v2_clipped_diagnostic_probe_results.md`: clipped residual diagnostic
@@ -309,19 +323,25 @@ Historical or preliminary reports:
   mechanism selection over explicit role/geometry/family descriptors. At
   `N=2048`, it improves held-out mean loss over static learned selection at
   `K=8,16,32`, but the candidate oracle remains substantially better.
+- The latest candidate-oracle gap audit makes the remaining headroom explicit:
+  risk-adjusted mechanism routing closes only `0.244220` of the available
+  oracle gain at best, so candidate scoring remains the priority-1 bottleneck.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy
   remains comparable rather than dominant.
 - The PyBullet objectification-quality benchmark makes the object contract
-  sharper: relation-drop can leave scalar contract score high while
-  event-frontier recall falls to `0.585417`, and position noise can reduce
-  semantic consistency to `0.675541` without invalidating object IDs or
-  relations.
+  sharper: the public report now includes frontier completeness and semantic
+  consistency, and the benchmark shows that relation-drop can drive
+  event-frontier recall to `0.585417` while position noise reduces semantic
+  consistency to `0.675541`.
 - The PyBullet systems profile is the clearest current cost-separation result:
   when PyBullet background state grows to `N≈2052.6`, indexed WPU still
   tensorizes only `K≈4.6`, reducing tensor bytes by `0.997454`. This supports
   the state-indexing premise but remains a proxy, not a hardware-power result.
+- The PyBullet state-integrity audit turns closed-loop rollout stability into
+  a tracked metric. It confirms that clipping is a safety layer, not a solution
+  to raw WPU sparse delta instability.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

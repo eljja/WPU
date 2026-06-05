@@ -46,6 +46,8 @@ def test_readme_and_current_evidence_script_help_runs() -> None:
         "scripts/analyze_b_sweep.py",
         "scripts/analyze_step_sweep.py",
         "scripts/analyze_controlled_stress.py",
+        "scripts/analyze_candidate_oracle_gap.py",
+        "scripts/analyze_state_integrity.py",
         "scripts/causal_working_set_experiment.py",
         "scripts/retriever_regret_distillation_probe.py",
         "scripts/retriever_cross_seed_invariant_set_scorer_probe.py",

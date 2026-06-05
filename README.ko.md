@@ -224,9 +224,9 @@ model = wpu.create_model(
   이전에 WPU selected K를 줄인다는 점을 보였다. 또한 현재 objectification score에는
   frontier completeness와 semantic identity check가 추가되어야 한다.
 - PyBullet objectification-quality benchmark는 이 gap을 더 명확히 만들었다.
-  Relation-drop은 scalar contract score를 높게 유지하면서도 event-frontier recall을
-  `0.585417`까지 떨어뜨릴 수 있고, position noise는 object ID/relation을 무효화하지
-  않으면서 semantic consistency를 `0.675541`까지 낮출 수 있다.
+  `ObjectificationReport`는 이제 frontier completeness와 semantic consistency를 포함한다.
+  Benchmark는 relation-drop이 event-frontier recall을 `0.585417`까지 떨어뜨리고,
+  position noise가 semantic consistency를 `0.675541`까지 낮출 수 있음을 보인다.
 - Parameter-matched PyBullet pilot에서는 약 50k parameter 조건에서 WPU sparse가
   background N=0에서 N=128까지 accuracy를 유지했고 full-state baseline은 하락했다.
   하지만 serialized-token은 이 규모에서 여전히 더 빠르므로, 주장은 보편 latency
@@ -235,6 +235,9 @@ model = wpu.create_model(
   반복 적용하면 horizon 25에서 state가 폭발할 수 있다. Delta clipping은 violation을
   줄이지만 raw prediction instability를 해결하지 않으므로, WPU에는 명시적
   state-integrity verification과 correction이 필요하다.
+- PyBullet state-integrity audit은 이 실패를 추적 가능한 metric으로 만들었다.
+  Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어지고, clipping은
+  score를 `0.201757`로 올리지만 raw delta instability를 해결하지는 않는다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이
@@ -278,8 +281,10 @@ intervention point를 자연스럽게 제공하지 않는다.
 
 남은 병목은 generated/candidate oracle과의 gap이다. Opaque set evaluator,
 score-margin gate, strict no-harm seed-stable gate만으로는 충분하지 않았다. 다음 v2
-목표는 invariant candidate descriptor, risk-adjusted mechanism routing, 그리고
-retriever-propagator joint training이다.
+최신 gap audit은 이를 직접 수치화한다. Risk-adjusted mechanism routing은 available
+candidate-oracle gain 중 최대 `0.244220`만 회수하고, `K=32`에서는 `0.042131`만 회수한다.
+따라서 다음 v2 목표는 invariant candidate descriptor, risk-adjusted mechanism routing,
+그리고 retriever-propagator joint training이다.
 
 ## 논문 및 문서
 

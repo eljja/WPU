@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from statistics import fmean
 
 from wpu.core.state import DeltaState, Relation, WorldState
@@ -27,6 +28,8 @@ class ObjectificationReport:
     relation_confidence: float
     delta_validity: float
     delta_locality: float | None
+    frontier_completeness: float | None
+    semantic_identity_consistency: float | None
     contract_score: float
 
     def to_dict(self) -> dict[str, float | int | None]:
@@ -41,6 +44,8 @@ class ObjectificationReport:
             "relation_confidence": self.relation_confidence,
             "delta_validity": self.delta_validity,
             "delta_locality": self.delta_locality,
+            "frontier_completeness": self.frontier_completeness,
+            "semantic_identity_consistency": self.semantic_identity_consistency,
             "contract_score": self.contract_score,
         }
 
@@ -172,13 +177,18 @@ def evaluate_objectification(
     *,
     delta: DeltaState | None = None,
     expected_working_set: set[str] | None = None,
+    event_target: str | None = None,
+    reference_state: WorldState | None = None,
+    position_tolerance: float = 0.15,
 ) -> ObjectificationReport:
     """Evaluate whether a `WorldState` satisfies the WPU object contract.
 
     This does not judge whether perception found the "right" objects. It checks
     whether the supplied objectified state is usable by WPU: stable identities,
     valid relation endpoints, bounded confidence, valid deltas, and optional
-    locality against an expected causal working set.
+    locality against an expected causal working set. Optional frontier and
+    semantic checks compare the supplied state against expected event-local
+    objects or a reference objectified state when those are available.
     """
 
     object_ids = set(state.objects)
@@ -216,6 +226,24 @@ def evaluate_objectification(
         empty_value=0.0,
     )
 
+    frontier_completeness: float | None = None
+    if event_target is not None and expected_working_set is not None:
+        observed_frontier = {event_target} if event_target in object_ids else set()
+        observed_frontier.update(state.neighbors(event_target))
+        frontier_completeness = _safe_ratio(
+            len(observed_frontier & expected_working_set),
+            len(expected_working_set),
+            empty_value=1.0,
+        )
+
+    semantic_identity_consistency: float | None = None
+    if reference_state is not None:
+        semantic_identity_consistency = _semantic_identity_consistency(
+            reference_state,
+            state,
+            position_tolerance=position_tolerance,
+        )
+
     score_parts = [
         identity_coverage,
         relation_validity,
@@ -225,6 +253,10 @@ def evaluate_objectification(
     ]
     if delta_locality is not None:
         score_parts.append(delta_locality)
+    if frontier_completeness is not None:
+        score_parts.append(frontier_completeness)
+    if semantic_identity_consistency is not None:
+        score_parts.append(semantic_identity_consistency)
 
     return ObjectificationReport(
         object_count=object_count,
@@ -237,8 +269,38 @@ def evaluate_objectification(
         relation_confidence=relation_confidence,
         delta_validity=delta_validity,
         delta_locality=delta_locality,
+        frontier_completeness=frontier_completeness,
+        semantic_identity_consistency=semantic_identity_consistency,
         contract_score=fmean(score_parts),
     )
+
+
+def _semantic_identity_consistency(
+    reference_state: WorldState,
+    state: WorldState,
+    *,
+    position_tolerance: float,
+) -> float:
+    scores: list[float] = []
+    for object_id, reference in reference_state.objects.items():
+        candidate = state.objects.get(object_id)
+        if candidate is None:
+            scores.append(0.0)
+            continue
+        type_match = reference.type == candidate.type
+        reference_position = reference.attributes.get("position")
+        candidate_position = candidate.attributes.get("position")
+        position_match = _position_distance(reference_position, candidate_position) <= position_tolerance
+        scores.append(1.0 if type_match and position_match else 0.0)
+    return fmean(scores) if scores else 1.0
+
+
+def _position_distance(left: object, right: object) -> float:
+    if not isinstance(left, list) or not isinstance(right, list):
+        return math.inf
+    if len(left) < 3 or len(right) < 3:
+        return math.inf
+    return math.sqrt(sum((float(left[index]) - float(right[index])) ** 2 for index in range(3)))
 
 
 def infer_missing_relations(

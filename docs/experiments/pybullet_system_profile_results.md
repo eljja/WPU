@@ -23,6 +23,8 @@ Source CSV:
   - `selected_tensor_bytes`: tensor bytes after pre-tensor indexed projection.
   - `tensor_byte_reduction`: reduction from full tensorization to indexed WPU
     tensorization.
+  - `tensorize_latency_reduction`: measured CPU reduction from full-state
+    `StateGraphBatch` construction to selected-state construction.
   - `branch_memory_reduction`: reduction of `BaseState + branch deltas` versus
     full state copies for `B` branches.
   - `work_proxy_reduction`: reduction from dense `N^2 * B` object work proxy to
@@ -30,23 +32,23 @@ Source CSV:
 
 ## Summary
 
-| background objects | branches | total objects | selected objects | tensor byte reduction | branch memory reduction | work proxy reduction |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | 1 | 4.562 | 4.562 | 0.000000 | 0.000000 | 0.000000 |
-| 0 | 3 | 4.562 | 4.562 | 0.000000 | 0.269627 | 0.000000 |
-| 0 | 8 | 4.562 | 4.562 | 0.000000 | 0.477961 | 0.000000 |
-| 32 | 1 | 36.562 | 4.562 | 0.859694 | 0.000000 | 0.984326 |
-| 32 | 3 | 36.562 | 4.562 | 0.859694 | 0.617715 | 0.984326 |
-| 32 | 8 | 36.562 | 4.562 | 0.859694 | 0.826048 | 0.984326 |
-| 128 | 1 | 132.562 | 4.562 | 0.960764 | 0.000000 | 0.998804 |
-| 128 | 3 | 132.562 | 4.562 | 0.960764 | 0.653167 | 0.998804 |
-| 128 | 8 | 132.562 | 4.562 | 0.960764 | 0.861500 | 0.998804 |
-| 512 | 1 | 516.562 | 4.562 | 0.989891 | 0.000000 | 0.999921 |
-| 512 | 3 | 516.562 | 4.562 | 0.989891 | 0.663202 | 0.999921 |
-| 512 | 8 | 516.562 | 4.562 | 0.989891 | 0.871536 | 0.999921 |
-| 2048 | 1 | 2052.562 | 4.562 | 0.997454 | 0.000000 | 0.999995 |
-| 2048 | 3 | 2052.562 | 4.562 | 0.997454 | 0.665795 | 0.999995 |
-| 2048 | 8 | 2052.562 | 4.562 | 0.997454 | 0.874128 | 0.999995 |
+| background objects | branches | total objects | selected objects | tensor byte reduction | tensorize latency reduction | branch memory reduction | work proxy reduction |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 1 | 4.562 | 4.562 | 0.000000 | 0.171420 | 0.000000 | 0.000000 |
+| 0 | 3 | 4.562 | 4.562 | 0.000000 | 0.075183 | 0.269627 | 0.000000 |
+| 0 | 8 | 4.562 | 4.562 | 0.000000 | 0.090003 | 0.477961 | 0.000000 |
+| 32 | 1 | 36.562 | 4.562 | 0.859694 | 0.814191 | 0.000000 | 0.984326 |
+| 32 | 3 | 36.562 | 4.562 | 0.859694 | 0.832416 | 0.617715 | 0.984326 |
+| 32 | 8 | 36.562 | 4.562 | 0.859694 | 0.837179 | 0.826048 | 0.984326 |
+| 128 | 1 | 132.562 | 4.562 | 0.960764 | 0.947560 | 0.000000 | 0.998804 |
+| 128 | 3 | 132.562 | 4.562 | 0.960764 | 0.947610 | 0.653167 | 0.998804 |
+| 128 | 8 | 132.562 | 4.562 | 0.960764 | 0.949431 | 0.861500 | 0.998804 |
+| 512 | 1 | 516.562 | 4.562 | 0.989891 | 0.984421 | 0.000000 | 0.999921 |
+| 512 | 3 | 516.562 | 4.562 | 0.989891 | 0.983728 | 0.663202 | 0.999921 |
+| 512 | 8 | 516.562 | 4.562 | 0.989891 | 0.984730 | 0.871536 | 0.999921 |
+| 2048 | 1 | 2052.562 | 4.562 | 0.997454 | 0.995549 | 0.000000 | 0.999995 |
+| 2048 | 3 | 2052.562 | 4.562 | 0.997454 | 0.995649 | 0.665795 | 0.999995 |
+| 2048 | 8 | 2052.562 | 4.562 | 0.997454 | 0.995509 | 0.874128 | 0.999995 |
 
 ## Interpretation
 
@@ -54,15 +56,18 @@ This is the cleanest current systems evidence for the WPU large-`N` premise.
 When irrelevant background state grows from `N≈4.6` to `N≈2052.6`, the
 pre-tensor indexed WPU path keeps the neural state near `K≈4.6`. The resulting
 tensor-byte reduction rises to `0.997454`, and the sparse object-work proxy
-reduction rises to `0.999995`.
+reduction rises to `0.999995`. The measured CPU tensorization latency reduction
+also reaches `0.995549` for B=1 at the largest `N`, connecting the byte proxy to
+a real preprocessing-time measurement.
 
 The branch result is also aligned with the WPU memory thesis. At `B=8`, storing
 `BaseState + branch deltas` reduces the branch memory proxy by `0.874128` at
 the largest `N` relative to full state copies.
 
 This does not prove hardware speedup or lower power. It is still a Python-level
-proxy and does not include irregular sparse-kernel overhead, cache behavior,
-GPU occupancy, or real memory traffic. The defensible claim is narrower:
+tensorization measurement and does not include model-forward latency, irregular
+sparse-kernel overhead, cache behavior, GPU occupancy, or real energy. The
+defensible claim is narrower:
 
 ```text
 If the causal working set K is selected before tensorization, WPU exposes a
@@ -72,8 +77,8 @@ unless they implement an equivalent state index.
 
 ## Issues Found
 
-- The profiler measures proxy bytes and proxy work, not wall-clock latency or
-  energy.
+- The profiler now measures CPU tensorization latency, but not trained model
+  forward latency, CUDA allocator traffic, or energy.
 - `sys.getsizeof`-based state memory is a Python-object approximation, not an
   allocator-level memory measurement.
 - The indexed frontier is relation-derived and easy in this PyBullet scene.
@@ -83,8 +88,8 @@ unless they implement an equivalent state index.
 
 ## Next Steps
 
-- Add runtime latency and CUDA memory measurements for matched model forward
-  passes on the same `N` settings.
+- Add trained/randomized model forward latency and CUDA memory measurements for
+  matched forward passes on the same `N` settings.
 - Add objectification corruption to measure how relation errors change selected
   `K`, tensor reduction, and downstream loss.
 - Replace Python-object memory estimates with serialized byte size and

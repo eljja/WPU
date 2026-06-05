@@ -14,7 +14,7 @@ Source CSV:
 - Eval mechanism: `nominal`, `high_force`, `edge_shift`, `catch_heavy`.
 - Model: `wpu-cws-indexed-sparse`, `wpu-cws-indexed-local-dense`,
   `graph-transformer`, `serialized-token`.
-- Seed: `11, 13`.
+- Seed: `11, 13, 17, 19, 23`.
 - Background objects: `32`.
 - Training steps: `20`.
 - Eval samples: seed/mechanism마다 `36`.
@@ -24,40 +24,35 @@ Source CSV:
 
 | eval mechanism | model | accuracy | ECE | Brier | NLL | selected K |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| nominal | wpu-cws-indexed-sparse | 0.486111 | 0.216639 | 0.638486 | 1.044608 | 4.3625 |
-| nominal | wpu-cws-indexed-local-dense | 0.416666 | 0.221161 | 0.666338 | 1.065497 | 4.3625 |
-| nominal | graph-transformer | 0.361111 | 0.217941 | 0.719271 | 1.137500 | 4.3625 |
-| nominal | serialized-token | 0.402778 | 0.100940 | 0.630391 | 1.009570 | 4.3625 |
-| high_force | wpu-cws-indexed-sparse | 0.444445 | 0.110487 | 0.643738 | 1.063413 | 4.3625 |
-| high_force | wpu-cws-indexed-local-dense | 0.444445 | 0.369688 | 0.804497 | 1.376495 | 4.3625 |
-| high_force | graph-transformer | 0.430555 | 0.393302 | 0.846081 | 1.453774 | 4.3625 |
-| high_force | serialized-token | 0.458334 | 0.188049 | 0.686918 | 1.124732 | 4.3625 |
-| edge_shift | wpu-cws-indexed-sparse | 0.597222 | 0.171235 | 0.624835 | 1.037711 | 4.3625 |
-| edge_shift | wpu-cws-indexed-local-dense | 0.527778 | 0.168204 | 0.626533 | 1.051272 | 4.3625 |
-| edge_shift | graph-transformer | 0.472222 | 0.195111 | 0.667463 | 1.130049 | 4.3625 |
-| edge_shift | serialized-token | 0.472222 | 0.119432 | 0.644900 | 1.072424 | 4.3625 |
-| catch_heavy | wpu-cws-indexed-sparse | 0.194445 | 0.248698 | 0.686505 | 1.106100 | 4.8125 |
-| catch_heavy | wpu-cws-indexed-local-dense | 0.277778 | 0.383692 | 0.779896 | 1.207206 | 4.8125 |
-| catch_heavy | graph-transformer | 0.361112 | 0.355464 | 0.789159 | 1.211036 | 4.8125 |
-| catch_heavy | serialized-token | 0.402778 | 0.198037 | 0.637309 | 1.004722 | 4.8125 |
+| nominal | wpu-cws-indexed-sparse | 0.427778 | 0.124159 | 0.636457 | 1.046428 | 4.3600 |
+| nominal | wpu-cws-indexed-local-dense | 0.394444 | 0.200036 | 0.658903 | 1.054336 | 4.3600 |
+| nominal | graph-transformer | 0.411111 | 0.221604 | 0.675927 | 1.077000 | 4.3600 |
+| nominal | serialized-token | 0.455556 | 0.140774 | 0.628618 | 1.012293 | 4.3600 |
+| high_force | wpu-cws-indexed-sparse | 0.416667 | 0.112684 | 0.638699 | 1.055790 | 4.3600 |
+| high_force | wpu-cws-indexed-local-dense | 0.416667 | 0.342607 | 0.777555 | 1.295899 | 4.3600 |
+| high_force | graph-transformer | 0.416667 | 0.382426 | 0.828363 | 1.420038 | 4.3600 |
+| high_force | serialized-token | 0.433333 | 0.232135 | 0.703167 | 1.154525 | 4.3600 |
+| edge_shift | wpu-cws-indexed-sparse | 0.522222 | 0.178233 | 0.622615 | 1.033803 | 4.3600 |
+| edge_shift | wpu-cws-indexed-local-dense | 0.477778 | 0.185243 | 0.603099 | 0.999774 | 4.3600 |
+| edge_shift | graph-transformer | 0.522222 | 0.224137 | 0.614147 | 1.033391 | 4.3600 |
+| edge_shift | serialized-token | 0.555555 | 0.167665 | 0.603833 | 0.997661 | 4.3600 |
+| catch_heavy | wpu-cws-indexed-sparse | 0.300000 | 0.252880 | 0.662538 | 1.078916 | 4.8050 |
+| catch_heavy | wpu-cws-indexed-local-dense | 0.366667 | 0.313698 | 0.728429 | 1.135705 | 4.8050 |
+| catch_heavy | graph-transformer | 0.322222 | 0.355048 | 0.763415 | 1.185473 | 4.8050 |
+| catch_heavy | serialized-token | 0.327778 | 0.229288 | 0.670691 | 1.058393 | 4.8050 |
 
 ## 해석
 
 결과는 mixed지만 유용하다.
 
-Positive regime은 `edge_shift`다. Sparse WPU accuracy는 `0.597222`로 local-dense
-WPU, graph, serialized-token baseline보다 높다. Event-local object graph가 식별 가능하고
-mechanism shift가 여전히 local한 경우 WPU premise와 맞는 결과다.
+5-seed 결과는 regime boundary를 바꾼다. WPU는 `catch_heavy`에서 local-dense path로
+`0.366667` accuracy를 기록해 best non-WPU `0.327778`보다 높다. 하지만 `edge_shift`와
+`high_force`에서는 baseline에 밀린다. 따라서 2-seed에서 보였던 `edge_shift` 우위는
+강한 shift claim으로 쓰기에는 안정적이지 않다.
 
-Negative regime은 `catch_heavy`다. WPU sparse는 `0.194445`까지 떨어지고,
-serialized-token baseline은 `0.402778`을 기록한다. 현재 WPU의 state/retrieval/branch
-head가 바뀐 catch-action prior를 충분히 사용하지 못한다는 뜻이다. 이 결과는 숨기면 안
-된다. WPU claim에 필요한 regime boundary다.
-
-Calibration도 아직 해결되지 않았다. ECE는 model과 mechanism에 따라 크게 달라진다.
-Sparse WPU는 `high_force`에서 낮은 ECE(`0.110487`)를 보이지만 `catch_heavy`에서는
-정확도가 낮다. Serialized-token은 이 짧은 pilot에서 더 잘 calibrate된 경우가 많다.
-따라서 향후 WPU claim은 accuracy와 calibration을 함께 보고해야 한다.
+Calibration은 aggregate 기준으로 개선됐다. Dashboard 기준 평균 WPU ECE는 평균 baseline
+ECE보다 낮아졌다. 하지만 accuracy가 여전히 mixed이고 multi-step rollout calibration이
+아니므로 calibration 문제가 해결됐다고 주장하면 안 된다.
 
 ## 결과
 

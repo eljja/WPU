@@ -87,6 +87,17 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
 
 
 def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[str, object]]) -> str:
+    labels = {str(row["run_label"]) for row in rows}
+    regularized_note = []
+    if "regularized" in labels:
+        regularized_note = [
+            "",
+            "The regularized run adds a training-time target-relative delta-norm",
+            "penalty. It is intentionally reported as a raw rollout, not as a",
+            "guarded state-store result. In the current evidence it only slightly",
+            "improves raw WPU sparse H=25 integrity, so simple delta-norm",
+            "regularization is not sufficient to solve model-delta instability.",
+        ]
     lines = [
         "# PyBullet State-Integrity Audit",
         "",
@@ -131,6 +142,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "H=25 integrity above the dashboard threshold, but it does not prove",
             "the underlying delta model is stable. Future reports must distinguish",
             "raw model deltas from guarded state-store deltas.",
+            *regularized_note,
             "",
             "This makes state integrity a first-class WPU metric:",
             "",

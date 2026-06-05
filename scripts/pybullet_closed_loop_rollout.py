@@ -51,6 +51,8 @@ def main() -> None:
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--delta-clip", type=float, default=0.0)
+    parser.add_argument("--delta-norm-penalty", type=float, default=0.0)
+    parser.add_argument("--delta-target-norm-slack", type=float, default=0.5)
     parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-position-norm", type=float, default=25.0)
     parser.add_argument("--max-velocity-norm", type=float, default=25.0)
@@ -101,6 +103,12 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
         prediction = model(batch, num_branches=3, route_branches=3)
         loss = F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
         loss = loss + 0.1 * F.mse_loss(prediction.object_delta, target_delta)
+        if args.delta_norm_penalty > 0.0:
+            loss = loss + args.delta_norm_penalty * _delta_norm_excess_loss(
+                prediction.object_delta,
+                target_delta,
+                slack=args.delta_target_norm_slack,
+            )
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -189,8 +197,16 @@ def _rollout_condition(
         "selected_k_mean": round(_mean(selected_k_values), 6),
         "final_majority_branch_ratio": round(max(final_branch_counts.values(), default=0) / max(args.samples, 1), 6),
         "delta_clip": args.delta_clip,
+        "delta_norm_penalty": args.delta_norm_penalty,
+        "delta_target_norm_slack": args.delta_target_norm_slack,
         "integrity_projection": bool(args.integrity_projection),
     }
+
+
+def _delta_norm_excess_loss(prediction_delta: torch.Tensor, target_delta: torch.Tensor, *, slack: float) -> torch.Tensor:
+    prediction_norm = prediction_delta[..., 1:7].norm(dim=-1)
+    target_norm = target_delta[..., 1:7].norm(dim=-1)
+    return F.relu(prediction_norm - target_norm - slack).pow(2).mean()
 
 
 def _apply_predicted_delta(

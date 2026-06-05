@@ -41,13 +41,13 @@ construction을 검증했다는 뜻은 아니다.
 | Gap | 왜 중요한가 | 현재 증거 | 필요한 다음 증거 |
 |---|---|---|---|
 | broad baseline superiority가 없음 | matched token/graph/world-model baseline 없이 보편 우월 주장은 reject될 가능성이 높다. | v1은 large `N`에서 WPU가 지는 결과를 보였고, v2는 working-set-control gain은 보이나 broad dominance는 아니다. | `N`, `K`, branch count, horizon을 통제한 parameter-matched, compute-matched token/graph baseline. |
-| candidate-oracle gap이 남아 있음 | v2는 유용한 control surface를 보여주지만 deployed selector는 oracle 성능을 충분히 사용하지 못한다. | 최신 gap audit은 risk-adjusted mechanism routing이 `K=8,16,32`에서 oracle gain의 `0.195451`, `0.244220`, `0.042131`만 회수함을 보인다. Decomposition audit은 이것이 aggregate policy 하나를 누락했기 때문이 아님을 보인다. No-harm gate audit은 margin-only sample-level gate도 충분하지 않음을 추가로 보인다. 최고 closure는 `0.082804`이고 K=8/16은 음수 closure다. | joint retriever-propagator training, calibrated candidate-regret target, selector uncertainty, no-harm rejection loss, transfer-stable candidate scoring. |
-| cross-seed/cross-task transfer가 불완전함 | synthetic gain은 generator artifact에 overfit될 수 있다. | 여러 cross-seed reranker/gate가 실패하거나 부분 개선에 그쳤다. PyBullet mechanism-family shift benchmark는 mixed result를 보인다. WPU sparse는 `edge_shift`에서 앞서지만 `catch_heavy`에서는 크게 진다. | 더 큰 seed sweep, 새 synthetic generator, leave-generator-family-out validation, mechanism-aware branch prior. |
-| long-horizon state integrity가 증명되지 않음 | persistent state는 delta overlay가 장기적으로 망가지지 않을 때만 장점이다. | PyBullet state-integrity audit이 constraint validity, bounded delta drift, branch stability를 추적한다. Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어진다. Guarded state-store projection은 sparse WPU의 applied-state integrity를 `0.958508`, local-dense WPU를 `0.964322`까지 올리지만 raw delta instability는 남아 있다. | rollback, correction, calibration, uncertainty escalation, state-consistency loss를 포함한 rollout training. |
+| candidate-oracle gap이 남아 있음 | v2는 유용한 control surface를 보여주지만 deployed selector는 oracle 성능을 충분히 사용하지 못한다. | Risk-adjusted mechanism routing의 기존 최고 closure는 `0.244220`이었다. Margin-only sample-level gate는 최고 `0.082804`로 실패했다. Direct candidate-regret gate는 K=16에서 최고 closure를 `0.308651`까지 올렸지만 목표 `0.5`에는 못 미치며 harmful candidate를 자주 accept한다. | joint retriever-propagator training, 더 강한 calibrated candidate-regret target, selector uncertainty, harmful-accept penalty, no-harm rejection loss, transfer-stable candidate scoring. |
+| cross-seed/cross-task transfer가 불완전함 | synthetic gain은 generator artifact에 overfit될 수 있다. | 여러 cross-seed reranker/gate가 실패하거나 부분 개선에 그쳤다. 5-seed PyBullet mechanism-family shift benchmark도 mixed result다. WPU local-dense는 `catch_heavy`에서 앞서지만 `edge_shift`와 `high_force`에서는 baseline에 밀린다. | 더 큰 seed sweep, 새 synthetic generator, leave-generator-family-out validation, mechanism-aware branch prior. |
+| long-horizon state integrity가 증명되지 않음 | persistent state는 delta overlay가 장기적으로 망가지지 않을 때만 장점이다. | PyBullet state-integrity audit이 constraint validity, bounded delta drift, branch stability를 추적한다. Raw WPU sparse는 horizon 25에서 integrity `0.084722`까지 떨어진다. Guarded state-store projection은 sparse WPU의 applied-state integrity를 `0.958508`, local-dense WPU를 `0.964322`까지 올리지만 raw delta instability는 남아 있다. Target-relative delta-norm regularized raw rollout도 sparse H=25 integrity를 `0.087153`까지만 올린다. | rollback, correction, calibration, uncertainty escalation, unsafe-delta rejection, state-consistency loss를 포함한 rollout training. |
 | real-world 또는 simulator-backed grounding이 없음 | world processing claim은 toy object physics 밖의 증거가 필요하다. | 현재 evidence는 synthetic robot-cup 및 CWS data다. | MuJoCo/Isaac/robotics/game-server/digital-twin benchmark와 explicit state extraction. |
 | perception-to-state가 해결되지 않음 | WPU는 explicit state가 있다고 가정한다. 외부 사용자는 pixels가 어떻게 object/relation이 되는지 물을 것이다. | 문서에서는 perception adapter를 future work로 제한하고 있다. | supervised segmentation, slot discovery, simulator-provided object label 기반 object-state adapter baseline. |
-| hardware claim이 뒷받침되지 않음 | Processing unit 주장은 PyTorch 모델만으로 부족하고 systems evidence가 필요하다. | PyBullet systems profile이 full-state tensorization, indexed WPU tensorization, sparse work proxy, branch-overlay memory proxy를 분리했다. `N≈2052.6`에서 indexed tensor byte는 `0.997454` 줄고 `K≈4.6`을 유지하지만, 아직 Python proxy다. | sparse frontier kernel profiling, 실제 memory-traffic accounting, allocator-level branch-overlay measurement, matched-accuracy speedup. |
-| calibration/uncertainty가 얕음 | branch probability는 distribution shift에서 calibration이 맞아야 의미가 있다. | PyBullet shift generalization은 held-out mechanism family에서 ECE, Brier, NLL을 보고하지만 calibration은 mixed이며 일부는 serialized-token이 낫다. | multi-step ECE/Brier/NLL, branch collapse test, temperature/calibration head, uncertainty-gated recompute experiment. |
+| hardware claim이 뒷받침되지 않음 | Processing unit 주장은 PyTorch 모델만으로 부족하고 systems evidence가 필요하다. | PyBullet systems profile이 full-state tensorization, indexed WPU tensorization, sparse work proxy, branch-overlay memory proxy, CPU tensorization latency를 분리했다. `N≈2052.6`에서 indexed tensor byte는 `0.997454` 줄고 `K≈4.6`을 유지하며, CPU tensorization latency reduction은 `0.995549`에 도달한다. 하지만 아직 model-forward, GPU, power, hardware evidence는 아니다. | sparse frontier kernel profiling, 실제 memory-traffic accounting, allocator-level branch-overlay measurement, CUDA/model-forward profiling, matched-accuracy speedup. |
+| calibration/uncertainty가 얕음 | branch probability는 distribution shift에서 calibration이 맞아야 의미가 있다. | PyBullet shift generalization은 held-out mechanism family에서 ECE, Brier, NLL을 보고한다. 5-seed aggregate ECE ratio는 WPU가 baseline 대비 `0.875306`으로 개선됐지만, 아직 single-step이고 accuracy가 mixed다. | multi-step ECE/Brier/NLL, branch collapse test, temperature/calibration head, uncertainty-gated recompute experiment. |
 | 객체화 품질이 완전히 해결되지 않음 | WPU 성능은 올바른 identity, relation, delta construction에 의존한다. | `ObjectificationReport`는 이제 frontier completeness와 semantic identity consistency를 포함하고, PyBullet quality benchmark는 identity recall, relation precision/recall, frontier recall, selected `K`, component score를 기록한다. | Objectification component를 downstream loss 및 실제 perception/state adapter quality와 연결한다. |
 | relation repair가 false hypothesis를 추가할 수 있음 | Repair는 누락된 local connectivity를 복구할 수 있지만, spurious edge는 `K`를 키우고 sparse precision을 낮출 수 있다. | relation-repair probe는 ungated repair가 frontier recall은 복구하지만 near distractor에서 precision `0.078994`, dense distractor에서 `0.013244`로 떨어짐을 보인다. Type-gated 및 learned-scorer repair는 in-distribution에서 precision `1.000000`을 회복한다. Learned scorer는 role/affordance state가 보존되면 aliased type name을 넘어 transfer하고 toy downstream branch accuracy를 `0.343750`에서 `0.671875`로 올리지만, type과 role 정보가 모두 제거되면 실패한다. Ungated dense-distractor repair는 frontier recall을 복구해도 downstream loss를 악화시킨다. | simulator relation 대비 repair precision/recall, repair 전후 downstream loss, cross-generator 및 hidden-mechanism shift에서 harmful repaired edge를 reject하는 learned gate. |
 | unknown-theory discovery는 장기 연구 프로그램일 뿐임 | 아직 모르는 규칙성을 드러내는 learned relation은 알려진 relation 사용보다 훨씬 강한 주장이다. | Synthetic evidence는 이제 relation transfer, local-law transfer, OOD stress, revision을 포함한다. Revision probe는 gain-shift MSE를 `0.115978`에서 `0.000342`로, power-shift MSE를 `0.054596`에서 `0.008887`로 낮춘다. Oracle relation revision은 `0.000232`에 도달한다. | simulator-backed held-out rule 또는 hidden-mechanism benchmark에서 learned object relation이 prediction을 개선하고 반증 가능한 새 구조를 제시하는 증거. |
@@ -70,20 +70,21 @@ projection 덕분에 fail에서 partial로 올라갔지만 raw delta instability
 
 ## 즉시 개선 우선순위
 
-1. token processing으로 돌아가지 않고 현재 best gap-closure fraction `0.244220`을
-   넘어 candidate-oracle gap을 줄인다. Decomposition audit에 따르면 aggregate
-   policy selection만으로는 부족하다. No-harm gate audit도 margin-only threshold가
-   해법이 아님을 보였으므로 per-candidate uncertainty, calibrated regret target,
-   no-harm rejection loss가 필요하다.
-2. long-horizon state integrity를 단순히 보고하는 것을 넘어 rollback, correction,
-   uncertainty escalation, consistency loss로 개선한다.
+1. token processing으로 돌아가지 않고 현재 best gap-closure fraction `0.308651`을
+   넘어 candidate-oracle gap을 줄인다. Candidate-regret target은 aggregate
+   policy selection보다 개선됐지만 harmful accept가 너무 많다. 다음 단계는 더 강한
+   accept/reject calibration, harmful-candidate penalty, cross-seed perturbation이다.
+2. long-horizon state integrity를 단순히 보고하는 것을 넘어 개선한다. 단순
+   delta-norm regularization은 부족하므로 rollback, correction, uncertainty
+   escalation, unsafe-delta rejection, consistency loss가 필요하다.
 3. explicit object state를 사용할 수 있는 simulator-backed benchmark를 추가한다.
 4. 첫 PyBullet mechanism-family shift benchmark를 더 많은 seed, 더 어려운
    mechanism, leave-generator-family-out validation으로 확장한다.
 5. Calibration을 단순 보고가 아니라 개선한다. Temperature/calibration head,
    uncertainty-gated fallback, multi-step ECE/Brier/NLL을 추가한다.
-6. PyBullet systems profile을 proxy byte에서 runtime, CUDA memory,
-   allocator-level memory, matched-accuracy speedup으로 확장한다.
+6. PyBullet systems profile을 CPU tensorization latency를 넘어 model forward
+   runtime, CUDA memory, allocator-level memory, matched-accuracy speedup으로
+   확장한다.
 7. `ObjectificationReport` component metric을 downstream propagation loss와 실제
    perception/state adapter quality에 연결한다.
 8. Repaired edge를 유용하다고 간주하기 전에 downstream impact를 평가한다. No-repair, ungated, type-gated, role-aware learned scoring을 비교한다.

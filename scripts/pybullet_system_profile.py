@@ -6,6 +6,7 @@ import csv
 from pathlib import Path
 import statistics
 import sys
+import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -90,8 +91,12 @@ def _profile_sample(
 ) -> dict[str, str]:
     selected_ids = _indexed_object_ids(state, event, max_nodes=max_nodes, max_depth=max_depth)
     selected_state = _project_state(state, selected_ids)
+    full_start = time.perf_counter()
     full_batch = StateGraphBatch.from_world_states([state], [event])
+    full_tensorize_ms = (time.perf_counter() - full_start) * 1000.0
+    selected_start = time.perf_counter()
     selected_batch = StateGraphBatch.from_world_states([selected_state], [event])
+    selected_tensorize_ms = (time.perf_counter() - selected_start) * 1000.0
 
     full_tensor_bytes = _batch_tensor_bytes(full_batch)
     selected_tensor_bytes = _batch_tensor_bytes(selected_batch)
@@ -124,6 +129,9 @@ def _profile_sample(
         "full_tensor_bytes": str(full_tensor_bytes),
         "selected_tensor_bytes": str(selected_tensor_bytes),
         "tensor_byte_reduction": f"{_safe_reduction(full_tensor_bytes, selected_tensor_bytes):.6f}",
+        "full_tensorize_ms": f"{full_tensorize_ms:.6f}",
+        "selected_tensorize_ms": f"{selected_tensorize_ms:.6f}",
+        "tensorize_latency_reduction": f"{_safe_reduction(full_tensorize_ms, selected_tensorize_ms):.6f}",
         "full_state_memory_bytes": str(full_state_memory),
         "selected_state_memory_bytes": str(selected_state_memory),
         "selected_state_memory_reduction": f"{_safe_reduction(full_state_memory, selected_state_memory):.6f}",
@@ -200,6 +208,9 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, str]]:
         "full_tensor_bytes",
         "selected_tensor_bytes",
         "tensor_byte_reduction",
+        "full_tensorize_ms",
+        "selected_tensorize_ms",
+        "tensorize_latency_reduction",
         "full_state_memory_bytes",
         "selected_state_memory_bytes",
         "selected_state_memory_reduction",

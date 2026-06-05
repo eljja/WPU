@@ -10,6 +10,7 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_clipped.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_guarded.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_regularized.csv`
 
 Derived CSV:
 
@@ -34,6 +35,8 @@ Derived CSV:
 | raw | wpu-cws-indexed-sparse | 5 | 0.200000 | 0.799330 | 0.125000 | 0.837023 |
 | raw | wpu-cws-indexed-sparse | 10 | 0.531250 | 3.534072 | 0.203704 | 0.543379 |
 | raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.076389 | 0.084722 |
+| regularized | wpu-cws-indexed-local-dense | 25 | 0.536667 | 1.915983 | 0.044271 | 0.628920 |
+| regularized | wpu-cws-indexed-sparse | 25 | 3.316667 | 1797100.815468 | 0.064237 | 0.087153 |
 
 ## Interpretation
 
@@ -44,6 +47,12 @@ state-store projection can protect the applied state and lift WPU
 H=25 integrity above the dashboard threshold, but it does not prove
 the underlying delta model is stable. Future reports must distinguish
 raw model deltas from guarded state-store deltas.
+
+The regularized run adds a training-time target-relative delta-norm
+penalty. It is intentionally reported as a raw rollout, not as a
+guarded state-store result. In the current evidence it only slightly
+improves raw WPU sparse H=25 integrity, so simple delta-norm
+regularization is not sufficient to solve model-delta instability.
 
 This makes state integrity a first-class WPU metric:
 

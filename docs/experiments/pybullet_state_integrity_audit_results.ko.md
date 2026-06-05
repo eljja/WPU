@@ -9,6 +9,7 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_clipped.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_guarded.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_regularized.csv`
 
 Derived CSV:
 
@@ -33,6 +34,8 @@ Derived CSV:
 | raw | wpu-cws-indexed-sparse | 5 | 0.200000 | 0.799330 | 0.125000 | 0.837023 |
 | raw | wpu-cws-indexed-sparse | 10 | 0.531250 | 3.534072 | 0.203704 | 0.543379 |
 | raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.076389 | 0.084722 |
+| regularized | wpu-cws-indexed-local-dense | 25 | 0.536667 | 1.915983 | 0.044271 | 0.628920 |
+| regularized | wpu-cws-indexed-sparse | 25 | 3.316667 | 1797100.815468 | 0.064237 | 0.087153 |
 
 ## 해석
 
@@ -42,6 +45,11 @@ invalid state를 만들 수 있다. Guarded state-store projection은 applied st
 H=25 integrity를 dashboard threshold 위로 올린다. 그러나 source CSV의 guarded sparse run은
 projection 이전 raw delta norm이 여전히 약 `1.9e6`임을 기록하므로, underlying delta model이
 안정적이라는 증거는 아니다.
+
+Regularized run은 학습 단계에 target-relative delta-norm penalty를 추가한 raw rollout이다.
+현재 결과에서는 sparse H=25 integrity가 `0.084722`에서 `0.087153`으로만 올라가고,
+local-dense H=25도 `0.618283`에서 `0.628920`으로 소폭 개선된다. 따라서 단순 delta-norm
+regularization은 raw model-delta instability를 해결하지 못한다.
 
 따라서 state integrity는 WPU의 first-class metric이어야 한다.
 

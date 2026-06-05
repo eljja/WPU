@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+import argparse
+import csv
+from pathlib import Path
+import statistics
+
+
+DEFAULT_INPUT = Path("docs/experiments/wpu_v2_candidate_regret_gate.csv")
+DEFAULT_OUT_CSV = Path("docs/experiments/wpu_v2_candidate_regret_gate_summary.csv")
+DEFAULT_OUT_MD = Path("docs/experiments/wpu_v2_candidate_regret_gate_results.md")
+DEFAULT_OUT_KO_MD = Path("docs/experiments/wpu_v2_candidate_regret_gate_results.ko.md")
+
+
+DEPLOYED_POLICIES = ["candidate_regret_gate", "uncertainty_regret_gate"]
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Summarize candidate-regret gate closure for WPU v2 priority-1 tracking."
+    )
+    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--out-csv", type=Path, default=DEFAULT_OUT_CSV)
+    parser.add_argument("--out-md", type=Path, default=DEFAULT_OUT_MD)
+    parser.add_argument("--out-ko-md", type=Path, default=DEFAULT_OUT_KO_MD)
+    args = parser.parse_args()
+
+    rows = _read_rows(args.input)
+    summary = _summarize(rows, args.input)
+    args.out_csv.parent.mkdir(parents=True, exist_ok=True)
+    _write_csv(args.out_csv, summary)
+    args.out_md.write_text(_render_markdown(summary, args.input, korean=False), encoding="utf-8")
+    args.out_ko_md.write_text(_render_markdown(summary, args.input, korean=True), encoding="utf-8")
+    print(f"wrote={args.out_csv}")
+    print(f"wrote={args.out_md}")
+    print(f"wrote={args.out_ko_md}")
+
+
+def _read_rows(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _summarize(rows: list[dict[str, str]], source: Path) -> list[dict[str, object]]:
+    out: list[dict[str, object]] = []
+    for causal_k in sorted({int(row["causal_k"]) for row in rows}):
+        group = [row for row in rows if int(row["causal_k"]) == causal_k]
+        policies = sorted({row["policy"] for row in group})
+        losses = {
+            policy: statistics.fmean(float(row["loss"]) for row in group if row["policy"] == policy)
+            for policy in policies
+        }
+        accuracies = {
+            policy: statistics.fmean(float(row["accuracy"]) for row in group if row["policy"] == policy)
+            for policy in policies
+        }
+        matches = {
+            policy: statistics.fmean(float(row["oracle_match_rate"]) for row in group if row["policy"] == policy)
+            for policy in policies
+        }
+        static_loss = losses["static_learned_interaction"]
+        oracle_loss = losses["generated_plus_composition_oracle"]
+        oracle_gap = static_loss - oracle_loss
+        for policy in DEPLOYED_POLICIES:
+            policy_rows = [row for row in group if row["policy"] == policy]
+            deployed_gain = static_loss - losses[policy]
+            gap_closure = deployed_gain / oracle_gap if oracle_gap > 0 else 0.0
+            out.append(
+                {
+                    "source": source.as_posix(),
+                    "total_objects_n": int(float(policy_rows[0]["total_objects_n"])),
+                    "causal_k": causal_k,
+                    "policy": policy,
+                    "static_loss": round(static_loss, 6),
+                    "candidate_oracle_loss": round(oracle_loss, 6),
+                    "candidate_oracle_gain_over_static": round(oracle_gap, 6),
+                    "policy_loss": round(losses[policy], 6),
+                    "policy_accuracy": round(accuracies[policy], 6),
+                    "oracle_match_rate": round(matches[policy], 6),
+                    "deployed_gain_over_static": round(deployed_gain, 6),
+                    "gap_closure_fraction": round(gap_closure, 6),
+                    "remaining_gap": round(losses[policy] - oracle_loss, 6),
+                    "mean_accept_rate": _mean_optional(policy_rows, "accept_rate"),
+                    "mean_harmful_accept_rate": _mean_optional(policy_rows, "harmful_accept_rate"),
+                    "mean_regret_corr": _mean_optional(policy_rows, "regret_corr"),
+                    "mean_predicted_sigma": _mean_optional(policy_rows, "predicted_sigma_mean"),
+                    "seed_count": len({int(row["seed"]) for row in policy_rows}),
+                    "failure_mode": _failure_mode(gap_closure, _mean_optional(policy_rows, "harmful_accept_rate")),
+                }
+            )
+    return out
+
+
+def _mean_optional(rows: list[dict[str, str]], key: str) -> float:
+    values = [float(row[key]) for row in rows if row.get(key) not in {None, ""}]
+    return round(statistics.fmean(values), 6) if values else 0.0
+
+
+def _failure_mode(gap_closure: float, harmful_accept_rate: float) -> str:
+    if gap_closure < 0.0:
+        return "harmful_transfer"
+    if harmful_accept_rate > 0.25:
+        return "insufficient_no_harm_rejection"
+    if gap_closure < 0.5:
+        return "partial_but_insufficient_gap_closure"
+    return "passes_current_p1_threshold"
+
+
+def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: bool) -> str:
+    best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
+    if korean:
+        title = "# Candidate Regret Gate 결과"
+        intro = (
+            "이 문서는 candidate별 `candidate_loss - learned_loss`를 직접 예측하고, "
+            "예측 regret이 충분히 낮을 때만 baseline 대신 선택하는 P1 probe를 요약한다."
+        )
+        conclusion = (
+            f"최고 closure는 `{float(best['gap_closure_fraction']):.6f}` "
+            f"(`K={best['causal_k']}`, `{best['policy']}`)다. 이는 이전 best `0.244220`을 "
+            "넘지만 P1 목표 `0.5`에는 못 미친다. 특히 harmful accept rate가 높아 "
+            "regret 예측은 candidate-oracle gap을 줄이기 시작했지만 no-harm rejection은 아직 약하다."
+        )
+        notes_title = "## 해석"
+        notes = [
+            "Candidate-regret target은 margin-only gate보다 강한 신호다.",
+            "K=16에서는 closure가 개선됐지만 K=8/32 generalization은 충분하지 않다.",
+            "다음 개선은 accept/reject calibration, harmful-candidate penalty, seed/domain perturbation을 학습 objective에 더 강하게 넣는 것이다.",
+        ]
+    else:
+        title = "# Candidate Regret Gate Results"
+        intro = (
+            "This report summarizes a P1 probe that directly predicts "
+            "`candidate_loss - learned_loss` and deploys a candidate only when "
+            "predicted regret is sufficiently favorable."
+        )
+        conclusion = (
+            f"The best closure is `{float(best['gap_closure_fraction']):.6f}` "
+            f"(`K={best['causal_k']}`, `{best['policy']}`). This improves over the "
+            "previous best `0.244220`, but it remains below the P1 target `0.5`. "
+            "The high harmful-accept rate shows that candidate-regret prediction "
+            "starts to close the gap, while no-harm rejection remains weak."
+        )
+        notes_title = "## Interpretation"
+        notes = [
+            "Candidate-regret targets provide a stronger signal than margin-only gating.",
+            "K=16 improves, but K=8/32 generalization is still insufficient.",
+            "The next improvement should strengthen accept/reject calibration, harmful-candidate penalties, and seed/domain perturbation in the learning objective.",
+        ]
+
+    lines = [
+        title,
+        "",
+        intro,
+        "",
+        f"Source CSV: `{source.as_posix()}`",
+        "",
+        conclusion,
+        "",
+        "| K | Policy | Loss | Accuracy | Oracle gain | Deployed gain | Closure | Accept | Harmful accept | Regret corr | Failure mode |",
+        "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in rows:
+        lines.append(
+            f"| {row['causal_k']} | `{row['policy']}` | {float(row['policy_loss']):.6f} | "
+            f"{float(row['policy_accuracy']):.6f} | {float(row['candidate_oracle_gain_over_static']):.6f} | "
+            f"{float(row['deployed_gain_over_static']):.6f} | {float(row['gap_closure_fraction']):.6f} | "
+            f"{float(row['mean_accept_rate']):.6f} | {float(row['mean_harmful_accept_rate']):.6f} | "
+            f"{float(row['mean_regret_corr']):.6f} | `{row['failure_mode']}` |"
+        )
+    lines.extend(["", notes_title, ""])
+    lines.extend(f"- {note}" for note in notes)
+    return "\n".join(lines) + "\n"
+
+
+if __name__ == "__main__":
+    main()

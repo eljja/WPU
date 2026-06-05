@@ -20,10 +20,10 @@ irrelevant background state.
 - Baseline input: full simulator-derived state graph.
 - Models: `wpu-cws-indexed-sparse`, `wpu-cws-indexed-local-dense`,
   `graph-transformer`, `serialized-token`.
-- Seeds: `11, 13`.
+- Seeds: `11, 13, 17, 19, 23`.
 - Background objects: `0, 32, 128`.
-- Training: 30 steps, batch 8, hidden 64.
-- Evaluation: 48 samples per condition.
+- Training: 20 steps, batch 8, hidden 64.
+- Evaluation: 36 samples per condition.
 
 Raw results:
 
@@ -37,18 +37,18 @@ Source CSV:
 
 | background N | model | branch accuracy | majority | latency ms/sample | selected K | causal recall | dense compute |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0 | graph-transformer | 0.583 | 0.333 | 2.211 | 4.44 | 1.000 | 1.000 |
-| 0 | serialized-token | 0.562 | 0.333 | 0.139 | 4.44 | 1.000 | 1.000 |
-| 0 | wpu-cws-indexed-local-dense | 0.573 | 0.333 | 1.432 | 4.44 | 1.000 | 1.000 |
-| 0 | wpu-cws-indexed-sparse | 0.552 | 0.333 | 1.471 | 4.44 | 1.000 | 0.000 |
-| 32 | graph-transformer | 0.531 | 0.333 | 11.840 | 4.44 | 1.000 | 1.000 |
-| 32 | serialized-token | 0.573 | 0.333 | 0.136 | 4.44 | 1.000 | 1.000 |
-| 32 | wpu-cws-indexed-local-dense | 0.573 | 0.333 | 1.574 | 4.44 | 1.000 | 1.000 |
-| 32 | wpu-cws-indexed-sparse | 0.552 | 0.333 | 1.288 | 4.44 | 1.000 | 0.000 |
-| 128 | graph-transformer | 0.521 | 0.333 | 42.716 | 4.44 | 1.000 | 1.000 |
-| 128 | serialized-token | 0.562 | 0.333 | 0.303 | 4.44 | 1.000 | 1.000 |
-| 128 | wpu-cws-indexed-local-dense | 0.573 | 0.333 | 1.550 | 4.44 | 1.000 | 1.000 |
-| 128 | wpu-cws-indexed-sparse | 0.552 | 0.333 | 1.920 | 4.44 | 1.000 | 0.000 |
+| 0 | graph-transformer | 0.594 | 0.333 | 2.412 | 4.41 | 1.000 | 1.000 |
+| 0 | serialized-token | 0.561 | 0.333 | 0.183 | 4.41 | 1.000 | 1.000 |
+| 0 | wpu-cws-indexed-local-dense | 0.544 | 0.333 | 1.542 | 4.41 | 1.000 | 1.000 |
+| 0 | wpu-cws-indexed-sparse | 0.561 | 0.333 | 1.462 | 4.41 | 1.000 | 0.000 |
+| 32 | graph-transformer | 0.522 | 0.333 | 14.020 | 4.41 | 1.000 | 1.000 |
+| 32 | serialized-token | 0.528 | 0.333 | 0.204 | 4.41 | 1.000 | 1.000 |
+| 32 | wpu-cws-indexed-local-dense | 0.544 | 0.333 | 1.495 | 4.41 | 1.000 | 1.000 |
+| 32 | wpu-cws-indexed-sparse | 0.561 | 0.333 | 1.249 | 4.41 | 1.000 | 0.000 |
+| 128 | graph-transformer | 0.506 | 0.333 | 49.683 | 4.41 | 1.000 | 1.000 |
+| 128 | serialized-token | 0.544 | 0.333 | 0.208 | 4.41 | 1.000 | 1.000 |
+| 128 | wpu-cws-indexed-local-dense | 0.544 | 0.333 | 1.631 | 4.41 | 1.000 | 1.000 |
+| 128 | wpu-cws-indexed-sparse | 0.561 | 0.333 | 1.396 | 4.41 | 1.000 | 0.000 |
 
 ## Interpretation
 

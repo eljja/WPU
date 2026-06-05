@@ -108,7 +108,9 @@ Use these reports for paper-level claims:
   first-class score combining constraint validity, bounded applied-delta drift,
   and branch stability. Raw WPU sparse drops to integrity `0.084722` at horizon
   25. Guarded state-store projection raises sparse WPU applied-state integrity
-  to `0.958508`, but raw delta instability remains.
+  to `0.958508`, but raw delta instability remains. A target-relative
+  delta-norm regularized raw rollout only raises sparse H=25 integrity to
+  `0.087153`, so simple norm regularization is not a solution.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -211,6 +213,12 @@ Use these reports for paper-level claims:
   gate audit over the conservative set evaluator. It rejects threshold-only
   gating as the missing P1 fix: best closure is only `0.082804`, and K=8/16
   show negative closure under held-out seeds.
+- `wpu_v2_candidate_regret_gate_results.md` and
+  `wpu_v2_candidate_regret_gate_results.ko.md`: direct candidate-regret gate
+  probe. It predicts `candidate_loss - learned_loss` and deploys a candidate
+  only when predicted regret is favorable. This improves best P1 closure from
+  `0.244220` to `0.308651` at K=16, but remains below the `0.5` threshold
+  because harmful accept rates are still high.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -368,6 +376,10 @@ Historical or preliminary reports:
 - The candidate no-harm gate audit narrows that bottleneck further: margin-only
   sample-level gates are not sufficient, because their confidence is not
   reliably aligned with held-out downstream regret.
+- Direct candidate-regret supervision improves the P1 best closure to
+  `0.308651`, which is the first measured movement beyond aggregate policy
+  selection. It is still a fail: no-harm rejection is weak and harmful accepts
+  remain frequent.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy
@@ -384,7 +396,8 @@ Historical or preliminary reports:
 - The PyBullet state-integrity audit turns closed-loop rollout stability into
   a tracked metric. It confirms that guarded state-store projection can protect
   applied state, but it remains a safety layer, not a solution to raw WPU sparse
-  delta instability.
+  delta instability. The regularized raw rollout confirms that simple delta-norm
+  penalties are insufficient.
 - The PyBullet shift benchmark adds the first mechanism-family generalization
   and calibration table. It is mixed: WPU sparse leads on `edge_shift`, but
   `serialized-token` is stronger on `catch_heavy`.

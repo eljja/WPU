@@ -45,7 +45,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         if row["feature_variant"] == "role_geometry_family"
         and row["policy"] == "risk_adjusted_selected_mechanism"
     ]
-    best = max(float(row["gap_closure_fraction"]) for row in target_rows)
+    aggregate_best = max(float(row["gap_closure_fraction"]) for row in target_rows)
     mean = statistics.fmean(float(row["gap_closure_fraction"]) for row in target_rows)
     noharm_path = ROOT / "wpu_v2_candidate_noharm_gate_summary.csv"
     noharm_best = None
@@ -57,6 +57,18 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         if noharm_best is not None
         else ""
     )
+    regret_path = ROOT / "wpu_v2_candidate_regret_gate_summary.csv"
+    regret_best = None
+    if regret_path.exists():
+        regret_rows = _read_rows(regret_path)
+        regret_best = max(float(row["gap_closure_fraction"]) for row in regret_rows)
+    regret_note = (
+        f" Direct candidate-regret gating improves best closure to {regret_best:.6f}, but it remains below threshold and has harmful accepts."
+        if regret_best is not None
+        else ""
+    )
+    best = max(value for value in [aggregate_best, noharm_best, regret_best] if value is not None)
+    source = regret_path if regret_best == best else path
     return _row(
         1,
         "Candidate-oracle gap",
@@ -64,9 +76,9 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         best,
         0.5,
         "gap_closure_fraction",
-        path,
-        f"Best deployed closure is {best:.6f} and mean closure is {mean:.6f}; decomposition shows no omitted aggregate policy closes the gap.{noharm_note}",
-        "Move below aggregate policy selection: add per-candidate uncertainty, calibrated regret targets, and sample-level no-harm rejection losses.",
+        source,
+        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}",
+        "Strengthen candidate-regret training with calibrated uncertainty, harmful-accept penalties, and cross-seed perturbations.",
     )
 
 
@@ -92,6 +104,14 @@ def _priority_state_integrity() -> dict[str, object]:
         ),
         0.0,
     )
+    sparse_regularized = next(
+        (
+            float(row["state_integrity_score"])
+            for row in wpu_h25
+            if row["run_label"] == "regularized" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
     return _row(
         2,
         "Long-horizon state integrity",
@@ -100,8 +120,8 @@ def _priority_state_integrity() -> dict[str, object]:
         0.8,
         "best_wpu_h25_integrity",
         path,
-        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, while clipped sparse without projection is {sparse_clipped:.6f}.",
-        "Add rollout-consistency loss, unsafe-delta rejection, rollback, correction, and uncertainty escalation.",
+        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, and regularized raw sparse is {sparse_regularized:.6f}.",
+        "Simple delta-norm regularization is insufficient; add rollout-consistency loss, unsafe-delta rejection, rollback, correction, and uncertainty escalation.",
     )
 
 
@@ -178,6 +198,7 @@ def _priority_systems_profile() -> dict[str, object]:
     path = ROOT / "pybullet_system_profile.csv"
     rows = _rows_of_type(_read_rows(path), "summary")
     max_reduction = max(float(row["tensor_byte_reduction"]) for row in rows)
+    max_latency_reduction = max(float(row.get("tensorize_latency_reduction", 0.0)) for row in rows)
     max_n = max(float(row["total_objects"]) for row in rows)
     status = "partial" if max_reduction >= 0.95 else "fail"
     return _row(
@@ -188,8 +209,8 @@ def _priority_systems_profile() -> dict[str, object]:
         0.95,
         "max_tensor_byte_reduction",
         path,
-        f"Proxy tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; real hardware data is absent.",
-        "Measure real CPU/GPU latency, CUDA memory, allocator traffic, sparse-kernel behavior, and matched-accuracy speedups.",
+        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}, but model-forward/GPU/energy data is absent.",
+        "Measure model forward latency, CUDA memory, allocator traffic, sparse-kernel behavior, and matched-accuracy speedups.",
     )
 
 
@@ -340,24 +361,24 @@ def _ko_status(status: str) -> str:
 
 def _ko_interpretation(priority: int) -> str:
     return {
-        1: "최고 deployed closure는 0.244220이고 평균 closure는 0.160601이다. Decomposition 결과 aggregate policy 하나를 더 고르는 방식으로는 gap이 닫히지 않는다. Sample-level no-harm/margin gate도 감사했지만 최고 closure는 0.082804에 그쳐 margin gating이 누락된 해법이 아님을 보인다.",
-        2: "최고 WPU H=25 integrity는 0.964322이고 guarded sparse는 0.958508이다. 하지만 raw sparse는 0.084722로 남아 있어 state-store guard가 적용 state를 보호한 것이지 raw delta model 안정성이 해결된 것은 아니다.",
-        3: "PyBullet benchmark는 2개 seed와 background N_bg=128까지 존재하지만, 논문급 강한 주장에는 seed와 mechanism 수가 부족하다.",
-        4: "WPU는 edge_shift에서 앞서지만 high_force와 catch_heavy에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.",
-        5: "평균 WPU ECE는 0.236226, baseline ECE는 0.221034로 WPU가 약 1.068727배 높다. Calibration은 측정됐지만 개선됐다고 보기 어렵다.",
-        6: "Proxy tensor-byte reduction은 mean total objects 2052.6에서 0.997454까지 도달한다. 다만 실제 hardware/runtime/energy 증거는 아직 없다.",
+        1: "최고 deployed closure는 candidate-regret gate의 0.308651로 개선됐다. 이전 aggregate-policy best는 0.244220이고 평균 aggregate closure는 0.160601이다. Sample-level no-harm/margin gate는 최고 0.082804에 그쳤으므로 threshold만으로는 부족하다. Candidate-regret target은 효과가 있지만 harmful accept가 높아 P1은 아직 fail이다.",
+        2: "최고 WPU H=25 integrity는 0.964322이고 guarded sparse는 0.958508이다. Regularized raw sparse는 0.087153으로 raw sparse 0.084722보다 거의 개선되지 않는다. 따라서 state-store guard가 적용 state를 보호한 것이지 raw delta model 안정성이 해결된 것은 아니다.",
+        3: "PyBullet benchmark는 5개 seed와 background N_bg=128까지 확장됐다. 다만 mechanism 다양성, training scale, long-horizon simulator rollout은 아직 부족하다.",
+        4: "5-seed shift benchmark에서 WPU는 catch_heavy에서 앞서지만 edge_shift와 high_force에서는 baseline에 밀린다. Shift generalization은 부분적으로만 성립한다.",
+        5: "5-seed 평균 WPU ECE는 0.213693, baseline ECE는 0.244135로 ratio가 0.875306까지 개선됐다. 하지만 multi-step/shift calibration이 해결된 것은 아니므로 partial로 유지한다.",
+        6: "Tensor-byte reduction은 mean total objects 2052.6에서 0.997454까지 도달하고 CPU tensorization latency reduction도 0.995549까지 도달한다. 다만 model-forward/GPU/energy 증거는 아직 없다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
     }[priority]
 
 
 def _ko_next_action(priority: int) -> str:
     return {
-        1: "Aggregate policy selection 아래로 내려가 per-candidate uncertainty, calibrated regret target, sample-level no-harm rejection loss를 추가한다.",
-        2: "Guarded state-store projection을 유지하되, rollout-consistency loss와 unsafe-delta rejection을 학습 단계로 끌어올린다.",
+        1: "Candidate-regret 학습에 calibrated uncertainty, harmful-accept penalty, cross-seed perturbation을 더 강하게 넣는다.",
+        2: "단순 delta-norm regularization은 부족하다. Guarded state-store projection을 유지하되, rollout-consistency loss, unsafe-delta rejection, rollback/correction을 학습 단계로 끌어올린다.",
         3: "Seed, mechanism, training scale, long-horizon simulator rollout을 늘린다.",
         4: "Leave-family-out training, 더 어려운 shift, mechanism-aware branch prior를 추가한다.",
         5: "Temperature head, branch calibration loss, multi-step ECE/Brier/NLL, uncertainty-gated recompute를 추가한다.",
-        6: "실제 CPU/GPU latency, CUDA memory, allocator traffic, sparse-kernel behavior, matched-accuracy speedup을 측정한다.",
+        6: "Model forward latency, CUDA memory, allocator traffic, sparse-kernel behavior, matched-accuracy speedup을 측정한다.",
         7: "Controlled objectification corruption에서 propagation을 학습/평가하고 report component와 downstream loss의 관계를 회귀 분석한다.",
     }[priority]
 

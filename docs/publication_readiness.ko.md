@@ -46,9 +46,9 @@ construction을 검증했다는 뜻은 아니다.
 | long-horizon state integrity가 증명되지 않음 | persistent state는 delta overlay가 장기적으로 망가지지 않을 때만 장점이다. | 현재는 rollout normalization과 짧은 synthetic prediction 중심이다. | multi-step branch rollout benchmark, rollback/correction/calibration/state-consistency metric. |
 | real-world 또는 simulator-backed grounding이 없음 | world processing claim은 toy object physics 밖의 증거가 필요하다. | 현재 evidence는 synthetic robot-cup 및 CWS data다. | MuJoCo/Isaac/robotics/game-server/digital-twin benchmark와 explicit state extraction. |
 | perception-to-state가 해결되지 않음 | WPU는 explicit state가 있다고 가정한다. 외부 사용자는 pixels가 어떻게 object/relation이 되는지 물을 것이다. | 문서에서는 perception adapter를 future work로 제한하고 있다. | supervised segmentation, slot discovery, simulator-provided object label 기반 object-state adapter baseline. |
-| hardware claim이 뒷받침되지 않음 | Processing unit 주장은 PyTorch 모델만으로 부족하고 systems evidence가 필요하다. | 현재 코드는 reference implementation이다. | sparse frontier kernel profiling, memory-traffic accounting, branch-overlay memory measurement, matched-accuracy speedup. |
+| hardware claim이 뒷받침되지 않음 | Processing unit 주장은 PyTorch 모델만으로 부족하고 systems evidence가 필요하다. | PyBullet systems profile이 full-state tensorization, indexed WPU tensorization, sparse work proxy, branch-overlay memory proxy를 분리했다. `N≈2052.6`에서 indexed tensor byte는 `0.997454` 줄고 `K≈4.6`을 유지하지만, 아직 Python proxy다. | sparse frontier kernel profiling, 실제 memory-traffic accounting, allocator-level branch-overlay measurement, matched-accuracy speedup. |
 | calibration/uncertainty가 얕음 | branch probability는 distribution shift에서 calibration이 맞아야 의미가 있다. | v1/v2는 branch accuracy와 일부 calibration 논의가 있으나 완전한 uncertainty benchmark는 아니다. | ECE/Brier/NLL multi-step rollout, branch collapse test, uncertainty-gated recompute experiment. |
-| 객체화 품질 benchmark가 없음 | WPU 성능은 올바른 identity, relation, delta construction에 의존한다. | `evaluate_objectification`은 object contract를 측정하지만, 현재 실험은 여전히 synthetic object state가 주어지는 조건이 많다. | missed object, identity swap, relation error, downstream propagation loss를 측정하는 object construction benchmark. |
+| 객체화 품질이 완전히 해결되지 않음 | WPU 성능은 올바른 identity, relation, delta construction에 의존한다. | PyBullet objectification-quality benchmark가 identity recall, semantic consistency, relation precision/recall, frontier recall, selected `K`, `ObjectificationReport` field를 측정한다. Scalar contract score가 놓칠 수 있는 frontier/semantic failure를 보였다. | 이 metric을 public objectification report에 추가하고 downstream loss 및 실제 perception/state adapter와 연결한다. |
 | relation repair가 false hypothesis를 추가할 수 있음 | Repair는 누락된 local connectivity를 복구할 수 있지만, spurious edge는 `K`를 키우고 sparse precision을 낮출 수 있다. | relation-repair probe는 ungated repair가 frontier recall은 복구하지만 near distractor에서 precision `0.078994`, dense distractor에서 `0.013244`로 떨어짐을 보인다. Type-gated 및 learned-scorer repair는 in-distribution에서 precision `1.000000`을 회복한다. Learned scorer는 role/affordance state가 보존되면 aliased type name을 넘어 transfer하고 toy downstream branch accuracy를 `0.343750`에서 `0.671875`로 올리지만, type과 role 정보가 모두 제거되면 실패한다. Ungated dense-distractor repair는 frontier recall을 복구해도 downstream loss를 악화시킨다. | simulator relation 대비 repair precision/recall, repair 전후 downstream loss, cross-generator 및 hidden-mechanism shift에서 harmful repaired edge를 reject하는 learned gate. |
 | unknown-theory discovery는 장기 연구 프로그램일 뿐임 | 아직 모르는 규칙성을 드러내는 learned relation은 알려진 relation 사용보다 훨씬 강한 주장이다. | Synthetic evidence는 이제 relation transfer, local-law transfer, OOD stress, revision을 포함한다. Revision probe는 gain-shift MSE를 `0.115978`에서 `0.000342`로, power-shift MSE를 `0.054596`에서 `0.008887`로 낮춘다. Oracle relation revision은 `0.000232`에 도달한다. | simulator-backed held-out rule 또는 hidden-mechanism benchmark에서 learned object relation이 prediction을 개선하고 반증 가능한 새 구조를 제시하는 증거. |
 
@@ -59,8 +59,10 @@ construction을 검증했다는 뜻은 아니다.
 3. explicit object state를 사용할 수 있는 simulator-backed benchmark를 추가한다.
 4. cross-seed 평가를 cross-generator-family 평가로 확장한다.
 5. calibrated branch/uncertainty metric을 주요 결과로 보고한다.
-6. sparse frontier와 branch-overlay memory cost를 dense tensor compute와 분리해 profile한다.
-7. `ObjectificationReport`를 실험 log에 포함하고, identity stability, relation precision/recall, delta locality, objectification mistake로 인한 downstream error benchmark를 추가한다.
+6. PyBullet systems profile을 proxy byte에서 runtime, CUDA memory,
+   allocator-level memory, matched-accuracy speedup으로 확장한다.
+7. `ObjectificationReport`에 frontier completeness와 semantic identity consistency를
+   추가하고, objectification-quality metric을 downstream propagation loss와 연결한다.
 8. Repaired edge를 유용하다고 간주하기 전에 downstream impact를 평가한다. No-repair, ungated, type-gated, role-aware learned scoring을 비교한다.
 9. generator가 relation family를 직접 주지 않는 hidden-rule benchmark를 추가하고, learned relation이 held-out mechanism에서 prediction error를 줄이는지 검증한다.
 

@@ -494,6 +494,86 @@ pair revision with risk-adjusted selection, validation, and closed-loop
 state-integrity checks before claiming physical-law discovery.
 ```
 
+### PyBullet Systems Profile
+
+Output:
+
+- `scripts/pybullet_system_profile.py`
+- `docs/experiments/pybullet_system_profile.csv`
+- `docs/experiments/pybullet_system_profile_results.md`
+
+Question:
+
+```text
+Can the WPU systems premise be measured separately from accuracy: full-state
+tensorization cost, indexed subgraph tensorization cost, and branch-overlay
+memory cost?
+```
+
+Result:
+
+| background objects | total objects | selected objects | tensor byte reduction | branch memory reduction at B=8 |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 4.562 | 4.562 | 0.000000 | 0.477961 |
+| 32 | 36.562 | 4.562 | 0.859694 | 0.826048 |
+| 128 | 132.562 | 4.562 | 0.960764 | 0.861500 |
+| 512 | 516.562 | 4.562 | 0.989891 | 0.871536 |
+| 2048 | 2052.562 | 4.562 | 0.997454 | 0.874128 |
+
+Interpretation:
+
+This closes part of the hardware/systems evidence gap without overstating it.
+The PyBullet state index keeps `K` nearly constant as irrelevant background
+objects grow, and the tensorization proxy shows the expected reduction. Branch
+overlays also reduce memory relative to full state copies when `B > 1`.
+
+V2 implication:
+
+```text
+The next stronger WPU claim must pair this cost profile with matched accuracy
+and real runtime/allocator measurements. Cost reduction alone is not a
+performance claim.
+```
+
+### PyBullet Objectification Quality Benchmark
+
+Output:
+
+- `scripts/pybullet_objectification_quality.py`
+- `docs/experiments/pybullet_objectification_quality.csv`
+- `docs/experiments/pybullet_objectification_quality_results.md`
+
+Question:
+
+```text
+Which objectification failures are visible to the current contract score, and
+which require frontier- or semantic-level metrics?
+```
+
+Representative result at background `N=128`:
+
+| corruption | contract score | semantic consistency | relation recall | frontier recall |
+| --- | ---: | ---: | ---: | ---: |
+| clean | 0.939715 | 1.000000 | 1.000000 | 1.000000 |
+| drop_relations_heavy | 0.938665 | 1.000000 | 0.979556 | 0.585417 |
+| position_noise | 0.939715 | 0.675541 | 1.000000 | 1.000000 |
+| low_confidence | 0.786843 | 1.000000 | 1.000000 | 1.000000 |
+| combined | 0.837442 | 0.814672 | 0.834180 | 0.716667 |
+
+Interpretation:
+
+The existing contract score correctly detects confidence degradation, but it
+does not by itself detect the frontier completeness needed by sparse WPU or the
+semantic consistency needed for stable object identity. This turns
+objectification from a prose dependency into a measurable failure surface.
+
+V2 implication:
+
+```text
+Sparse WPU claims should report objectification score, semantic identity
+consistency, relation precision/recall, and event-frontier recall together.
+```
+
 ### Priority 6: Local Dense Hybrid
 
 Implemented as:

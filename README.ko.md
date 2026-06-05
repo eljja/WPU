@@ -223,6 +223,10 @@ model = wpu.create_model(
 - 첫 PyBullet objectification stress는 causal-frontier relation 누락이 propagation
   이전에 WPU selected K를 줄인다는 점을 보였다. 또한 현재 objectification score에는
   frontier completeness와 semantic identity check가 추가되어야 한다.
+- PyBullet objectification-quality benchmark는 이 gap을 더 명확히 만들었다.
+  Relation-drop은 scalar contract score를 높게 유지하면서도 event-frontier recall을
+  `0.585417`까지 떨어뜨릴 수 있고, position noise는 object ID/relation을 무효화하지
+  않으면서 semantic consistency를 `0.675541`까지 낮출 수 있다.
 - Parameter-matched PyBullet pilot에서는 약 50k parameter 조건에서 WPU sparse가
   background N=0에서 N=128까지 accuracy를 유지했고 full-state baseline은 하락했다.
   하지만 serialized-token은 이 규모에서 여전히 더 빠르므로, 주장은 보편 latency
@@ -236,6 +240,10 @@ model = wpu.create_model(
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이
   드러났다. 주장은 unknown physical-law discovery가 아니라 revisable local
   hypothesis다.
+- PyBullet systems profile은 state/tensor/branch-memory cost를 분리했다.
+  Background state가 `N≈2052.6`까지 커져도 indexed WPU는 `K≈4.6` 객체만 tensorize하며
+  tensor byte를 `0.997454` 줄인다. 이것은 pre-tensor state indexing에 대한 cost-proxy
+  evidence이지 hardware speed 또는 power 증명은 아니다.
 
 v1의 핵심 목표는 명확하다.
 

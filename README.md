@@ -278,6 +278,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   relations reduce WPU selected K before propagation. It also shows that the
   current objectification score must be extended with frontier completeness and
   semantic identity checks.
+- The PyBullet objectification-quality benchmark makes that gap explicit:
+  relation-drop can keep scalar contract score high while event-frontier recall
+  falls to `0.585417`, and position noise can reduce semantic consistency to
+  `0.675541` without invalidating object IDs or relations.
 - A parameter-matched PyBullet pilot shows WPU sparse preserving accuracy from
   background N=0 to N=128 at roughly 50k parameters, while full-state baselines
   drop in this short run. Serialized-token remains faster at this scale, so the
@@ -291,6 +295,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
   candidate-selection gaps. The claim is revisable local hypotheses, not
   unknown physical-law discovery.
+- The PyBullet systems profile separates state/tensor/branch-memory costs:
+  with background state up to `N≈2052.6`, indexed WPU tensorizes only `K≈4.6`
+  objects and reduces tensor bytes by `0.997454`. This is cost-proxy evidence
+  for pre-tensor state indexing, not proof of hardware speed or power.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

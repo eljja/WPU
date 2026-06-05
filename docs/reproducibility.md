@@ -147,6 +147,13 @@ The PyBullet objectification-corruption stress can be reproduced with:
 python scripts/pybullet_objectification_stress.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer --corruptions clean drop_relations_light drop_relations_heavy position_noise low_confidence identity_swap combined --background-objects 32 --seeds 11 13 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_objectification_stress.csv
 ```
 
+The PyBullet objectification-quality decomposition benchmark can be reproduced
+with:
+
+```bash
+python scripts/pybullet_objectification_quality.py --samples 12 --seeds 11 13 --background-objects 32 128 512 --corruptions clean drop_relations_heavy drop_objects_light position_noise low_confidence identity_swap combined --sim-steps 24 --out docs/experiments/pybullet_objectification_quality.csv
+```
+
 The parameter-matched PyBullet pilot can be reproduced with:
 
 ```bash
@@ -164,6 +171,12 @@ The PyBullet local-law revision probe can be reproduced with:
 
 ```bash
 python scripts/pybullet_local_law_revision.py --train-samples 64 --calibration-samples 24 --eval-samples 48 --seeds 11 13 --background-objects 16 --sim-steps 120 --mechanisms nominal high_force edge_shift catch_heavy --out docs/experiments/pybullet_local_law_revision.csv
+```
+
+The PyBullet systems profile can be reproduced with:
+
+```bash
+python scripts/pybullet_system_profile.py --samples 8 --seeds 11 13 --background-objects 0 32 128 512 2048 --branch-counts 1 3 8 --sim-steps 24 --out docs/experiments/pybullet_system_profile.csv
 ```
 
 ## Current Submission Boundary

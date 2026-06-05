@@ -125,3 +125,29 @@ def test_pybullet_local_law_revision_help_runs() -> None:
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_pybullet_system_profile_help_runs() -> None:
+    result = subprocess.run(
+        [sys.executable, "scripts/pybullet_system_profile.py", "--help"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_pybullet_objectification_quality_help_runs() -> None:
+    result = subprocess.run(
+        [sys.executable, "scripts/pybullet_objectification_quality.py", "--help"],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stderr

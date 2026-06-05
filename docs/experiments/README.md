@@ -66,6 +66,14 @@ Use these reports for paper-level claims:
   objectification score detects confidence degradation but not missing expected
   causal frontier edges or semantic identity swaps; the benchmark therefore logs
   pre-projection `frontier_causal_recall_mean`.
+- `pybullet_objectification_quality_results.md`: objectification-quality
+  decomposition benchmark on PyBullet state. It compares corrupted state against
+  clean simulator-derived state and records identity recall, semantic identity
+  consistency, relation precision/recall, event-frontier recall, selected `K`,
+  and `ObjectificationReport` fields. It shows that relation-drop can leave the
+  scalar contract score almost unchanged while event-frontier recall falls to
+  `0.585417`, and that position noise can drop semantic consistency to
+  `0.675541` while syntactic identity/relation validity remains high.
 - `pybullet_matched_baseline_benchmark_results.md`: parameter-matched PyBullet
   pilot using `--target-params`. At an approximate 50k-parameter budget, WPU
   sparse preserves branch accuracy from background N=0 to N=128 while full-state
@@ -82,6 +90,12 @@ Use these reports for paper-level claims:
   nominal and `catch_heavy` cases expose overfitting and candidate-selection
   gaps. This supports revisable bounded local-law hypotheses, not unknown
   physical-law discovery.
+- `pybullet_system_profile_results.md`: PyBullet-derived systems profile that
+  separates full-state tensorization, pre-tensor indexed WPU tensorization, and
+  branch-overlay memory proxies. It shows tensor-byte reduction rising to
+  `0.997454` at `N≈2052.6` while selected `K≈4.6`, and branch-overlay memory
+  proxy reduction reaching `0.874128` at `B=8`. This is systems evidence, not
+  hardware speed or energy proof.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -204,12 +218,16 @@ Historical or preliminary reports:
   simulator-grounded PyBullet cup benchmark.
 - `pybullet_objectification_stress_results.ko.md`: Korean companion for the
   PyBullet objectification corruption stress benchmark.
+- `pybullet_objectification_quality_results.ko.md`: Korean companion for the
+  PyBullet objectification-quality decomposition benchmark.
 - `pybullet_matched_baseline_benchmark_results.ko.md`: Korean companion for the
   parameter-matched PyBullet benchmark.
 - `pybullet_closed_loop_rollout_results.ko.md`: Korean companion for the
   PyBullet closed-loop rollout diagnostic.
 - `pybullet_local_law_revision_results.ko.md`: Korean companion for the
   PyBullet local-law revision probe.
+- `pybullet_system_profile_results.ko.md`: Korean companion for the PyBullet
+  systems profile.
 - `wpu_v2_experiment_plan.md`: running v2 experiment plan and decision log;
   useful for provenance, not a result claim by itself.
 - `wpu_v2_adaptive_hybrid_pilot_results.md`: early adaptive hybrid pilot;
@@ -295,6 +313,15 @@ Historical or preliminary reports:
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy
   remains comparable rather than dominant.
+- The PyBullet objectification-quality benchmark makes the object contract
+  sharper: relation-drop can leave scalar contract score high while
+  event-frontier recall falls to `0.585417`, and position noise can reduce
+  semantic consistency to `0.675541` without invalidating object IDs or
+  relations.
+- The PyBullet systems profile is the clearest current cost-separation result:
+  when PyBullet background state grows to `N≈2052.6`, indexed WPU still
+  tensorizes only `K≈4.6`, reducing tensor bytes by `0.997454`. This supports
+  the state-indexing premise but remains a proxy, not a hardware-power result.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

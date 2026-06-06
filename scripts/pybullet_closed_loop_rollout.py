@@ -57,6 +57,7 @@ def main() -> None:
     parser.add_argument("--rollout-consistency-slack", type=float, default=0.5)
     parser.add_argument("--state-validity-penalty", type=float, default=0.0)
     parser.add_argument("--unsafe-delta-reject-norm", type=float, default=0.0)
+    parser.add_argument("--rollback-on-violation", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-position-norm", type=float, default=25.0)
     parser.add_argument("--max-velocity-norm", type=float, default=25.0)
@@ -161,6 +162,7 @@ def _rollout_condition(
     delta_norm_values: list[float] = []
     raw_delta_norm_values: list[float] = []
     rejected_delta_count = 0
+    rollback_count = 0
     total_delta_count = 0
     selected_k_values: list[float] = []
     final_branch_counts: Counter[int] = Counter()
@@ -196,6 +198,9 @@ def _rollout_condition(
                     delta = torch.zeros_like(delta)
                     rejected_delta_count += 1
                 object_ids = batch.object_ids[0] if batch.object_ids is not None else list(current.state.objects)
+                before_state = current.state.to_json() if args.rollback_on_violation else None
+                before_event_time = current.event.time if args.rollback_on_violation else 0.0
+                before_violations = _constraint_violations(current) if args.rollback_on_violation else 0
                 applied_delta_norm = _apply_predicted_delta(
                     current,
                     object_ids,
@@ -207,6 +212,13 @@ def _rollout_condition(
                     max_velocity_norm=args.max_velocity_norm,
                     min_cup_z=args.min_cup_z,
                 )
+                if args.rollback_on_violation:
+                    after_violations = _constraint_violations(current)
+                    if after_violations > before_violations:
+                        current.state = type(current.state).from_json(before_state)  # type: ignore[arg-type]
+                        current.event.time = before_event_time
+                        rollback_count += 1
+                        applied_delta_norm = 0.0
                 delta_norm_values.append(applied_delta_norm)
                 violation_count += _constraint_violations(current)
     model.train()
@@ -222,6 +234,7 @@ def _rollout_condition(
         "delta_norm_mean": round(_mean(delta_norm_values), 6),
         "raw_delta_norm_mean": round(_mean(raw_delta_norm_values), 6),
         "unsafe_delta_rejection_rate": round(rejected_delta_count / max(total_delta_count, 1), 6),
+        "rollback_rate": round(rollback_count / max(total_delta_count, 1), 6),
         "selected_k_mean": round(_mean(selected_k_values), 6),
         "final_majority_branch_ratio": round(max(final_branch_counts.values(), default=0) / max(args.samples, 1), 6),
         "delta_clip": args.delta_clip,
@@ -229,6 +242,7 @@ def _rollout_condition(
         "delta_target_norm_slack": args.delta_target_norm_slack,
         "state_validity_penalty": args.state_validity_penalty,
         "unsafe_delta_reject_norm": args.unsafe_delta_reject_norm,
+        "rollback_on_violation": bool(args.rollback_on_violation),
         "integrity_projection": bool(args.integrity_projection),
     }
 

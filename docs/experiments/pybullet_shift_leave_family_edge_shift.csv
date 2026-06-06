@@ -1,0 +1,17 @@
+row_type,model,seed,train_mechanism,eval_mechanism,temperature,background_objects,total_objects_n,samples,branch_accuracy,majority_accuracy,mse,nll,brier,ece,selected_k_mean,causal_recall_mean,dense_compute_ratio,seed_count
+seed,wpu-cws-indexed-sparse,11,nominal+high_force+catch_heavy,edge_shift,0.361065,32,37,36,0.555556,0.527778,0.318614,1.001198,0.606251,0.117661,4.375,1.0,0.0,1
+seed,wpu-cws-indexed-sparse,13,nominal+high_force+catch_heavy,edge_shift,0.354992,32,37,36,0.416667,0.555556,0.342248,1.067626,0.64684,0.046626,4.35,1.0,0.0,1
+seed,wpu-cws-indexed-sparse,17,nominal+high_force+catch_heavy,edge_shift,0.36112,32,37,36,0.555556,0.555556,0.370478,0.940456,0.556061,0.215413,4.4,1.0,0.0,1
+seed,wpu-cws-indexed-local-dense,11,nominal+high_force+catch_heavy,edge_shift,0.388808,32,37,36,0.555556,0.527778,0.487748,0.994723,0.598392,0.150474,4.375,1.0,1.0,1
+seed,wpu-cws-indexed-local-dense,13,nominal+high_force+catch_heavy,edge_shift,0.960167,32,37,36,0.305556,0.555556,0.46523,1.073372,0.650268,0.122665,4.35,1.0,1.0,1
+seed,wpu-cws-indexed-local-dense,17,nominal+high_force+catch_heavy,edge_shift,0.386008,32,37,36,0.555556,0.555556,0.361106,0.944973,0.575218,0.146126,4.4,1.0,1.0,1
+seed,graph-transformer,11,nominal+high_force+catch_heavy,edge_shift,0.373652,32,37,36,0.555556,0.527778,0.061292,0.938126,0.575255,0.092632,4.375,1.0,1.0,1
+seed,graph-transformer,13,nominal+high_force+catch_heavy,edge_shift,2.159134,32,37,36,0.333333,0.555556,0.081465,1.119302,0.678996,0.049431,4.35,1.0,1.0,1
+seed,graph-transformer,17,nominal+high_force+catch_heavy,edge_shift,2.429456,32,37,36,0.333333,0.555556,0.072518,1.060841,0.642282,0.122867,4.4,1.0,1.0,1
+seed,serialized-token,11,nominal+high_force+catch_heavy,edge_shift,0.440843,32,37,36,0.555556,0.527778,0.084923,0.959766,0.576706,0.133673,4.375,1.0,1.0,1
+seed,serialized-token,13,nominal+high_force+catch_heavy,edge_shift,0.709654,32,37,36,0.472222,0.555556,0.081561,1.093249,0.654417,0.144267,4.35,1.0,1.0,1
+seed,serialized-token,17,nominal+high_force+catch_heavy,edge_shift,2.212405,32,37,36,0.305556,0.555556,0.070767,1.083773,0.658955,0.097151,4.4,1.0,1.0,1
+summary,graph-transformer,all,nominal+high_force+catch_heavy,edge_shift,1.654081,32,37,36,0.407407,0.546297,0.071758,1.039423,0.632178,0.08831,4.375,1.0,1.0,3
+summary,serialized-token,all,nominal+high_force+catch_heavy,edge_shift,1.120967,32,37,36,0.444445,0.546297,0.079084,1.045596,0.630026,0.12503,4.375,1.0,1.0,3
+summary,wpu-cws-indexed-local-dense,all,nominal+high_force+catch_heavy,edge_shift,0.578328,32,37,36,0.472223,0.546297,0.438028,1.004356,0.607959,0.139755,4.375,1.0,1.0,3
+summary,wpu-cws-indexed-sparse,all,nominal+high_force+catch_heavy,edge_shift,0.359059,32,37,36,0.50926,0.546297,0.34378,1.003093,0.603051,0.126567,4.375,1.0,0.0,3

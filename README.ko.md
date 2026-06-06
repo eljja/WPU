@@ -244,7 +244,9 @@ model = wpu.create_model(
   반드시 함께 보고해야 한다. Naive rollout-consistency penalty는 sparse H=25
   integrity `0.084549`에 그치고, state-validity regularization도 `0.084722`에
   머물러 training-time validity penalty만으로는 raw delta instability를 해결하지
-  못한다.
+  못한다. Rollback/correction memory layer는 sparse H=25 applied-state integrity를
+  `0.988647`까지 올리지만 update의 `0.812500`을 rollback하므로 raw dynamics와
+  memory safety를 분리해 보고해야 한다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이
@@ -256,12 +258,18 @@ model = wpu.create_model(
   latency reduction `0.996216`을 보였지만 peak-memory reduction은 `0.304080`에
   그친다. 이것은 pre-tensor state indexing에 대한 systems evidence이지 energy나
   matched-accuracy speedup 증명은 아니다.
+- Matched-accuracy speedup audit은 더 엄격하다. `N=5`에서는 WPU와 serialized-token이
+  accuracy-matched지만 WPU가 더 느리다. `N=133`에서는 WPU가 graph-transformer보다
+  훨씬 빠르고 더 정확하지만 configured matched-accuracy tolerance 밖이다. 따라서 strict
+  matched-speedup은 아직 열려 있다.
 - PyBullet shift-generalization benchmark는 held-out mechanism family에서 calibration
   metric을 추가했다. 7-seed 재실행에서 WPU local-dense는 `catch_heavy`에서 앞서지만,
   `edge_shift`와 `high_force`에서는 serialized-token이 더 강하므로 robust world-state
   generalization은 아직 해결되지 않았다. 3-seed calibrated mixture-training probe는
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.
+  3-seed leave-family-out probe는 WPU win-rate `0.750000`으로 더 좋지만 여전히
+  `catch_heavy`에서는 실패한다.
 
 v1의 핵심 목표는 명확하다.
 

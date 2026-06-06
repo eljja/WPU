@@ -49,6 +49,7 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         flip_rate = _mean(group, "branch_flip_rate")
         selected_k = _mean(group, "selected_k_mean")
         rejection_rate = _mean_optional(group, "unsafe_delta_rejection_rate")
+        rollback_rate = _mean_optional(group, "rollback_rate")
         integrity_score = _integrity_score(violations, delta_norm, flip_rate)
         output.append(
             {
@@ -62,6 +63,7 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "branch_flip_rate": round(flip_rate, 6),
                 "selected_k_mean": round(selected_k, 6),
                 "unsafe_delta_rejection_rate": round(rejection_rate, 6),
+                "rollback_rate": round(rollback_rate, 6),
                 "state_integrity_score": round(integrity_score, 6),
             }
         )
@@ -158,8 +160,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "",
             "## Summary",
             "",
-            "| run | model | H | violations/step | delta norm | flip rate | reject rate | integrity score |",
-            "|---|---|---:|---:|---:|---:|---:|---:|",
+            "| run | model | H | violations/step | delta norm | flip rate | reject rate | rollback rate | integrity score |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in rows:
@@ -168,6 +170,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             f"{float(row['constraint_violations_per_step']):.6f} | "
             f"{float(row['delta_norm_mean']):.6f} | {float(row['branch_flip_rate']):.6f} | "
             f"{float(row['unsafe_delta_rejection_rate']):.6f} | "
+            f"{float(row['rollback_rate']):.6f} | "
             f"{float(row['state_integrity_score']):.6f} |"
         )
     lines.extend(

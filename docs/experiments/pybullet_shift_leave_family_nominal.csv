@@ -1,0 +1,17 @@
+row_type,model,seed,train_mechanism,eval_mechanism,temperature,background_objects,total_objects_n,samples,branch_accuracy,majority_accuracy,mse,nll,brier,ece,selected_k_mean,causal_recall_mean,dense_compute_ratio,seed_count
+seed,wpu-cws-indexed-sparse,11,high_force+edge_shift+catch_heavy,nominal,0.538705,32,37,36,0.5,0.444444,0.055018,1.061955,0.644022,0.092006,4.375,1.0,0.0,1
+seed,wpu-cws-indexed-sparse,13,high_force+edge_shift+catch_heavy,nominal,2.51197,32,37,36,0.444444,0.444444,0.072567,1.092744,0.662798,0.103908,4.35,1.0,0.0,1
+seed,wpu-cws-indexed-sparse,17,high_force+edge_shift+catch_heavy,nominal,2.393603,32,37,36,0.444444,0.444444,0.080541,1.085689,0.657812,0.094713,4.4,1.0,0.0,1
+seed,wpu-cws-indexed-local-dense,11,high_force+edge_shift+catch_heavy,nominal,0.753737,32,37,36,0.277778,0.444444,0.136503,1.069938,0.653822,0.141665,4.375,1.0,1.0,1
+seed,wpu-cws-indexed-local-dense,13,high_force+edge_shift+catch_heavy,nominal,0.849551,32,37,36,0.555556,0.444444,0.137158,1.030713,0.623516,0.16645,4.35,1.0,1.0,1
+seed,wpu-cws-indexed-local-dense,17,high_force+edge_shift+catch_heavy,nominal,2.379617,32,37,36,0.527778,0.444444,0.105797,1.064028,0.643734,0.168334,4.4,1.0,1.0,1
+seed,graph-transformer,11,high_force+edge_shift+catch_heavy,nominal,2.375617,32,37,36,0.472222,0.444444,0.027748,1.07539,0.651157,0.118822,4.375,1.0,1.0,1
+seed,graph-transformer,13,high_force+edge_shift+catch_heavy,nominal,0.811828,32,37,36,0.222222,0.444444,0.034837,1.150397,0.703991,0.204162,4.35,1.0,1.0,1
+seed,graph-transformer,17,high_force+edge_shift+catch_heavy,nominal,2.37497,32,37,36,0.527778,0.444444,0.035585,1.025348,0.620181,0.140978,4.4,1.0,1.0,1
+seed,serialized-token,11,high_force+edge_shift+catch_heavy,nominal,1.164449,32,37,36,0.277778,0.444444,0.044785,1.15144,0.700299,0.145094,4.375,1.0,1.0,1
+seed,serialized-token,13,high_force+edge_shift+catch_heavy,nominal,0.835052,32,37,36,0.277778,0.444444,0.033294,1.169518,0.715387,0.168249,4.35,1.0,1.0,1
+seed,serialized-token,17,high_force+edge_shift+catch_heavy,nominal,1.35207,32,37,36,0.305556,0.444444,0.031311,1.05573,0.642705,0.090709,4.4,1.0,1.0,1
+summary,graph-transformer,all,high_force+edge_shift+catch_heavy,nominal,1.854138,32,37,36,0.407407,0.444444,0.032723,1.083712,0.658443,0.154654,4.375,1.0,1.0,3
+summary,serialized-token,all,high_force+edge_shift+catch_heavy,nominal,1.11719,32,37,36,0.287037,0.444444,0.036463,1.125563,0.68613,0.134684,4.375,1.0,1.0,3
+summary,wpu-cws-indexed-local-dense,all,high_force+edge_shift+catch_heavy,nominal,1.327635,32,37,36,0.453704,0.444444,0.126486,1.054893,0.640357,0.158816,4.375,1.0,1.0,3
+summary,wpu-cws-indexed-sparse,all,high_force+edge_shift+catch_heavy,nominal,1.814759,32,37,36,0.462963,0.444444,0.069375,1.080129,0.654877,0.096876,4.375,1.0,0.0,3

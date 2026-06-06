@@ -79,6 +79,8 @@ def main() -> None:
     parser.add_argument("--variance-weight", type=float, default=0.05)
     parser.add_argument("--harmful-accept-weight", type=float, default=0.0)
     parser.add_argument("--safe-ranking-weight", type=float, default=0.0)
+    parser.add_argument("--feature-noise-std", type=float, default=0.0)
+    parser.add_argument("--feature-dropout", type=float, default=0.0)
     parser.add_argument("--samples", type=int, default=90)
     parser.add_argument("--validation-samples", type=int, default=180)
     parser.add_argument("--batch-size", type=int, default=10)
@@ -185,7 +187,8 @@ def _train_gate(
     optimizer = torch.optim.AdamW(gate.parameters(), lr=args.gate_lr)
     gate.train()
     for _ in range(args.gate_steps):
-        pred_mean, pred_log_var = gate(features)
+        train_features = _perturb_features(features, args)
+        pred_mean, pred_log_var = gate(train_features)
         pred_var = pred_log_var.exp().clamp_min(1e-4)
         regression = F.smooth_l1_loss(pred_mean, regrets)
         nll = 0.5 * (pred_log_var + (regrets - pred_mean).pow(2) / pred_var).mean()
@@ -202,6 +205,16 @@ def _train_gate(
         loss.backward()
         optimizer.step()
     return gate.eval()
+
+
+def _perturb_features(features: torch.Tensor, args: argparse.Namespace) -> torch.Tensor:
+    output = features
+    if args.feature_noise_std > 0.0:
+        output = output + torch.randn_like(output) * args.feature_noise_std
+    if args.feature_dropout > 0.0:
+        keep = (torch.rand_like(output) >= args.feature_dropout).float()
+        output = output * keep / max(1.0 - args.feature_dropout, 1e-6)
+    return output
 
 
 def _predict_modes(

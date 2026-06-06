@@ -300,7 +300,9 @@ The current evidence supports a regime hypothesis, not universal dominance.
   be reported next to integrity. A naive rollout-consistency penalty gives
   sparse H=25 integrity `0.084549`, and state-validity regularization remains
   at `0.084722`, so training-time validity penalties alone do not solve raw
-  delta instability.
+  delta instability. A rollback/correction memory layer raises sparse H=25
+  applied-state integrity to `0.988647`, but only by rolling back `0.812500` of
+  updates, so raw dynamics and memory safety must be reported separately.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
@@ -312,13 +314,19 @@ The current evidence supports a regime hypothesis, not universal dominance.
   shows sparse-forward latency reduction `0.996216`, but peak-memory reduction
   is only `0.304080`; this is systems evidence for pre-tensor state indexing,
   not proof of energy or matched-accuracy speedup.
+- The matched-accuracy speedup audit is stricter: at `N=5`, WPU and
+  serialized-token are accuracy-matched but WPU is slower; at `N=133`, WPU is
+  much faster than graph-transformer and more accurate, but the accuracy gap is
+  outside the configured matched-accuracy tolerance. Strict matched-speedup is
+  therefore still open.
 - The PyBullet shift-generalization benchmark adds calibration metrics under
   held-out mechanism families. In the 7-seed rerun, WPU local-dense leads on
   `catch_heavy`, but serialized-token remains stronger on `edge_shift` and
   `high_force`, so robust world-state generalization remains unsolved. A 3-seed
   calibrated mixture-training probe improves WPU on `edge_shift` but loses
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc
-  temperature calibration is not enough.
+  temperature calibration is not enough. A 3-seed leave-family-out probe is
+  better for WPU, with win-rate `0.750000`, but still fails `catch_heavy`.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

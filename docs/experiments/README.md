@@ -98,6 +98,12 @@ Use these reports for paper-level claims:
   sparse preserves branch accuracy from background N=0 to N=128 while full-state
   graph/token baselines drop in this short run. The latency result remains
   mixed because the serialized-token baseline is still fastest at this scale.
+- `pybullet_cup_benchmark_7seed_results.md`: 7-seed extension of the PyBullet
+  cup benchmark at `N=5` and `N=133`. Sparse WPU preserves accuracy as
+  background objects grow and is best at `N=133`, while serialized-token remains
+  the fastest model.
+- `pybullet_cup_benchmark_7seed_results.ko.md`: Korean companion for the
+  7-seed PyBullet cup benchmark extension.
 - `pybullet_closed_loop_rollout_results.md`: first PyBullet-derived closed-loop
   `WorldState` rollout diagnostic. Repeated delta application exposes a
   long-horizon WPU sparse failure: raw delta explosion and high constraint
@@ -132,6 +138,13 @@ Use these reports for paper-level claims:
   reduction is much weaker at `0.304080`, and branch-overlay memory proxy
   reduction reaches `0.874128` at `B=8`. This is systems evidence, not energy
   or matched-accuracy proof.
+- `pybullet_matched_speedup_audit_results.md`: matched-accuracy speedup audit
+  connecting the parameter-matched PyBullet benchmark to the CUDA systems
+  profile. It shows strict matched-accuracy speedup is not yet established:
+  `N=5` is accuracy-matched but WPU is slower than token, while `N=133` is fast
+  for WPU but not within the configured accuracy tolerance.
+- `pybullet_matched_speedup_audit_results.ko.md`: Korean companion for the
+  matched-accuracy speedup audit.
 - `pybullet_shift_generalization_results.md`: PyBullet mechanism-family shift
   benchmark. Models train on nominal dynamics and evaluate on `high_force`,
   `edge_shift`, and `catch_heavy`, with ECE/Brier/NLL as first-class calibration
@@ -144,6 +157,11 @@ Use these reports for paper-level claims:
   calibration can worsen aggregate WPU-vs-baseline ECE ratio to `1.133834`.
 - `pybullet_shift_generalization_mixture_calibrated_results.ko.md`: Korean
   companion for the calibrated mixture-training probe.
+- `pybullet_shift_leave_family_out_results.md`: 3-seed leave-family-out shift
+  probe. WPU wins three of four held-out families but still loses the
+  `catch_heavy` branch-prior shift.
+- `pybullet_shift_leave_family_out_results.ko.md`: Korean companion for the
+  leave-family-out shift probe.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.
@@ -240,6 +258,10 @@ Use these reports for paper-level claims:
   penalty variant. It lowers train-selected harmful accept to `0.088889` but
   collapses train-selected closure to `0.081253`, showing that safety penalties
   alone do not solve P1.
+- `wpu_v2_candidate_regret_gate_perturbed_results.md` and
+  `wpu_v2_candidate_regret_gate_perturbed_results.ko.md`: feature-perturbed
+  candidate-regret training. It slightly improves safe test-sweep closure to
+  `0.329756` but lowers train-selected deployment to `0.312586`.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter

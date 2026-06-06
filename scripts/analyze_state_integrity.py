@@ -49,6 +49,7 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         flip_rate = _mean(group, "branch_flip_rate")
         selected_k = _mean(group, "selected_k_mean")
         rejection_rate = _mean_optional(group, "unsafe_delta_rejection_rate")
+        correction_rate = _mean_optional(group, "correction_rate")
         rollback_rate = _mean_optional(group, "rollback_rate")
         integrity_score = _integrity_score(violations, delta_norm, flip_rate)
         output.append(
@@ -63,6 +64,7 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "branch_flip_rate": round(flip_rate, 6),
                 "selected_k_mean": round(selected_k, 6),
                 "unsafe_delta_rejection_rate": round(rejection_rate, 6),
+                "correction_rate": round(correction_rate, 6),
                 "rollback_rate": round(rollback_rate, 6),
                 "state_integrity_score": round(integrity_score, 6),
             }
@@ -117,6 +119,16 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "rejection means the memory layer protected the state by declining",
             "unsafe updates.",
         ]
+    correction_note = []
+    if any(float(row.get("correction_rate", 0.0)) > 0.0 for row in rows):
+        correction_note = [
+            "",
+            "The correction run applies a bounded state projection after a predicted",
+            "delta increases validity violations, and only then falls back to",
+            "rollback if the corrected state is still worse than the previous",
+            "state. It tests whether memory-layer repair can reduce rollback",
+            "frequency while preserving applied-state integrity.",
+        ]
     consistency_note = []
     if "consistency" in labels:
         consistency_note = [
@@ -160,8 +172,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "",
             "## Summary",
             "",
-            "| run | model | H | violations/step | delta norm | flip rate | reject rate | rollback rate | integrity score |",
-            "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+            "| run | model | H | violations/step | delta norm | flip rate | reject rate | correction rate | rollback rate | integrity score |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in rows:
@@ -170,6 +182,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             f"{float(row['constraint_violations_per_step']):.6f} | "
             f"{float(row['delta_norm_mean']):.6f} | {float(row['branch_flip_rate']):.6f} | "
             f"{float(row['unsafe_delta_rejection_rate']):.6f} | "
+            f"{float(row['correction_rate']):.6f} | "
             f"{float(row['rollback_rate']):.6f} | "
             f"{float(row['state_integrity_score']):.6f} |"
         )
@@ -187,6 +200,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "raw model deltas from guarded state-store deltas.",
             *regularized_note,
             *rejection_note,
+            *correction_note,
             *consistency_note,
             *validity_note,
             "",

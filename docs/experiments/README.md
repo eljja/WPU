@@ -111,7 +111,8 @@ Use these reports for paper-level claims:
   the underlying raw prediction instability.
 - `pybullet_state_integrity_audit_results.md`: derived audit over raw, clipped,
   guarded, regularized, unsafe-delta-rejected, consistency-regularized, and
-  state-validity-regularized PyBullet closed-loop rollouts.
+  state-validity-regularized PyBullet closed-loop rollouts, now including
+  rollback-only and corrected-rollback memory safety variants.
   It turns state integrity into a first-class score combining constraint
   validity, bounded applied-delta drift, branch stability, and rejection rate.
   Raw WPU sparse drops to integrity `0.084722` at horizon 25. Guarded state-store
@@ -121,7 +122,9 @@ Use these reports for paper-level claims:
   rejection raises sparse integrity to `0.530270` only by rejecting `0.640000`
   of updates; naive rollout-consistency reaches only `0.084549`; state-validity
   and strong state-validity regularization both remain at `0.084722` for sparse
-  H=25.
+  H=25. Rollback-only raises sparse applied-state integrity to `0.988647` with
+  rollback rate `0.812500`; corrected rollback lowers rollback rate to
+  `0.564167` but lowers integrity to `0.884654`.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -145,6 +148,12 @@ Use these reports for paper-level claims:
   for WPU but not within the configured accuracy tolerance.
 - `pybullet_matched_speedup_audit_results.ko.md`: Korean companion for the
   matched-accuracy speedup audit.
+- `pybullet_system_energy_proxy_results.md`: screening-only system energy proxy
+  derived from tensorization and CUDA forward profiles. It is useful for
+  choosing future power/sparse-kernel measurement regimes, but it is not real
+  energy evidence.
+- `pybullet_system_energy_proxy_results.ko.md`: Korean companion for the
+  screening-only energy proxy.
 - `pybullet_shift_generalization_results.md`: PyBullet mechanism-family shift
   benchmark. Models train on nominal dynamics and evaluate on `high_force`,
   `edge_shift`, and `catch_heavy`, with ECE/Brier/NLL as first-class calibration
@@ -162,6 +171,17 @@ Use these reports for paper-level claims:
   `catch_heavy` branch-prior shift.
 - `pybullet_shift_leave_family_out_results.ko.md`: Korean companion for the
   leave-family-out shift probe.
+- `pybullet_shift_composition_stress_results.md`: 3-seed composition-shift
+  stress probe over `no_catch`, `edge_high_force`, and `edge_catch_heavy`.
+  WPU is accuracy-positive in this run, but `no_catch` exposes worse
+  calibration.
+- `pybullet_shift_composition_stress_results.ko.md`: Korean companion for the
+  composition-shift stress probe.
+- `wpu_v2_candidate_safety_frontier_results.md`: candidate-regret safety
+  frontier showing that P1 is not solved by threshold search: stricter harmful
+  accept limits sharply reduce gap closure.
+- `wpu_v2_candidate_safety_frontier_results.ko.md`: Korean companion for the
+  candidate safety frontier.
 - `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
   and state-only regret routers; rejects scalar state-only routing for the
   current v2 model.

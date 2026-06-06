@@ -57,6 +57,7 @@ def main() -> None:
     parser.add_argument("--rollout-consistency-slack", type=float, default=0.5)
     parser.add_argument("--state-validity-penalty", type=float, default=0.0)
     parser.add_argument("--unsafe-delta-reject-norm", type=float, default=0.0)
+    parser.add_argument("--correct-on-violation", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--rollback-on-violation", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-position-norm", type=float, default=25.0)
@@ -162,6 +163,7 @@ def _rollout_condition(
     delta_norm_values: list[float] = []
     raw_delta_norm_values: list[float] = []
     rejected_delta_count = 0
+    correction_count = 0
     rollback_count = 0
     total_delta_count = 0
     selected_k_values: list[float] = []
@@ -198,9 +200,10 @@ def _rollout_condition(
                     delta = torch.zeros_like(delta)
                     rejected_delta_count += 1
                 object_ids = batch.object_ids[0] if batch.object_ids is not None else list(current.state.objects)
-                before_state = current.state.to_json() if args.rollback_on_violation else None
-                before_event_time = current.event.time if args.rollback_on_violation else 0.0
-                before_violations = _constraint_violations(current) if args.rollback_on_violation else 0
+                needs_memory_guard = args.rollback_on_violation or args.correct_on_violation
+                before_state = current.state.to_json() if needs_memory_guard else None
+                before_event_time = current.event.time if needs_memory_guard else 0.0
+                before_violations = _constraint_violations(current) if needs_memory_guard else 0
                 applied_delta_norm = _apply_predicted_delta(
                     current,
                     object_ids,
@@ -212,8 +215,17 @@ def _rollout_condition(
                     max_velocity_norm=args.max_velocity_norm,
                     min_cup_z=args.min_cup_z,
                 )
-                if args.rollback_on_violation:
+                if needs_memory_guard:
                     after_violations = _constraint_violations(current)
+                    if args.correct_on_violation and after_violations > before_violations:
+                        _project_sample_state(
+                            current,
+                            max_position_norm=args.max_position_norm,
+                            max_velocity_norm=args.max_velocity_norm,
+                            min_cup_z=args.min_cup_z,
+                        )
+                        correction_count += 1
+                        after_violations = _constraint_violations(current)
                     if after_violations > before_violations:
                         current.state = type(current.state).from_json(before_state)  # type: ignore[arg-type]
                         current.event.time = before_event_time
@@ -234,6 +246,7 @@ def _rollout_condition(
         "delta_norm_mean": round(_mean(delta_norm_values), 6),
         "raw_delta_norm_mean": round(_mean(raw_delta_norm_values), 6),
         "unsafe_delta_rejection_rate": round(rejected_delta_count / max(total_delta_count, 1), 6),
+        "correction_rate": round(correction_count / max(total_delta_count, 1), 6),
         "rollback_rate": round(rollback_count / max(total_delta_count, 1), 6),
         "selected_k_mean": round(_mean(selected_k_values), 6),
         "final_majority_branch_ratio": round(max(final_branch_counts.values(), default=0) / max(args.samples, 1), 6),
@@ -242,6 +255,7 @@ def _rollout_condition(
         "delta_target_norm_slack": args.delta_target_norm_slack,
         "state_validity_penalty": args.state_validity_penalty,
         "unsafe_delta_reject_norm": args.unsafe_delta_reject_norm,
+        "correct_on_violation": bool(args.correct_on_violation),
         "rollback_on_violation": bool(args.rollback_on_violation),
         "integrity_projection": bool(args.integrity_projection),
     }
@@ -358,6 +372,25 @@ def _constraint_violations(sample: PyBulletCupSample) -> int:
         if isinstance(position, list) and len(position) >= 3 and float(position[2]) < -0.2:
             violations += 1
     return violations
+
+
+def _project_sample_state(
+    sample: PyBulletCupSample,
+    *,
+    max_position_norm: float,
+    max_velocity_norm: float,
+    min_cup_z: float,
+) -> None:
+    for object_id, obj in sample.state.objects.items():
+        position = obj.attributes.get("position", [0.0, 0.0, 0.0])
+        velocity = obj.attributes.get("velocity", [0.0, 0.0, 0.0])
+        if _finite_vector(position):
+            projected_position = _project_vector([float(item) for item in position], max_position_norm)
+            if object_id == "cup_001":
+                projected_position[2] = max(float(projected_position[2]), min_cup_z)
+            obj.attributes["position"] = projected_position
+        if _finite_vector(velocity):
+            obj.attributes["velocity"] = _project_vector([float(item) for item in velocity], max_velocity_norm)
 
 
 def _clip_vector(values: torch.Tensor, max_norm: float) -> torch.Tensor:

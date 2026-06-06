@@ -300,9 +300,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
   be reported next to integrity. A naive rollout-consistency penalty gives
   sparse H=25 integrity `0.084549`, and state-validity regularization remains
   at `0.084722`, so training-time validity penalties alone do not solve raw
-  delta instability. A rollback/correction memory layer raises sparse H=25
+  delta instability. A rollback-only memory layer raises sparse H=25
   applied-state integrity to `0.988647`, but only by rolling back `0.812500` of
-  updates, so raw dynamics and memory safety must be reported separately.
+  updates. A corrected-rollback variant reduces rollback rate to `0.564167`,
+  but integrity falls to `0.884654`, so raw dynamics, correction quality, and
+  memory safety must be reported separately.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
@@ -314,6 +316,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   shows sparse-forward latency reduction `0.996216`, but peak-memory reduction
   is only `0.304080`; this is systems evidence for pre-tensor state indexing,
   not proof of energy or matched-accuracy speedup.
+- A screening-only energy proxy now combines tensorization latency with tensor
+  bytes and CUDA forward latency with peak memory. It shows large proxy
+  reductions at large `N`, but it is explicitly not wall-plug power, GPU power
+  telemetry, or sparse-kernel evidence.
 - The matched-accuracy speedup audit is stricter: at `N=5`, WPU and
   serialized-token are accuracy-matched but WPU is slower; at `N=133`, WPU is
   much faster than graph-transformer and more accurate, but the accuracy gap is
@@ -327,6 +333,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc
   temperature calibration is not enough. A 3-seed leave-family-out probe is
   better for WPU, with win-rate `0.750000`, but still fails `catch_heavy`.
+  A 3-seed composition-shift stress probe is accuracy-positive for WPU
+  (win-rate `1.000000`, mean accuracy delta `0.123457`) but calibration-negative
+  on `no_catch` (ECE ratio `2.362081`), so accuracy and branch-probability
+  reliability must be separated.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

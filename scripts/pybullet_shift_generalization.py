@@ -45,6 +45,21 @@ MECHANISMS = {
         "cup_x_range": (0.62, 0.96),
         "catch_probability": 0.85,
     },
+    "no_catch": {
+        "force_range": (0.2, 1.8),
+        "cup_x_range": (0.62, 0.96),
+        "catch_probability": 0.05,
+    },
+    "edge_high_force": {
+        "force_range": (1.1, 2.4),
+        "cup_x_range": (0.84, 1.02),
+        "catch_probability": 0.45,
+    },
+    "edge_catch_heavy": {
+        "force_range": (0.2, 1.8),
+        "cup_x_range": (0.84, 1.02),
+        "catch_probability": 0.85,
+    },
 }
 
 

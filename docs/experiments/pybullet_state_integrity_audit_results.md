@@ -16,6 +16,7 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_validity.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_validity_strong.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_rollback.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_corrected_rollback.csv`
 
 Derived CSV:
 
@@ -23,37 +24,40 @@ Derived CSV:
 
 ## Summary
 
-| run | model | H | violations/step | delta norm | flip rate | reject rate | rollback rate | integrity score |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| clipped | graph-transformer | 25 | 0.253333 | 8.363635 | 0.054688 | 0.000000 | 0.000000 | 0.557002 |
-| clipped | wpu-cws-indexed-local-dense | 25 | 0.314167 | 2.809900 | 0.048611 | 0.000000 | 0.000000 | 0.719139 |
-| clipped | wpu-cws-indexed-sparse | 25 | 0.785000 | 1939290.233702 | 0.082465 | 0.000000 | 0.000000 | 0.201757 |
-| consistency | wpu-cws-indexed-local-dense | 25 | 0.811667 | 1.965078 | 0.059896 | 0.000000 | 0.000000 | 0.472827 |
-| consistency | wpu-cws-indexed-sparse | 25 | 3.360834 | 1775082.311771 | 0.077257 | 0.000000 | 0.000000 | 0.084549 |
-| guarded | graph-transformer | 25 | 0.000000 | 2.096666 | 0.054688 | 0.000000 | 0.000000 | 0.915679 |
-| guarded | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.741597 | 0.048611 | 0.000000 | 0.000000 | 0.964322 |
-| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.083334 | 0.000000 | 0.000000 | 0.958508 |
-| raw | graph-transformer | 5 | 0.045833 | 4.162467 | 0.062500 | 0.000000 | 0.000000 | 0.816605 |
-| raw | graph-transformer | 10 | 0.139583 | 6.106724 | 0.150463 | 0.000000 | 0.000000 | 0.679401 |
-| raw | graph-transformer | 25 | 0.272500 | 8.409911 | 0.056424 | 0.000000 | 0.000000 | 0.544493 |
-| raw | wpu-cws-indexed-local-dense | 5 | 0.066667 | 2.788842 | 0.145834 | 0.000000 | 0.000000 | 0.836557 |
-| raw | wpu-cws-indexed-local-dense | 10 | 0.204167 | 2.648499 | 0.148148 | 0.000000 | 0.000000 | 0.765381 |
-| raw | wpu-cws-indexed-local-dense | 25 | 0.499166 | 2.744688 | 0.055556 | 0.000000 | 0.000000 | 0.618283 |
-| raw | wpu-cws-indexed-sparse | 5 | 0.200000 | 0.799330 | 0.125000 | 0.000000 | 0.000000 | 0.837023 |
-| raw | wpu-cws-indexed-sparse | 10 | 0.531250 | 3.534072 | 0.203704 | 0.000000 | 0.000000 | 0.543379 |
-| raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.076389 | 0.000000 | 0.000000 | 0.084722 |
-| regularized | wpu-cws-indexed-local-dense | 25 | 0.536667 | 1.915983 | 0.044271 | 0.000000 | 0.000000 | 0.628920 |
-| regularized | wpu-cws-indexed-sparse | 25 | 3.316667 | 1797100.815468 | 0.064237 | 0.000000 | 0.000000 | 0.087153 |
-| rejected | graph-transformer | 25 | 0.271666 | 3.406922 | 0.053819 | 0.359166 | 0.000000 | 0.720577 |
-| rejected | wpu-cws-indexed-local-dense | 25 | 0.499166 | 2.277815 | 0.055556 | 0.000000 | 0.000000 | 0.634624 |
-| rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.076389 | 0.640000 | 0.000000 | 0.530270 |
-| rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.057292 | 0.000000 | 0.261667 | 0.843622 |
-| rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.052951 | 0.000000 | 0.499166 | 0.946506 |
-| rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.030382 | 0.000000 | 0.812500 | 0.988647 |
-| validity | wpu-cws-indexed-local-dense | 25 | 0.605833 | 2.222097 | 0.054688 | 0.000000 | 0.000000 | 0.578081 |
-| validity | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.000000 | 0.084722 |
-| validity_strong | wpu-cws-indexed-local-dense | 25 | 0.710833 | 2.212986 | 0.055556 | 0.000000 | 0.000000 | 0.520476 |
-| validity_strong | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.000000 | 0.084722 |
+| run | model | H | violations/step | delta norm | flip rate | reject rate | correction rate | rollback rate | integrity score |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| clipped | graph-transformer | 25 | 0.253333 | 8.363635 | 0.054688 | 0.000000 | 0.000000 | 0.000000 | 0.557002 |
+| clipped | wpu-cws-indexed-local-dense | 25 | 0.314167 | 2.809900 | 0.048611 | 0.000000 | 0.000000 | 0.000000 | 0.719139 |
+| clipped | wpu-cws-indexed-sparse | 25 | 0.785000 | 1939290.233702 | 0.082465 | 0.000000 | 0.000000 | 0.000000 | 0.201757 |
+| consistency | wpu-cws-indexed-local-dense | 25 | 0.811667 | 1.965078 | 0.059896 | 0.000000 | 0.000000 | 0.000000 | 0.472827 |
+| consistency | wpu-cws-indexed-sparse | 25 | 3.360834 | 1775082.311771 | 0.077257 | 0.000000 | 0.000000 | 0.000000 | 0.084549 |
+| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.758165 | 0.056424 | 0.000000 | 0.268334 | 0.000000 | 0.787180 |
+| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.283443 | 0.055556 | 0.000000 | 0.499166 | 0.000000 | 0.908968 |
+| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.839244 | 0.079862 | 0.000000 | 0.812500 | 0.564167 | 0.884654 |
+| guarded | graph-transformer | 25 | 0.000000 | 2.096666 | 0.054688 | 0.000000 | 0.000000 | 0.000000 | 0.915679 |
+| guarded | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.741597 | 0.048611 | 0.000000 | 0.000000 | 0.000000 | 0.964322 |
+| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.083334 | 0.000000 | 0.000000 | 0.000000 | 0.958508 |
+| raw | graph-transformer | 5 | 0.045833 | 4.162467 | 0.062500 | 0.000000 | 0.000000 | 0.000000 | 0.816605 |
+| raw | graph-transformer | 10 | 0.139583 | 6.106724 | 0.150463 | 0.000000 | 0.000000 | 0.000000 | 0.679401 |
+| raw | graph-transformer | 25 | 0.272500 | 8.409911 | 0.056424 | 0.000000 | 0.000000 | 0.000000 | 0.544493 |
+| raw | wpu-cws-indexed-local-dense | 5 | 0.066667 | 2.788842 | 0.145834 | 0.000000 | 0.000000 | 0.000000 | 0.836557 |
+| raw | wpu-cws-indexed-local-dense | 10 | 0.204167 | 2.648499 | 0.148148 | 0.000000 | 0.000000 | 0.000000 | 0.765381 |
+| raw | wpu-cws-indexed-local-dense | 25 | 0.499166 | 2.744688 | 0.055556 | 0.000000 | 0.000000 | 0.000000 | 0.618283 |
+| raw | wpu-cws-indexed-sparse | 5 | 0.200000 | 0.799330 | 0.125000 | 0.000000 | 0.000000 | 0.000000 | 0.837023 |
+| raw | wpu-cws-indexed-sparse | 10 | 0.531250 | 3.534072 | 0.203704 | 0.000000 | 0.000000 | 0.000000 | 0.543379 |
+| raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.076389 | 0.000000 | 0.000000 | 0.000000 | 0.084722 |
+| regularized | wpu-cws-indexed-local-dense | 25 | 0.536667 | 1.915983 | 0.044271 | 0.000000 | 0.000000 | 0.000000 | 0.628920 |
+| regularized | wpu-cws-indexed-sparse | 25 | 3.316667 | 1797100.815468 | 0.064237 | 0.000000 | 0.000000 | 0.000000 | 0.087153 |
+| rejected | graph-transformer | 25 | 0.271666 | 3.406922 | 0.053819 | 0.359166 | 0.000000 | 0.000000 | 0.720577 |
+| rejected | wpu-cws-indexed-local-dense | 25 | 0.499166 | 2.277815 | 0.055556 | 0.000000 | 0.000000 | 0.000000 | 0.634624 |
+| rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.076389 | 0.640000 | 0.000000 | 0.000000 | 0.530270 |
+| rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.057292 | 0.000000 | 0.000000 | 0.261667 | 0.843622 |
+| rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.052951 | 0.000000 | 0.000000 | 0.499166 | 0.946506 |
+| rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.030382 | 0.000000 | 0.000000 | 0.812500 | 0.988647 |
+| validity | wpu-cws-indexed-local-dense | 25 | 0.605833 | 2.222097 | 0.054688 | 0.000000 | 0.000000 | 0.000000 | 0.578081 |
+| validity | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.000000 | 0.000000 | 0.084722 |
+| validity_strong | wpu-cws-indexed-local-dense | 25 | 0.710833 | 2.212986 | 0.055556 | 0.000000 | 0.000000 | 0.000000 | 0.520476 |
+| validity_strong | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.000000 | 0.000000 | 0.084722 |
 
 ## Interpretation
 
@@ -76,6 +80,12 @@ not proof that the raw transition model is stable. It must be
 reported together with rejection rate: high integrity with high
 rejection means the memory layer protected the state by declining
 unsafe updates.
+
+The correction run applies a bounded state projection after a predicted
+delta increases validity violations, and only then falls back to
+rollback if the corrected state is still worse than the previous
+state. It tests whether memory-layer repair can reduce rollback
+frequency while preserving applied-state integrity.
 
 The rollout-consistency run adds a second-step delta-growth penalty
 during training. In the current evidence it does not solve sparse

@@ -243,6 +243,36 @@ def _priority_state_integrity() -> dict[str, object]:
         ),
         0.0,
     )
+    sparse_corrected = next(
+        (
+            float(row["state_integrity_score"])
+            for row in wpu_h25
+            if row["run_label"] == "corrected_rollback" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
+    sparse_correction_rate = next(
+        (
+            float(row.get("correction_rate", 0.0))
+            for row in wpu_h25
+            if row["run_label"] == "corrected_rollback" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
+    sparse_corrected_rollback_rate = next(
+        (
+            float(row.get("rollback_rate", 0.0))
+            for row in wpu_h25
+            if row["run_label"] == "corrected_rollback" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
+    correction_note = (
+        f" Corrected rollback sparse is {sparse_corrected:.6f} with correction rate "
+        f"{sparse_correction_rate:.6f} and rollback rate {sparse_corrected_rollback_rate:.6f}."
+        if sparse_corrected > 0.0
+        else ""
+    )
     return _row(
         2,
         "Long-horizon state integrity",
@@ -251,7 +281,7 @@ def _priority_state_integrity() -> dict[str, object]:
         0.8,
         "best_wpu_h25_integrity",
         path,
-        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, regularized raw sparse is {sparse_regularized:.6f}, rollout-consistency sparse is {sparse_consistency:.6f}, validity sparse is {sparse_validity:.6f}, strong-validity sparse is {sparse_validity_strong:.6f}, unsafe-delta rejected sparse is {sparse_rejected:.6f} with rejection rate {sparse_rejection_rate:.6f}, and rollback sparse is {sparse_rollback:.6f} with rollback rate {sparse_rollback_rate:.6f}.",
+        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, regularized raw sparse is {sparse_regularized:.6f}, rollout-consistency sparse is {sparse_consistency:.6f}, validity sparse is {sparse_validity:.6f}, strong-validity sparse is {sparse_validity_strong:.6f}, unsafe-delta rejected sparse is {sparse_rejected:.6f} with rejection rate {sparse_rejection_rate:.6f}, and rollback sparse is {sparse_rollback:.6f} with rollback rate {sparse_rollback_rate:.6f}.{correction_note}",
         "Simple delta-norm, rollout-consistency, and validity regularization are insufficient; add rollback, correction, and uncertainty escalation.",
     )
 
@@ -313,6 +343,19 @@ def _priority_shift_generalization() -> dict[str, object]:
             for row in leave_rows
         ]
         notes.append(f"3-seed leave-family-out win-rate {leave_win_rate:.6f}: " + "; ".join(leave_notes))
+    stress_path = ROOT / "pybullet_shift_composition_stress_summary.csv"
+    if stress_path.exists():
+        stress_rows = _read_rows(stress_path)
+        stress_win_rate = sum(1 for row in stress_rows if row["wpu_win"] == "True") / max(len(stress_rows), 1)
+        stress_delta = statistics.fmean(float(row["accuracy_delta"]) for row in stress_rows)
+        stress_notes = [
+            f"composition {row['eval_mechanism']}: WPU {float(row['best_wpu_accuracy']):.6f} vs baseline {float(row['best_baseline_accuracy']):.6f}"
+            for row in stress_rows
+        ]
+        notes.append(
+            f"3-seed composition-shift stress win-rate {stress_win_rate:.6f}, "
+            f"mean accuracy delta {stress_delta:.6f}: " + "; ".join(stress_notes)
+        )
     status = "partial" if 0.0 < win_rate < 1.0 else ("pass" if win_rate == 1.0 else "fail")
     return _row(
         4,
@@ -349,6 +392,15 @@ def _priority_calibration() -> dict[str, object]:
         leave_rows = _read_rows(leave_path)
         leave_ratio = statistics.fmean(float(row["ece_ratio"]) for row in leave_rows)
         mixture_note += f" A 3-seed leave-family-out probe gives mean ECE ratio {leave_ratio:.6f}."
+    stress_path = ROOT / "pybullet_shift_composition_stress_summary.csv"
+    if stress_path.exists():
+        stress_rows = _read_rows(stress_path)
+        stress_ratio = statistics.fmean(float(row["ece_ratio"]) for row in stress_rows)
+        worst = max(stress_rows, key=lambda row: float(row["ece_ratio"]))
+        mixture_note += (
+            f" A 3-seed composition-shift stress probe gives mean ECE ratio {stress_ratio:.6f}; "
+            f"worst is {worst['eval_mechanism']} at {float(worst['ece_ratio']):.6f}."
+        )
     status = "partial" if ratio <= 1.1 else "fail"
     return _row(
         5,
@@ -391,6 +443,17 @@ def _priority_systems_profile() -> dict[str, object]:
                 f"N={row['total_objects_n']}: matched={row['matched_accuracy']} speedup={float(row['matched_speedup']):.6f}"
             )
         cuda_note += " Matched-accuracy audit: " + "; ".join(matched_notes) + "."
+    energy_proxy_path = ROOT / "pybullet_system_energy_proxy.csv"
+    if energy_proxy_path.exists():
+        proxy_rows = _read_rows(energy_proxy_path)
+        best_proxy = max(proxy_rows, key=lambda row: float(row["proxy_reduction"]))
+        cuda_proxy_rows = [row for row in proxy_rows if row["profile"] == "cuda_forward_screening"]
+        if cuda_proxy_rows:
+            best_cuda_proxy = max(cuda_proxy_rows, key=lambda row: float(row["proxy_reduction"]))
+            cuda_note += (
+                f" Screening-only energy proxy max is {float(best_proxy['proxy_reduction']):.6f}; "
+                f"CUDA forward proxy max is {float(best_cuda_proxy['proxy_reduction']):.6f}."
+            )
     return _row(
         6,
         "Systems profile and memory traffic",
@@ -399,7 +462,7 @@ def _priority_systems_profile() -> dict[str, object]:
         0.95,
         "max_tensor_byte_reduction",
         path,
-        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}; random-model CPU sparse-forward latency reduction reaches {max_forward_reduction:.6f}.{cuda_note} Energy and strict matched-accuracy speedup remain unproven.",
+        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}; random-model CPU sparse-forward latency reduction reaches {max_forward_reduction:.6f}.{cuda_note} Real energy and strict matched-accuracy speedup remain unproven.",
         "Measure energy, allocator traffic, sparse-kernel behavior, and strict matched-accuracy speedups.",
     )
 
@@ -552,11 +615,11 @@ def _ko_status(status: str) -> str:
 def _ko_interpretation(priority: int) -> str:
     return {
         1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다.",
-        2: "Rollback/correction memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Guarded projection과 rollback은 applied state를 보호한다는 증거이지 raw delta model이 안정적이라는 증거가 아니다. 따라서 P2는 raw delta stability와 memory-layer safety를 분리해 주장해야 한다.",
+        2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.884654로 떨어진다. 따라서 P2는 raw delta stability, state correction, rollback safety 사이의 tradeoff를 분리해 주장해야 한다.",
         3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 확장됐다. N=133에서 WPU sparse accuracy가 0.547619로 serialized-token 0.539683보다 약간 높지만, serialized-token은 여전히 가장 빠르다. Simulator-backed evidence는 강화됐지만 규모와 mechanism 다양성은 아직 부족하다.",
-        4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. WPU는 nominal/high_force/edge_shift holdout에서는 앞서지만 catch_heavy branch-prior shift에서는 baseline에 진다. 따라서 shift generalization은 조건부다.",
-        5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. Calibration advantage는 안정된 결론이 아니며 mechanism-aware uncertainty가 필요하다.",
-        6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Matched-speedup audit은 N=5에서는 accuracy matched지만 WPU가 token보다 느리고, N=133에서는 WPU가 빠르지만 accuracy tolerance 조건을 넘는다. Energy와 strict matched-accuracy speedup은 아직 미해결이다.",
+        4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 새 composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.123457이다. 그러나 catch_heavy류 branch-prior shift는 여전히 약점이므로 shift generalization은 조건부다.",
+        5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. 새 composition-shift stress의 평균 ECE ratio는 1.327702이고 no_catch에서 2.362081까지 악화된다. Accuracy가 좋아도 branch probability calibration은 아직 안정적이지 않다.",
+        6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit은 N=5에서는 accuracy matched지만 WPU가 token보다 느리고, N=133에서는 WPU가 빠르지만 accuracy tolerance 조건을 넘는다. Real energy와 strict matched-accuracy speedup은 아직 미해결이다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
     }[priority]
 

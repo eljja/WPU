@@ -1,0 +1,7 @@
+background_objects,branch_entropy_mean,branch_flip_rate,constraint_violations_per_step,correct_on_violation,correction_rate,delta_clip,delta_norm_mean,delta_norm_penalty,delta_target_norm_slack,final_majority_branch_ratio,horizon,integrity_projection,model,raw_delta_norm_mean,rollback_on_violation,rollback_rate,samples,seed,selected_k_mean,state_validity_penalty,unsafe_delta_reject_norm,unsafe_delta_rejection_rate
+32,0.399651,0.057292,0.0,True,0.75,0.0,2.992791,0.0,0.5,1.0,25,False,wpu-cws-indexed-sparse,78.427639,True,0.551667,24,11,4.416667,0.0,0.0,0.0
+32,0.61678,0.102431,0.0,True,0.875,0.0,2.685698,0.0,0.5,1.0,25,False,wpu-cws-indexed-sparse,55.725386,True,0.576667,24,13,4.416667,0.0,0.0,0.0
+32,1.052062,0.034722,0.0,True,0.695,0.0,1.985364,0.0,0.5,1.0,25,False,wpu-cws-indexed-local-dense,2.166005,True,0.0,24,11,4.416667,0.0,0.0,0.0
+32,0.70914,0.076389,0.0,True,0.303333,0.0,2.581521,0.0,0.5,1.0,25,False,wpu-cws-indexed-local-dense,3.333165,True,0.0,24,13,4.416667,0.0,0.0,0.0
+32,0.90968,0.067708,0.0,True,0.001667,0.0,5.795568,0.0,0.5,1.0,25,False,graph-transformer,9.46268,True,0.0,24,11,36.416667,0.0,0.0,0.0
+32,0.870625,0.045139,0.0,True,0.535,0.0,5.720762,0.0,0.5,1.0,25,False,graph-transformer,7.357371,True,0.0,24,13,36.416667,0.0,0.0,0.0

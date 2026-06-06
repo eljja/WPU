@@ -244,9 +244,11 @@ model = wpu.create_model(
   반드시 함께 보고해야 한다. Naive rollout-consistency penalty는 sparse H=25
   integrity `0.084549`에 그치고, state-validity regularization도 `0.084722`에
   머물러 training-time validity penalty만으로는 raw delta instability를 해결하지
-  못한다. Rollback/correction memory layer는 sparse H=25 applied-state integrity를
-  `0.988647`까지 올리지만 update의 `0.812500`을 rollback하므로 raw dynamics와
-  memory safety를 분리해 보고해야 한다.
+  못한다. Rollback-only memory layer는 sparse H=25 applied-state integrity를
+  `0.988647`까지 올리지만 update의 `0.812500`을 rollback한다. Corrected-rollback
+  variant는 rollback rate를 `0.564167`까지 낮추지만 integrity가 `0.884654`로
+  떨어진다. 따라서 raw dynamics, correction quality, memory safety를 분리해
+  보고해야 한다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이
@@ -258,6 +260,10 @@ model = wpu.create_model(
   latency reduction `0.996216`을 보였지만 peak-memory reduction은 `0.304080`에
   그친다. 이것은 pre-tensor state indexing에 대한 systems evidence이지 energy나
   matched-accuracy speedup 증명은 아니다.
+- Screening-only energy proxy는 tensorization latency와 tensor byte, CUDA forward
+  latency와 peak memory를 결합한 보조 지표다. Large `N`에서 큰 proxy reduction을
+  보이지만, wall-plug power, GPU power telemetry, sparse-kernel evidence를 대체하지
+  않는다.
 - Matched-accuracy speedup audit은 더 엄격하다. `N=5`에서는 WPU와 serialized-token이
   accuracy-matched지만 WPU가 더 느리다. `N=133`에서는 WPU가 graph-transformer보다
   훨씬 빠르고 더 정확하지만 configured matched-accuracy tolerance 밖이다. 따라서 strict
@@ -269,7 +275,10 @@ model = wpu.create_model(
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.
   3-seed leave-family-out probe는 WPU win-rate `0.750000`으로 더 좋지만 여전히
-  `catch_heavy`에서는 실패한다.
+  `catch_heavy`에서는 실패한다. 3-seed composition-shift stress는 accuracy 기준으로
+  WPU에 긍정적이다(win-rate `1.000000`, mean accuracy delta `0.123457`). 하지만
+  `no_catch`에서 ECE ratio가 `2.362081`까지 악화되어, accuracy와 branch probability
+  reliability를 반드시 분리해 보고해야 한다.
 
 v1의 핵심 목표는 명확하다.
 

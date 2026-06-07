@@ -87,6 +87,9 @@ def main() -> None:
     parser.add_argument("--mechanism-prior-samples", type=int, default=36)
     parser.add_argument("--mechanism-prior-strength", type=float, default=1.0)
     parser.add_argument("--mechanism-prior-strengths", type=float, nargs="+", default=None)
+    parser.add_argument("--select-mechanism-prior-strength", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--mechanism-prior-selection-metric", choices=["nll", "brier", "ece", "nll_ece"], default="nll")
+    parser.add_argument("--mechanism-prior-selection-ece-weight", type=float, default=1.0)
     parser.add_argument("--mechanism-prior-smoothing", type=float, default=1.0)
     parser.add_argument("--temperature-steps", type=int, default=80)
     parser.add_argument("--temperature-lr", type=float, default=5e-2)
@@ -117,10 +120,23 @@ def main() -> None:
             for mechanism in args.eval_mechanisms:
                 print(f"eval model={model_name} seed={seed} mechanism={mechanism}", flush=True)
                 if args.calibrate_mechanism_prior:
-                    for strength in mechanism_prior_strengths:
-                        calibrator = _fit_mechanism_prior_calibrator(mechanism, seed, args, base_calibrator, strength)
+                    if args.select_mechanism_prior_strength:
+                        calibrator = _fit_selected_mechanism_prior_calibrator(
+                            model,
+                            model_name,
+                            mechanism,
+                            seed,
+                            args,
+                            base_calibrator,
+                            mechanism_prior_strengths,
+                        )
                         rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, args))
                         _write_csv(args.out, rows)
+                    else:
+                        for strength in mechanism_prior_strengths:
+                            calibrator = _fit_mechanism_prior_calibrator(mechanism, seed, args, base_calibrator, strength)
+                            rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, args))
+                            _write_csv(args.out, rows)
                 else:
                     rows.append(_evaluate(model, model_name, seed, mechanism, base_calibrator, args))
                     _write_csv(args.out, rows)
@@ -181,6 +197,9 @@ def _default_calibrator() -> dict[str, object]:
         "bias": [0.0, 0.0, 0.0],
         "calibration_mode": "none",
         "mechanism_prior_strength": 0.0,
+        "mechanism_prior_policy": "none",
+        "mechanism_prior_selection_metric": "",
+        "mechanism_prior_selection_score": "",
     }
 
 
@@ -218,6 +237,9 @@ def _fit_calibrator(model: torch.nn.Module, model_name: str, seed: int, args: ar
         "bias": bias_values,
         "calibration_mode": "temperature_bias" if bias is not None else "temperature",
         "mechanism_prior_strength": 0.0,
+        "mechanism_prior_policy": "none",
+        "mechanism_prior_selection_metric": "",
+        "mechanism_prior_selection_score": "",
     }
 
 
@@ -228,24 +250,98 @@ def _fit_mechanism_prior_calibrator(
     base_calibrator: dict[str, object],
     strength: float,
 ) -> dict[str, object]:
+    prior_bias, _ = _mechanism_prior_bias_and_dataset(mechanism, seed, args)
+    return _mechanism_prior_calibrator_from_bias(base_calibrator, prior_bias, strength, policy="fixed")
+
+
+def _fit_selected_mechanism_prior_calibrator(
+    model: torch.nn.Module,
+    model_name: str,
+    mechanism: str,
+    seed: int,
+    args: argparse.Namespace,
+    base_calibrator: dict[str, object],
+    candidate_strengths: list[float],
+) -> dict[str, object]:
+    prior_bias, selection_dataset = _mechanism_prior_bias_and_dataset(mechanism, seed, args)
+    device = torch.device(args.device)
+    loader = DataLoader(selection_dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args, model_name))
+    model.eval()
+    logits_batches: list[torch.Tensor] = []
+    label_batches: list[torch.Tensor] = []
+    with torch.no_grad():
+        for batch, _, labels, _ in loader:
+            batch = _move_batch(batch, device)
+            logits_batches.append(model(batch, num_branches=3, route_branches=3).branch_logits.detach())
+            label_batches.append(labels.to(device))
+    logits = torch.cat(logits_batches, dim=0)
+    labels = torch.cat(label_batches, dim=0)
+    base_bias = torch.tensor(base_calibrator["bias"], dtype=logits.dtype, device=device)
+    prior_bias = prior_bias.to(device=device, dtype=logits.dtype)
+    temperature = max(float(base_calibrator["temperature"]), 1e-6)
+    best_strength = float(candidate_strengths[0])
+    best_score = float("inf")
+    for strength in candidate_strengths:
+        combined_bias = base_bias + float(strength) * prior_bias
+        combined_bias = combined_bias - combined_bias.mean()
+        probabilities = F.softmax((logits + combined_bias) / temperature, dim=-1)
+        nll = float(F.nll_loss(probabilities.clamp_min(1e-8).log(), labels).item())
+        brier = float(_brier_score(probabilities, labels).item())
+        confidence = probabilities.max(dim=-1).values.detach().cpu().tolist()
+        correct = (probabilities.argmax(dim=-1) == labels).float().detach().cpu().tolist()
+        ece = _ece([float(value) for value in confidence], [float(value) for value in correct])
+        if args.mechanism_prior_selection_metric == "nll":
+            score = nll
+        elif args.mechanism_prior_selection_metric == "brier":
+            score = brier
+        elif args.mechanism_prior_selection_metric == "ece":
+            score = ece
+        else:
+            score = nll + float(args.mechanism_prior_selection_ece_weight) * ece
+        if (score, abs(float(strength))) < (best_score, abs(best_strength)):
+            best_score = score
+            best_strength = float(strength)
+    calibrator = _mechanism_prior_calibrator_from_bias(
+        base_calibrator,
+        prior_bias.detach().cpu(),
+        best_strength,
+        policy="selected",
+    )
+    calibrator["mechanism_prior_selection_metric"] = args.mechanism_prior_selection_metric
+    calibrator["mechanism_prior_selection_score"] = round(float(best_score), 6)
+    return calibrator
+
+
+def _mechanism_prior_bias_and_dataset(
+    mechanism: str,
+    seed: int,
+    args: argparse.Namespace,
+) -> tuple[torch.Tensor, PyBulletCupDataset]:
     train_prior = _label_prior(
         _calibration_dataset(seed + 40_000, args),
         smoothing=args.mechanism_prior_smoothing,
     )
-    eval_prior = _label_prior(
-        _dataset(
-            mechanism=mechanism,
-            samples=args.mechanism_prior_samples,
-            seed=seed + 50_000,
-            args=args,
-            balanced_labels=False,
-        ),
-        smoothing=args.mechanism_prior_smoothing,
+    eval_dataset = _dataset(
+        mechanism=mechanism,
+        samples=args.mechanism_prior_samples,
+        seed=seed + 50_000,
+        args=args,
+        balanced_labels=False,
     )
+    eval_prior = _label_prior(eval_dataset, smoothing=args.mechanism_prior_smoothing)
     prior_bias = (eval_prior / train_prior.clamp_min(1e-8)).log()
-    prior_bias = prior_bias - prior_bias.mean()
+    return prior_bias - prior_bias.mean(), eval_dataset
+
+
+def _mechanism_prior_calibrator_from_bias(
+    base_calibrator: dict[str, object],
+    prior_bias: torch.Tensor,
+    strength: float,
+    *,
+    policy: str,
+) -> dict[str, object]:
     base_bias = torch.tensor(base_calibrator["bias"], dtype=torch.float32)
-    combined_bias = base_bias + float(strength) * prior_bias
+    combined_bias = base_bias + float(strength) * prior_bias.to(dtype=torch.float32)
     combined_bias = combined_bias - combined_bias.mean()
     base_mode = str(base_calibrator["calibration_mode"])
     mode = "mechanism_prior" if base_mode == "none" else f"{base_mode}+mechanism_prior"
@@ -254,6 +350,9 @@ def _fit_mechanism_prior_calibrator(
         "bias": [round(float(value), 6) for value in combined_bias.tolist()],
         "calibration_mode": mode,
         "mechanism_prior_strength": round(float(strength), 6),
+        "mechanism_prior_policy": policy,
+        "mechanism_prior_selection_metric": "",
+        "mechanism_prior_selection_score": "",
     }
 
 
@@ -329,6 +428,9 @@ def _evaluate(
         "temperature": calibrator["temperature"],
         "calibration_mode": calibrator["calibration_mode"],
         "mechanism_prior_strength": calibrator.get("mechanism_prior_strength", 0.0),
+        "mechanism_prior_policy": calibrator.get("mechanism_prior_policy", "none"),
+        "mechanism_prior_selection_metric": calibrator.get("mechanism_prior_selection_metric", ""),
+        "mechanism_prior_selection_score": calibrator.get("mechanism_prior_selection_score", ""),
         "calibration_bias": ";".join(f"{float(value):.6f}" for value in calibrator["bias"]),  # type: ignore[union-attr]
         "background_objects": args.background_objects,
         "total_objects_n": args.background_objects + 5,
@@ -437,17 +539,21 @@ def _working_set_stats(model: torch.nn.Module, causal_k: torch.Tensor) -> tuple[
 
 
 def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    grouped: dict[tuple[str, str, str, str, float], list[dict[str, object]]] = {}
+    grouped: dict[tuple[str, str, str, str, str, str, float], list[dict[str, object]]] = {}
     for row in rows:
         if row["row_type"] != "seed":
             continue
+        policy = str(row.get("mechanism_prior_policy", "none"))
+        grouped_strength = float(row.get("mechanism_prior_strength", 0.0)) if policy != "selected" else -1.0
         grouped.setdefault(
             (
                 str(row["model"]),
                 str(row["train_mechanism"]),
                 str(row["eval_mechanism"]),
                 str(row.get("calibration_mode", "none")),
-                float(row.get("mechanism_prior_strength", 0.0)),
+                policy,
+                str(row.get("mechanism_prior_selection_metric", "")),
+                grouped_strength,
             ),
             [],
         ).append(row)
@@ -465,7 +571,15 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
         "temperature",
         "mechanism_prior_strength",
     ]
-    for (model, train_mechanism, mechanism, calibration_mode, mechanism_prior_strength), group in sorted(grouped.items()):
+    for (
+        model,
+        train_mechanism,
+        mechanism,
+        calibration_mode,
+        mechanism_prior_policy,
+        selection_metric,
+        mechanism_prior_strength,
+    ), group in sorted(grouped.items()):
         row = {
             "row_type": "summary",
             "model": model,
@@ -474,7 +588,10 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
             "eval_mechanism": mechanism,
             "temperature": group[0]["temperature"],
             "calibration_mode": calibration_mode,
-            "mechanism_prior_strength": mechanism_prior_strength,
+            "mechanism_prior_strength": mechanism_prior_strength if mechanism_prior_policy != "selected" else 0.0,
+            "mechanism_prior_policy": mechanism_prior_policy,
+            "mechanism_prior_selection_metric": selection_metric,
+            "mechanism_prior_selection_score": "",
             "calibration_bias": "",
             "background_objects": group[0]["background_objects"],
             "total_objects_n": group[0]["total_objects_n"],

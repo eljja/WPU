@@ -440,7 +440,10 @@ training이다.
   올리지만 shifted mean WPU ECE를 `0.024819` 악화시킨다. Prior-strength sweep은
   accuracy-best 비영점 strength(`0.75`)를 찾지만, `strength=0` 대비 win-rate를
   유지/개선하면서 ECE를 악화시키지 않는 비영점 strength는 없었다. 따라서
-  calibration-safe adaptation은 아직 열려 있다.
+  calibration-safe adaptation은 아직 열려 있다. Calibration-selected prior follow-up은
+  shifted mean WPU ECE를 `-0.046204`, Brier를 `-0.105470` 개선하지만 shifted
+  WPU-vs-baseline win-rate는 `0.333333`에 머문다. 따라서 branch-probability
+  calibration과 robust mechanism generalization은 분리해 보고해야 한다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

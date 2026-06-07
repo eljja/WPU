@@ -328,7 +328,11 @@ Not supported:
   shifted WPU ECE by `0.024819`. A prior-strength sweep finds an accuracy-best
   nonzero strength (`0.75`) but no nonzero strength that preserves or improves
   win-rate relative to `strength=0` without increasing ECE, so
-  calibration-safe adaptation remains open.
+  calibration-safe adaptation remains open. A calibration-selected prior
+  follow-up improves shifted mean WPU ECE by `-0.046204` and Brier by
+  `-0.105470`, but it leaves shifted WPU-vs-baseline win-rate at `0.333333`.
+  This separates branch-probability calibration from robust mechanism
+  generalization.
 
 ## Application Boundary
 

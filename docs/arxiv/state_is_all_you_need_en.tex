@@ -738,7 +738,10 @@ probe raises shifted WPU win-rate to 0.666667, but worsens mean shifted WPU ECE
 by 0.024819. A prior-strength sweep finds an accuracy-best nonzero strength
 (0.75), but no nonzero strength preserves or improves win-rate relative to
 zero strength without increasing ECE. Calibration-safe prior adaptation
-therefore remains open.
+therefore remains open. A calibration-selected prior follow-up improves shifted
+mean WPU ECE by -0.046204 and Brier by -0.105470, but leaves shifted
+WPU-versus-baseline win-rate at 0.333333. Thus branch-probability calibration
+and robust mechanism generalization must be reported separately.
 
 \section{Discussion}
 

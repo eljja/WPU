@@ -196,6 +196,13 @@ Use these reports for paper-level claims:
   `strength=0` without increasing WPU ECE.
 - `pybullet_prior_strength_sweep_results.ko.md`: Korean companion for the
   prior-strength sweep.
+- `pybullet_selected_prior_adaptation_results.md`: 7-seed diagnostic that
+  selects mechanism-prior strength on a small held-out calibration set before
+  evaluation. It improves shifted mean WPU accuracy by `0.145503`, ECE by
+  `-0.046204`, and Brier by `-0.105470`, and removes the prior-dominated
+  shifted failure, but shifted WPU-vs-baseline win-rate remains `0.333333`.
+- `pybullet_selected_prior_adaptation_results.ko.md`: Korean companion for the
+  calibration-selected prior diagnostic.
 - `pybullet_shift_generalization_mixture_calibrated_results.md`: 3-seed
   calibrated mixture-training probe. It shows that mixture training helps WPU
   on `edge_shift` but not on `catch_heavy`, and that post-hoc temperature
@@ -529,6 +536,9 @@ Historical or preliminary reports:
   `0.024819`, so P4 improves while P5 remains unsolved. A prior-strength sweep
   confirms the boundary: `strength=0.75` is accuracy-best, but every nonzero
   strength that improves win-rate increases ECE relative to `strength=0`.
+  Calibration-selected prior strength is the first positive P5 follow-up:
+  shifted mean WPU ECE changes by `-0.046204` and Brier by `-0.105470`, but
+  shifted baseline win-rate remains `0.333333`, so P4 and P5 must be separated.
   Temperature+bias calibration reduces the worst `no_catch` ECE failure but
   does not improve all composition mechanisms.
 - The defensible v2 claim is therefore architectural: explicit state exposes

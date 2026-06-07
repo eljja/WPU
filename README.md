@@ -344,7 +344,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   A follow-up prior-strength sweep finds `strength=0.75` is accuracy-best
   (shifted WPU win-rate `0.666667`, mean WPU accuracy `0.601852`), but no
   nonzero strength improves or preserves win-rate without increasing ECE
-  relative to `strength=0`.
+  relative to `strength=0`. Calibration-selected prior strength is more
+  useful for P5: it improves shifted mean WPU accuracy by `0.145503`, ECE by
+  `-0.046204`, and Brier by `-0.105470`, but shifted WPU-vs-baseline win-rate
+  stays `0.333333`.
   A 3-seed
   calibrated mixture-training probe improves WPU on `edge_shift` but loses
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc

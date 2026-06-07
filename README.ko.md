@@ -220,6 +220,13 @@ model = wpu.create_model(
 - 첫 PyBullet benchmark는 simulator가 생성한 rigid-body state를 `WorldState`로
   객체화하고 동일한 WPU API로 처리할 수 있음을 보였다. 현재는 systems/pipeline
   결과이지 accuracy dominance 결과는 아니다.
+- PyBullet simulator coverage audit는 simulator breadth와 superiority claim을 분리한다.
+  Baseline-complete cup evidence는 7 seeds와 `N=133`까지이고, shift evidence는
+  4개 mechanism family, rollout diagnostic은 horizon 25, objectification-quality
+  evidence는 7개 corruption setting, systems profile은 `N≈2052`까지 포함한다.
+  N_bg=512 cup extension은 total `N=517`에서 WPU 실행 가능성을 보이지만,
+  같은 protocol에서 dense graph baseline이 완료되지 않았으므로 accuracy-superiority
+  result가 아니라 WPU-only systems feasibility evidence다.
 - 첫 PyBullet objectification stress는 causal-frontier relation 누락이 propagation
   이전에 WPU selected K를 줄인다는 점을 보였다. 또한 현재 objectification score에는
   frontier completeness와 semantic identity check가 추가되어야 한다.
@@ -362,6 +369,7 @@ ensemble regret gate도 negative result다. 최고 closure는 `0.287268`, safe b
 - Reproducibility guide: `docs/reproducibility.ko.md`
 - Experiment index: `docs/experiments/README.md`
 - PyBullet benchmark: `docs/experiments/pybullet_cup_benchmark_results.ko.md`
+- PyBullet coverage audit: `docs/experiments/pybullet_simulator_coverage_results.ko.md`
 - Review response: `docs/Review/review_response_and_differentiation.md`
 
 PDF build:

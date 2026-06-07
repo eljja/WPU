@@ -339,6 +339,11 @@ Not supported:
   WPU-vs-baseline win-rate `1.000000` and mean margin change `0.050264`, but it
   uses mechanism-specific calibration samples. It is evidence for an adapted
   regime, not for zero-shot physical generalization.
+- Baseline-complete large-`N` simulator superiority. The PyBullet coverage
+  audit now reaches WPU-only N_bg=512, total `N=517`, but the graph-transformer
+  baseline did not complete under the attempted protocol. This is systems
+  feasibility evidence and a benchmark-design warning, not an accuracy
+  superiority result.
 
 ## Application Boundary
 

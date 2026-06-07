@@ -39,6 +39,14 @@ Use these reports for paper-level claims:
 - `wpu_v2_priority_dashboard.md` and `wpu_v2_priority_dashboard.ko.md`:
   conservative cross-experiment dashboard for v2 priorities 1-7. It is the
   fastest way to see which claims are ready, partial, or still failing.
+- `pybullet_simulator_coverage_results.md` and
+  `pybullet_simulator_coverage_results.ko.md`: simulator-grounding coverage
+  audit that separates breadth from superiority claims. It tracks cup
+  prediction, mechanism shift, closed-loop rollout, objectification corruption,
+  and CPU/CUDA systems profile axes. The N_bg=512 cup extension is explicitly
+  marked baseline-incomplete because only WPU models completed under the
+  attempted protocol; it is systems feasibility evidence, not matched accuracy
+  evidence.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid
@@ -532,6 +540,13 @@ Historical or preliminary reports:
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy
   remains comparable rather than dominant.
+- The PyBullet simulator coverage audit makes the P3 boundary explicit:
+  baseline-complete simulator evidence currently reaches 7 cup seeds,
+  4 mechanism families, horizon 25 rollout diagnostics, 7 objectification
+  corruption settings, and systems profiles up to `N≈2052`. A WPU-only
+  N_bg=512 cup extension reaches total `N=517`, but dense graph comparison did
+  not complete under the same protocol, so it must not be used as an accuracy
+  superiority claim.
 - The PyBullet objectification-quality benchmark makes the object contract
   sharper: the public report now includes frontier completeness and semantic
   consistency, and the benchmark shows that relation-drop can drive

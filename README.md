@@ -234,6 +234,7 @@ Key reports:
 - `docs/experiments/step_sweep_v1_results.md`
 - `docs/experiments/controlled_stress_v1_results.md`
 - `docs/experiments/pybullet_cup_benchmark_results.md`
+- `docs/experiments/pybullet_simulator_coverage_results.md`
 
 ## Paper
 
@@ -274,6 +275,14 @@ The current evidence supports a regime hypothesis, not universal dominance.
 - The first PyBullet benchmark shows that simulator-generated rigid-body state
   can be objectified into `WorldState` and processed by the same WPU API. It is
   currently a systems/pipeline result, not an accuracy-dominance result.
+- The PyBullet simulator coverage audit now separates simulator breadth from
+  superiority claims. Baseline-complete cup evidence reaches 7 seeds and
+  `N=133`; shift evidence covers 4 mechanism families; rollout diagnostics
+  reach horizon 25; objectification-quality evidence covers 7 corruption
+  settings; systems profiles reach `N≈2052`. The N_bg=512 cup extension runs
+  WPU at total `N=517`, but it is WPU-only because the dense graph baseline did
+  not complete under the attempted protocol, so it is not an accuracy-superiority
+  result.
 - The first PyBullet objectification stress shows that missing causal-frontier
   relations reduce WPU selected K before propagation. It also shows that the
   current objectification score must be extended with frontier completeness and

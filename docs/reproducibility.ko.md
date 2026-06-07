@@ -153,6 +153,14 @@ python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws
 python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 0 128 --seeds 11 13 17 19 23 29 31 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --runtime-repeats 3 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_7seed.csv
 ```
 
+Large-background WPU-only PyBullet extension은 systems feasibility run이지
+matched-baseline accuracy comparison이 아니다. Dense graph baseline은 attempted
+protocol에서 완료되지 않았으므로 이 CSV에서 baseline accuracy를 추론하면 안 된다.
+
+```bash
+python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense --background-objects 512 --seeds 11 13 17 19 23 29 31 --steps 12 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --runtime-repeats 2 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_n512.csv
+```
+
 PyBullet closed-loop rollout diagnostic은 다음 명령으로 재현할 수 있다.
 
 ```bash
@@ -254,6 +262,7 @@ python scripts/analyze_pybullet_pareto_frontier.py
 보수적인 v2 우선순위 dashboard는 다음 명령으로 재현할 수 있다.
 
 ```bash
+python scripts/analyze_pybullet_simulator_coverage.py
 python scripts/audit_v2_priority_dashboard.py
 ```
 

@@ -161,6 +161,14 @@ python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws
 python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 0 128 --seeds 11 13 17 19 23 29 31 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --runtime-repeats 3 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_7seed.csv
 ```
 
+The large-background WPU-only PyBullet extension is a systems feasibility run,
+not a matched-baseline accuracy comparison. The dense graph baseline did not
+complete under the attempted protocol and should not be inferred from this CSV.
+
+```bash
+python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense --background-objects 512 --seeds 11 13 17 19 23 29 31 --steps 12 --sim-steps 120 --samples 24 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --runtime-repeats 2 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_n512.csv
+```
+
 The PyBullet closed-loop rollout diagnostic can be reproduced with:
 
 ```bash
@@ -263,6 +271,7 @@ python scripts/analyze_pybullet_pareto_frontier.py
 The conservative v2 priority dashboard can be reproduced with:
 
 ```bash
+python scripts/analyze_pybullet_simulator_coverage.py
 python scripts/audit_v2_priority_dashboard.py
 ```
 

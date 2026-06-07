@@ -452,6 +452,11 @@ selection, retriever-propagator joint training이다.
   `1.000000`, mean margin change `0.050264`까지 도달하지만 mechanism-specific
   calibration sample을 사용한다. 이는 adapted regime의 evidence이지 zero-shot
   physical generalization evidence는 아니다.
+- Baseline-complete large-`N` simulator superiority는 아직 지지되지 않는다.
+  PyBullet coverage audit는 WPU-only N_bg=512, total `N=517` extension까지
+  도달했지만, graph-transformer baseline은 같은 protocol에서 완료되지 않았다.
+  따라서 이는 systems feasibility evidence와 benchmark-design warning이지
+  matched-baseline accuracy evidence가 아니다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

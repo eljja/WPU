@@ -835,6 +835,11 @@ probe strengthens the applied-state safety story: sparse WPU reaches H=25
 integrity 0.958735 with zero rollback and zero dense escalation, but only by
 correcting 0.784166 of updates. This is evidence for a bounded memory-safety
 layer, not evidence that raw sparse dynamics are already stable.
+A separate PyBullet coverage audit reaches a WPU-only large-background
+extension at \(N_{\mathrm{bg}}=512\), total \(N=517\), but the graph-transformer
+baseline did not complete under the attempted protocol. We therefore treat this
+as systems feasibility evidence and a benchmark-design warning, not as
+matched-baseline accuracy evidence.
 
 These limitations change the paper's scientific posture. The current claim is
 not that WPU already surpasses Transformers, GNN simulators, Dreamer-style

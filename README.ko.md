@@ -305,10 +305,11 @@ model = wpu.create_model(
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.
   3-seed leave-family-out probe는 WPU win-rate `0.750000`으로 더 좋지만 여전히
-  `catch_heavy`에서는 실패한다. 3-seed composition-shift stress는 accuracy 기준으로
-  WPU에 긍정적이다(win-rate `1.000000`, mean accuracy delta `0.123457`). 하지만
-  `no_catch`에서 ECE ratio가 `2.362081`까지 악화되어, accuracy와 branch probability
-  reliability를 반드시 분리해 보고해야 한다. Temperature+bias calibration은
+  `catch_heavy`에서는 실패한다. 7-seed composition-shift stress는 accuracy 기준으로
+  WPU에 긍정적이다(win-rate `1.000000`, mean accuracy delta `0.071428`). 하지만
+  평균 ECE ratio는 `1.014879`, worst `no_catch` ratio는 `1.166073`이라 calibration
+  우위는 아니며, accuracy와 branch probability reliability를 반드시 분리해 보고해야 한다.
+  Temperature+bias calibration은
   `no_catch` ECE ratio를 `0.960054`까지 낮췄지만 composition mechanism 3개 중
   1개만 개선하므로, calibration은 해결된 것이 아니라 mechanism-aware 문제로 남아 있다.
 

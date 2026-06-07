@@ -241,6 +241,14 @@ Use these reports for paper-level claims:
   calibration.
 - `pybullet_shift_composition_stress_results.ko.md`: Korean companion for the
   composition-shift stress probe.
+- `pybullet_shift_composition_stress_7seed_results.md`: 7-seed
+  composition-shift stress probe over `no_catch`, `edge_high_force`, and
+  `edge_catch_heavy`. WPU local-dense is best on all three composition
+  mechanisms with mean accuracy delta `0.071428`, but mean ECE ratio remains
+  slightly above 1 at `1.014879`, so P4 accuracy and P5 calibration remain
+  separate.
+- `pybullet_shift_composition_stress_7seed_results.ko.md`: Korean companion for
+  the 7-seed composition-shift stress probe.
 - `pybullet_shift_composition_stress_bias_calibrated_results.md`: repeats the
   composition-shift stress probe with temperature+bias calibration. It improves
   `no_catch` ECE but does not solve calibration across all composition
@@ -584,7 +592,10 @@ Historical or preliminary reports:
   Few-shot mechanism adaptation is the first strong P4 adapted-regime result:
   shifted WPU win-rate reaches `1.000000` with mean margin change `0.050264`,
   but it uses mechanism-specific calibration samples and therefore does not
-  prove zero-shot shift generalization.
+  prove zero-shot shift generalization. The new 7-seed composition-shift stress
+  is a stronger zero-shot positive sub-regime: WPU wins all three compound
+  mechanisms with mean accuracy delta `0.071428`, but calibration remains mixed
+  because mean ECE ratio is `1.014879`.
   Temperature+bias calibration reduces the worst `no_catch` ECE failure but
   does not improve all composition mechanisms.
 - The defensible v2 claim is therefore architectural: explicit state exposes

@@ -1,0 +1,4 @@
+eval_mechanism,train_mechanism,best_wpu_model,best_baseline_model,best_wpu_accuracy,best_baseline_accuracy,accuracy_delta,wpu_win,best_wpu_ece,best_baseline_ece,ece_ratio,best_wpu_brier,best_baseline_brier,best_wpu_nll,best_baseline_nll,seed_count
+edge_catch_heavy,nominal+high_force+edge_shift+catch_heavy,wpu-cws-indexed-local-dense,graph-transformer,0.412698,0.353175,0.059523,True,0.101415,0.098169,1.033065,0.670454,0.683625,1.100995,1.124585,7
+edge_high_force,nominal+high_force+edge_shift+catch_heavy,wpu-cws-indexed-local-dense,graph-transformer,0.615079,0.611111,0.003968,True,0.138419,0.163713,0.845498,0.576884,0.593129,0.996818,1.00795,7
+no_catch,nominal+high_force+edge_shift+catch_heavy,wpu-cws-indexed-local-dense,graph-transformer,0.599206,0.448413,0.150793,True,0.206403,0.177007,1.166073,0.552302,0.648515,0.938668,1.07863,7

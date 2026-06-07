@@ -451,7 +451,10 @@ selection, retriever-propagator joint training이다.
   Few-shot mechanism adaptation follow-up은 shifted WPU-vs-baseline win-rate
   `1.000000`, mean margin change `0.050264`까지 도달하지만 mechanism-specific
   calibration sample을 사용한다. 이는 adapted regime의 evidence이지 zero-shot
-  physical generalization evidence는 아니다.
+  physical generalization evidence는 아니다. 별도 7-seed composition-shift stress
+  probe는 더 강한 zero-shot positive sub-regime을 보인다. WPU local-dense는 3개
+  compound mechanism 모두에서 이기고 mean accuracy delta는 `0.071428`이지만,
+  mean ECE ratio는 `1.014879`라서 accuracy와 calibration은 별도 claim으로 남는다.
 - Baseline-complete large-`N` simulator superiority는 아직 지지되지 않는다.
   PyBullet coverage audit는 WPU-only N_bg=512, total `N=517` extension까지
   도달했지만, graph-transformer baseline은 같은 protocol에서 완료되지 않았다.

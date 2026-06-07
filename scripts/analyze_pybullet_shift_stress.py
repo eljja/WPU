@@ -86,7 +86,7 @@ def _render(rows: list[dict[str, object]], input_csv: Path, output_csv: Path, *,
         interpretation = [
             f"WPU win-rate는 `{win_rate:.6f}`, 평균 accuracy delta는 `{mean_delta:.6f}`다.",
             f"평균 ECE ratio는 `{mean_ece_ratio:.6f}`이며, 1보다 작으면 best WPU의 ECE가 best baseline보다 낮다는 뜻이다.",
-            "이 stress test는 단일 held-out family보다 어렵다. compound shift에서 지면 WPU 주장은 local-state regime으로 더 좁혀야 한다.",
+            "이 stress test는 단일 held-out family보다 어렵다. Accuracy-positive 결과는 compound-shift P4를 강화하지만, ECE가 1보다 크면 P5 calibration은 별도 문제로 남는다.",
         ]
     else:
         title = "# PyBullet Composition-Shift Stress"
@@ -97,7 +97,7 @@ def _render(rows: list[dict[str, object]], input_csv: Path, output_csv: Path, *,
         interpretation = [
             f"WPU win-rate is `{win_rate:.6f}` and mean accuracy delta is `{mean_delta:.6f}`.",
             f"Mean ECE ratio is `{mean_ece_ratio:.6f}`; values below 1 mean the best WPU has lower ECE than the best baseline.",
-            "This stress test is harder than single held-out families. Failures here narrow the WPU claim to local-state regimes rather than broad shift generalization.",
+            "This stress test is harder than single held-out families. Accuracy-positive results strengthen compound-shift P4, but ECE above 1 keeps P5 calibration separate.",
         ]
     lines = [
         title,

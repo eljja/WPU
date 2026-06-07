@@ -338,7 +338,11 @@ Not supported:
   generalization. A few-shot mechanism adaptation follow-up reaches shifted
   WPU-vs-baseline win-rate `1.000000` and mean margin change `0.050264`, but it
   uses mechanism-specific calibration samples. It is evidence for an adapted
-  regime, not for zero-shot physical generalization.
+  regime, not for zero-shot physical generalization. A separate 7-seed
+  composition-shift stress probe is a stronger zero-shot positive sub-regime:
+  WPU local-dense wins all three compound mechanisms with mean accuracy delta
+  `0.071428`, but mean ECE ratio is `1.014879`, so accuracy and calibration
+  remain separate claims.
 - Baseline-complete large-`N` simulator superiority. The PyBullet coverage
   audit now reaches WPU-only N_bg=512, total `N=517`, but the graph-transformer
   baseline did not complete under the attempted protocol. This is systems

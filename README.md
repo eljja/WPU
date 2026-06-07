@@ -369,10 +369,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc
   temperature calibration is not enough. A 3-seed leave-family-out probe is
   better for WPU, with win-rate `0.750000`, but still fails `catch_heavy`.
-  A 3-seed composition-shift stress probe is accuracy-positive for WPU
-  (win-rate `1.000000`, mean accuracy delta `0.123457`) but calibration-negative
-  on `no_catch` (ECE ratio `2.362081`), so accuracy and branch-probability
-  reliability must be separated. Temperature+bias calibration improves
+  A 7-seed composition-shift stress probe is accuracy-positive for WPU
+  (win-rate `1.000000`, mean accuracy delta `0.071428`) but still not
+  calibration-positive overall (mean ECE ratio `1.014879`, worst `no_catch`
+  ratio `1.166073`), so accuracy and branch-probability reliability must be
+  separated. Temperature+bias calibration improves
   `no_catch` ECE ratio to `0.960054`, but only improves 1/3 composition
   mechanisms, so calibration remains mechanism-aware rather than solved.
 

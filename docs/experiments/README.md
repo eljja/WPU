@@ -124,7 +124,10 @@ Use these reports for paper-level claims:
   and strong state-validity regularization both remain at `0.084722` for sparse
   H=25. Rollback-only raises sparse applied-state integrity to `0.988647` with
   rollback rate `0.812500`; corrected rollback lowers rollback rate to
-  `0.564167` but lowers integrity to `0.900288`.
+  `0.564167` but lowers integrity to `0.900288`. Sparse-first dense escalation
+  raises corrected-rollback integrity to `0.914831` and lowers rollback rate to
+  `0.000000`, but still acts as a safety layer rather than fixing raw sparse
+  delta instability.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -155,6 +158,11 @@ Use these reports for paper-level claims:
   depends on a single tolerance threshold.
 - `pybullet_matched_speedup_tolerance_results.ko.md`: Korean companion for the
   matched-speedup tolerance sweep.
+- `pybullet_pareto_frontier_results.md`: accuracy-latency Pareto frontier audit
+  for the parameter-matched PyBullet benchmark. WPU is on the frontier at
+  `N=133` but is dominated by serialized-token at `N=5`.
+- `pybullet_pareto_frontier_results.ko.md`: Korean companion for the Pareto
+  frontier audit.
 - `pybullet_system_energy_proxy_results.md`: screening-only system energy proxy
   derived from tensorization and CUDA forward profiles. It is useful for
   choosing future power/sparse-kernel measurement regimes, but it is not real
@@ -301,6 +309,11 @@ Use these reports for paper-level claims:
   `wpu_v2_candidate_regret_gate_perturbed_results.ko.md`: feature-perturbed
   candidate-regret training. It slightly improves safe test-sweep closure to
   `0.329756` but lowers train-selected deployment to `0.312586`.
+- `wpu_v2_candidate_safety_gate_results.md` and
+  `wpu_v2_candidate_safety_gate_results.ko.md`: safety/utility-head candidate
+  gate. This is a negative P1 result: best closure is `0.147450`, safe best is
+  `0.090719`, and train-selected closure is `0.144863`, below the direct
+  candidate-regret gate.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -475,8 +488,9 @@ Historical or preliminary reports:
   when PyBullet background state grows to `N≈2052.6`, indexed WPU still
   tensorizes only `K≈4.6`, reducing tensor bytes by `0.997454`; the random CPU
   sparse-forward proxy reaches `0.996975` reduction. This supports the
-  state-indexing premise but remains a proxy, not a hardware-power or
-  Pareto-dominance result.
+  state-indexing premise but remains a proxy, not a hardware-power result. The
+  matched benchmark now has a small Pareto audit: WPU reaches the
+  accuracy-latency frontier at `N=133`, but not at `N=5`.
 - The PyBullet state-integrity audit turns closed-loop rollout stability into
   a tracked metric. It confirms that guarded state-store projection can protect
   applied state, but it remains a safety layer, not a solution to raw WPU sparse

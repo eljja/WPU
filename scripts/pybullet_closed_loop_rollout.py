@@ -59,6 +59,7 @@ def main() -> None:
     parser.add_argument("--unsafe-delta-reject-norm", type=float, default=0.0)
     parser.add_argument("--correct-on-violation", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--rollback-on-violation", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--escalation-model", default="")
     parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-position-norm", type=float, default=25.0)
     parser.add_argument("--max-velocity-norm", type=float, default=25.0)
@@ -69,16 +70,43 @@ def main() -> None:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, object]] = []
+    model_cache: dict[tuple[str, int], torch.nn.Module] = {}
     for model_name in args.models:
         for seed in args.seeds:
             print(f"train model={model_name} seed={seed}", flush=True)
-            model = _train_model(model_name, seed, args)
+            model = _cached_model(model_cache, model_name, seed, args)
+            fallback_model = None
+            if args.escalation_model and args.escalation_model != model_name:
+                print(f"train escalation_model={args.escalation_model} seed={seed}", flush=True)
+                fallback_model = _cached_model(model_cache, args.escalation_model, seed, args)
             for horizon in args.horizons:
                 print(f"rollout model={model_name} seed={seed} horizon={horizon}", flush=True)
-                rows.append(_rollout_condition(model, model_name, seed, horizon, args))
+                rows.append(
+                    _rollout_condition(
+                        model,
+                        model_name,
+                        seed,
+                        horizon,
+                        args,
+                        fallback_model=fallback_model,
+                        fallback_model_name=args.escalation_model if fallback_model is not None else "",
+                    )
+                )
                 _write_csv(args.out, rows)
     _write_csv(args.out, rows)
     print(f"wrote={args.out}", flush=True)
+
+
+def _cached_model(
+    cache: dict[tuple[str, int], torch.nn.Module],
+    model_name: str,
+    seed: int,
+    args: argparse.Namespace,
+) -> torch.nn.Module:
+    key = (model_name, seed)
+    if key not in cache:
+        cache[key] = _train_model(model_name, seed, args)
+    return cache[key]
 
 
 def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.nn.Module:
@@ -145,6 +173,9 @@ def _rollout_condition(
     seed: int,
     horizon: int,
     args: argparse.Namespace,
+    *,
+    fallback_model: torch.nn.Module | None = None,
+    fallback_model_name: str = "",
 ) -> dict[str, object]:
     device = torch.device(args.device)
     dataset = PyBulletCupDataset(
@@ -165,6 +196,8 @@ def _rollout_condition(
     rejected_delta_count = 0
     correction_count = 0
     rollback_count = 0
+    escalation_count = 0
+    escalation_success_count = 0
     total_delta_count = 0
     selected_k_values: list[float] = []
     final_branch_counts: Counter[int] = Counter()
@@ -218,6 +251,32 @@ def _rollout_condition(
                 if needs_memory_guard:
                     before_world_state = type(current.state).from_json(before_state)  # type: ignore[arg-type]
                     after_violations = _constraint_violations(current)
+                    if fallback_model is not None and after_violations > before_violations:
+                        current.state = type(current.state).from_json(before_state)  # type: ignore[arg-type]
+                        current.event.time = before_event_time
+                        fallback_batch, _, _, _ = _collate_fn(args, fallback_model_name)([current])
+                        fallback_batch = _move_batch(fallback_batch, device)
+                        fallback_prediction = fallback_model(fallback_batch, num_branches=3, route_branches=3)
+                        fallback_delta = fallback_prediction.object_delta[0].detach().cpu()
+                        fallback_object_ids = (
+                            fallback_batch.object_ids[0]
+                            if fallback_batch.object_ids is not None
+                            else list(current.state.objects)
+                        )
+                        applied_delta_norm = _apply_predicted_delta(
+                            current,
+                            fallback_object_ids,
+                            fallback_delta,
+                            time_step=sample.event.time,
+                            delta_clip=args.delta_clip,
+                            integrity_projection=args.integrity_projection,
+                            max_position_norm=args.max_position_norm,
+                            max_velocity_norm=args.max_velocity_norm,
+                            min_cup_z=args.min_cup_z,
+                        )
+                        escalation_count += 1
+                        after_violations = _constraint_violations(current)
+                        escalation_success_count += int(after_violations <= before_violations)
                     if args.correct_on_violation and after_violations > before_violations:
                         _project_sample_state(
                             current,
@@ -250,6 +309,9 @@ def _rollout_condition(
         "unsafe_delta_rejection_rate": round(rejected_delta_count / max(total_delta_count, 1), 6),
         "correction_rate": round(correction_count / max(total_delta_count, 1), 6),
         "rollback_rate": round(rollback_count / max(total_delta_count, 1), 6),
+        "escalation_rate": round(escalation_count / max(total_delta_count, 1), 6),
+        "escalation_success_rate": round(escalation_success_count / max(escalation_count, 1), 6),
+        "escalation_model": fallback_model_name,
         "selected_k_mean": round(_mean(selected_k_values), 6),
         "final_majority_branch_ratio": round(max(final_branch_counts.values(), default=0) / max(args.samples, 1), 6),
         "delta_clip": args.delta_clip,

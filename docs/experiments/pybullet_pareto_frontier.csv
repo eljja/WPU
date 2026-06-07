@@ -1,0 +1,9 @@
+total_objects_n,model,is_wpu,branch_accuracy,ms_per_sample_forward,cuda_peak_mb,seed_count,pareto_frontier,dominated_by,dominator_accuracy,dominator_ms_per_sample
+5,graph-transformer,False,0.527778,2.19857,18.125488,2,False,serialized-token,0.569445,0.14465
+5,serialized-token,False,0.569445,0.14465,18.351074,2,True,,,
+5,wpu-cws-indexed-local-dense,True,0.5,1.429921,18.138184,2,False,serialized-token,0.569445,0.14465
+5,wpu-cws-indexed-sparse,True,0.569445,1.299167,18.088379,2,False,serialized-token,0.569445,0.14465
+133,graph-transformer,False,0.472222,41.766361,24.424316,2,False,wpu-cws-indexed-sparse,0.569445,2.177138
+133,serialized-token,False,0.472222,0.293472,38.546387,2,True,,,
+133,wpu-cws-indexed-local-dense,True,0.5,1.437547,18.138184,2,True,,,
+133,wpu-cws-indexed-sparse,True,0.569445,2.177138,18.088379,2,True,,,

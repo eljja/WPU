@@ -248,7 +248,10 @@ model = wpu.create_model(
   `0.988647`까지 올리지만 update의 `0.812500`을 rollback한다. Corrected-rollback
   variant는 rollback rate를 `0.564167`까지 낮추지만 integrity가 `0.900288`로
   떨어진다. 따라서 raw dynamics, correction quality, memory safety를 분리해
-  보고해야 한다.
+  보고해야 한다. Sparse-first dense-escalation variant는 corrected-rollback
+  integrity를 `0.914831`로 올리고 rollback rate를 `0.000000`으로 낮추지만,
+  fallback을 자주 호출한다(`0.805833`). 따라서 이는 stable raw sparse dynamics가
+  아니라 dense-when-needed safety-layer 결과다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이
@@ -268,7 +271,8 @@ model = wpu.create_model(
   accuracy-matched지만 WPU가 더 느리다. `N=133`에서는 WPU가 best-accuracy non-WPU
   baseline인 graph-transformer보다 더 정확하고 `19.184067x` 빠르다. 이는 positive
   large-N evidence지만 모든 baseline에 대한 Pareto dominance는 아니다. Serialized-token은
-  더 낮은 accuracy에서 여전히 더 빠르다.
+  더 낮은 accuracy에서 여전히 더 빠르다. 별도 Pareto audit에서는 WPU가 `N=133`
+  accuracy-latency frontier에는 올라가지만 `N=5`에서는 그렇지 않다.
 - PyBullet shift-generalization benchmark는 held-out mechanism family에서 calibration
   metric을 추가했다. 7-seed 재실행에서 WPU local-dense는 `catch_heavy`에서 앞서지만,
   `edge_shift`와 `high_force`에서는 serialized-token이 더 강하므로 robust world-state
@@ -322,7 +326,9 @@ Direct candidate-regret deployment는 train-selected deployment 기준 `0.328025
 test sweep 기준 `0.329950`까지 도달했지만, candidate oracle은 여전히 훨씬 강하고
 harmful accept도 safety limit 근처에 남아 있다. 따라서 다음 v2 목표는 invariant
 candidate descriptor, risk-adjusted mechanism routing, 그리고 retriever-propagator
-joint training이다.
+joint training이다. 별도 safety/utility-head gate는 negative result다. Best closure는
+`0.147450`, safe best는 `0.090719`, train-selected closure는 `0.144863`에 그쳐,
+P1에는 safety head만이 아니라 더 강한 candidate scoring signal이 필요하다.
 
 ## 논문 및 문서
 

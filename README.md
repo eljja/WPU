@@ -304,7 +304,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
   applied-state integrity to `0.988647`, but only by rolling back `0.812500` of
   updates. A corrected-rollback variant reduces rollback rate to `0.564167`,
   but integrity falls to `0.900288`, so raw dynamics, correction quality, and
-  memory safety must be reported separately.
+  memory safety must be reported separately. A sparse-first dense-escalation
+  variant raises corrected-rollback integrity to `0.914831` and reduces
+  rollback rate to `0.000000`, but it still invokes fallback frequently
+  (`0.805833`), so this is a dense-when-needed safety-layer result rather than
+  stable raw sparse dynamics.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and
@@ -325,7 +329,8 @@ The current evidence supports a regime hypothesis, not universal dominance.
   both more accurate and faster than the best-accuracy non-WPU baseline
   (`graph-transformer`). This is positive large-N evidence, but not Pareto
   dominance over every baseline because serialized-token remains faster at
-  lower accuracy.
+  lower accuracy. A separate Pareto audit places WPU on the accuracy-latency
+  frontier at `N=133`, but not at `N=5`.
 - The PyBullet shift-generalization benchmark adds calibration metrics under
   held-out mechanism families. In the 7-seed rerun, WPU local-dense leads on
   `catch_heavy`, but serialized-token remains stronger on `edge_shift` and
@@ -377,7 +382,10 @@ closes only `0.244220` of the available candidate-oracle gain at best, and only
 Direct candidate-regret deployment improves the conservative closure to
 `0.328025` under train-selected deployment (`0.329950` in the test sweep), but
 the candidate oracle remains substantially stronger and harmful accepts remain
-near the safety limit.
+near the safety limit. A separate safety/utility-head gate is a negative result:
+best closure is only `0.147450`, safe best is `0.090719`, and train-selected
+closure is `0.144863`, so P1 needs better candidate scoring rather than a
+separate safety head alone.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than

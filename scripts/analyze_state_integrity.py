@@ -51,6 +51,8 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         rejection_rate = _mean_optional(group, "unsafe_delta_rejection_rate")
         correction_rate = _mean_optional(group, "correction_rate")
         rollback_rate = _mean_optional(group, "rollback_rate")
+        escalation_rate = _mean_optional(group, "escalation_rate")
+        escalation_success_rate = _mean_optional(group, "escalation_success_rate")
         integrity_score = _integrity_score(violations, delta_norm, flip_rate)
         output.append(
             {
@@ -66,6 +68,8 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "unsafe_delta_rejection_rate": round(rejection_rate, 6),
                 "correction_rate": round(correction_rate, 6),
                 "rollback_rate": round(rollback_rate, 6),
+                "escalation_rate": round(escalation_rate, 6),
+                "escalation_success_rate": round(escalation_success_rate, 6),
                 "state_integrity_score": round(integrity_score, 6),
             }
         )
@@ -129,6 +133,18 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "state. It tests whether memory-layer repair can reduce rollback",
             "frequency while preserving applied-state integrity.",
         ]
+    escalation_note = []
+    if any(float(row.get("escalation_rate", 0.0)) > 0.0 for row in rows):
+        escalation_note = [
+            "",
+            "The escalation run tests sparse-first, dense-when-needed memory",
+            "safety: when the sparse delta increases validity violations, the",
+            "state is restored and a local-dense WPU fallback recomputes the",
+            "update before correction or rollback. In the current evidence this",
+            "reduces rollback frequency to zero for sparse H=25 while improving",
+            "corrected-rollback integrity, but it is still a safety-layer result",
+            "rather than proof of stable raw sparse dynamics.",
+        ]
     consistency_note = []
     if "consistency" in labels:
         consistency_note = [
@@ -172,8 +188,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "",
             "## Summary",
             "",
-            "| run | model | H | violations/step | delta norm | flip rate | reject rate | correction rate | rollback rate | integrity score |",
-            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+            "| run | model | H | violations/step | delta norm | flip rate | reject rate | correction rate | rollback rate | escalation rate | escalation success | integrity score |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in rows:
@@ -184,6 +200,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             f"{float(row['unsafe_delta_rejection_rate']):.6f} | "
             f"{float(row['correction_rate']):.6f} | "
             f"{float(row['rollback_rate']):.6f} | "
+            f"{float(row['escalation_rate']):.6f} | "
+            f"{float(row['escalation_success_rate']):.6f} | "
             f"{float(row['state_integrity_score']):.6f} |"
         )
     lines.extend(
@@ -201,6 +219,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             *regularized_note,
             *rejection_note,
             *correction_note,
+            *escalation_note,
             *consistency_note,
             *validity_note,
             "",

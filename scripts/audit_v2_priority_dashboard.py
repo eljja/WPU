@@ -60,6 +60,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
     regret_path = ROOT / "wpu_v2_candidate_regret_gate_summary.csv"
     penalty_path = ROOT / "wpu_v2_candidate_regret_gate_penalty_summary.csv"
     perturb_path = ROOT / "wpu_v2_candidate_regret_gate_perturbed_summary.csv"
+    safety_path = ROOT / "wpu_v2_candidate_safety_gate_summary.csv"
     regret_best = None
     regret_safe_best = None
     regret_unconstrained_best = None
@@ -142,7 +143,42 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
                 f"{float(safe_best['gap_closure_fraction']):.6f} under harmful-accept <= 0.25, "
                 f"but train-selected closure is {float(train_best['gap_closure_fraction']):.6f}."
             )
-    best = max(value for value in [aggregate_best, noharm_best, regret_best] if value is not None)
+    safety_best = None
+    safety_note = ""
+    if safety_path.exists():
+        safety_rows = _read_rows(safety_path)
+        safety_best_row = max(safety_rows, key=lambda row: float(row["gap_closure_fraction"]))
+        safety_best = float(safety_best_row["gap_closure_fraction"])
+        safety_safe_rows = [
+            row for row in safety_rows if float(row.get("mean_harmful_accept_rate", 1.0)) <= 0.25
+        ]
+        safety_train_rows = [
+            row for row in safety_rows if row["policy"] == "train_selected_safety_utility_gate"
+        ]
+        safety_safe_best = (
+            max(float(row["gap_closure_fraction"]) for row in safety_safe_rows)
+            if safety_safe_rows
+            else None
+        )
+        safety_train_best = (
+            max(float(row["gap_closure_fraction"]) for row in safety_train_rows)
+            if safety_train_rows
+            else None
+        )
+        safety_note = (
+            f" A separate safety/utility head is a negative result: best closure is {safety_best:.6f}"
+            + (
+                f", safe best is {safety_safe_best:.6f}"
+                if safety_safe_best is not None
+                else ", with no harmful-accept <= 0.25 deployment"
+            )
+            + (
+                f", and train-selected closure is {safety_train_best:.6f}."
+                if safety_train_best is not None
+                else "."
+            )
+        )
+    best = max(value for value in [aggregate_best, noharm_best, regret_best, safety_best] if value is not None)
     source = regret_path if regret_best == best else path
     return _row(
         1,
@@ -152,7 +188,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         0.5,
         "gap_closure_fraction",
         source,
-        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}",
+        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}",
         "Strengthen candidate-regret training with calibrated uncertainty, harmful-accept penalties, and cross-seed perturbations.",
     )
 
@@ -267,10 +303,58 @@ def _priority_state_integrity() -> dict[str, object]:
         ),
         0.0,
     )
+    sparse_escalated = next(
+        (
+            float(row["state_integrity_score"])
+            for row in wpu_h25
+            if row["run_label"] == "escalated_corrected_rollback" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
+    sparse_escalated_correction_rate = next(
+        (
+            float(row.get("correction_rate", 0.0))
+            for row in wpu_h25
+            if row["run_label"] == "escalated_corrected_rollback" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
+    sparse_escalated_rollback_rate = next(
+        (
+            float(row.get("rollback_rate", 0.0))
+            for row in wpu_h25
+            if row["run_label"] == "escalated_corrected_rollback" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
+    sparse_escalated_escalation_rate = next(
+        (
+            float(row.get("escalation_rate", 0.0))
+            for row in wpu_h25
+            if row["run_label"] == "escalated_corrected_rollback" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
+    sparse_escalated_success_rate = next(
+        (
+            float(row.get("escalation_success_rate", 0.0))
+            for row in wpu_h25
+            if row["run_label"] == "escalated_corrected_rollback" and row["model"] == "wpu-cws-indexed-sparse"
+        ),
+        0.0,
+    )
     correction_note = (
         f" Corrected rollback sparse is {sparse_corrected:.6f} with correction rate "
         f"{sparse_correction_rate:.6f} and rollback rate {sparse_corrected_rollback_rate:.6f}."
         if sparse_corrected > 0.0
+        else ""
+    )
+    escalation_note = (
+        f" Escalated corrected rollback sparse is {sparse_escalated:.6f} with correction rate "
+        f"{sparse_escalated_correction_rate:.6f}, rollback rate {sparse_escalated_rollback_rate:.6f}, "
+        f"escalation rate {sparse_escalated_escalation_rate:.6f}, and escalation success "
+        f"{sparse_escalated_success_rate:.6f}."
+        if sparse_escalated > 0.0
         else ""
     )
     return _row(
@@ -281,7 +365,7 @@ def _priority_state_integrity() -> dict[str, object]:
         0.8,
         "best_wpu_h25_integrity",
         path,
-        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, regularized raw sparse is {sparse_regularized:.6f}, rollout-consistency sparse is {sparse_consistency:.6f}, validity sparse is {sparse_validity:.6f}, strong-validity sparse is {sparse_validity_strong:.6f}, unsafe-delta rejected sparse is {sparse_rejected:.6f} with rejection rate {sparse_rejection_rate:.6f}, and rollback sparse is {sparse_rollback:.6f} with rollback rate {sparse_rollback_rate:.6f}.{correction_note}",
+        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, regularized raw sparse is {sparse_regularized:.6f}, rollout-consistency sparse is {sparse_consistency:.6f}, validity sparse is {sparse_validity:.6f}, strong-validity sparse is {sparse_validity_strong:.6f}, unsafe-delta rejected sparse is {sparse_rejected:.6f} with rejection rate {sparse_rejection_rate:.6f}, and rollback sparse is {sparse_rollback:.6f} with rollback rate {sparse_rollback_rate:.6f}.{correction_note}{escalation_note}",
         "Simple delta-norm, rollout-consistency, and validity regularization are insufficient; add rollback, correction, and uncertainty escalation.",
     )
 
@@ -452,6 +536,27 @@ def _priority_systems_profile() -> dict[str, object]:
                 f"N={row['total_objects_n']}: matched={row['matched_accuracy']} speedup={float(row['matched_speedup']):.6f}"
             )
         cuda_note += " Matched-or-better audit: " + "; ".join(matched_notes) + "."
+    pareto_path = ROOT / "pybullet_pareto_frontier.csv"
+    if pareto_path.exists():
+        pareto_rows = _read_rows(pareto_path)
+        wpu_frontier_ns = sorted(
+            {
+                int(float(row["total_objects_n"]))
+                for row in pareto_rows
+                if row.get("is_wpu") == "True" and row.get("pareto_frontier") == "True"
+            }
+        )
+        wpu_dominated_ns = sorted(
+            {
+                int(float(row["total_objects_n"]))
+                for row in pareto_rows
+                if row.get("is_wpu") == "True" and row.get("pareto_frontier") != "True"
+            }
+        )
+        cuda_note += (
+            f" Pareto audit places WPU on the accuracy-latency frontier at N={wpu_frontier_ns} "
+            f"and dominated at N={wpu_dominated_ns}."
+        )
     energy_proxy_path = ROOT / "pybullet_system_energy_proxy.csv"
     if energy_proxy_path.exists():
         proxy_rows = _read_rows(energy_proxy_path)
@@ -471,7 +576,7 @@ def _priority_systems_profile() -> dict[str, object]:
         0.95,
         "max_tensor_byte_reduction",
         path,
-        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}; random-model CPU sparse-forward latency reduction reaches {max_forward_reduction:.6f}.{cuda_note} Real energy, sparse-kernel behavior, and Pareto dominance over every baseline remain unproven.",
+        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}; random-model CPU sparse-forward latency reduction reaches {max_forward_reduction:.6f}.{cuda_note} Real energy and sparse-kernel behavior remain unproven.",
         "Measure energy, allocator traffic, sparse-kernel behavior, Pareto frontiers, and trained matched-or-better speedups.",
     )
 
@@ -623,12 +728,12 @@ def _ko_status(status: str) -> str:
 
 def _ko_interpretation(priority: int) -> str:
     return {
-        1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다.",
-        2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.900288로 떨어진다. 따라서 P2는 raw delta stability, state correction, rollback safety 사이의 tradeoff를 분리해 주장해야 한다.",
+        1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다. 별도 safety/utility head도 negative result다. Best closure는 0.147450, safe best는 0.090719, train-selected closure는 0.144863에 그친다.",
+        2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.900288로 떨어진다. Escalated corrected rollback은 local-dense fallback을 사용해 integrity를 0.914831로 올리고 rollback rate를 0.000000으로 낮춘다. 따라서 P2는 sparse-first/dense-when-needed safety layer가 유효할 수 있음을 보이지만, raw delta stability가 해결된 것은 아니다.",
         3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 확장됐다. N=133에서 WPU sparse accuracy가 0.547619로 serialized-token 0.539683보다 약간 높지만, serialized-token은 여전히 가장 빠르다. Simulator-backed evidence는 강화됐지만 규모와 mechanism 다양성은 아직 부족하다.",
         4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 새 composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.123457이다. 그러나 catch_heavy류 branch-prior shift는 여전히 약점이므로 shift generalization은 조건부다.",
         5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. Composition-shift stress의 평균 ECE ratio는 1.327702이고 no_catch에서 2.362081까지 악화된다. Temperature+bias calibration은 no_catch를 개선하지만 3개 mechanism 중 1개만 ECE ratio가 개선되어 보편 해결책은 아니다. Accuracy가 좋아도 branch probability calibration은 아직 안정적이지 않다.",
-        6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit의 판정 기준을 corrected matched-or-better로 고치면 N=133에서는 best-accuracy non-WPU baseline 대비 WPU가 더 정확하고 더 빠르다. 다만 N=5에서는 WPU가 token보다 느리고, 모든 baseline에 대한 Pareto 우월성과 real energy는 아직 미해결이다.",
+        6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit의 판정 기준을 corrected matched-or-better로 고치면 N=133에서는 best-accuracy non-WPU baseline 대비 WPU가 더 정확하고 더 빠르다. Pareto audit에서도 WPU는 N=133에서 frontier에 올라가지만 N=5에서는 token에 지배된다. Real energy와 sparse-kernel behavior는 아직 미해결이다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
     }[priority]
 

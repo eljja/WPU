@@ -16,6 +16,7 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_validity_strong.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_rollback.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_corrected_rollback.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_escalated_corrected_rollback.csv`
 
 Derived CSV:
 
@@ -23,17 +24,18 @@ Derived CSV:
 
 ## 핵심 결과
 
-| run | model | H | violations/step | delta norm | correction rate | rollback rate | integrity score |
-|---|---|---:|---:|---:|---:|---:|---:|
-| raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.000000 | 0.000000 | 0.084722 |
-| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.000000 | 0.000000 | 0.958508 |
-| rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.000000 | 0.000000 | 0.530270 |
-| rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.000000 | 0.812500 | 0.988647 |
-| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.392552 | 0.812500 | 0.564167 | 0.900288 |
-| rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.000000 | 0.499166 | 0.946506 |
-| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.499166 | 0.000000 | 0.909670 |
-| rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.000000 | 0.261667 | 0.843622 |
-| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.756884 | 0.268334 | 0.000000 | 0.787224 |
+| run | model | H | violations/step | delta norm | correction rate | rollback rate | escalation rate | escalation success | integrity score |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.084722 |
+| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.958508 |
+| rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.530270 |
+| rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.000000 | 0.812500 | 0.000000 | 0.000000 | 0.988647 |
+| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.392552 | 0.812500 | 0.564167 | 0.000000 | 0.000000 | 0.900288 |
+| escalated_corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 1.942319 | 0.710833 | 0.000000 | 0.805833 | 0.116107 | 0.914831 |
+| rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.000000 | 0.499166 | 0.000000 | 0.000000 | 0.946506 |
+| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.499166 | 0.000000 | 0.000000 | 0.000000 | 0.909670 |
+| rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.000000 | 0.261667 | 0.000000 | 0.000000 | 0.843622 |
+| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.756884 | 0.268334 | 0.000000 | 0.000000 | 0.000000 | 0.787224 |
 
 전체 audit table은 `docs/experiments/pybullet_state_integrity_audit.csv`에 있다.
 
@@ -54,7 +56,13 @@ Rollback-only memory layer는 sparse WPU H=25 applied-state integrity를 `0.9886
 rollback한다. 이 방식은 sparse rollback rate를 `0.564167`까지 낮추지만 integrity는
 `0.900288`로 떨어진다.
 
+Escalated corrected rollback은 sparse delta가 violation을 늘릴 때 이전 state로 되돌린 뒤
+local-dense WPU fallback으로 같은 event를 재계산한다. 이 방식은 sparse integrity를
+`0.914831`로 올리고 rollback rate를 `0.000000`으로 낮춘다. 그러나 escalation rate가
+`0.805833`이고 escalation success가 `0.116107`에 그치므로, 이는 raw sparse dynamics의
+해결이 아니라 dense-when-needed safety layer의 제한적 양성 증거다.
+
 따라서 현재 결론은 명확하다. Rollback과 correction은 state memory safety mechanism이지,
 raw dynamics가 해결됐다는 증거가 아니다. 다음 단계는 rollback 빈도를 낮추면서
-integrity를 유지하는 learned correction, uncertainty escalation, state-consistency
-loss다.
+integrity를 유지하는 learned correction, 더 정밀한 uncertainty escalation,
+state-consistency loss다.

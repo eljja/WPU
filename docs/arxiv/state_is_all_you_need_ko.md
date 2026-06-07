@@ -444,6 +444,10 @@ training이다.
   shifted mean WPU ECE를 `-0.046204`, Brier를 `-0.105470` 개선하지만 shifted
   WPU-vs-baseline win-rate는 `0.333333`에 머문다. 따라서 branch-probability
   calibration과 robust mechanism generalization은 분리해 보고해야 한다.
+  Few-shot mechanism adaptation follow-up은 shifted WPU-vs-baseline win-rate
+  `1.000000`, mean margin change `0.050264`까지 도달하지만 mechanism-specific
+  calibration sample을 사용한다. 이는 adapted regime의 evidence이지 zero-shot
+  physical generalization evidence는 아니다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

@@ -347,7 +347,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
   relative to `strength=0`. Calibration-selected prior strength is more
   useful for P5: it improves shifted mean WPU accuracy by `0.145503`, ECE by
   `-0.046204`, and Brier by `-0.105470`, but shifted WPU-vs-baseline win-rate
-  stays `0.333333`.
+  stays `0.333333`. Few-shot mechanism adaptation is stronger for P4 in an
+  adapted protocol: shifted WPU win-rate reaches `1.000000`, mean WPU accuracy
+  changes by `0.154762`, mean WPU-baseline margin by `0.050264`, and mean ECE
+  by `-0.055342`. This uses mechanism-specific calibration samples and is not
+  a zero-shot claim.
   A 3-seed
   calibrated mixture-training probe improves WPU on `edge_shift` but loses
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc

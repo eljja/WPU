@@ -287,6 +287,10 @@ model = wpu.create_model(
   비영점 strength는 발견되지 않았다. Calibration-selected prior strength는 P5에는
   더 유용하다. Shifted mean WPU accuracy는 `0.145503`, ECE는 `-0.046204`, Brier는
   `-0.105470` 개선되지만, shifted WPU-vs-baseline win-rate는 `0.333333`에 머문다.
+  Few-shot mechanism adaptation은 adapted protocol에서 P4에 더 강하다. Shifted WPU
+  win-rate는 `1.000000`, mean WPU accuracy 변화는 `0.154762`, mean WPU-baseline
+  margin 변화는 `0.050264`, mean ECE 변화는 `-0.055342`이다. 단, mechanism-specific
+  calibration sample을 사용하므로 zero-shot 주장은 아니다.
   3-seed calibrated mixture-training probe는
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.

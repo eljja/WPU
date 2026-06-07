@@ -203,6 +203,15 @@ Use these reports for paper-level claims:
   shifted failure, but shifted WPU-vs-baseline win-rate remains `0.333333`.
 - `pybullet_selected_prior_adaptation_results.ko.md`: Korean companion for the
   calibration-selected prior diagnostic.
+- `pybullet_fewshot_mechanism_adaptation_results.md`: 7-seed few-shot
+  mechanism adaptation diagnostic. All models, including non-WPU baselines, are
+  fine-tuned for a few steps on a small held-out mechanism calibration set.
+  Shifted WPU win-rate rises from `0.333333` to `1.000000`, mean WPU accuracy
+  changes by `0.154762`, mean WPU-baseline margin by `0.050264`, and mean WPU
+  ECE by `-0.055342`. This supports an adapted regime, not zero-shot
+  mechanism generalization.
+- `pybullet_fewshot_mechanism_adaptation_results.ko.md`: Korean companion for
+  the few-shot mechanism adaptation diagnostic.
 - `pybullet_shift_generalization_mixture_calibrated_results.md`: 3-seed
   calibrated mixture-training probe. It shows that mixture training helps WPU
   on `edge_shift` but not on `catch_heavy`, and that post-hoc temperature
@@ -539,6 +548,10 @@ Historical or preliminary reports:
   Calibration-selected prior strength is the first positive P5 follow-up:
   shifted mean WPU ECE changes by `-0.046204` and Brier by `-0.105470`, but
   shifted baseline win-rate remains `0.333333`, so P4 and P5 must be separated.
+  Few-shot mechanism adaptation is the first strong P4 adapted-regime result:
+  shifted WPU win-rate reaches `1.000000` with mean margin change `0.050264`,
+  but it uses mechanism-specific calibration samples and therefore does not
+  prove zero-shot shift generalization.
   Temperature+bias calibration reduces the worst `no_catch` ECE failure but
   does not improve all composition mechanisms.
 - The defensible v2 claim is therefore architectural: explicit state exposes

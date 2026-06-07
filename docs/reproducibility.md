@@ -215,6 +215,8 @@ python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse 
 python scripts/analyze_pybullet_prior_strength_sweep.py
 python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 17 19 23 29 31 --background-objects 32 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --calibrate-mechanism-prior --select-mechanism-prior-strength --mechanism-prior-selection-metric nll_ece --mechanism-prior-selection-ece-weight 1.0 --mechanism-prior-samples 36 --mechanism-prior-strengths 0 0.25 0.5 0.75 1.0 --out docs/experiments/pybullet_shift_generalization_selected_prior.csv
 python scripts/analyze_pybullet_selected_prior_adaptation.py
+python scripts/pybullet_fewshot_mechanism_adaptation.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 17 19 23 29 31 --background-objects 32 --steps 20 --adaptation-steps 8 --adaptation-samples 36 --adaptation-lr 0.0005 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --out docs/experiments/pybullet_fewshot_mechanism_adaptation.csv
+python scripts/analyze_pybullet_fewshot_adaptation.py
 ```
 
 The latest candidate-oracle gap audit can be reproduced with:

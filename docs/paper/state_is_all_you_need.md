@@ -332,7 +332,10 @@ Not supported:
   follow-up improves shifted mean WPU ECE by `-0.046204` and Brier by
   `-0.105470`, but it leaves shifted WPU-vs-baseline win-rate at `0.333333`.
   This separates branch-probability calibration from robust mechanism
-  generalization.
+  generalization. A few-shot mechanism adaptation follow-up reaches shifted
+  WPU-vs-baseline win-rate `1.000000` and mean margin change `0.050264`, but it
+  uses mechanism-specific calibration samples. It is evidence for an adapted
+  regime, not for zero-shot physical generalization.
 
 ## Application Boundary
 

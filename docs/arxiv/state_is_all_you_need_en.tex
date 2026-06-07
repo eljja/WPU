@@ -741,7 +741,11 @@ zero strength without increasing ECE. Calibration-safe prior adaptation
 therefore remains open. A calibration-selected prior follow-up improves shifted
 mean WPU ECE by -0.046204 and Brier by -0.105470, but leaves shifted
 WPU-versus-baseline win-rate at 0.333333. Thus branch-probability calibration
-and robust mechanism generalization must be reported separately.
+and robust mechanism generalization must be reported separately. A few-shot
+mechanism adaptation follow-up reaches shifted WPU-versus-baseline win-rate
+1.000000 and mean margin change 0.050264, but uses mechanism-specific
+calibration samples. It is evidence for an adapted regime, not for zero-shot
+physical generalization.
 
 \section{Discussion}
 

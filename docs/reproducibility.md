@@ -211,6 +211,8 @@ python scripts/analyze_shift_calibration_comparison.py
 python scripts/analyze_pybullet_branch_prior_shift.py
 python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 17 19 23 29 31 --background-objects 32 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --calibrate-mechanism-prior --mechanism-prior-samples 36 --out docs/experiments/pybullet_shift_generalization_mechanism_prior.csv
 python scripts/analyze_pybullet_mechanism_prior_adaptation.py
+python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --eval-mechanisms nominal high_force edge_shift catch_heavy --seeds 11 13 17 19 23 29 31 --background-objects 32 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --calibrate-mechanism-prior --mechanism-prior-samples 36 --mechanism-prior-strengths 0 0.25 0.5 0.75 1.0 --out docs/experiments/pybullet_shift_generalization_prior_strength_sweep.csv
+python scripts/analyze_pybullet_prior_strength_sweep.py
 ```
 
 The latest candidate-oracle gap audit can be reproduced with:

@@ -189,6 +189,13 @@ Use these reports for paper-level claims:
   `0.024819`.
 - `pybullet_mechanism_prior_adaptation_results.ko.md`: Korean companion for the
   mechanism-prior adaptation diagnostic.
+- `pybullet_prior_strength_sweep_results.md`: 7-seed strength sweep for
+  mechanism-aware branch-prior bias. The accuracy-best strength is `0.75`,
+  reaching shifted WPU win-rate `0.666667` and mean WPU accuracy `0.601852`,
+  but no nonzero strength preserves or improves win-rate relative to
+  `strength=0` without increasing WPU ECE.
+- `pybullet_prior_strength_sweep_results.ko.md`: Korean companion for the
+  prior-strength sweep.
 - `pybullet_shift_generalization_mixture_calibrated_results.md`: 3-seed
   calibrated mixture-training probe. It shows that mixture training helps WPU
   on `edge_shift` but not on `catch_heavy`, and that post-hoc temperature
@@ -519,7 +526,9 @@ Historical or preliminary reports:
   majority prior accuracy is `0.753968` versus best WPU `0.408730`, making it a
   branch-prior adaptation failure. A 7-seed mechanism-prior adaptation probe
   raises shifted WPU win-rate to `0.666667`, but worsens mean shifted WPU ECE by
-  `0.024819`, so P4 improves while P5 remains unsolved.
+  `0.024819`, so P4 improves while P5 remains unsolved. A prior-strength sweep
+  confirms the boundary: `strength=0.75` is accuracy-best, but every nonzero
+  strength that improves win-rate increases ECE relative to `strength=0`.
   Temperature+bias calibration reduces the worst `no_catch` ECE failure but
   does not improve all composition mechanisms.
 - The defensible v2 claim is therefore architectural: explicit state exposes

@@ -478,6 +478,27 @@ def _priority_shift_generalization() -> dict[str, object]:
             f"change {mean_accuracy_change:.6f}, mean WPU ECE change {mean_ece_change:.6f}, "
             f"prior-dominated shifts {prior_before}->{prior_after}"
         )
+    strength_path = ROOT / "pybullet_prior_strength_sweep_summary.csv"
+    if strength_path.exists():
+        strength_rows = [row for row in _read_rows(strength_path) if row["row_type"] == "aggregate"]
+        if strength_rows:
+            best_strength = max(
+                strength_rows,
+                key=lambda row: (
+                    float(row["shifted_wpu_win_rate"]),
+                    float(row["wpu_accuracy"]),
+                    -float(row["wpu_ece"]),
+                ),
+            )
+            observed_win_rate = max(observed_win_rate, float(best_strength["shifted_wpu_win_rate"]))
+            if float(best_strength["shifted_wpu_win_rate"]) >= win_rate:
+                source_path = strength_path
+            notes.append(
+                f"prior-strength sweep best strength {float(best_strength['mechanism_prior_strength']):.2f} "
+                f"reaches shifted WPU win-rate {float(best_strength['shifted_wpu_win_rate']):.6f}, "
+                f"mean WPU accuracy {float(best_strength['wpu_accuracy']):.6f}, and mean WPU ECE "
+                f"{float(best_strength['wpu_ece']):.6f}"
+            )
     status = "partial" if 0.0 < observed_win_rate < 1.0 else ("pass" if observed_win_rate == 1.0 else "fail")
     return _row(
         4,
@@ -557,6 +578,38 @@ def _priority_calibration() -> dict[str, object]:
             f"{mean_ece_change:.6f} and mean Brier by {mean_brier_change:.6f}; "
             "simple prior bias is therefore not calibration-safe."
         )
+    strength_path = ROOT / "pybullet_prior_strength_sweep_summary.csv"
+    if strength_path.exists():
+        strength_rows = [row for row in _read_rows(strength_path) if row["row_type"] == "aggregate"]
+        if strength_rows:
+            zero = min(strength_rows, key=lambda row: abs(float(row["mechanism_prior_strength"])))
+            safe_rows = [
+                row
+                for row in strength_rows
+                if float(row["mechanism_prior_strength"]) > 0.0
+                and float(row["shifted_wpu_win_rate"]) >= float(zero["shifted_wpu_win_rate"])
+                and float(row["wpu_ece"]) <= float(zero["wpu_ece"])
+            ]
+            best_strength = max(
+                strength_rows,
+                key=lambda row: (
+                    float(row["shifted_wpu_win_rate"]),
+                    float(row["wpu_accuracy"]),
+                    -float(row["wpu_ece"]),
+                ),
+            )
+            safe_note = (
+                f"calibration-safe nonzero strength exists at {float(safe_rows[0]['mechanism_prior_strength']):.2f}"
+                if safe_rows
+                else "no nonzero strength preserves/improves win-rate without increasing ECE"
+            )
+            mixture_note += (
+                f" Prior-strength sweep finds best accuracy strength "
+                f"{float(best_strength['mechanism_prior_strength']):.2f} with shifted WPU win-rate "
+                f"{float(best_strength['shifted_wpu_win_rate']):.6f}, but {safe_note}; "
+                f"zero-strength WPU ECE is {float(zero['wpu_ece']):.6f} versus best-strength WPU ECE "
+                f"{float(best_strength['wpu_ece']):.6f}."
+            )
     status = "partial" if ratio <= 1.1 else "fail"
     return _row(
         5,
@@ -794,8 +847,8 @@ def _ko_interpretation(priority: int) -> str:
         1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다. 별도 safety/utility head도 negative result다. Best closure는 0.147450, safe best는 0.090719, train-selected closure는 0.144863에 그친다.",
         2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.900288로 떨어진다. Escalated corrected rollback은 local-dense fallback을 사용해 integrity를 0.914831로 올리고 rollback rate를 0.000000으로 낮춘다. 따라서 P2는 sparse-first/dense-when-needed safety layer가 유효할 수 있음을 보이지만, raw delta stability가 해결된 것은 아니다.",
         3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 확장됐다. N=133에서 WPU sparse accuracy가 0.547619로 serialized-token 0.539683보다 약간 높지만, serialized-token은 여전히 가장 빠르다. Simulator-backed evidence는 강화됐지만 규모와 mechanism 다양성은 아직 부족하다.",
-        4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 새 composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.123457이다. Branch-prior audit은 catch_heavy가 prior-dominated shift임을 보인다. Mechanism-prior adaptation은 shifted WPU win-rate를 0.333333에서 0.666667로 올리고 prior-dominated shift를 1개에서 0개로 줄인다. 따라서 P4는 개선됐지만 아직 solved가 아니다.",
-        5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. Composition-shift stress의 평균 ECE ratio는 1.327702이고 no_catch에서 2.362081까지 악화된다. Temperature+bias calibration은 no_catch를 개선하지만 3개 mechanism 중 1개만 ECE ratio가 개선되어 보편 해결책은 아니다. Branch-prior audit은 catch_heavy에서 majority prior 0.753968이 best WPU 0.408730을 크게 앞선다는 점을 보여준다. Mechanism-prior adaptation은 accuracy를 개선하지만 shifted mean ECE를 0.024819 악화시키므로, branch probability와 prior adaptation은 아직 안정적이지 않다.",
+        4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 새 composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.123457이다. Branch-prior audit은 catch_heavy가 prior-dominated shift임을 보인다. Mechanism-prior adaptation은 shifted WPU win-rate를 0.333333에서 0.666667로 올리고 prior-dominated shift를 1개에서 0개로 줄인다. Prior-strength sweep의 accuracy-best 설정은 strength=0.75, mean WPU accuracy 0.601852지만 shifted win-rate는 0.666667에 머문다. 따라서 P4는 개선됐지만 아직 solved가 아니다.",
+        5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. Composition-shift stress의 평균 ECE ratio는 1.327702이고 no_catch에서 2.362081까지 악화된다. Temperature+bias calibration은 no_catch를 개선하지만 3개 mechanism 중 1개만 ECE ratio가 개선되어 보편 해결책은 아니다. Branch-prior audit은 catch_heavy에서 majority prior 0.753968이 best WPU 0.408730을 크게 앞선다는 점을 보여준다. Mechanism-prior adaptation은 accuracy를 개선하지만 shifted mean ECE를 0.024819 악화시킨다. Prior-strength sweep에서도 win-rate를 유지/개선하면서 ECE를 악화시키지 않는 비영점 strength가 없으므로 branch probability와 prior adaptation은 아직 안정적이지 않다.",
         6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit의 판정 기준을 corrected matched-or-better로 고치면 N=133에서는 best-accuracy non-WPU baseline 대비 WPU가 더 정확하고 더 빠르다. Pareto audit에서도 WPU는 N=133에서 frontier에 올라가지만 N=5에서는 token에 지배된다. Real energy와 sparse-kernel behavior는 아직 미해결이다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
     }[priority]

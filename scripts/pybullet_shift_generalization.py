@@ -86,6 +86,7 @@ def main() -> None:
     parser.add_argument("--calibrate-mechanism-prior", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--mechanism-prior-samples", type=int, default=36)
     parser.add_argument("--mechanism-prior-strength", type=float, default=1.0)
+    parser.add_argument("--mechanism-prior-strengths", type=float, nargs="+", default=None)
     parser.add_argument("--mechanism-prior-smoothing", type=float, default=1.0)
     parser.add_argument("--temperature-steps", type=int, default=80)
     parser.add_argument("--temperature-lr", type=float, default=5e-2)
@@ -100,6 +101,11 @@ def main() -> None:
     unknown.extend(mechanism for mechanism in args.train_mechanisms if mechanism not in MECHANISMS)
     if unknown:
         raise ValueError(f"unknown mechanisms: {unknown}")
+    mechanism_prior_strengths = (
+        [float(value) for value in args.mechanism_prior_strengths]
+        if args.mechanism_prior_strengths is not None
+        else [float(args.mechanism_prior_strength)]
+    )
 
     rows: list[dict[str, object]] = []
     for model_name in args.models:
@@ -110,13 +116,14 @@ def main() -> None:
             base_calibrator = _fit_calibrator(model, model_name, seed, args) if args.calibrate_temperature else _default_calibrator()
             for mechanism in args.eval_mechanisms:
                 print(f"eval model={model_name} seed={seed} mechanism={mechanism}", flush=True)
-                calibrator = (
-                    _fit_mechanism_prior_calibrator(mechanism, seed, args, base_calibrator)
-                    if args.calibrate_mechanism_prior
-                    else base_calibrator
-                )
-                rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, args))
-                _write_csv(args.out, rows)
+                if args.calibrate_mechanism_prior:
+                    for strength in mechanism_prior_strengths:
+                        calibrator = _fit_mechanism_prior_calibrator(mechanism, seed, args, base_calibrator, strength)
+                        rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, args))
+                        _write_csv(args.out, rows)
+                else:
+                    rows.append(_evaluate(model, model_name, seed, mechanism, base_calibrator, args))
+                    _write_csv(args.out, rows)
     rows.extend(_summary(rows))
     _write_csv(args.out, rows)
     print(f"wrote={args.out}", flush=True)
@@ -169,7 +176,12 @@ def _training_dataset(seed: int, args: argparse.Namespace):
 
 
 def _default_calibrator() -> dict[str, object]:
-    return {"temperature": 1.0, "bias": [0.0, 0.0, 0.0], "calibration_mode": "none"}
+    return {
+        "temperature": 1.0,
+        "bias": [0.0, 0.0, 0.0],
+        "calibration_mode": "none",
+        "mechanism_prior_strength": 0.0,
+    }
 
 
 def _fit_calibrator(model: torch.nn.Module, model_name: str, seed: int, args: argparse.Namespace) -> dict[str, object]:
@@ -205,6 +217,7 @@ def _fit_calibrator(model: torch.nn.Module, model_name: str, seed: int, args: ar
         "temperature": round(float(log_temperature.detach().exp().clamp(0.25, 8.0).cpu().item()), 6),
         "bias": bias_values,
         "calibration_mode": "temperature_bias" if bias is not None else "temperature",
+        "mechanism_prior_strength": 0.0,
     }
 
 
@@ -213,6 +226,7 @@ def _fit_mechanism_prior_calibrator(
     seed: int,
     args: argparse.Namespace,
     base_calibrator: dict[str, object],
+    strength: float,
 ) -> dict[str, object]:
     train_prior = _label_prior(
         _calibration_dataset(seed + 40_000, args),
@@ -231,7 +245,7 @@ def _fit_mechanism_prior_calibrator(
     prior_bias = (eval_prior / train_prior.clamp_min(1e-8)).log()
     prior_bias = prior_bias - prior_bias.mean()
     base_bias = torch.tensor(base_calibrator["bias"], dtype=torch.float32)
-    combined_bias = base_bias + float(args.mechanism_prior_strength) * prior_bias
+    combined_bias = base_bias + float(strength) * prior_bias
     combined_bias = combined_bias - combined_bias.mean()
     base_mode = str(base_calibrator["calibration_mode"])
     mode = "mechanism_prior" if base_mode == "none" else f"{base_mode}+mechanism_prior"
@@ -239,6 +253,7 @@ def _fit_mechanism_prior_calibrator(
         "temperature": base_calibrator["temperature"],
         "bias": [round(float(value), 6) for value in combined_bias.tolist()],
         "calibration_mode": mode,
+        "mechanism_prior_strength": round(float(strength), 6),
     }
 
 
@@ -313,6 +328,7 @@ def _evaluate(
         "eval_mechanism": mechanism,
         "temperature": calibrator["temperature"],
         "calibration_mode": calibrator["calibration_mode"],
+        "mechanism_prior_strength": calibrator.get("mechanism_prior_strength", 0.0),
         "calibration_bias": ";".join(f"{float(value):.6f}" for value in calibrator["bias"]),  # type: ignore[union-attr]
         "background_objects": args.background_objects,
         "total_objects_n": args.background_objects + 5,
@@ -421,11 +437,20 @@ def _working_set_stats(model: torch.nn.Module, causal_k: torch.Tensor) -> tuple[
 
 
 def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    grouped: dict[tuple[str, str, str], list[dict[str, object]]] = {}
+    grouped: dict[tuple[str, str, str, str, float], list[dict[str, object]]] = {}
     for row in rows:
         if row["row_type"] != "seed":
             continue
-        grouped.setdefault((str(row["model"]), str(row["train_mechanism"]), str(row["eval_mechanism"])), []).append(row)
+        grouped.setdefault(
+            (
+                str(row["model"]),
+                str(row["train_mechanism"]),
+                str(row["eval_mechanism"]),
+                str(row.get("calibration_mode", "none")),
+                float(row.get("mechanism_prior_strength", 0.0)),
+            ),
+            [],
+        ).append(row)
     output: list[dict[str, object]] = []
     numeric_fields = [
         "branch_accuracy",
@@ -438,14 +463,19 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
         "causal_recall_mean",
         "dense_compute_ratio",
         "temperature",
+        "mechanism_prior_strength",
     ]
-    for (model, train_mechanism, mechanism), group in sorted(grouped.items()):
+    for (model, train_mechanism, mechanism, calibration_mode, mechanism_prior_strength), group in sorted(grouped.items()):
         row = {
             "row_type": "summary",
             "model": model,
             "seed": "all",
             "train_mechanism": train_mechanism,
             "eval_mechanism": mechanism,
+            "temperature": group[0]["temperature"],
+            "calibration_mode": calibration_mode,
+            "mechanism_prior_strength": mechanism_prior_strength,
+            "calibration_bias": "",
             "background_objects": group[0]["background_objects"],
             "total_objects_n": group[0]["total_objects_n"],
             "samples": group[0]["samples"],

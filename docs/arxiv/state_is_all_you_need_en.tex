@@ -735,7 +735,10 @@ it is a prior-adaptation failure. Mechanism-aware branch priors and
 uncertainty-gated recompute are therefore required v2 components rather than
 optional calibration refinements. A small seven-seed mechanism-prior adaptation
 probe raises shifted WPU win-rate to 0.666667, but worsens mean shifted WPU ECE
-by 0.024819, so calibration-safe prior adaptation remains open.
+by 0.024819. A prior-strength sweep finds an accuracy-best nonzero strength
+(0.75), but no nonzero strength preserves or improves win-rate relative to
+zero strength without increasing ECE. Calibration-safe prior adaptation
+therefore remains open.
 
 \section{Discussion}
 

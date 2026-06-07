@@ -325,7 +325,10 @@ Not supported:
   mechanism-aware branch priors and uncertainty-gated recompute required v2
   components, not optional calibration polish. A small 7-seed mechanism-prior
   adaptation probe raises shifted WPU win-rate to `0.666667`, but worsens mean
-  shifted WPU ECE by `0.024819`, so calibration-safe adaptation remains open.
+  shifted WPU ECE by `0.024819`. A prior-strength sweep finds an accuracy-best
+  nonzero strength (`0.75`) but no nonzero strength that preserves or improves
+  win-rate relative to `strength=0` without increasing ECE, so
+  calibration-safe adaptation remains open.
 
 ## Application Boundary
 

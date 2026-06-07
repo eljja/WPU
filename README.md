@@ -341,6 +341,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   other learned baselines. A 7-seed mechanism-prior adaptation probe raises
   shifted WPU win-rate from `0.333333` to `0.666667` and removes the
   prior-dominated shift, but worsens mean shifted WPU ECE by `0.024819`.
+  A follow-up prior-strength sweep finds `strength=0.75` is accuracy-best
+  (shifted WPU win-rate `0.666667`, mean WPU accuracy `0.601852`), but no
+  nonzero strength improves or preserves win-rate without increasing ECE
+  relative to `strength=0`.
   A 3-seed
   calibrated mixture-training probe improves WPU on `edge_shift` but loses
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc

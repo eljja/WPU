@@ -281,7 +281,10 @@ model = wpu.create_model(
   WPU가 다른 learned baseline보다 높더라도 이 구간은 prior adaptation 실패다.
   7-seed mechanism-prior adaptation probe는 shifted WPU win-rate를 `0.333333`에서
   `0.666667`로 올리고 prior-dominated shift를 제거하지만, shifted mean WPU ECE를
-  `0.024819` 악화시킨다.
+  `0.024819` 악화시킨다. 후속 prior-strength sweep에서는 `strength=0.75`가
+  accuracy-best다(shifted WPU win-rate `0.666667`, mean WPU accuracy `0.601852`).
+  그러나 `strength=0` 대비 win-rate를 유지/개선하면서 ECE를 악화시키지 않는
+  비영점 strength는 발견되지 않았다.
   3-seed calibrated mixture-training probe는
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.

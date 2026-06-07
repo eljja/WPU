@@ -338,7 +338,10 @@ The current evidence supports a regime hypothesis, not universal dominance.
   branch-prior audit changes the interpretation of `catch_heavy`: the
   non-learned majority prior reaches `0.753968`, far above the best WPU
   `0.408730`, so this is a prior-adaptation failure even though WPU beats the
-  other learned baselines. A 3-seed
+  other learned baselines. A 7-seed mechanism-prior adaptation probe raises
+  shifted WPU win-rate from `0.333333` to `0.666667` and removes the
+  prior-dominated shift, but worsens mean shifted WPU ECE by `0.024819`.
+  A 3-seed
   calibrated mixture-training probe improves WPU on `edge_shift` but loses
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc
   temperature calibration is not enough. A 3-seed leave-family-out probe is

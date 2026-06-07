@@ -83,6 +83,10 @@ def main() -> None:
     parser.add_argument("--calibrate-temperature", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--calibrate-bias", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--calibration-samples", type=int, default=96)
+    parser.add_argument("--calibrate-mechanism-prior", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--mechanism-prior-samples", type=int, default=36)
+    parser.add_argument("--mechanism-prior-strength", type=float, default=1.0)
+    parser.add_argument("--mechanism-prior-smoothing", type=float, default=1.0)
     parser.add_argument("--temperature-steps", type=int, default=80)
     parser.add_argument("--temperature-lr", type=float, default=5e-2)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=True)
@@ -103,9 +107,14 @@ def main() -> None:
             train_label = "+".join(args.train_mechanisms)
             print(f"train {train_label} model={model_name} seed={seed}", flush=True)
             model = _train_model(model_name, seed, args)
-            calibrator = _fit_calibrator(model, model_name, seed, args) if args.calibrate_temperature else _default_calibrator()
+            base_calibrator = _fit_calibrator(model, model_name, seed, args) if args.calibrate_temperature else _default_calibrator()
             for mechanism in args.eval_mechanisms:
                 print(f"eval model={model_name} seed={seed} mechanism={mechanism}", flush=True)
+                calibrator = (
+                    _fit_mechanism_prior_calibrator(mechanism, seed, args, base_calibrator)
+                    if args.calibrate_mechanism_prior
+                    else base_calibrator
+                )
                 rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, args))
                 _write_csv(args.out, rows)
     rows.extend(_summary(rows))
@@ -197,6 +206,47 @@ def _fit_calibrator(model: torch.nn.Module, model_name: str, seed: int, args: ar
         "bias": bias_values,
         "calibration_mode": "temperature_bias" if bias is not None else "temperature",
     }
+
+
+def _fit_mechanism_prior_calibrator(
+    mechanism: str,
+    seed: int,
+    args: argparse.Namespace,
+    base_calibrator: dict[str, object],
+) -> dict[str, object]:
+    train_prior = _label_prior(
+        _calibration_dataset(seed + 40_000, args),
+        smoothing=args.mechanism_prior_smoothing,
+    )
+    eval_prior = _label_prior(
+        _dataset(
+            mechanism=mechanism,
+            samples=args.mechanism_prior_samples,
+            seed=seed + 50_000,
+            args=args,
+            balanced_labels=False,
+        ),
+        smoothing=args.mechanism_prior_smoothing,
+    )
+    prior_bias = (eval_prior / train_prior.clamp_min(1e-8)).log()
+    prior_bias = prior_bias - prior_bias.mean()
+    base_bias = torch.tensor(base_calibrator["bias"], dtype=torch.float32)
+    combined_bias = base_bias + float(args.mechanism_prior_strength) * prior_bias
+    combined_bias = combined_bias - combined_bias.mean()
+    base_mode = str(base_calibrator["calibration_mode"])
+    mode = "mechanism_prior" if base_mode == "none" else f"{base_mode}+mechanism_prior"
+    return {
+        "temperature": base_calibrator["temperature"],
+        "bias": [round(float(value), 6) for value in combined_bias.tolist()],
+        "calibration_mode": mode,
+    }
+
+
+def _label_prior(dataset, *, smoothing: float) -> torch.Tensor:
+    counts = torch.full((3,), float(smoothing), dtype=torch.float32)
+    for index in range(len(dataset)):
+        counts[int(dataset[index].branch_label)] += 1.0
+    return counts / counts.sum().clamp_min(1e-8)
 
 
 def _evaluate(

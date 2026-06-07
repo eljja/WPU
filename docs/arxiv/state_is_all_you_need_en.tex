@@ -733,7 +733,9 @@ claim. In the \texttt{catch\_heavy} mechanism, the majority branch prior reaches
 is not a clean propagation success even when WPU beats other learned baselines;
 it is a prior-adaptation failure. Mechanism-aware branch priors and
 uncertainty-gated recompute are therefore required v2 components rather than
-optional calibration refinements.
+optional calibration refinements. A small seven-seed mechanism-prior adaptation
+probe raises shifted WPU win-rate to 0.666667, but worsens mean shifted WPU ECE
+by 0.024819, so calibration-safe prior adaptation remains open.
 
 \section{Discussion}
 

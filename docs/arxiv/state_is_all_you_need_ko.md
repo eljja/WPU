@@ -436,6 +436,9 @@ training이다.
   PyBullet branch-prior audit은 `catch_heavy`가 prior-dominated임을 보인다.
   majority accuracy는 `0.753968`이고 best WPU는 `0.408730`이므로,
   mechanism-aware branch prior와 uncertainty-gated recompute가 v2의 필수 요소다.
+  7-seed mechanism-prior adaptation probe는 shifted WPU win-rate를 `0.666667`로
+  올리지만 shifted mean WPU ECE를 `0.024819` 악화시키므로, calibration-safe
+  adaptation은 아직 열려 있다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

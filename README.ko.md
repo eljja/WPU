@@ -279,6 +279,9 @@ model = wpu.create_model(
   generalization은 아직 해결되지 않았다. Branch-prior audit은 `catch_heavy` 해석을
   바꾼다. 비학습 majority prior가 `0.753968`이고 best WPU는 `0.408730`에 그치므로,
   WPU가 다른 learned baseline보다 높더라도 이 구간은 prior adaptation 실패다.
+  7-seed mechanism-prior adaptation probe는 shifted WPU win-rate를 `0.333333`에서
+  `0.666667`로 올리고 prior-dominated shift를 제거하지만, shifted mean WPU ECE를
+  `0.024819` 악화시킨다.
   3-seed calibrated mixture-training probe는
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.

@@ -182,6 +182,13 @@ Use these reports for paper-level claims:
   mechanism-aware branch priors rather than only larger propagation blocks.
 - `pybullet_branch_prior_shift_results.ko.md`: Korean companion for the
   branch-prior shift audit.
+- `pybullet_mechanism_prior_adaptation_results.md`: 7-seed diagnostic that adds
+  mechanism-specific branch-prior bias from a small calibration set. It raises
+  shifted WPU win-rate from `0.333333` to `0.666667` and removes the
+  prior-dominated `catch_heavy` failure, but mean shifted WPU ECE worsens by
+  `0.024819`.
+- `pybullet_mechanism_prior_adaptation_results.ko.md`: Korean companion for the
+  mechanism-prior adaptation diagnostic.
 - `pybullet_shift_generalization_mixture_calibrated_results.md`: 3-seed
   calibrated mixture-training probe. It shows that mixture training helps WPU
   on `edge_shift` but not on `catch_heavy`, and that post-hoc temperature
@@ -510,7 +517,9 @@ Historical or preliminary reports:
   but `serialized-token` is stronger on `edge_shift` and `high_force`.
   A branch-prior audit shows that `catch_heavy` is not a clean WPU success:
   majority prior accuracy is `0.753968` versus best WPU `0.408730`, making it a
-  branch-prior adaptation failure.
+  branch-prior adaptation failure. A 7-seed mechanism-prior adaptation probe
+  raises shifted WPU win-rate to `0.666667`, but worsens mean shifted WPU ECE by
+  `0.024819`, so P4 improves while P5 remains unsolved.
   Temperature+bias calibration reduces the worst `no_catch` ECE failure but
   does not improve all composition mechanisms.
 - The defensible v2 claim is therefore architectural: explicit state exposes

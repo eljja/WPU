@@ -402,8 +402,10 @@ Direct candidate-regret deployment improves the conservative closure to
 the candidate oracle remains substantially stronger and harmful accepts remain
 near the safety limit. A separate safety/utility-head gate is a negative result:
 best closure is only `0.147450`, safe best is `0.090719`, and train-selected
-closure is `0.144863`, so P1 needs better candidate scoring rather than a
-separate safety head alone.
+closure is `0.144863`. A cross-fit ensemble regret gate is also negative:
+best closure is `0.287268`, safe best is `0.279738`, and cross-fit selected
+closure is `0.270989`. P1 therefore needs better candidate scoring rather than
+another post-hoc gate.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than

@@ -343,7 +343,9 @@ harmful accept도 safety limit 근처에 남아 있다. 따라서 다음 v2 목�
 candidate descriptor, risk-adjusted mechanism routing, 그리고 retriever-propagator
 joint training이다. 별도 safety/utility-head gate는 negative result다. Best closure는
 `0.147450`, safe best는 `0.090719`, train-selected closure는 `0.144863`에 그쳐,
-P1에는 safety head만이 아니라 더 강한 candidate scoring signal이 필요하다.
+P1에는 safety head만이 아니라 더 강한 candidate scoring signal이 필요하다. Cross-fit
+ensemble regret gate도 negative result다. 최고 closure는 `0.287268`, safe best는
+`0.279738`, cross-fit selected closure는 `0.270989`로 direct gate보다 낮다.
 
 ## 논문 및 문서
 

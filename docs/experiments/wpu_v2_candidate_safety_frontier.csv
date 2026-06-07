@@ -17,3 +17,9 @@ penalty,docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv,0.15,u
 penalty,docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv,0.2,uncertainty_regret_gate,16,0.083764,0.075556,0.222222,11
 penalty,docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv,0.25,uncertainty_regret_gate,16,0.083764,0.075556,0.222222,11
 penalty,docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv,0.3,uncertainty_regret_gate,16,0.083764,0.075556,0.222222,13
+crossfit,docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv,0.05,crossfit_regret_gate_m0p0025_r0p5_d1_v0,16,0.047589,0.04,0.157778,47
+crossfit,docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv,0.1,crossfit_regret_gate_m0_r0p5_d0_v0p75,16,0.092392,0.093333,0.324444,88
+crossfit,docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv,0.15,crossfit_regret_gate_m0p02_r0_d0p5_v0p75,16,0.185108,0.137778,0.48,112
+crossfit,docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv,0.2,crossfit_regret_gate_m0p0025_r0_d2_v0,16,0.221481,0.191111,0.635555,149
+crossfit,docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv,0.25,crossfit_regret_gate_m0_r0_d0_v1,16,0.279738,0.244445,0.824444,193
+crossfit,docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv,0.3,crossfit_regret_gate_m0p0025_r0_d0_v0,16,0.287268,0.284444,0.928889,250

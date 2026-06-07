@@ -7,6 +7,7 @@ Source CSVs:
 - `docs/experiments/wpu_v2_candidate_regret_gate_summary.csv`
 - `docs/experiments/wpu_v2_candidate_regret_gate_perturbed_summary.csv`
 - `docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv`
+- `docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv`
 
 Derived CSV:
 
@@ -32,6 +33,12 @@ Derived CSV:
 | penalty | 0.20 | `uncertainty_regret_gate` | 16 | 0.083764 | 0.075556 | 0.222222 | 11 |
 | penalty | 0.25 | `uncertainty_regret_gate` | 16 | 0.083764 | 0.075556 | 0.222222 | 11 |
 | penalty | 0.30 | `uncertainty_regret_gate` | 16 | 0.083764 | 0.075556 | 0.222222 | 13 |
+| crossfit | 0.05 | `crossfit_regret_gate_m0p0025_r0p5_d1_v0` | 16 | 0.047589 | 0.040000 | 0.157778 | 47 |
+| crossfit | 0.10 | `crossfit_regret_gate_m0_r0p5_d0_v0p75` | 16 | 0.092392 | 0.093333 | 0.324444 | 88 |
+| crossfit | 0.15 | `crossfit_regret_gate_m0p02_r0_d0p5_v0p75` | 16 | 0.185108 | 0.137778 | 0.480000 | 112 |
+| crossfit | 0.20 | `crossfit_regret_gate_m0p0025_r0_d2_v0` | 16 | 0.221481 | 0.191111 | 0.635555 | 149 |
+| crossfit | 0.25 | `crossfit_regret_gate_m0_r0_d0_v1` | 16 | 0.279738 | 0.244445 | 0.824444 | 193 |
+| crossfit | 0.30 | `crossfit_regret_gate_m0p0025_r0_d0_v0` | 16 | 0.287268 | 0.284444 | 0.928889 | 250 |
 
 ## Interpretation
 

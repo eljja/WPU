@@ -404,10 +404,12 @@ train seed evidence로 고른다. Strict no-harm seed-stable gate는 K=32에서 
 제공하지 않는다.
 
 단, 이 결과도 한계가 있다. Generated/candidate oracle과의 gap은 여전히 크다. Opaque
-set evaluator, score-margin confidence gate, strict no-harm seed-stable gate는 충분하지
-않았다. 따라서 v2의 다음 핵심 문제는 더 많은 candidate 생성이 아니라 invariant
-candidate descriptor, risk-aware mechanism selection, retriever-propagator joint
-training이다.
+set evaluator, score-margin confidence gate, strict no-harm seed-stable gate,
+cross-fit ensemble regret gate는 충분하지 않았다. 최신 cross-fit probe에서도 최고
+closure는 `0.287268`, cross-fit selected closure는 `0.270989`로 direct candidate-regret
+gate보다 낮다. 따라서 v2의 다음 핵심 문제는 더 많은 candidate 생성이나 post-hoc
+deployment gate가 아니라 invariant candidate descriptor, risk-aware mechanism
+selection, retriever-propagator joint training이다.
 
 ## 11. 현재 주장 경계
 
@@ -431,7 +433,9 @@ training이다.
 - GPU/NPU/TPU/LPU보다 항상 빠르다.
 - fixed `rho` threshold가 최종 scheduler다.
 - cross-seed candidate oracle gap은 아직 닫히지 않았다. Risk-adjusted mechanism
-  selection은 positive result지만 최종 candidate scorer는 아니다.
+  selection은 positive result지만 최종 candidate scorer는 아니다. Cross-fit
+  ensemble regret gate도 closure를 개선하지 못했으므로, 남은 병목은 threshold
+  tuning이 아니라 transfer-stable candidate scoring이다.
 - mechanism shift에서 branch-prior adaptation이 아직 안정적이지 않다.
   PyBullet branch-prior audit은 `catch_heavy`가 prior-dominated임을 보인다.
   majority accuracy는 `0.753968`이고 best WPU는 `0.408730`이므로,

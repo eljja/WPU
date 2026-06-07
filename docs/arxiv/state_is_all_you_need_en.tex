@@ -721,11 +721,14 @@ baselines can serialize the same scene, but they do not naturally expose this
 object-level intervention point as an independent control surface.
 
 The result remains bounded. Opaque set evaluators, score-margin confidence
-gates, and strict no-harm seed-stable gates do not solve the cross-seed
-selection problem, and the candidate oracle remains substantially better. The
-unresolved v2 problem is therefore invariant candidate descriptors,
-risk-aware mechanism selection, and joint retriever-propagator training, not
-merely the generation of more candidate sets.
+gates, strict no-harm seed-stable gates, and cross-fit ensemble regret gates do
+not solve the cross-seed selection problem, and the candidate oracle remains
+substantially better. In the latest cross-fit probe, best closure falls to
+0.287268 and cross-fit selected closure to 0.270989, below direct
+candidate-regret gating. The unresolved v2 problem is therefore invariant
+candidate descriptors, risk-aware mechanism selection, and joint
+retriever-propagator training, not merely the generation of more candidate sets
+or post-hoc deployment gates.
 
 A separate PyBullet branch-prior audit adds an important boundary to the shift
 claim. In the \texttt{catch\_heavy} mechanism, the majority branch prior reaches

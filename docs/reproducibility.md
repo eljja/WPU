@@ -250,7 +250,9 @@ python scripts/retriever_cross_seed_candidate_regret_gate_probe.py --feature-noi
 python scripts/analyze_candidate_regret_gate.py --input docs/experiments/wpu_v2_candidate_regret_gate_perturbed.csv --out-csv docs/experiments/wpu_v2_candidate_regret_gate_perturbed_summary.csv --out-md docs/experiments/wpu_v2_candidate_regret_gate_perturbed_results.md --out-ko-md docs/experiments/wpu_v2_candidate_regret_gate_perturbed_results.ko.md
 python scripts/retriever_cross_seed_candidate_safety_gate_probe.py --out docs/experiments/wpu_v2_candidate_safety_gate.csv
 python scripts/analyze_candidate_regret_gate.py --input docs/experiments/wpu_v2_candidate_safety_gate.csv --out-csv docs/experiments/wpu_v2_candidate_safety_gate_summary.csv --out-md docs/experiments/wpu_v2_candidate_safety_gate_results.md --out-ko-md docs/experiments/wpu_v2_candidate_safety_gate_results.ko.md
-python scripts/analyze_candidate_safety_frontier.py
+python scripts/retriever_cross_seed_candidate_regret_crossfit_probe.py --out docs/experiments/wpu_v2_candidate_regret_crossfit.csv
+python scripts/analyze_candidate_regret_gate.py --input docs/experiments/wpu_v2_candidate_regret_crossfit.csv --out-csv docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv --out-md docs/experiments/wpu_v2_candidate_regret_crossfit_results.md --out-ko-md docs/experiments/wpu_v2_candidate_regret_crossfit_results.ko.md
+python scripts/analyze_candidate_safety_frontier.py --inputs docs/experiments/wpu_v2_candidate_regret_gate_summary.csv docs/experiments/wpu_v2_candidate_regret_gate_perturbed_summary.csv docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv --labels direct perturbed penalty crossfit
 python scripts/analyze_matched_accuracy_speedup.py
 python scripts/analyze_matched_speedup_tolerance.py
 python scripts/analyze_pybullet_pareto_frontier.py

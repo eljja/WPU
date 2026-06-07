@@ -61,6 +61,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
     penalty_path = ROOT / "wpu_v2_candidate_regret_gate_penalty_summary.csv"
     perturb_path = ROOT / "wpu_v2_candidate_regret_gate_perturbed_summary.csv"
     safety_path = ROOT / "wpu_v2_candidate_safety_gate_summary.csv"
+    crossfit_path = ROOT / "wpu_v2_candidate_regret_crossfit_summary.csv"
     regret_best = None
     regret_safe_best = None
     regret_unconstrained_best = None
@@ -178,7 +179,43 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
                 else "."
             )
         )
-    best = max(value for value in [aggregate_best, noharm_best, regret_best, safety_best] if value is not None)
+    crossfit_best = None
+    crossfit_note = ""
+    if crossfit_path.exists():
+        crossfit_rows = _read_rows(crossfit_path)
+        crossfit_unconstrained = max(crossfit_rows, key=lambda row: float(row["gap_closure_fraction"]))
+        crossfit_safe_rows = [
+            row for row in crossfit_rows if float(row.get("mean_harmful_accept_rate", 1.0)) <= 0.25
+        ]
+        crossfit_selected_rows = [
+            row for row in crossfit_rows if row["policy"] == "crossfit_selected_candidate_regret_gate"
+        ]
+        crossfit_safe_best = (
+            max(float(row["gap_closure_fraction"]) for row in crossfit_safe_rows)
+            if crossfit_safe_rows
+            else None
+        )
+        crossfit_selected_best = (
+            max(float(row["gap_closure_fraction"]) for row in crossfit_selected_rows)
+            if crossfit_selected_rows
+            else None
+        )
+        crossfit_best = crossfit_selected_best or float(crossfit_unconstrained["gap_closure_fraction"])
+        crossfit_note = (
+            f" Cross-fit ensemble regret gating is also a negative result for P1 improvement: "
+            f"best closure is {float(crossfit_unconstrained['gap_closure_fraction']):.6f}"
+            + (
+                f", safe best is {crossfit_safe_best:.6f}"
+                if crossfit_safe_best is not None
+                else ", with no harmful-accept <= 0.25 deployment"
+            )
+            + (
+                f", and cross-fit selected closure is {crossfit_selected_best:.6f}."
+                if crossfit_selected_best is not None
+                else "."
+            )
+        )
+    best = max(value for value in [aggregate_best, noharm_best, regret_best, safety_best, crossfit_best] if value is not None)
     source = regret_path if regret_best == best else path
     return _row(
         1,
@@ -188,8 +225,8 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         0.5,
         "gap_closure_fraction",
         source,
-        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}",
-        "Strengthen candidate-regret training with calibrated uncertainty, harmful-accept penalties, and cross-seed perturbations.",
+        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}{crossfit_note}",
+        "Move beyond post-hoc gates: train transfer-stable candidate scoring jointly with retrieval/propagation and calibrated no-harm objectives.",
     )
 
 
@@ -897,7 +934,7 @@ def _ko_status(status: str) -> str:
 
 def _ko_interpretation(priority: int) -> str:
     return {
-        1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다. 별도 safety/utility head도 negative result다. Best closure는 0.147450, safe best는 0.090719, train-selected closure는 0.144863에 그친다.",
+        1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다. 별도 safety/utility head도 negative result다. Best closure는 0.147450, safe best는 0.090719, train-selected closure는 0.144863에 그친다. Cross-fit ensemble regret gate도 train-selected overfit 가설을 부정하는 negative result다. 최고 closure는 0.287268, safe best는 0.279738, cross-fit selected closure는 0.270989로 direct regret gate보다 낮다.",
         2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.900288로 떨어진다. Escalated corrected rollback은 local-dense fallback을 사용해 integrity를 0.914831로 올리고 rollback rate를 0.000000으로 낮춘다. 따라서 P2는 sparse-first/dense-when-needed safety layer가 유효할 수 있음을 보이지만, raw delta stability가 해결된 것은 아니다.",
         3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 확장됐다. N=133에서 WPU sparse accuracy가 0.547619로 serialized-token 0.539683보다 약간 높지만, serialized-token은 여전히 가장 빠르다. Simulator-backed evidence는 강화됐지만 규모와 mechanism 다양성은 아직 부족하다.",
         4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 새 composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.123457이다. Branch-prior audit은 catch_heavy가 prior-dominated shift임을 보인다. Mechanism-prior adaptation은 shifted WPU win-rate를 0.333333에서 0.666667로 올리고 prior-dominated shift를 1개에서 0개로 줄인다. Prior-strength sweep의 accuracy-best 설정은 strength=0.75, mean WPU accuracy 0.601852지만 shifted win-rate는 0.666667에 머문다. Calibration-selected prior는 mean accuracy/ECE를 개선하지만 shifted win-rate는 0.333333에 머문다. Few-shot mechanism adaptation은 shifted WPU win-rate 1.000000, mean margin change 0.050264까지 도달하지만 mechanism별 calibration set을 쓰는 adapted protocol이다. 따라서 P4는 adapted regime에서 크게 개선됐지만 zero-shot solved는 아니다.",
@@ -909,7 +946,7 @@ def _ko_interpretation(priority: int) -> str:
 
 def _ko_next_action(priority: int) -> str:
     return {
-        1: "Candidate-regret 학습에 calibrated uncertainty, harmful-accept penalty, cross-seed perturbation을 더 강하게 넣는다.",
+        1: "Post-hoc gate를 더 튜닝하기보다 retrieval/propagation과 candidate scoring을 joint objective로 묶고, no-harm/calibration target을 cross-seed 전이에 맞게 학습한다.",
         2: "단순 delta-norm, rollout-consistency, state-validity regularization은 부족하다. Guarded state-store projection을 유지하되 rollback/correction과 uncertainty escalation을 모델-메모리 계층에 넣는다.",
         3: "더 많은 mechanism, long-horizon simulator rollout, parameter-matched 7-seed benchmark를 추가한다.",
         4: "Catch-heavy류 branch-prior shift를 겨냥한 mechanism-aware branch prior와 uncertainty-gated fallback을 추가한다.",

@@ -337,6 +337,13 @@ Use these reports for paper-level claims:
   only when predicted regret is favorable. The current deployment reaches
   `0.329950` in the test sweep and `0.328025` under train-selected deployment,
   but remains below the `0.5` threshold.
+- `wpu_v2_candidate_regret_crossfit_results.md` and
+  `wpu_v2_candidate_regret_crossfit_results.ko.md`: cross-fit ensemble
+  candidate-regret gate probe. Deployment thresholds are selected using
+  out-of-source-seed predictions rather than in-sample train predictions. This
+  is a negative P1 improvement result: best closure is `0.287268`, safe best is
+  `0.279738`, and cross-fit selected closure is `0.270989`, below the direct
+  candidate-regret gate.
 - `wpu_v2_candidate_regret_gate_penalty_results.md` and
   `wpu_v2_candidate_regret_gate_penalty_results.ko.md`: harmful-accept/ranking
   penalty variant. It lowers train-selected harmful accept to `0.088889` but
@@ -512,6 +519,11 @@ Historical or preliminary reports:
   train-selected deployment, with a test-sweep best of `0.329950`. It is still
   a fail: no-harm rejection is weak and the candidate oracle remains
   substantially stronger.
+- Cross-fit ensemble candidate-regret gating lowers the risk of train-selected
+  overfit but does not improve P1. Its best closure is `0.287268` and its
+  cross-fit selected closure is `0.270989`, so the bottleneck is not only
+  threshold selection; candidate scoring itself must become more transfer
+  stable.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

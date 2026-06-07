@@ -481,7 +481,10 @@ matched or acceptable accuracy at lower routed work
 - risk-adjusted mechanism selection의 cross-seed gain이 더 큰 seed/model sweep에서
   사라진다.
 - long-horizon rollout에서 delta overlay가 누적 오차와 state corruption을 제어하지
-  못한다.
+  못한다. 최신 finite-corrected rollout은 sparse WPU H=25 integrity `0.958735`를
+  rollback과 dense escalation 없이 달성하지만 correction rate가 `0.784166`으로 높다.
+  따라서 이는 bounded memory-safety layer의 증거이지 raw sparse dynamics 안정화의
+  증거는 아니다.
 - sparse advantage가 실제 sparse kernel, memory traffic, branch overlay 비용을
   포함하면 사라진다.
 

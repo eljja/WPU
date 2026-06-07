@@ -112,7 +112,8 @@ Use these reports for paper-level claims:
 - `pybullet_state_integrity_audit_results.md`: derived audit over raw, clipped,
   guarded, regularized, unsafe-delta-rejected, consistency-regularized, and
   state-validity-regularized PyBullet closed-loop rollouts, now including
-  rollback-only and corrected-rollback memory safety variants.
+  rollback-only, corrected-rollback, finite-clamped, and finite-corrected
+  memory safety variants.
   It turns state integrity into a first-class score combining constraint
   validity, bounded applied-delta drift, branch stability, and rejection rate.
   Raw WPU sparse drops to integrity `0.084722` at horizon 25. Guarded state-store
@@ -126,8 +127,11 @@ Use these reports for paper-level claims:
   rollback rate `0.812500`; corrected rollback lowers rollback rate to
   `0.564167` but lowers integrity to `0.900288`. Sparse-first dense escalation
   raises corrected-rollback integrity to `0.914831` and lowers rollback rate to
-  `0.000000`, but still acts as a safety layer rather than fixing raw sparse
-  delta instability.
+  `0.000000`, but still invokes fallback frequently. Finite-safe clamping
+  removes the sparse delta-norm explosion but leaves violations, while
+  finite-corrected sparse reaches integrity `0.958735` with rollback and
+  escalation both `0.000000` at correction rate `0.784166`. This strengthens
+  the memory-safety result without solving raw sparse dynamics.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -546,7 +550,9 @@ Historical or preliminary reports:
   delta instability. The regularized and consistency-regularized raw rollouts
   confirm that simple delta penalties are insufficient, and unsafe-delta
   rejection must be reported with rejection rate because it can protect state by
-  declining unsafe updates.
+  declining unsafe updates. Finite-corrected sparse is the strongest
+  lower-disruption safety result so far: H=25 integrity `0.958735` with rollback
+  and escalation both zero, at correction rate `0.784166`.
 - The PyBullet shift benchmark adds the first mechanism-family generalization
   and calibration table. It is mixed: WPU local-dense leads on `catch_heavy`,
   but `serialized-token` is stronger on `edge_shift` and `high_force`.

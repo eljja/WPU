@@ -58,6 +58,10 @@ For the formal objectification definition, see `docs/objectification.md`.
 - If delta overlays accumulate unrecoverable state corruption in long-horizon
   rollout, persistent state becomes a liability without verification and
   rollback mechanisms.
+- If finite-safe correction must fire on most sparse updates, the memory layer
+  can protect applied state but the raw transition model is still not stable;
+  stronger claims require reducing correction frequency, not only eliminating
+  rollback.
 
 ## Submission Posture
 

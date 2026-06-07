@@ -133,6 +133,28 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "state. It tests whether memory-layer repair can reduce rollback",
             "frequency while preserving applied-state integrity.",
         ]
+    finite_clamp_note = []
+    if "finite_clamped" in labels:
+        finite_clamp_note = [
+            "",
+            "The finite-clamped run first sanitizes non-finite or extreme",
+            "predicted deltas, then applies norm clipping. It removes the",
+            "sparse WPU delta-norm explosion seen in the earlier clipped run,",
+            "but it does not eliminate validity violations by itself. This",
+            "separates numerical delta safety from state validity.",
+        ]
+    finite_correction_note = []
+    if "finite_corrected" in labels:
+        finite_correction_note = [
+            "",
+            "The finite-corrected run combines finite-safe delta clipping with",
+            "correction-only projection. It is a stronger memory-safety result:",
+            "sparse WPU reaches H=25 integrity comparable to guarded projection",
+            "with zero rollback and zero dense escalation, but at a high",
+            "correction rate. This still does not prove raw dynamics stability;",
+            "it shows that bounded local correction can protect applied state",
+            "without declining or recomputing most updates.",
+        ]
     escalation_note = []
     if any(float(row.get("escalation_rate", 0.0)) > 0.0 for row in rows):
         escalation_note = [
@@ -219,6 +241,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             *regularized_note,
             *rejection_note,
             *correction_note,
+            *finite_clamp_note,
+            *finite_correction_note,
             *escalation_note,
             *consistency_note,
             *validity_note,

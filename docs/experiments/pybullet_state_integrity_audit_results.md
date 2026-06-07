@@ -18,6 +18,8 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_rollback.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_corrected_rollback.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_escalated_corrected_rollback.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_finite_clamped.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_finite_corrected.csv`
 
 Derived CSV:
 
@@ -36,6 +38,12 @@ Derived CSV:
 | corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.055556 | 0.000000 | 0.499166 | 0.000000 | 0.000000 | 0.000000 | 0.909670 |
 | corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.392552 | 0.079862 | 0.000000 | 0.812500 | 0.564167 | 0.000000 | 0.000000 | 0.900288 |
 | escalated_corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 1.942319 | 0.085938 | 0.000000 | 0.710833 | 0.000000 | 0.805833 | 0.116107 | 0.914831 |
+| finite_clamped | graph-transformer | 25 | 0.253333 | 2.096666 | 0.054688 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.776346 |
+| finite_clamped | wpu-cws-indexed-local-dense | 25 | 0.314167 | 0.741596 | 0.048611 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.791530 |
+| finite_clamped | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.082465 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 |
+| finite_corrected | graph-transformer | 25 | 0.000000 | 2.095547 | 0.054688 | 0.000000 | 0.253333 | 0.000000 | 0.000000 | 0.000000 | 0.915718 |
+| finite_corrected | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.735348 | 0.048611 | 0.000000 | 0.314167 | 0.000000 | 0.000000 | 0.000000 | 0.964541 |
+| finite_corrected | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.697858 | 0.084201 | 0.000000 | 0.784166 | 0.000000 | 0.000000 | 0.000000 | 0.958735 |
 | guarded | graph-transformer | 25 | 0.000000 | 2.096666 | 0.054688 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.915679 |
 | guarded | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.741597 | 0.048611 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.964322 |
 | guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.083334 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.958508 |
@@ -88,6 +96,20 @@ delta increases validity violations, and only then falls back to
 rollback if the corrected state is still worse than the previous
 state. It tests whether memory-layer repair can reduce rollback
 frequency while preserving applied-state integrity.
+
+The finite-clamped run first sanitizes non-finite or extreme
+predicted deltas, then applies norm clipping. It removes the
+sparse WPU delta-norm explosion seen in the earlier clipped run,
+but it does not eliminate validity violations by itself. This
+separates numerical delta safety from state validity.
+
+The finite-corrected run combines finite-safe delta clipping with
+correction-only projection. It is a stronger memory-safety result:
+sparse WPU reaches H=25 integrity comparable to guarded projection
+with zero rollback and zero dense escalation, but at a high
+correction rate. This still does not prove raw dynamics stability;
+it shows that bounded local correction can protect applied state
+without declining or recomputing most updates.
 
 The escalation run tests sparse-first, dense-when-needed memory
 safety: when the sparse delta increases validity violations, the

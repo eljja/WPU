@@ -51,6 +51,7 @@ def main() -> None:
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--delta-clip", type=float, default=0.0)
+    parser.add_argument("--finite-delta-clamp", type=float, default=0.0)
     parser.add_argument("--delta-norm-penalty", type=float, default=0.0)
     parser.add_argument("--delta-target-norm-slack", type=float, default=0.5)
     parser.add_argument("--rollout-consistency-penalty", type=float, default=0.0)
@@ -244,6 +245,7 @@ def _rollout_condition(
                     time_step=sample.event.time,
                     delta_clip=args.delta_clip,
                     integrity_projection=args.integrity_projection,
+                    finite_delta_clamp=args.finite_delta_clamp,
                     max_position_norm=args.max_position_norm,
                     max_velocity_norm=args.max_velocity_norm,
                     min_cup_z=args.min_cup_z,
@@ -270,6 +272,7 @@ def _rollout_condition(
                             time_step=sample.event.time,
                             delta_clip=args.delta_clip,
                             integrity_projection=args.integrity_projection,
+                            finite_delta_clamp=args.finite_delta_clamp,
                             max_position_norm=args.max_position_norm,
                             max_velocity_norm=args.max_velocity_norm,
                             min_cup_z=args.min_cup_z,
@@ -287,7 +290,7 @@ def _rollout_condition(
                         correction_count += 1
                         after_violations = _constraint_violations(current)
                         applied_delta_norm = _state_delta_norm(before_world_state, current.state)
-                    if after_violations > before_violations:
+                    if args.rollback_on_violation and after_violations > before_violations:
                         current.state = before_world_state
                         current.event.time = before_event_time
                         rollback_count += 1
@@ -315,6 +318,7 @@ def _rollout_condition(
         "selected_k_mean": round(_mean(selected_k_values), 6),
         "final_majority_branch_ratio": round(max(final_branch_counts.values(), default=0) / max(args.samples, 1), 6),
         "delta_clip": args.delta_clip,
+        "finite_delta_clamp": args.finite_delta_clamp,
         "delta_norm_penalty": args.delta_norm_penalty,
         "delta_target_norm_slack": args.delta_target_norm_slack,
         "state_validity_penalty": args.state_validity_penalty,
@@ -388,6 +392,7 @@ def _apply_predicted_delta(
     time_step: float,
     delta_clip: float,
     integrity_projection: bool,
+    finite_delta_clamp: float,
     max_position_norm: float,
     max_velocity_norm: float,
     min_cup_z: float,
@@ -397,8 +402,8 @@ def _apply_predicted_delta(
         if object_id not in sample.state.objects or index >= delta.size(0):
             continue
         obj = sample.state.objects[object_id]
-        position_delta = _clip_vector(delta[index, 1:4], delta_clip).tolist()
-        velocity_delta = _clip_vector(delta[index, 4:7], delta_clip).tolist()
+        position_delta = _clip_vector(delta[index, 1:4], delta_clip, finite_delta_clamp).tolist()
+        velocity_delta = _clip_vector(delta[index, 4:7], delta_clip, finite_delta_clamp).tolist()
         position = obj.attributes.get("position", [0.0, 0.0, 0.0])
         velocity = obj.attributes.get("velocity", [0.0, 0.0, 0.0])
         if isinstance(position, list) and len(position) >= 3:
@@ -475,10 +480,15 @@ def _state_delta_norm(before_state: object, after_state: object) -> float:
     return math.sqrt(total)
 
 
-def _clip_vector(values: torch.Tensor, max_norm: float) -> torch.Tensor:
+def _clip_vector(values: torch.Tensor, max_norm: float, finite_clamp: float = 0.0) -> torch.Tensor:
+    if finite_clamp > 0.0:
+        values = torch.nan_to_num(values, nan=0.0, posinf=finite_clamp, neginf=-finite_clamp)
+        values = values.clamp(min=-finite_clamp, max=finite_clamp)
     if max_norm <= 0.0:
         return values
     norm = values.norm().clamp_min(1e-8)
+    if not torch.isfinite(norm):
+        return torch.zeros_like(values)
     scale = min(1.0, float(max_norm) / float(norm.item()))
     return values * scale
 

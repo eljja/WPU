@@ -830,7 +830,11 @@ models. Fifth, the current memory analysis does not yet measure real branch
 overlay memory, irregular sparse-kernel cost, or GPU/accelerator efficiency.
 Sixth, persistent state introduces a safety problem: wrong deltas can corrupt
 future state, so checkpointing, rollback, uncertainty gates, and consistency
-checks are required before deployment.
+checks are required before deployment. The latest finite-corrected rollout
+probe strengthens the applied-state safety story: sparse WPU reaches H=25
+integrity 0.958735 with zero rollback and zero dense escalation, but only by
+correcting 0.784166 of updates. This is evidence for a bounded memory-safety
+layer, not evidence that raw sparse dynamics are already stable.
 
 These limitations change the paper's scientific posture. The current claim is
 not that WPU already surpasses Transformers, GNN simulators, Dreamer-style

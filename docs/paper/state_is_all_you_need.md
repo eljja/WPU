@@ -372,7 +372,10 @@ The next decisive step is experimental, not rhetorical:
 - long-horizon rollout, branch consistency, and branch calibration;
 - matched Dreamer/GNS/object-centric baselines;
 - simulator-backed object dynamics and object-state adapters for perception;
-- explicit state integrity: checkpoint, rollback, and consistency checks;
+- explicit state integrity: checkpoint, rollback, finite-safe correction, and
+  consistency checks. The current finite-corrected rollout reaches sparse H=25
+  integrity `0.958735` with zero rollback/escalation, but correction frequency
+  remains high, so raw sparse dynamics are not solved;
 - hardware-aware profiling of frontier queues, relation fetch, scatter/gather,
   delta logs, and branch overlays.
 

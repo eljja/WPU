@@ -17,6 +17,8 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_rollback.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_corrected_rollback.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_escalated_corrected_rollback.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_finite_clamped.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_finite_corrected.csv`
 
 Derived CSV:
 
@@ -32,6 +34,8 @@ Derived CSV:
 | rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.000000 | 0.812500 | 0.000000 | 0.000000 | 0.988647 |
 | corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.392552 | 0.812500 | 0.564167 | 0.000000 | 0.000000 | 0.900288 |
 | escalated_corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 1.942319 | 0.710833 | 0.000000 | 0.805833 | 0.116107 | 0.914831 |
+| finite_clamped | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 |
+| finite_corrected | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.697858 | 0.784166 | 0.000000 | 0.000000 | 0.000000 | 0.958735 |
 | rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.000000 | 0.499166 | 0.000000 | 0.000000 | 0.946506 |
 | corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.499166 | 0.000000 | 0.000000 | 0.000000 | 0.909670 |
 | rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.000000 | 0.261667 | 0.000000 | 0.000000 | 0.843622 |
@@ -62,7 +66,21 @@ local-dense WPU fallback으로 같은 event를 재계산한다. 이 방식은 sp
 `0.805833`이고 escalation success가 `0.116107`에 그치므로, 이는 raw sparse dynamics의
 해결이 아니라 dense-when-needed safety layer의 제한적 양성 증거다.
 
+Finite-clamped run은 non-finite 또는 극단적인 predicted delta를 먼저 정리하고 norm
+clipping을 적용한다. 이 방식은 기존 clipped run의 sparse delta-norm explosion을
+제거해 delta norm을 `1939290.233702`에서 `0.709270`으로 낮추지만, violations/step은
+`0.784166`으로 남아 integrity가 `0.527391`에 그친다. 즉 numerical delta safety와
+state validity는 별도의 문제다.
+
+Finite-corrected run은 finite-safe delta clipping과 correction-only projection을 결합한다.
+Sparse WPU H=25에서 violations/step `0.000000`, rollback rate `0.000000`, escalation rate
+`0.000000`, integrity `0.958735`를 얻었다. 이는 guarded projection `0.958508`과 비슷한
+applied-state safety를 rollback 없이 달성한다. 다만 correction rate가 `0.784166`으로
+높기 때문에 raw dynamics가 안정화됐다는 뜻은 아니며, memory layer의 bounded local
+correction이 unsafe update를 거부하거나 dense recompute하지 않고 state를 보호할 수
+있음을 보이는 결과다.
+
 따라서 현재 결론은 명확하다. Rollback과 correction은 state memory safety mechanism이지,
-raw dynamics가 해결됐다는 증거가 아니다. 다음 단계는 rollback 빈도를 낮추면서
+raw dynamics가 해결됐다는 증거가 아니다. 다음 단계는 correction rate를 낮추면서
 integrity를 유지하는 learned correction, 더 정밀한 uncertainty escalation,
 state-consistency loss다.

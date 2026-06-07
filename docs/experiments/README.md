@@ -175,6 +175,13 @@ Use these reports for paper-level claims:
   outputs. In the 7-seed rerun it shows a WPU-positive `catch_heavy` regime and
   WPU-negative `edge_shift`/`high_force` regimes where serialized-token remains
   stronger.
+- `pybullet_branch_prior_shift_results.md`: derived audit over the 7-seed
+  shift-generalization result. It separates learned-model accuracy from
+  branch-label prior shift. `catch_heavy` is prior-dominated: majority accuracy
+  is `0.753968`, while best WPU reaches `0.408730`, so P4/P5 need
+  mechanism-aware branch priors rather than only larger propagation blocks.
+- `pybullet_branch_prior_shift_results.ko.md`: Korean companion for the
+  branch-prior shift audit.
 - `pybullet_shift_generalization_mixture_calibrated_results.md`: 3-seed
   calibrated mixture-training probe. It shows that mixture training helps WPU
   on `edge_shift` but not on `catch_heavy`, and that post-hoc temperature
@@ -501,6 +508,9 @@ Historical or preliminary reports:
 - The PyBullet shift benchmark adds the first mechanism-family generalization
   and calibration table. It is mixed: WPU local-dense leads on `catch_heavy`,
   but `serialized-token` is stronger on `edge_shift` and `high_force`.
+  A branch-prior audit shows that `catch_heavy` is not a clean WPU success:
+  majority prior accuracy is `0.753968` versus best WPU `0.408730`, making it a
+  branch-prior adaptation failure.
   Temperature+bias calibration reduces the worst `no_catch` ECE failure but
   does not improve all composition mechanisms.
 - The defensible v2 claim is therefore architectural: explicit state exposes

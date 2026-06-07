@@ -276,7 +276,10 @@ model = wpu.create_model(
 - PyBullet shift-generalization benchmark는 held-out mechanism family에서 calibration
   metric을 추가했다. 7-seed 재실행에서 WPU local-dense는 `catch_heavy`에서 앞서지만,
   `edge_shift`와 `high_force`에서는 serialized-token이 더 강하므로 robust world-state
-  generalization은 아직 해결되지 않았다. 3-seed calibrated mixture-training probe는
+  generalization은 아직 해결되지 않았다. Branch-prior audit은 `catch_heavy` 해석을
+  바꾼다. 비학습 majority prior가 `0.753968`이고 best WPU는 `0.408730`에 그치므로,
+  WPU가 다른 learned baseline보다 높더라도 이 구간은 prior adaptation 실패다.
+  3-seed calibrated mixture-training probe는
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.
   3-seed leave-family-out probe는 WPU win-rate `0.750000`으로 더 좋지만 여전히

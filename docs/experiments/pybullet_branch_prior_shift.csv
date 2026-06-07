@@ -1,0 +1,5 @@
+eval_mechanism,best_wpu_model,best_baseline_model,best_wpu_accuracy,best_baseline_accuracy,majority_accuracy,wpu_minus_baseline,majority_minus_best_wpu,majority_minus_best_baseline,branch_prior_dominates,best_wpu_ece,best_baseline_ece,best_wpu_brier,best_baseline_brier,seed_count
+catch_heavy,wpu-cws-indexed-local-dense,serialized-token,0.40873,0.349206,0.753968,0.059524,0.345238,0.404762,True,0.264469,0.219188,0.688479,0.650279,7
+edge_shift,wpu-cws-indexed-sparse,serialized-token,0.527778,0.571428,0.515873,-0.04365,-0.011905,-0.055555,False,0.212969,0.18707,0.60769,0.592148,7
+high_force,wpu-cws-indexed-local-dense,serialized-token,0.43254,0.460318,0.424603,-0.027778,-0.007937,-0.035715,False,0.31382,0.210711,0.736105,0.663026,7
+nominal,wpu-cws-indexed-sparse,serialized-token,0.444445,0.5,0.468254,-0.055555,0.023809,-0.031746,False,0.118385,0.131319,0.628308,0.609825,7

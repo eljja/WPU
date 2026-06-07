@@ -46,9 +46,11 @@ Source CSV:
 결과는 mixed지만 유용하다.
 
 7-seed 결과는 같은 regime boundary를 유지한다. WPU는 `catch_heavy`에서 local-dense path로
-`0.408730` accuracy를 기록해 best non-WPU `0.349206`보다 높다. 하지만 `edge_shift`와
-`high_force`에서는 baseline에 밀린다. 따라서 2-seed에서 보였던 `edge_shift` 우위는
-강한 shift claim으로 쓰기에는 안정적이지 않다.
+`0.408730` accuracy를 기록해 best non-WPU `0.349206`보다 높다. 하지만 후속
+branch-prior audit은 이것이 깨끗한 성공이 아님을 보인다. `catch_heavy`에서 majority
+prior는 `0.753968`에 도달한다. 또한 WPU는 `edge_shift`와 `high_force`에서는 baseline에
+밀린다. 따라서 2-seed에서 보였던 `edge_shift` 우위는 강한 shift claim으로 쓰기에는
+안정적이지 않다.
 
 Calibration은 aggregate 기준으로 약하게 유리하다. Dashboard 기준 평균 WPU ECE는 평균
 baseline ECE보다 낮지만 7-seed 재실행 후 ratio는 `0.963449`로 약해졌다. Accuracy가

@@ -727,6 +727,14 @@ unresolved v2 problem is therefore invariant candidate descriptors,
 risk-aware mechanism selection, and joint retriever-propagator training, not
 merely the generation of more candidate sets.
 
+A separate PyBullet branch-prior audit adds an important boundary to the shift
+claim. In the \texttt{catch\_heavy} mechanism, the majority branch prior reaches
+0.753968 accuracy, while the best WPU model reaches 0.408730. Thus this regime
+is not a clean propagation success even when WPU beats other learned baselines;
+it is a prior-adaptation failure. Mechanism-aware branch priors and
+uncertainty-gated recompute are therefore required v2 components rather than
+optional calibration refinements.
+
 \section{Discussion}
 
 The next-state result shows that the prototype learns the local synthetic delta

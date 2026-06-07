@@ -319,6 +319,11 @@ Not supported:
 - Fixed `rho` thresholds as a final routing policy.
 - Closed oracle gap for cross-seed candidate scoring; current risk-adjusted
   mechanism selection is positive but still far from the candidate oracle.
+- Robust branch-prior adaptation under mechanism shift. The PyBullet
+  branch-prior audit shows that `catch_heavy` is prior-dominated: majority
+  accuracy is `0.753968`, while best WPU reaches `0.408730`. This makes
+  mechanism-aware branch priors and uncertainty-gated recompute required v2
+  components, not optional calibration polish.
 
 ## Application Boundary
 

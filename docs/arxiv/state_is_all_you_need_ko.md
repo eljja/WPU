@@ -432,6 +432,10 @@ training이다.
 - fixed `rho` threshold가 최종 scheduler다.
 - cross-seed candidate oracle gap은 아직 닫히지 않았다. Risk-adjusted mechanism
   selection은 positive result지만 최종 candidate scorer는 아니다.
+- mechanism shift에서 branch-prior adaptation이 아직 안정적이지 않다.
+  PyBullet branch-prior audit은 `catch_heavy`가 prior-dominated임을 보인다.
+  majority accuracy는 `0.753968`이고 best WPU는 `0.408730`이므로,
+  mechanism-aware branch prior와 uncertainty-gated recompute가 v2의 필수 요소다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

@@ -334,7 +334,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
 - The PyBullet shift-generalization benchmark adds calibration metrics under
   held-out mechanism families. In the 7-seed rerun, WPU local-dense leads on
   `catch_heavy`, but serialized-token remains stronger on `edge_shift` and
-  `high_force`, so robust world-state generalization remains unsolved. A 3-seed
+  `high_force`, so robust world-state generalization remains unsolved. A
+  branch-prior audit changes the interpretation of `catch_heavy`: the
+  non-learned majority prior reaches `0.753968`, far above the best WPU
+  `0.408730`, so this is a prior-adaptation failure even though WPU beats the
+  other learned baselines. A 3-seed
   calibrated mixture-training probe improves WPU on `edge_shift` but loses
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc
   temperature calibration is not enough. A 3-seed leave-family-out probe is

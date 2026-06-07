@@ -45,10 +45,13 @@ Source CSV:
 
 This is a mixed but useful cross-generator result.
 
-The 7-seed result keeps the same regime boundary. WPU wins on `catch_heavy`
-through the local-dense path (`0.408730` versus the best non-WPU `0.349206`),
-but loses on `edge_shift` and `high_force`. The older two-seed `edge_shift`
-advantage was therefore not stable enough to support a broad shift claim.
+The 7-seed result keeps the same regime boundary. WPU beats the learned
+baselines on `catch_heavy` through the local-dense path (`0.408730` versus the
+best non-WPU `0.349206`), but a follow-up branch-prior audit shows that this is
+not a clean success: the majority prior reaches `0.753968` on `catch_heavy`.
+WPU also loses on `edge_shift` and `high_force`. The older two-seed
+`edge_shift` advantage was therefore not stable enough to support a broad shift
+claim.
 
 Calibration remains slightly favorable in aggregate: mean WPU ECE is lower than
 mean baseline ECE in the dashboard calculation, but the ratio weakens to

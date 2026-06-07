@@ -440,6 +440,21 @@ def _priority_shift_generalization() -> dict[str, object]:
             f"3-seed composition-shift stress win-rate {stress_win_rate:.6f}, "
             f"mean accuracy delta {stress_delta:.6f}: " + "; ".join(stress_notes)
         )
+    prior_path = ROOT / "pybullet_branch_prior_shift.csv"
+    if prior_path.exists():
+        prior_rows = _read_rows(prior_path)
+        shifted_prior_rows = [
+            row
+            for row in prior_rows
+            if row["eval_mechanism"] != "nominal" and row["branch_prior_dominates"] == "True"
+        ]
+        prior_notes = [
+            f"{row['eval_mechanism']}: majority {float(row['majority_accuracy']):.6f} "
+            f"vs best WPU {float(row['best_wpu_accuracy']):.6f}"
+            for row in shifted_prior_rows
+        ]
+        if prior_notes:
+            notes.append("branch-prior audit flags prior-dominated shifts: " + "; ".join(prior_notes))
     status = "partial" if 0.0 < win_rate < 1.0 else ("pass" if win_rate == 1.0 else "fail")
     return _row(
         4,
@@ -494,6 +509,21 @@ def _priority_calibration() -> dict[str, object]:
             f" Temperature+bias calibration changes mean ECE ratio by {mean_ece_change:.6f} "
             f"and improves {improved}/{len(comparison_rows)} composition mechanisms."
         )
+    prior_path = ROOT / "pybullet_branch_prior_shift.csv"
+    if prior_path.exists():
+        prior_rows = _read_rows(prior_path)
+        shifted = [row for row in prior_rows if row["eval_mechanism"] != "nominal"]
+        prior_dominated = [row for row in shifted if row["branch_prior_dominates"] == "True"]
+        if prior_dominated:
+            mean_prior_gap = statistics.fmean(float(row["majority_minus_best_wpu"]) for row in shifted)
+            worst = max(prior_dominated, key=lambda row: float(row["majority_minus_best_wpu"]))
+            mixture_note += (
+                f" Branch-prior audit finds {len(prior_dominated)}/{len(shifted)} shifted mechanisms "
+                f"are prior-dominated; worst is {worst['eval_mechanism']} where majority accuracy "
+                f"{float(worst['majority_accuracy']):.6f} exceeds best WPU "
+                f"{float(worst['best_wpu_accuracy']):.6f}. Mean shifted majority-WPU gap is "
+                f"{mean_prior_gap:.6f}."
+            )
     status = "partial" if ratio <= 1.1 else "fail"
     return _row(
         5,
@@ -731,8 +761,8 @@ def _ko_interpretation(priority: int) -> str:
         1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다. 별도 safety/utility head도 negative result다. Best closure는 0.147450, safe best는 0.090719, train-selected closure는 0.144863에 그친다.",
         2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.900288로 떨어진다. Escalated corrected rollback은 local-dense fallback을 사용해 integrity를 0.914831로 올리고 rollback rate를 0.000000으로 낮춘다. 따라서 P2는 sparse-first/dense-when-needed safety layer가 유효할 수 있음을 보이지만, raw delta stability가 해결된 것은 아니다.",
         3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 확장됐다. N=133에서 WPU sparse accuracy가 0.547619로 serialized-token 0.539683보다 약간 높지만, serialized-token은 여전히 가장 빠르다. Simulator-backed evidence는 강화됐지만 규모와 mechanism 다양성은 아직 부족하다.",
-        4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 새 composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.123457이다. 그러나 catch_heavy류 branch-prior shift는 여전히 약점이므로 shift generalization은 조건부다.",
-        5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. Composition-shift stress의 평균 ECE ratio는 1.327702이고 no_catch에서 2.362081까지 악화된다. Temperature+bias calibration은 no_catch를 개선하지만 3개 mechanism 중 1개만 ECE ratio가 개선되어 보편 해결책은 아니다. Accuracy가 좋아도 branch probability calibration은 아직 안정적이지 않다.",
+        4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 새 composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.123457이다. 그러나 branch-prior audit은 catch_heavy가 prior-dominated shift임을 보인다. Majority prior는 0.753968이고 best WPU는 0.408730이므로 shift generalization은 mechanism-aware branch prior 없이는 조건부다.",
+        5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. Composition-shift stress의 평균 ECE ratio는 1.327702이고 no_catch에서 2.362081까지 악화된다. Temperature+bias calibration은 no_catch를 개선하지만 3개 mechanism 중 1개만 ECE ratio가 개선되어 보편 해결책은 아니다. Branch-prior audit은 catch_heavy에서 majority prior 0.753968이 best WPU 0.408730을 크게 앞선다는 점을 보여준다. Accuracy가 좋아도 branch probability와 prior adaptation은 아직 안정적이지 않다.",
         6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit의 판정 기준을 corrected matched-or-better로 고치면 N=133에서는 best-accuracy non-WPU baseline 대비 WPU가 더 정확하고 더 빠르다. Pareto audit에서도 WPU는 N=133에서 frontier에 올라가지만 N=5에서는 token에 지배된다. Real energy와 sparse-kernel behavior는 아직 미해결이다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
     }[priority]

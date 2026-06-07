@@ -401,6 +401,15 @@ def _priority_calibration() -> dict[str, object]:
             f" A 3-seed composition-shift stress probe gives mean ECE ratio {stress_ratio:.6f}; "
             f"worst is {worst['eval_mechanism']} at {float(worst['ece_ratio']):.6f}."
         )
+    calibration_compare_path = ROOT / "pybullet_shift_calibration_comparison.csv"
+    if calibration_compare_path.exists():
+        comparison_rows = _read_rows(calibration_compare_path)
+        mean_ece_change = statistics.fmean(float(row["ece_ratio_change"]) for row in comparison_rows)
+        improved = sum(1 for row in comparison_rows if float(row["ece_ratio_change"]) < 0.0)
+        mixture_note += (
+            f" Temperature+bias calibration changes mean ECE ratio by {mean_ece_change:.6f} "
+            f"and improves {improved}/{len(comparison_rows)} composition mechanisms."
+        )
     status = "partial" if ratio <= 1.1 else "fail"
     return _row(
         5,
@@ -442,7 +451,7 @@ def _priority_systems_profile() -> dict[str, object]:
             matched_notes.append(
                 f"N={row['total_objects_n']}: matched={row['matched_accuracy']} speedup={float(row['matched_speedup']):.6f}"
             )
-        cuda_note += " Matched-accuracy audit: " + "; ".join(matched_notes) + "."
+        cuda_note += " Matched-or-better audit: " + "; ".join(matched_notes) + "."
     energy_proxy_path = ROOT / "pybullet_system_energy_proxy.csv"
     if energy_proxy_path.exists():
         proxy_rows = _read_rows(energy_proxy_path)
@@ -462,8 +471,8 @@ def _priority_systems_profile() -> dict[str, object]:
         0.95,
         "max_tensor_byte_reduction",
         path,
-        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}; random-model CPU sparse-forward latency reduction reaches {max_forward_reduction:.6f}.{cuda_note} Real energy and strict matched-accuracy speedup remain unproven.",
-        "Measure energy, allocator traffic, sparse-kernel behavior, and strict matched-accuracy speedups.",
+        f"Tensor-byte reduction reaches {max_reduction:.6f} at mean total objects {max_n:.1f}; CPU tensorization latency reduction reaches {max_latency_reduction:.6f}; random-model CPU sparse-forward latency reduction reaches {max_forward_reduction:.6f}.{cuda_note} Real energy, sparse-kernel behavior, and Pareto dominance over every baseline remain unproven.",
+        "Measure energy, allocator traffic, sparse-kernel behavior, Pareto frontiers, and trained matched-or-better speedups.",
     )
 
 
@@ -615,11 +624,11 @@ def _ko_status(status: str) -> str:
 def _ko_interpretation(priority: int) -> str:
     return {
         1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다.",
-        2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.884654로 떨어진다. 따라서 P2는 raw delta stability, state correction, rollback safety 사이의 tradeoff를 분리해 주장해야 한다.",
+        2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.900288로 떨어진다. 따라서 P2는 raw delta stability, state correction, rollback safety 사이의 tradeoff를 분리해 주장해야 한다.",
         3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 확장됐다. N=133에서 WPU sparse accuracy가 0.547619로 serialized-token 0.539683보다 약간 높지만, serialized-token은 여전히 가장 빠르다. Simulator-backed evidence는 강화됐지만 규모와 mechanism 다양성은 아직 부족하다.",
         4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 새 composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.123457이다. 그러나 catch_heavy류 branch-prior shift는 여전히 약점이므로 shift generalization은 조건부다.",
-        5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. 새 composition-shift stress의 평균 ECE ratio는 1.327702이고 no_catch에서 2.362081까지 악화된다. Accuracy가 좋아도 branch probability calibration은 아직 안정적이지 않다.",
-        6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit은 N=5에서는 accuracy matched지만 WPU가 token보다 느리고, N=133에서는 WPU가 빠르지만 accuracy tolerance 조건을 넘는다. Real energy와 strict matched-accuracy speedup은 아직 미해결이다.",
+        5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. Composition-shift stress의 평균 ECE ratio는 1.327702이고 no_catch에서 2.362081까지 악화된다. Temperature+bias calibration은 no_catch를 개선하지만 3개 mechanism 중 1개만 ECE ratio가 개선되어 보편 해결책은 아니다. Accuracy가 좋아도 branch probability calibration은 아직 안정적이지 않다.",
+        6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit의 판정 기준을 corrected matched-or-better로 고치면 N=133에서는 best-accuracy non-WPU baseline 대비 WPU가 더 정확하고 더 빠르다. 다만 N=5에서는 WPU가 token보다 느리고, 모든 baseline에 대한 Pareto 우월성과 real energy는 아직 미해결이다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
     }[priority]
 
@@ -631,7 +640,7 @@ def _ko_next_action(priority: int) -> str:
         3: "더 많은 mechanism, long-horizon simulator rollout, parameter-matched 7-seed benchmark를 추가한다.",
         4: "Catch-heavy류 branch-prior shift를 겨냥한 mechanism-aware branch prior와 uncertainty-gated fallback을 추가한다.",
         5: "Post-hoc temperature가 아니라 학습 가능한 calibration head, multi-step ECE/Brier/NLL, uncertainty-gated recompute를 추가한다.",
-        6: "Energy, allocator traffic, sparse-kernel behavior, strict matched-accuracy speedup을 측정한다.",
+        6: "Energy, allocator traffic, sparse-kernel behavior, Pareto frontier, trained matched-or-better speedup을 측정한다.",
         7: "Controlled objectification corruption에서 propagation을 학습/평가하고 report component와 downstream loss의 관계를 회귀 분석한다.",
     }[priority]
 

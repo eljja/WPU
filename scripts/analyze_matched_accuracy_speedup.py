@@ -85,7 +85,7 @@ def _matched_rows(summary_rows: list[dict[str, object]], tolerance: float) -> li
         accuracy_gap = float(best_wpu["branch_accuracy"]) - float(best_baseline["branch_accuracy"])
         speedup = float(best_baseline["ms_per_sample_forward"]) / max(float(best_wpu["ms_per_sample_forward"]), 1e-9)
         memory_ratio = float(best_wpu["cuda_peak_mb"]) / max(float(best_baseline["cuda_peak_mb"]), 1e-9)
-        matched = abs(accuracy_gap) <= tolerance
+        matched = accuracy_gap >= -tolerance
         out.append(
             {
                 "total_objects_n": total_n,
@@ -96,6 +96,7 @@ def _matched_rows(summary_rows: list[dict[str, object]], tolerance: float) -> li
                 "accuracy_gap": round(accuracy_gap, 6),
                 "accuracy_tolerance": tolerance,
                 "matched_accuracy": matched,
+                "accuracy_relation": "wpu_higher" if accuracy_gap > tolerance else ("matched" if abs(accuracy_gap) <= tolerance else "wpu_lower"),
                 "wpu_ms_per_sample": best_wpu["ms_per_sample_forward"],
                 "baseline_ms_per_sample": best_baseline["ms_per_sample_forward"],
                 "matched_speedup": round(speedup, 6),
@@ -143,10 +144,10 @@ def _render_markdown(
         title = "# PyBullet Matched-Accuracy Speedup Audit"
         intro = (
             "이 audit은 parameter-matched PyBullet benchmark에서 best WPU와 best non-WPU baseline을 "
-            "같은 N별로 비교하고, accuracy gap이 tolerance 안에 있을 때만 speedup을 해석한다."
+            "같은 N별로 비교하고, WPU accuracy가 baseline보다 tolerance 이상 낮지 않을 때만 speedup을 해석한다."
         )
         interp = (
-            "이 결과는 matched-accuracy가 성립하는 구간에서만 speedup을 주장해야 함을 보여준다. "
+            "이 결과는 matched-or-better accuracy가 성립하는 구간에서만 speedup을 주장해야 함을 보여준다. "
             "CUDA systems profile은 큰 N에서 random-model sparse forward latency가 크게 줄어드는 "
             "상한 근거를 제공하지만, benchmark 표의 speedup은 실제 학습된 small model 조건이다."
         )
@@ -155,11 +156,11 @@ def _render_markdown(
         intro = (
             "This audit compares the best WPU and best non-WPU baseline at each N in the "
             "parameter-matched PyBullet benchmark. Speedup is interpreted only when the "
-            "accuracy gap is within the configured tolerance."
+            "WPU accuracy is not below the baseline by more than the configured tolerance."
         )
         interp = (
             "The result enforces a stricter claim: WPU speedup only matters in regimes "
-            "where accuracy is matched. The CUDA systems profile gives an upper-bound "
+            "where accuracy is matched or better. The CUDA systems profile gives an upper-bound "
             "random-model latency signal at large N, while the benchmark table reports "
             "trained small-model runtime."
         )
@@ -168,18 +169,22 @@ def _render_markdown(
         "",
         intro,
         "",
-        f"Benchmark CSV: `{args.benchmark.as_posix()}`",
-        f"CUDA systems CSV: `{args.cuda_profile.as_posix()}`",
+        "Source CSVs:",
+        "",
+        f"- `{args.out_csv.as_posix()}`",
+        f"- `{args.benchmark.as_posix()}`",
+        f"- `{args.cuda_profile.as_posix()}`",
+        "",
         f"Accuracy tolerance: `{args.accuracy_tolerance}`",
         "",
-        "| N | best WPU | best baseline | WPU acc | baseline acc | gap | matched | speedup | WPU ms | baseline ms | WPU/baseline peak mem |",
-        "|---:|---|---|---:|---:|---:|---|---:|---:|---:|---:|",
+        "| N | best WPU | best baseline | WPU acc | baseline acc | gap | relation | matched-or-better | speedup | WPU ms | baseline ms | WPU/baseline peak mem |",
+        "|---:|---|---|---:|---:|---:|---|---|---:|---:|---:|---:|",
     ]
     for row in rows:
         lines.append(
             f"| {row['total_objects_n']} | `{row['best_wpu']}` | `{row['best_baseline']}` | "
             f"{float(row['wpu_accuracy']):.6f} | {float(row['baseline_accuracy']):.6f} | "
-            f"{float(row['accuracy_gap']):.6f} | {row['matched_accuracy']} | "
+            f"{float(row['accuracy_gap']):.6f} | {row['accuracy_relation']} | {row['matched_accuracy']} | "
             f"{float(row['matched_speedup']):.6f} | {float(row['wpu_ms_per_sample']):.6f} | "
             f"{float(row['baseline_ms_per_sample']):.6f} | {float(row['wpu_over_baseline_peak_memory']):.6f} |"
         )

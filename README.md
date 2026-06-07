@@ -303,7 +303,7 @@ The current evidence supports a regime hypothesis, not universal dominance.
   delta instability. A rollback-only memory layer raises sparse H=25
   applied-state integrity to `0.988647`, but only by rolling back `0.812500` of
   updates. A corrected-rollback variant reduces rollback rate to `0.564167`,
-  but integrity falls to `0.884654`, so raw dynamics, correction quality, and
+  but integrity falls to `0.900288`, so raw dynamics, correction quality, and
   memory safety must be reported separately.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
@@ -320,11 +320,12 @@ The current evidence supports a regime hypothesis, not universal dominance.
   bytes and CUDA forward latency with peak memory. It shows large proxy
   reductions at large `N`, but it is explicitly not wall-plug power, GPU power
   telemetry, or sparse-kernel evidence.
-- The matched-accuracy speedup audit is stricter: at `N=5`, WPU and
+- The matched-or-better speedup audit is stricter: at `N=5`, WPU and
   serialized-token are accuracy-matched but WPU is slower; at `N=133`, WPU is
-  much faster than graph-transformer and more accurate, but the accuracy gap is
-  outside the configured matched-accuracy tolerance. Strict matched-speedup is
-  therefore still open.
+  both more accurate and faster than the best-accuracy non-WPU baseline
+  (`graph-transformer`). This is positive large-N evidence, but not Pareto
+  dominance over every baseline because serialized-token remains faster at
+  lower accuracy.
 - The PyBullet shift-generalization benchmark adds calibration metrics under
   held-out mechanism families. In the 7-seed rerun, WPU local-dense leads on
   `catch_heavy`, but serialized-token remains stronger on `edge_shift` and
@@ -336,7 +337,9 @@ The current evidence supports a regime hypothesis, not universal dominance.
   A 3-seed composition-shift stress probe is accuracy-positive for WPU
   (win-rate `1.000000`, mean accuracy delta `0.123457`) but calibration-negative
   on `no_catch` (ECE ratio `2.362081`), so accuracy and branch-probability
-  reliability must be separated.
+  reliability must be separated. Temperature+bias calibration improves
+  `no_catch` ECE ratio to `0.960054`, but only improves 1/3 composition
+  mechanisms, so calibration remains mechanism-aware rather than solved.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

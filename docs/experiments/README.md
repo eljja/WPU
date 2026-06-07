@@ -124,7 +124,7 @@ Use these reports for paper-level claims:
   and strong state-validity regularization both remain at `0.084722` for sparse
   H=25. Rollback-only raises sparse applied-state integrity to `0.988647` with
   rollback rate `0.812500`; corrected rollback lowers rollback rate to
-  `0.564167` but lowers integrity to `0.884654`.
+  `0.564167` but lowers integrity to `0.900288`.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -143,11 +143,18 @@ Use these reports for paper-level claims:
   or matched-accuracy proof.
 - `pybullet_matched_speedup_audit_results.md`: matched-accuracy speedup audit
   connecting the parameter-matched PyBullet benchmark to the CUDA systems
-  profile. It shows strict matched-accuracy speedup is not yet established:
-  `N=5` is accuracy-matched but WPU is slower than token, while `N=133` is fast
-  for WPU but not within the configured accuracy tolerance.
+  profile. It applies a matched-or-better criterion: `N=5` is
+  accuracy-matched but WPU is slower than token, while `N=133` is positive
+  against the best-accuracy non-WPU baseline because WPU is more accurate than
+  graph-transformer and `19.184067x` faster. This is not Pareto dominance over
+  every baseline.
 - `pybullet_matched_speedup_audit_results.ko.md`: Korean companion for the
   matched-accuracy speedup audit.
+- `pybullet_matched_speedup_tolerance_results.md`: tolerance sweep for the
+  matched-or-better speedup audit, used to check whether the `N=133` conclusion
+  depends on a single tolerance threshold.
+- `pybullet_matched_speedup_tolerance_results.ko.md`: Korean companion for the
+  matched-speedup tolerance sweep.
 - `pybullet_system_energy_proxy_results.md`: screening-only system energy proxy
   derived from tensorization and CUDA forward profiles. It is useful for
   choosing future power/sparse-kernel measurement regimes, but it is not real
@@ -177,6 +184,18 @@ Use these reports for paper-level claims:
   calibration.
 - `pybullet_shift_composition_stress_results.ko.md`: Korean companion for the
   composition-shift stress probe.
+- `pybullet_shift_composition_stress_bias_calibrated_results.md`: repeats the
+  composition-shift stress probe with temperature+bias calibration. It improves
+  `no_catch` ECE but does not solve calibration across all composition
+  mechanisms.
+- `pybullet_shift_composition_stress_bias_calibrated_results.ko.md`: Korean
+  companion for the bias-calibrated composition-stress probe.
+- `pybullet_shift_calibration_comparison_results.md`: direct comparison between
+  temperature-only and temperature+bias composition-stress calibration. Mean
+  ECE ratio improves, but only 1/3 mechanisms improve, so calibration remains
+  mechanism-aware.
+- `pybullet_shift_calibration_comparison_results.ko.md`: Korean companion for
+  the calibration comparison.
 - `wpu_v2_candidate_safety_frontier_results.md`: candidate-regret safety
   frontier showing that P1 is not solved by threshold search: stricter harmful
   accept limits sharply reduce gap closure.
@@ -457,7 +476,7 @@ Historical or preliminary reports:
   tensorizes only `K≈4.6`, reducing tensor bytes by `0.997454`; the random CPU
   sparse-forward proxy reaches `0.996975` reduction. This supports the
   state-indexing premise but remains a proxy, not a hardware-power or
-  matched-accuracy result.
+  Pareto-dominance result.
 - The PyBullet state-integrity audit turns closed-loop rollout stability into
   a tracked metric. It confirms that guarded state-store projection can protect
   applied state, but it remains a safety layer, not a solution to raw WPU sparse
@@ -468,6 +487,8 @@ Historical or preliminary reports:
 - The PyBullet shift benchmark adds the first mechanism-family generalization
   and calibration table. It is mixed: WPU local-dense leads on `catch_heavy`,
   but `serialized-token` is stronger on `edge_shift` and `high_force`.
+  Temperature+bias calibration reduces the worst `no_catch` ECE failure but
+  does not improve all composition mechanisms.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

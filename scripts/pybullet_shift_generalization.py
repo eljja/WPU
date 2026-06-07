@@ -81,6 +81,7 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--calibrate-temperature", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--calibrate-bias", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--calibration-samples", type=int, default=96)
     parser.add_argument("--temperature-steps", type=int, default=80)
     parser.add_argument("--temperature-lr", type=float, default=5e-2)
@@ -102,10 +103,10 @@ def main() -> None:
             train_label = "+".join(args.train_mechanisms)
             print(f"train {train_label} model={model_name} seed={seed}", flush=True)
             model = _train_model(model_name, seed, args)
-            temperature = _fit_temperature(model, model_name, seed, args) if args.calibrate_temperature else 1.0
+            calibrator = _fit_calibrator(model, model_name, seed, args) if args.calibrate_temperature else _default_calibrator()
             for mechanism in args.eval_mechanisms:
                 print(f"eval model={model_name} seed={seed} mechanism={mechanism}", flush=True)
-                rows.append(_evaluate(model, model_name, seed, mechanism, temperature, args))
+                rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, args))
                 _write_csv(args.out, rows)
     rows.extend(_summary(rows))
     _write_csv(args.out, rows)
@@ -158,18 +159,18 @@ def _training_dataset(seed: int, args: argparse.Namespace):
     return datasets[0] if len(datasets) == 1 else ConcatDataset(datasets)
 
 
-def _fit_temperature(model: torch.nn.Module, model_name: str, seed: int, args: argparse.Namespace) -> float:
+def _default_calibrator() -> dict[str, object]:
+    return {"temperature": 1.0, "bias": [0.0, 0.0, 0.0], "calibration_mode": "none"}
+
+
+def _fit_calibrator(model: torch.nn.Module, model_name: str, seed: int, args: argparse.Namespace) -> dict[str, object]:
     device = torch.device(args.device)
-    dataset = _dataset(
-        mechanism=args.train_mechanisms[0],
-        samples=args.calibration_samples,
-        seed=seed + 30_000,
-        args=args,
-        balanced_labels=False,
-    )
+    dataset = _calibration_dataset(seed + 30_000, args)
     loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args, model_name))
     log_temperature = torch.zeros((), device=device, requires_grad=True)
-    optimizer = torch.optim.AdamW([log_temperature], lr=args.temperature_lr)
+    bias = torch.zeros(3, device=device, requires_grad=True) if args.calibrate_bias else None
+    parameters = [log_temperature] if bias is None else [log_temperature, bias]
+    optimizer = torch.optim.AdamW(parameters, lr=args.temperature_lr)
     model.eval()
     for _ in range(args.temperature_steps):
         total_loss = torch.zeros((), device=device)
@@ -180,13 +181,22 @@ def _fit_temperature(model: torch.nn.Module, model_name: str, seed: int, args: a
             with torch.no_grad():
                 logits = model(batch, num_branches=3, route_branches=3).branch_logits.detach()
             temperature = log_temperature.exp().clamp(0.25, 8.0)
-            total_loss = total_loss + F.cross_entropy(logits / temperature, labels, reduction="sum")
+            calibrated_logits = logits if bias is None else logits + (bias - bias.mean())
+            total_loss = total_loss + F.cross_entropy(calibrated_logits / temperature, labels, reduction="sum")
             total_count += int(labels.numel())
         loss = total_loss / max(total_count, 1)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-    return round(float(log_temperature.detach().exp().clamp(0.25, 8.0).cpu().item()), 6)
+    bias_values = [0.0, 0.0, 0.0]
+    if bias is not None:
+        centered = (bias - bias.mean()).detach().cpu().tolist()
+        bias_values = [round(float(value), 6) for value in centered]
+    return {
+        "temperature": round(float(log_temperature.detach().exp().clamp(0.25, 8.0).cpu().item()), 6),
+        "bias": bias_values,
+        "calibration_mode": "temperature_bias" if bias is not None else "temperature",
+    }
 
 
 def _evaluate(
@@ -194,7 +204,7 @@ def _evaluate(
     model_name: str,
     seed: int,
     mechanism: str,
-    temperature: float,
+    calibrator: dict[str, object],
     args: argparse.Namespace,
 ) -> dict[str, object]:
     device = torch.device(args.device)
@@ -224,7 +234,10 @@ def _evaluate(
             target_delta = target_delta.to(device)
             labels = labels.to(device)
             prediction = model(batch, num_branches=3, route_branches=3)
-            probabilities = F.softmax(prediction.branch_logits / max(float(temperature), 1e-6), dim=-1)
+            bias = torch.tensor(calibrator["bias"], dtype=prediction.branch_logits.dtype, device=device)
+            calibrated_logits = prediction.branch_logits + bias
+            temperature = max(float(calibrator["temperature"]), 1e-6)
+            probabilities = F.softmax(calibrated_logits / temperature, dim=-1)
             predicted = probabilities.argmax(dim=-1)
             batch_total = int(labels.numel())
             total += batch_total
@@ -248,7 +261,9 @@ def _evaluate(
         "seed": seed,
         "train_mechanism": "+".join(args.train_mechanisms),
         "eval_mechanism": mechanism,
-        "temperature": temperature,
+        "temperature": calibrator["temperature"],
+        "calibration_mode": calibrator["calibration_mode"],
+        "calibration_bias": ";".join(f"{float(value):.6f}" for value in calibrator["bias"]),  # type: ignore[union-attr]
         "background_objects": args.background_objects,
         "total_objects_n": args.background_objects + 5,
         "samples": args.samples,
@@ -277,6 +292,21 @@ def _dataset(*, mechanism: str, samples: int, seed: int, args: argparse.Namespac
         cup_x_range=config["cup_x_range"],
         catch_probability=float(config["catch_probability"]),
     )
+
+
+def _calibration_dataset(seed: int, args: argparse.Namespace):
+    per_mechanism = max(args.batch_size, args.calibration_samples // max(len(args.train_mechanisms), 1))
+    datasets = [
+        _dataset(
+            mechanism=mechanism,
+            samples=per_mechanism,
+            seed=seed + 101 * index,
+            args=args,
+            balanced_labels=False,
+        )
+        for index, mechanism in enumerate(args.train_mechanisms)
+    ]
+    return datasets[0] if len(datasets) == 1 else ConcatDataset(datasets)
 
 
 def _brier_score(probabilities: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:

@@ -216,6 +216,7 @@ def _rollout_condition(
                     min_cup_z=args.min_cup_z,
                 )
                 if needs_memory_guard:
+                    before_world_state = type(current.state).from_json(before_state)  # type: ignore[arg-type]
                     after_violations = _constraint_violations(current)
                     if args.correct_on_violation and after_violations > before_violations:
                         _project_sample_state(
@@ -226,8 +227,9 @@ def _rollout_condition(
                         )
                         correction_count += 1
                         after_violations = _constraint_violations(current)
+                        applied_delta_norm = _state_delta_norm(before_world_state, current.state)
                     if after_violations > before_violations:
-                        current.state = type(current.state).from_json(before_state)  # type: ignore[arg-type]
+                        current.state = before_world_state
                         current.event.time = before_event_time
                         rollback_count += 1
                         applied_delta_norm = 0.0
@@ -391,6 +393,24 @@ def _project_sample_state(
             obj.attributes["position"] = projected_position
         if _finite_vector(velocity):
             obj.attributes["velocity"] = _project_vector([float(item) for item in velocity], max_velocity_norm)
+
+
+def _state_delta_norm(before_state: object, after_state: object) -> float:
+    before_objects = getattr(before_state, "objects", {})
+    after_objects = getattr(after_state, "objects", {})
+    total = 0.0
+    for object_id, after_obj in after_objects.items():
+        before_obj = before_objects.get(object_id)
+        if before_obj is None:
+            continue
+        for attribute in ("position", "velocity"):
+            before_value = before_obj.attributes.get(attribute, [0.0, 0.0, 0.0])
+            after_value = after_obj.attributes.get(attribute, [0.0, 0.0, 0.0])
+            if not (_finite_vector(before_value) and _finite_vector(after_value)):
+                continue
+            for before_item, after_item in zip(before_value, after_value, strict=False):
+                total += (float(after_item) - float(before_item)) ** 2
+    return math.sqrt(total)
 
 
 def _clip_vector(values: torch.Tensor, max_norm: float) -> torch.Tensor:

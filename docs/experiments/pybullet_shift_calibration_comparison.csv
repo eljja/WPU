@@ -1,0 +1,4 @@
+eval_mechanism,base_label,candidate_label,base_accuracy_delta,candidate_accuracy_delta,accuracy_delta_change,base_ece_ratio,candidate_ece_ratio,ece_ratio_change,base_best_wpu,candidate_best_wpu,base_best_baseline,candidate_best_baseline
+edge_catch_heavy,temperature,temperature_bias,0.12037,0.0,-0.12037,0.59807,1.269938,0.671868,wpu-cws-indexed-sparse,wpu-cws-indexed-sparse,graph-transformer,graph-transformer
+edge_high_force,temperature,temperature_bias,0.0,0.185185,0.185185,1.022954,1.099548,0.076594,wpu-cws-indexed-local-dense,wpu-cws-indexed-local-dense,graph-transformer,serialized-token
+no_catch,temperature,temperature_bias,0.25,0.203704,-0.046296,2.362081,0.960054,-1.402027,wpu-cws-indexed-sparse,wpu-cws-indexed-local-dense,graph-transformer,graph-transformer

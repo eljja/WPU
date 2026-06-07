@@ -195,6 +195,9 @@ python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse 
 python scripts/analyze_pybullet_leave_family_out.py
 python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --train-mechanisms nominal high_force edge_shift catch_heavy --eval-mechanisms no_catch edge_high_force edge_catch_heavy --seeds 11 13 17 --background-objects 32 --steps 12 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --calibrate-temperature --calibration-samples 36 --temperature-steps 20 --out docs/experiments/pybullet_shift_composition_stress.csv
 python scripts/analyze_pybullet_shift_stress.py
+python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --train-mechanisms nominal high_force edge_shift catch_heavy --eval-mechanisms no_catch edge_high_force edge_catch_heavy --seeds 11 13 17 --background-objects 32 --steps 12 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --calibrate-temperature --calibrate-bias --calibration-samples 36 --temperature-steps 20 --out docs/experiments/pybullet_shift_composition_stress_bias_calibrated.csv
+python scripts/analyze_pybullet_shift_stress.py --input docs/experiments/pybullet_shift_composition_stress_bias_calibrated.csv --out-csv docs/experiments/pybullet_shift_composition_stress_bias_calibrated_summary.csv --out-md docs/experiments/pybullet_shift_composition_stress_bias_calibrated_results.md --out-ko-md docs/experiments/pybullet_shift_composition_stress_bias_calibrated_results.ko.md
+python scripts/analyze_shift_calibration_comparison.py
 ```
 
 최신 candidate-oracle gap audit은 다음 명령으로 재현할 수 있다.
@@ -228,6 +231,7 @@ python scripts/retriever_cross_seed_candidate_regret_gate_probe.py --feature-noi
 python scripts/analyze_candidate_regret_gate.py --input docs/experiments/wpu_v2_candidate_regret_gate_perturbed.csv --out-csv docs/experiments/wpu_v2_candidate_regret_gate_perturbed_summary.csv --out-md docs/experiments/wpu_v2_candidate_regret_gate_perturbed_results.md --out-ko-md docs/experiments/wpu_v2_candidate_regret_gate_perturbed_results.ko.md
 python scripts/analyze_candidate_safety_frontier.py
 python scripts/analyze_matched_accuracy_speedup.py
+python scripts/analyze_matched_speedup_tolerance.py
 ```
 
 보수적인 v2 우선순위 dashboard는 다음 명령으로 재현할 수 있다.

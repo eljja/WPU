@@ -31,9 +31,9 @@ Derived CSV:
 | clipped | wpu-cws-indexed-sparse | 25 | 0.785000 | 1939290.233702 | 0.082465 | 0.000000 | 0.000000 | 0.000000 | 0.201757 |
 | consistency | wpu-cws-indexed-local-dense | 25 | 0.811667 | 1.965078 | 0.059896 | 0.000000 | 0.000000 | 0.000000 | 0.472827 |
 | consistency | wpu-cws-indexed-sparse | 25 | 3.360834 | 1775082.311771 | 0.077257 | 0.000000 | 0.000000 | 0.000000 | 0.084549 |
-| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.758165 | 0.056424 | 0.000000 | 0.268334 | 0.000000 | 0.787180 |
-| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.283443 | 0.055556 | 0.000000 | 0.499166 | 0.000000 | 0.908968 |
-| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.839244 | 0.079862 | 0.000000 | 0.812500 | 0.564167 | 0.884654 |
+| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.756884 | 0.056424 | 0.000000 | 0.268334 | 0.000000 | 0.787224 |
+| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.055556 | 0.000000 | 0.499166 | 0.000000 | 0.909670 |
+| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.392552 | 0.079862 | 0.000000 | 0.812500 | 0.564167 | 0.900288 |
 | guarded | graph-transformer | 25 | 0.000000 | 2.096666 | 0.054688 | 0.000000 | 0.000000 | 0.000000 | 0.915679 |
 | guarded | wpu-cws-indexed-local-dense | 25 | 0.000000 | 0.741597 | 0.048611 | 0.000000 | 0.000000 | 0.000000 | 0.964322 |
 | guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.083334 | 0.000000 | 0.000000 | 0.000000 | 0.958508 |

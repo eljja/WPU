@@ -1,0 +1,15 @@
+total_objects_n,best_wpu,best_baseline,wpu_accuracy,baseline_accuracy,accuracy_gap,accuracy_tolerance,matched_accuracy,accuracy_relation,wpu_ms_per_sample,baseline_ms_per_sample,matched_speedup,wpu_cuda_peak_mb,baseline_cuda_peak_mb,wpu_over_baseline_peak_memory,seed_count
+5,wpu-cws-indexed-sparse,serialized-token,0.569445,0.569445,0.0,0.0,True,matched,1.299167,0.14465,0.111341,18.088379,18.351074,0.985685,2
+133,wpu-cws-indexed-sparse,graph-transformer,0.569445,0.472222,0.097223,0.0,True,wpu_higher,2.177138,41.766361,19.184067,18.088379,24.424316,0.740589,2
+5,wpu-cws-indexed-sparse,serialized-token,0.569445,0.569445,0.0,0.01,True,matched,1.299167,0.14465,0.111341,18.088379,18.351074,0.985685,2
+133,wpu-cws-indexed-sparse,graph-transformer,0.569445,0.472222,0.097223,0.01,True,wpu_higher,2.177138,41.766361,19.184067,18.088379,24.424316,0.740589,2
+5,wpu-cws-indexed-sparse,serialized-token,0.569445,0.569445,0.0,0.03,True,matched,1.299167,0.14465,0.111341,18.088379,18.351074,0.985685,2
+133,wpu-cws-indexed-sparse,graph-transformer,0.569445,0.472222,0.097223,0.03,True,wpu_higher,2.177138,41.766361,19.184067,18.088379,24.424316,0.740589,2
+5,wpu-cws-indexed-sparse,serialized-token,0.569445,0.569445,0.0,0.05,True,matched,1.299167,0.14465,0.111341,18.088379,18.351074,0.985685,2
+133,wpu-cws-indexed-sparse,graph-transformer,0.569445,0.472222,0.097223,0.05,True,wpu_higher,2.177138,41.766361,19.184067,18.088379,24.424316,0.740589,2
+5,wpu-cws-indexed-sparse,serialized-token,0.569445,0.569445,0.0,0.075,True,matched,1.299167,0.14465,0.111341,18.088379,18.351074,0.985685,2
+133,wpu-cws-indexed-sparse,graph-transformer,0.569445,0.472222,0.097223,0.075,True,wpu_higher,2.177138,41.766361,19.184067,18.088379,24.424316,0.740589,2
+5,wpu-cws-indexed-sparse,serialized-token,0.569445,0.569445,0.0,0.1,True,matched,1.299167,0.14465,0.111341,18.088379,18.351074,0.985685,2
+133,wpu-cws-indexed-sparse,graph-transformer,0.569445,0.472222,0.097223,0.1,True,matched,2.177138,41.766361,19.184067,18.088379,24.424316,0.740589,2
+5,wpu-cws-indexed-sparse,serialized-token,0.569445,0.569445,0.0,0.125,True,matched,1.299167,0.14465,0.111341,18.088379,18.351074,0.985685,2
+133,wpu-cws-indexed-sparse,graph-transformer,0.569445,0.472222,0.097223,0.125,True,matched,2.177138,41.766361,19.184067,18.088379,24.424316,0.740589,2

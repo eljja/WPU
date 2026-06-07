@@ -29,11 +29,11 @@ Derived CSV:
 | guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.000000 | 0.000000 | 0.958508 |
 | rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.000000 | 0.000000 | 0.530270 |
 | rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.000000 | 0.812500 | 0.988647 |
-| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.839244 | 0.812500 | 0.564167 | 0.884654 |
+| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.392552 | 0.812500 | 0.564167 | 0.900288 |
 | rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.000000 | 0.499166 | 0.946506 |
-| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.283443 | 0.499166 | 0.000000 | 0.908968 |
+| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.499166 | 0.000000 | 0.909670 |
 | rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.000000 | 0.261667 | 0.843622 |
-| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.758165 | 0.268334 | 0.000000 | 0.787180 |
+| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.756884 | 0.268334 | 0.000000 | 0.787224 |
 
 전체 audit table은 `docs/experiments/pybullet_state_integrity_audit.csv`에 있다.
 
@@ -52,7 +52,7 @@ Rollback-only memory layer는 sparse WPU H=25 applied-state integrity를 `0.9886
 올리지만 rollback rate가 `0.812500`으로 매우 높다. Corrected rollback은 violation이
 증가한 state를 먼저 bounded projection으로 수선하고, 그래도 이전 state보다 나쁘면
 rollback한다. 이 방식은 sparse rollback rate를 `0.564167`까지 낮추지만 integrity는
-`0.884654`로 떨어진다.
+`0.900288`로 떨어진다.
 
 따라서 현재 결론은 명확하다. Rollback과 correction은 state memory safety mechanism이지,
 raw dynamics가 해결됐다는 증거가 아니다. 다음 단계는 rollback 빈도를 낮추면서

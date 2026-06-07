@@ -246,7 +246,7 @@ model = wpu.create_model(
   머물러 training-time validity penalty만으로는 raw delta instability를 해결하지
   못한다. Rollback-only memory layer는 sparse H=25 applied-state integrity를
   `0.988647`까지 올리지만 update의 `0.812500`을 rollback한다. Corrected-rollback
-  variant는 rollback rate를 `0.564167`까지 낮추지만 integrity가 `0.884654`로
+  variant는 rollback rate를 `0.564167`까지 낮추지만 integrity가 `0.900288`로
   떨어진다. 따라서 raw dynamics, correction quality, memory safety를 분리해
   보고해야 한다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
@@ -264,10 +264,11 @@ model = wpu.create_model(
   latency와 peak memory를 결합한 보조 지표다. Large `N`에서 큰 proxy reduction을
   보이지만, wall-plug power, GPU power telemetry, sparse-kernel evidence를 대체하지
   않는다.
-- Matched-accuracy speedup audit은 더 엄격하다. `N=5`에서는 WPU와 serialized-token이
-  accuracy-matched지만 WPU가 더 느리다. `N=133`에서는 WPU가 graph-transformer보다
-  훨씬 빠르고 더 정확하지만 configured matched-accuracy tolerance 밖이다. 따라서 strict
-  matched-speedup은 아직 열려 있다.
+- Matched-or-better speedup audit은 더 엄격하다. `N=5`에서는 WPU와 serialized-token이
+  accuracy-matched지만 WPU가 더 느리다. `N=133`에서는 WPU가 best-accuracy non-WPU
+  baseline인 graph-transformer보다 더 정확하고 `19.184067x` 빠르다. 이는 positive
+  large-N evidence지만 모든 baseline에 대한 Pareto dominance는 아니다. Serialized-token은
+  더 낮은 accuracy에서 여전히 더 빠르다.
 - PyBullet shift-generalization benchmark는 held-out mechanism family에서 calibration
   metric을 추가했다. 7-seed 재실행에서 WPU local-dense는 `catch_heavy`에서 앞서지만,
   `edge_shift`와 `high_force`에서는 serialized-token이 더 강하므로 robust world-state
@@ -278,7 +279,9 @@ model = wpu.create_model(
   `catch_heavy`에서는 실패한다. 3-seed composition-shift stress는 accuracy 기준으로
   WPU에 긍정적이다(win-rate `1.000000`, mean accuracy delta `0.123457`). 하지만
   `no_catch`에서 ECE ratio가 `2.362081`까지 악화되어, accuracy와 branch probability
-  reliability를 반드시 분리해 보고해야 한다.
+  reliability를 반드시 분리해 보고해야 한다. Temperature+bias calibration은
+  `no_catch` ECE ratio를 `0.960054`까지 낮췄지만 composition mechanism 3개 중
+  1개만 개선하므로, calibration은 해결된 것이 아니라 mechanism-aware 문제로 남아 있다.
 
 v1의 핵심 목표는 명확하다.
 

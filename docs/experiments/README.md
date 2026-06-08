@@ -261,6 +261,16 @@ Use these reports for paper-level claims:
   mechanism-aware.
 - `pybullet_shift_calibration_comparison_results.ko.md`: Korean companion for
   the calibration comparison.
+- `pybullet_uncertainty_gated_recompute_results.md`: 7-seed WPU-only
+  uncertainty-gated recompute probe. Low-confidence sparse WPU predictions are
+  routed to WPU local-dense recompute, not to token or graph baselines. The
+  aggregate ECE-safe gate improves accuracy by `0.071428` and ECE by
+  `-0.016396`, but uses dense recompute rate `0.985450`; the low-cost gate uses
+  rate `0.025132`, improves accuracy by `0.009260`, and worsens ECE by
+  `0.005395`. This supports uncertainty routing as a direction while rejecting
+  the current hand-threshold gate as a solved low-cost selective policy.
+- `pybullet_uncertainty_gated_recompute_results.ko.md`: Korean companion for
+  the uncertainty-gated recompute probe.
 - `wpu_v2_candidate_safety_frontier_results.md`: candidate-regret safety
   frontier showing that P1 is not solved by threshold search: stricter harmful
   accept limits sharply reduce gap closure.
@@ -598,6 +608,11 @@ Historical or preliminary reports:
   because mean ECE ratio is `1.014879`.
   Temperature+bias calibration reduces the worst `no_catch` ECE failure but
   does not improve all composition mechanisms.
+- A WPU-only uncertainty-gated recompute probe shows that state-native
+  uncertainty routing can improve aggregate accuracy and calibration, but the
+  useful hand-threshold policy is almost full local-dense recompute. The
+  low-cost gate is not calibration-safe, so P5 now targets learned low-cost
+  uncertainty gates rather than another static confidence threshold.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

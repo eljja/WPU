@@ -376,6 +376,14 @@ The current evidence supports a regime hypothesis, not universal dominance.
   separated. Temperature+bias calibration improves
   `no_catch` ECE ratio to `0.960054`, but only improves 1/3 composition
   mechanisms, so calibration remains mechanism-aware rather than solved.
+- A WPU-only uncertainty-gated recompute probe improves aggregate WPU accuracy
+  by `0.071428` and ECE by `-0.016396` by routing low-confidence sparse
+  predictions to WPU local-dense recompute. This is a state-native fallback, not
+  a return to token processing. The caveat is decisive: the useful gate uses
+  dense recompute rate `0.985450`, while a low-cost gate at rate `0.025132`
+  improves accuracy only `0.009260` and worsens ECE by `0.005395`. P5 therefore
+  needs learned low-cost uncertainty gates, not another static confidence
+  threshold.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

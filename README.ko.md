@@ -312,6 +312,14 @@ model = wpu.create_model(
   Temperature+bias calibration은
   `no_catch` ECE ratio를 `0.960054`까지 낮췄지만 composition mechanism 3개 중
   1개만 개선하므로, calibration은 해결된 것이 아니라 mechanism-aware 문제로 남아 있다.
+- WPU-only uncertainty-gated recompute probe는 low-confidence sparse prediction을
+  WPU local-dense recompute로 넘겨 aggregate WPU accuracy를 `0.071428`, ECE를
+  `-0.016396` 개선한다. 이것은 token processing으로 돌아가는 fallback이 아니라
+  state-native fallback이다. 하지만 중요한 caveat가 있다. 유의미한 gate는 dense
+  recompute rate가 `0.985450`으로 거의 full recompute이고, low-cost gate는 rate
+  `0.025132`에서 accuracy를 `0.009260` 올리지만 ECE를 `0.005395` 악화시킨다.
+  따라서 P5는 static confidence threshold가 아니라 학습 가능한 저비용 uncertainty
+  gate가 필요하다.
 
 v1의 핵심 목표는 명확하다.
 

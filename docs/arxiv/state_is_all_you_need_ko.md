@@ -455,6 +455,13 @@ selection, retriever-propagator joint training이다.
   probe는 더 강한 zero-shot positive sub-regime을 보인다. WPU local-dense는 3개
   compound mechanism 모두에서 이기고 mean accuracy delta는 `0.071428`이지만,
   mean ECE ratio는 `1.014879`라서 accuracy와 calibration은 별도 claim으로 남는다.
+  같은 compound-shift family에서 WPU-only uncertainty-gated recompute probe도
+  수행했다. Low-confidence sparse prediction을 WPU local-dense path로 넘기면
+  aggregate accuracy는 `0.071428`, ECE는 `-0.016396` 개선된다. 그러나 dense
+  recompute rate가 `0.985450`으로 거의 full recompute다. Low-cost threshold는
+  recompute rate `0.025132`에서 accuracy를 `0.009260`만 개선하고 ECE를
+  `0.005395` 악화시킨다. 따라서 uncertainty routing은 WPU control surface로
+  유망하지만, static confidence threshold는 아직 저비용 calibrated policy가 아니다.
 - Baseline-complete large-`N` simulator superiority는 아직 지지되지 않는다.
   PyBullet coverage audit는 WPU-only N_bg=512, total `N=517` extension까지
   도달했지만, graph-transformer baseline은 같은 protocol에서 완료되지 않았다.

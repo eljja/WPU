@@ -752,6 +752,14 @@ physical generalization. A separate 7-seed composition-shift stress probe is a
 stronger zero-shot positive sub-regime: WPU local-dense wins all three compound
 mechanisms with mean accuracy delta 0.071428, but mean ECE ratio is 1.014879,
 so accuracy and calibration remain separate claims.
+We also ran a WPU-only uncertainty-gated recompute probe on the same compound
+shift family. Routing low-confidence sparse predictions to the WPU local-dense
+path improves aggregate accuracy by 0.071428 and ECE by -0.016396, but the
+effective dense recompute rate is 0.985450. A low-cost threshold with recompute
+rate 0.025132 improves accuracy by only 0.009260 and worsens ECE by 0.005395.
+This is a useful negative constraint: uncertainty routing is a plausible WPU
+control surface, but static confidence thresholds do not yet provide a
+low-cost calibrated policy.
 
 \section{Discussion}
 

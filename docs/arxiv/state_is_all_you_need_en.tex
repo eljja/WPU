@@ -760,6 +760,14 @@ rate 0.025132 improves accuracy by only 0.009260 and worsens ECE by 0.005395.
 This is a useful negative constraint: uncertainty routing is a plausible WPU
 control surface, but static confidence thresholds do not yet provide a
 low-cost calibrated policy.
+A learned sparse-output benefit gate narrows the constraint further. Using only
+sparse branch probabilities, entropy/margin, and event features, a source-trained
+low-cost gate improves aggregate accuracy by 0.052910 at recompute rate
+0.205027, but worsens ECE by 0.010769. A few-shot mechanism gate improves
+accuracy more strongly, but exceeds the low-cost budget or worsens ECE. Thus the
+next calibration problem is not simply to learn a confidence gate; it is to learn
+mechanism-aware uncertainty that optimizes accuracy, calibration, and recompute
+cost jointly.
 
 \section{Discussion}
 

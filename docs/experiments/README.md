@@ -271,6 +271,15 @@ Use these reports for paper-level claims:
   the current hand-threshold gate as a solved low-cost selective policy.
 - `pybullet_uncertainty_gated_recompute_results.ko.md`: Korean companion for
   the uncertainty-gated recompute probe.
+- `pybullet_learned_uncertainty_gate_results.md`: 7-seed follow-up that trains
+  a sparse-output benefit gate from branch probabilities, entropy/margin, and
+  event features. Source-trained low-cost gating improves aggregate accuracy by
+  `0.052910` at dense recompute rate `0.205027`, but worsens ECE by `0.010769`.
+  Few-shot mechanism gating improves accuracy more strongly, but exceeds the
+  low-cost budget or worsens ECE. This narrows P5: the next gate must be
+  calibration-aware and mechanism-aware, not only sparse-confidence based.
+- `pybullet_learned_uncertainty_gate_results.ko.md`: Korean companion for the
+  learned uncertainty-gate probe.
 - `wpu_v2_candidate_safety_frontier_results.md`: candidate-regret safety
   frontier showing that P1 is not solved by threshold search: stricter harmful
   accept limits sharply reduce gap closure.
@@ -613,6 +622,11 @@ Historical or preliminary reports:
   useful hand-threshold policy is almost full local-dense recompute. The
   low-cost gate is not calibration-safe, so P5 now targets learned low-cost
   uncertainty gates rather than another static confidence threshold.
+- The learned uncertainty-gate follow-up improves low-cost source-gate accuracy
+  but not calibration: source low-cost accuracy changes by `0.052910`, ECE by
+  `0.010769`, and dense recompute rate is `0.205027`. Few-shot gating is more
+  accurate but not low-cost/calibration-safe. The remaining P5 target is a
+  calibration-aware mechanism uncertainty model.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

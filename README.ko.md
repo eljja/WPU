@@ -320,6 +320,11 @@ model = wpu.create_model(
   `0.025132`에서 accuracy를 `0.009260` 올리지만 ECE를 `0.005395` 악화시킨다.
   따라서 P5는 static confidence threshold가 아니라 학습 가능한 저비용 uncertainty
   gate가 필요하다.
+- Learned sparse-output benefit gate는 다음 negative/partial result다. Source-trained
+  low-cost gate는 recompute rate `0.205027`에서 accuracy를 `0.052910` 개선하지만
+  ECE를 `0.010769` 악화시킨다. Few-shot mechanism gate는 accuracy는 더 올리지만
+  low-cost budget을 넘거나 ECE를 악화시킨다. 남은 목표는 confidence-only routing이
+  아니라 calibration-aware mechanism uncertainty다.
 
 v1의 핵심 목표는 명확하다.
 

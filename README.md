@@ -384,6 +384,12 @@ The current evidence supports a regime hypothesis, not universal dominance.
   improves accuracy only `0.009260` and worsens ECE by `0.005395`. P5 therefore
   needs learned low-cost uncertainty gates, not another static confidence
   threshold.
+- A learned sparse-output benefit gate is the next negative/partial result:
+  source-trained low-cost gating improves accuracy by `0.052910` at recompute
+  rate `0.205027`, but worsens ECE by `0.010769`. Few-shot mechanism gating is
+  more accurate but exceeds the low-cost budget or worsens ECE. The remaining
+  target is calibration-aware mechanism uncertainty, not confidence-only
+  routing.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

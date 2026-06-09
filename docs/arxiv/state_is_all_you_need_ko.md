@@ -462,6 +462,13 @@ selection, retriever-propagator joint training이다.
   recompute rate `0.025132`에서 accuracy를 `0.009260`만 개선하고 ECE를
   `0.005395` 악화시킨다. 따라서 uncertainty routing은 WPU control surface로
   유망하지만, static confidence threshold는 아직 저비용 calibrated policy가 아니다.
+  Learned sparse-output benefit gate는 이 경계를 더 좁힌다. Sparse branch
+  probability, entropy/margin, event feature만 사용한 source-trained low-cost gate는
+  recompute rate `0.205027`에서 aggregate accuracy를 `0.052910` 개선하지만 ECE를
+  `0.010769` 악화시킨다. Few-shot mechanism gate는 accuracy를 더 크게 개선하지만
+  low-cost budget을 넘거나 ECE를 악화시킨다. 따라서 다음 calibration 문제는 단순히
+  confidence gate를 학습하는 것이 아니라, accuracy, calibration, recompute cost를
+  함께 최적화하는 mechanism-aware uncertainty를 학습하는 것이다.
 - Baseline-complete large-`N` simulator superiority는 아직 지지되지 않는다.
   PyBullet coverage audit는 WPU-only N_bg=512, total `N=517` extension까지
   도달했지만, graph-transformer baseline은 같은 protocol에서 완료되지 않았다.

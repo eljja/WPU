@@ -337,13 +337,20 @@ Use these reports for paper-level claims:
   learned uncertainty-gate probe.
 - `pybullet_calibration_cost_frontier_results.md`: derived P5 audit that puts
   static threshold gates, learned gates, and mechanism-adaptive policy on common
-  accuracy, ECE, Brier, and cost-proxy axes. It finds `0` non-reference
-  calibration-safe policies under `cost_proxy <= 0.25`; the best low-cost
-  accuracy policy improves accuracy by `0.052910` but worsens ECE by
-  `0.010769`, while the strongest ECE improvement requires cost proxy
-  `1.000000`.
+  accuracy, ECE, Brier, and cost-proxy axes. With the mechanism-selective
+  calibration gate included, it finds `1` non-reference calibration-safe policy
+  under `cost_proxy <= 0.25`: `mechanism_selective_best_safe` improves accuracy
+  by `0.029100`, ECE by `-0.001652`, and Brier by `-0.030758` at cost
+  `0.247355`. This is adapted mechanism-aware evidence, not zero-shot routing.
 - `pybullet_calibration_cost_frontier_results.ko.md`: Korean companion for the
   calibration-cost frontier audit.
+- `pybullet_mechanism_selective_calibration_gate_results.md` and
+  `pybullet_mechanism_selective_calibration_gate_results.ko.md`: derived P5
+  audit that composes mechanism-specific WPU recompute policies from the learned
+  uncertainty-gate CSV. It identifies `4` low-cost, accuracy-safe,
+  calibration-safe non-reference combinations and shows that the best safe
+  policy selectively uses few-shot recompute on `edge_high_force` while keeping
+  sparse routing on the other compound mechanisms.
 - `wpu_v2_candidate_safety_frontier_results.md`: candidate-regret safety
   frontier showing that P1 is not solved by threshold search: stricter harmful
   accept limits sharply reduce gap closure.
@@ -747,8 +754,11 @@ Historical or preliminary reports:
   calibration-aware mechanism uncertainty model.
 - The calibration-cost frontier audit makes that P5 boundary explicit:
   non-reference calibration-safe low-cost policies under `cost_proxy <= 0.25`
-  are currently `0`, and the cheapest calibration-safe non-reference policy has
-  cost proxy `0.867725`.
+  are no longer `0` once mechanism-selective routing is included. The best safe
+  mechanism-selective policy has cost `0.247355`, accuracy delta `0.029100`,
+  ECE delta `-0.001652`, and Brier delta `-0.030758`. This narrows P5: global
+  confidence gates still fail, but mechanism-aware adapted routing exposes a
+  weak positive low-cost calibration-safe sub-regime.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

@@ -794,11 +794,12 @@ next calibration problem is not simply to learn a confidence gate; it is to lear
 mechanism-aware uncertainty that optimizes accuracy, calibration, and recompute
 cost jointly.
 A derived calibration-cost frontier audit makes this boundary explicit across
-static gates, learned gates, and mechanism-aware adaptation: it finds zero
-non-reference calibration-safe policies under cost proxy $\leq 0.25$, while the
-cheapest non-reference calibration-safe policy has cost proxy 0.867725. This
-turns P5 into a falsifiable routing target rather than a solved calibration
-claim.
+static gates, learned gates, mechanism-aware adaptation, and mechanism-selective
+calibration routing. Global gates still fail, but the mechanism-selective audit
+finds one non-reference calibration-safe policy under cost proxy $\leq 0.25$:
+accuracy delta 0.029100, ECE delta -0.001652, Brier delta -0.030758, and cost
+0.247355. This is a weak adapted positive sub-regime, not zero-shot
+calibration-safe routing.
 
 \section{Discussion}
 

@@ -6,15 +6,15 @@ Source CSV: `docs/experiments/pybullet_calibration_cost_frontier.csv`
 
 ## Summary
 
-- Low-cost budget(`cost_proxy <= 0.25`) 안에서 non-reference calibration-safe policy는 0개다.
+- Low-cost budget(`cost_proxy <= 0.25`) 안에서 non-reference calibration-safe policy는 1개다.
 - 가장 정확한 low-cost policy는 `source_learned_p0.12`이며 accuracy delta `0.052910`, ECE delta `0.010769`, cost proxy `0.205027`이다.
 - 가장 큰 ECE 개선은 `mechanism_aware_adaptive_policy`이며 ECE delta `-0.099347`, accuracy delta `0.198412`, cost proxy `1.000000`이다.
-- 최저 비용 non-reference calibration-safe policy는 `wpu_gated_t0.40`이며 cost proxy `0.867725`이다.
-- Pareto-efficient policies: wpu_sparse_uncertainty_probe, wpu_sparse_learned_gate_probe, wpu_gated_t0.34, source_learned_p0.12, source_learned_p0.08, fewshot_learned_p0.12, source_learned_p0.04, fewshot_learned_p0.08, source_learned_p0.02, source_learned_p0.01, source_learned_p0.00, fewshot_learned_p0.04, fewshot_learned_p0.02, fewshot_learned_p0.01, fewshot_learned_p0.00, wpu_gated_t0.40, wpu_gated_t0.45, mechanism_aware_adaptive_policy.
+- 최저 비용 non-reference calibration-safe policy는 `mechanism_selective_best_safe`이며 cost proxy `0.247355`이다.
+- Pareto-efficient policies: wpu_sparse_uncertainty_probe, wpu_sparse_learned_gate_probe, wpu_gated_t0.34, source_learned_p0.12, mechanism_selective_best_safe, source_learned_p0.08, fewshot_learned_p0.12, source_learned_p0.04, fewshot_learned_p0.08, source_learned_p0.02, source_learned_p0.01, source_learned_p0.00, fewshot_learned_p0.04, fewshot_learned_p0.02, fewshot_learned_p0.01, fewshot_learned_p0.00, wpu_gated_t0.40, wpu_gated_t0.45, mechanism_aware_adaptive_policy.
 
 ## Interpretation
 
-현재 증거에서 WPU는 selective state processing으로 계산량을 줄일 수 있지만, low-cost와 calibration-safe를 동시에 만족하는 정책은 아직 확보되지 않았다. 학습된 sparse-output gate는 낮은 recompute rate에서 accuracy를 개선하지만 ECE가 악화되고, calibration-safe 개선은 거의 full dense recompute 또는 mechanism-specific detect-and-adapt 정책에 의존한다. 따라서 P5의 다음 연구 목표는 branch-calibration loss, mechanism uncertainty, shift detector를 결합한 저비용 calibration-aware routing이다.
+현재 증거에서 전역 confidence threshold와 sparse-output benefit gate는 아직 low-cost calibration-safe routing을 해결하지 못한다. 하지만 새 mechanism-selective calibration gate는 낮은 평균 cost에서 accuracy, ECE, Brier를 동시에 개선하는 non-reference policy를 만든다. 따라서 P5는 불가능한 문제가 아니라, mechanism 식별과 calibration-aware policy selection이 필요한 문제로 좁혀졌다. 단, 이 positive 결과는 mechanism-specific adapted setting이며 zero-shot calibration-safe routing은 아직 아니다.
 
 ## Frontier Rows
 
@@ -24,6 +24,7 @@ Source CSV: `docs/experiments/pybullet_calibration_cost_frontier.csv`
 | uncertainty_threshold | wpu_sparse_uncertainty_probe | sparse_reference | 0.000000 | 0.000000 | 0.000000 | 0.000000 | True | True | True |
 | uncertainty_threshold | wpu_gated_t0.34 | zero_shot_threshold_gate | 0.025132 | 0.009260 | 0.005395 | -0.001779 | False | True | True |
 | learned_sparse_output_gate | source_learned_p0.12 | source_learned_gate | 0.205027 | 0.052910 | 0.010769 | -0.033549 | False | True | True |
+| mechanism_selective_calibration_gate | mechanism_selective_best_safe | mechanism_selective_detect_and_adapt | 0.247355 | 0.029100 | -0.001652 | -0.030758 | True | True | True |
 | learned_sparse_output_gate | source_learned_p0.08 | source_learned_gate | 0.280423 | 0.064815 | 0.020740 | -0.043976 | False | False | True |
 | learned_sparse_output_gate | fewshot_learned_p0.12 | fewshot_learned_gate | 0.292328 | 0.089947 | 0.041513 | -0.050933 | False | False | True |
 | learned_sparse_output_gate | source_learned_p0.04 | source_learned_gate | 0.361111 | 0.071429 | 0.023684 | -0.049750 | False | False | True |

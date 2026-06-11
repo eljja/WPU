@@ -492,10 +492,12 @@ scoring이다.
   confidence gate를 학습하는 것이 아니라, accuracy, calibration, recompute cost를
   함께 최적화하는 mechanism-aware uncertainty를 학습하는 것이다.
   Calibration-cost frontier audit은 static gate, learned gate,
-  mechanism-aware adaptation을 같은 축으로 비교해 이 경계를 명확히 한다.
-  `cost_proxy <= 0.25`에서 non-reference calibration-safe policy는 `0`개이고,
-  최저 비용 non-reference calibration-safe policy의 cost proxy는 `0.867725`이다.
-  따라서 P5는 해결된 calibration claim이 아니라 반증 가능한 routing target이다.
+  mechanism-aware adaptation, mechanism-selective calibration routing을 같은 축으로
+  비교해 이 경계를 명확히 한다. Global gate는 여전히 실패하지만,
+  mechanism-selective audit은 `cost_proxy <= 0.25`에서 non-reference
+  calibration-safe policy `1`개를 찾는다. Accuracy delta는 `0.029100`, ECE
+  delta는 `-0.001652`, Brier delta는 `-0.030758`, cost는 `0.247355`다. 이는
+  약한 adapted positive sub-regime이지 zero-shot calibration-safe routing은 아니다.
 - Baseline-complete large-`N` simulator superiority는 아직 지지되지 않는다.
   PyBullet coverage audit는 N_bg=256, total `N=261`에서 WPU/graph/token baseline이
   모두 완료되는 matched run을 포함한다. Medium-training run은 evidence를 개선한다.

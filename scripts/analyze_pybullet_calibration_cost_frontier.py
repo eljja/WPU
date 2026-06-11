@@ -22,6 +22,7 @@ def main() -> None:
     rows.extend(_uncertainty_gated_rows(ROOT / "pybullet_uncertainty_gated_recompute.csv"))
     rows.extend(_learned_gate_rows(ROOT / "pybullet_learned_uncertainty_gate.csv"))
     rows.extend(_adaptive_policy_rows(ROOT / "pybullet_mechanism_adaptive_policy_summary.csv"))
+    rows.extend(_mechanism_selective_gate_rows(ROOT / "pybullet_mechanism_selective_calibration_gate.csv"))
 
     for row in rows:
         row["calibration_safe"] = _is_calibration_safe(row)
@@ -146,6 +147,36 @@ def _adaptive_policy_rows(path: Path) -> list[dict[str, object]]:
     ]
 
 
+def _mechanism_selective_gate_rows(path: Path) -> list[dict[str, object]]:
+    if not path.exists():
+        return []
+    summary = next((row for row in _read_rows(path) if row["row_type"] == "summary"), None)
+    if summary is None or not summary.get("best_safe_policy"):
+        return []
+    baseline_accuracy = float(summary["branch_accuracy"])
+    baseline_ece = float(summary["ece"])
+    baseline_brier = float(summary["brier"])
+    return [
+        {
+            "family": "mechanism_selective_calibration_gate",
+            "policy": "mechanism_selective_best_safe",
+            "protocol": "mechanism_selective_detect_and_adapt",
+            "cost_proxy": float(summary["best_safe_cost"]),
+            "dense_recompute_rate": float(summary["best_safe_cost"]),
+            "adaptation_required": True,
+            "branch_accuracy": baseline_accuracy + float(summary["best_safe_accuracy_delta"]),
+            "ece": baseline_ece + float(summary["best_safe_ece_delta"]),
+            "brier": baseline_brier + float(summary["best_safe_brier_delta"]),
+            "accuracy_delta": float(summary["best_safe_accuracy_delta"]),
+            "margin_delta": "",
+            "ece_delta": float(summary["best_safe_ece_delta"]),
+            "brier_delta": float(summary["best_safe_brier_delta"]),
+            "wpu_win_rate": "",
+            "source": str(path),
+        }
+    ]
+
+
 def _baseline_row(family: str, policy: str, row: dict[str, str], source: Path) -> dict[str, object]:
     return {
         "family": family,
@@ -263,12 +294,12 @@ def _render_report(rows: list[dict[str, object]], *, korean: bool) -> str:
             )
         interpretation = (
             "\n## Interpretation\n\n"
-            "현재 증거에서 WPU는 selective state processing으로 계산량을 줄일 수 있지만, "
-            "low-cost와 calibration-safe를 동시에 만족하는 정책은 아직 확보되지 않았다. "
-            "학습된 sparse-output gate는 낮은 recompute rate에서 accuracy를 개선하지만 ECE가 "
-            "악화되고, calibration-safe 개선은 거의 full dense recompute 또는 mechanism-specific "
-            "detect-and-adapt 정책에 의존한다. 따라서 P5의 다음 연구 목표는 branch-calibration "
-            "loss, mechanism uncertainty, shift detector를 결합한 저비용 calibration-aware routing이다.\n"
+            "현재 증거에서 전역 confidence threshold와 sparse-output benefit gate는 아직 "
+            "low-cost calibration-safe routing을 해결하지 못한다. 하지만 새 mechanism-selective "
+            "calibration gate는 낮은 평균 cost에서 accuracy, ECE, Brier를 동시에 개선하는 "
+            "non-reference policy를 만든다. 따라서 P5는 불가능한 문제가 아니라, mechanism 식별과 "
+            "calibration-aware policy selection이 필요한 문제로 좁혀졌다. 단, 이 positive 결과는 "
+            "mechanism-specific adapted setting이며 zero-shot calibration-safe routing은 아직 아니다.\n"
         )
     else:
         title = "# PyBullet Calibration-Cost Frontier Audit\n"
@@ -297,12 +328,12 @@ def _render_report(rows: list[dict[str, object]], *, korean: bool) -> str:
             )
         interpretation = (
             "\n## Interpretation\n\n"
-            "The current evidence supports WPU as a way to reduce computation through selective state "
-            "processing, but it does not yet show a low-cost calibration-safe router. Learned sparse-output "
-            "gates improve accuracy at low recompute rate while worsening ECE, whereas calibration-safe "
-            "improvements mostly require near-full dense recompute or mechanism-specific detect-and-adapt "
-            "policies. P5 therefore remains a concrete research target: train low-cost calibration-aware "
-            "routing with branch-calibration losses, mechanism uncertainty, and shift detection.\n"
+            "Global confidence thresholds and sparse-output benefit gates still do not solve low-cost "
+            "calibration-safe routing. The new mechanism-selective calibration gate, however, finds a "
+            "non-reference policy that improves accuracy, ECE, and Brier at low average cost. P5 is "
+            "therefore narrowed from an impossible-looking tradeoff to a mechanism-identification and "
+            "calibration-aware policy-selection problem. The caveat remains decisive: this positive result "
+            "is mechanism-specific and adapted, not zero-shot calibration-safe routing.\n"
         )
 
     table_header = (

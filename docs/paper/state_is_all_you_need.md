@@ -367,11 +367,12 @@ Not supported:
   `0.071428`, but mean ECE ratio is `1.014879`, so accuracy and calibration
   remain separate claims.
   The calibration-cost frontier audit makes this boundary explicit across
-  static gates, learned gates, and mechanism-aware adaptation: there are `0`
-  non-reference calibration-safe policies under `cost_proxy <= 0.25`, while
-  the cheapest non-reference calibration-safe policy costs `0.867725`. The
-  current result is therefore a precise open problem for WPU routing, not a
-  solved calibration claim.
+  static gates, learned gates, mechanism-aware adaptation, and
+  mechanism-selective calibration routing. Global gates still fail, but the
+  mechanism-selective audit finds `1` non-reference calibration-safe policy
+  under `cost_proxy <= 0.25`: accuracy delta `0.029100`, ECE delta
+  `-0.001652`, Brier delta `-0.030758`, and cost `0.247355`. This is a weak
+  adapted positive sub-regime, not zero-shot calibration-safe routing.
 - Baseline-complete large-`N` simulator superiority. The PyBullet coverage
   audit now includes matched N_bg=256, total `N=261` runs where WPU, graph, and
   token baselines all complete. A medium-training run improves the evidence:

@@ -62,6 +62,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
     perturb_path = ROOT / "wpu_v2_candidate_regret_gate_perturbed_summary.csv"
     safety_path = ROOT / "wpu_v2_candidate_safety_gate_summary.csv"
     crossfit_path = ROOT / "wpu_v2_candidate_regret_crossfit_summary.csv"
+    invariant_path = ROOT / "wpu_v2_candidate_invariant_gate_summary.csv"
     regret_best = None
     regret_safe_best = None
     regret_unconstrained_best = None
@@ -215,8 +216,48 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
                 else "."
             )
         )
-    best = max(value for value in [aggregate_best, noharm_best, regret_best, safety_best, crossfit_best] if value is not None)
-    source = regret_path if regret_best == best else path
+    invariant_best = None
+    invariant_note = ""
+    if invariant_path.exists():
+        invariant_rows = _read_rows(invariant_path)
+        invariant_unconstrained = max(invariant_rows, key=lambda row: float(row["gap_closure_fraction"]))
+        invariant_safe_rows = [
+            row for row in invariant_rows if float(row.get("mean_harmful_accept_rate", 1.0)) <= 0.25
+        ]
+        invariant_selected_rows = [
+            row for row in invariant_rows if row["policy"] == "train_selected_invariant_gate"
+        ]
+        invariant_safe_best = (
+            max(float(row["gap_closure_fraction"]) for row in invariant_safe_rows)
+            if invariant_safe_rows
+            else None
+        )
+        invariant_selected_best = (
+            max(float(row["gap_closure_fraction"]) for row in invariant_selected_rows)
+            if invariant_selected_rows
+            else None
+        )
+        invariant_best = invariant_selected_best or float(invariant_unconstrained["gap_closure_fraction"])
+        invariant_note = (
+            f" Descriptor standardization plus group-DRO no-harm training remains insufficient: "
+            f"best closure is {float(invariant_unconstrained['gap_closure_fraction']):.6f}"
+            + (
+                f", safe best is {invariant_safe_best:.6f}"
+                if invariant_safe_best is not None
+                else ", with no harmful-accept <= 0.25 deployment"
+            )
+            + (
+                f", and train-selected closure is {invariant_selected_best:.6f}."
+                if invariant_selected_best is not None
+                else "."
+            )
+        )
+    best = max(
+        value
+        for value in [aggregate_best, noharm_best, regret_best, safety_best, crossfit_best, invariant_best]
+        if value is not None
+    )
+    source = invariant_path if invariant_best == best else regret_path if regret_best == best else path
     return _row(
         1,
         "Candidate-oracle gap",
@@ -225,7 +266,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         0.5,
         "gap_closure_fraction",
         source,
-        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}{crossfit_note}",
+        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}{crossfit_note}{invariant_note}",
         "Move beyond post-hoc gates: train transfer-stable candidate scoring jointly with retrieval/propagation and calibrated no-harm objectives.",
     )
 

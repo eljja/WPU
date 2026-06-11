@@ -119,10 +119,11 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
 
 def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: bool) -> str:
     is_safety_gate = "candidate_safety_gate" in source.name
+    is_invariant_gate = "candidate_invariant_gate" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
-    train_selected_rows = [row for row in rows if row["policy"] == "train_selected_candidate_regret_gate"]
+    train_selected_rows = [row for row in rows if str(row["policy"]).startswith("train_selected_")]
     train_selected_best = (
         max(train_selected_rows, key=lambda row: float(row["gap_closure_fraction"]))
         if train_selected_rows
@@ -134,18 +135,30 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         best_by_k.append(max(group, key=lambda row: float(row["gap_closure_fraction"])))
     table_rows = _top_rows(rows, best_by_k)
     if korean:
-        title = "# Candidate Safety/Utility Gate 결과" if is_safety_gate else "# Candidate Regret Gate 결과"
-        intro = (
+        title = (
+            "# Candidate Invariant Gate 결과"
+            if is_invariant_gate
+            else "# Candidate Safety/Utility Gate 결과"
+            if is_safety_gate
+            else "# Candidate Regret Gate 결과"
+        )
+        if is_invariant_gate:
+            intro = (
+                "이 문서는 candidate descriptor를 train split에서 표준화하고, "
+                "train seed별 worst-group loss와 no-harm objective를 함께 줄이는 P1 probe를 요약한다."
+            )
+        else:
+            intro = (
             "이 문서는 candidate별 safe probability와 utility를 별도로 예측하고, "
             "예측 utility와 안전 확률이 충분할 때만 baseline 대신 선택하는 P1 probe를 요약한다."
             if is_safety_gate
             else "이 문서는 candidate별 `candidate_loss - learned_loss`를 직접 예측하고, "
             "예측 regret이 충분히 낮을 때만 baseline 대신 선택하는 P1 probe를 요약한다."
-        )
+            )
         conclusion = (
             f"최고 closure는 `{float(best['gap_closure_fraction']):.6f}` "
             f"(`K={best['causal_k']}`, `{best['policy']}`)다. P1 목표 `0.5`를 기준으로 "
-            f"{'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'}가 candidate-oracle gap을 충분히 닫는지와 "
+            f"{'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'}가 candidate-oracle gap을 충분히 닫는지와 "
             "harmful accept를 억제하는지를 동시에 본다."
             + (
                 f" Harmful accept <= `0.25` 조건의 conservative best는 "
@@ -168,8 +181,21 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             "좋은 정책은 closure만 높으면 부족하고, harmful accept도 낮아야 한다.",
         ]
     else:
-        title = "# Candidate Safety/Utility Gate Results" if is_safety_gate else "# Candidate Regret Gate Results"
-        intro = (
+        title = (
+            "# Candidate Invariant Gate Results"
+            if is_invariant_gate
+            else "# Candidate Safety/Utility Gate Results"
+            if is_safety_gate
+            else "# Candidate Regret Gate Results"
+        )
+        if is_invariant_gate:
+            intro = (
+                "This report summarizes a P1 probe that standardizes candidate descriptors "
+                "on the training split and jointly minimizes no-harm utility loss, "
+                "worst-source-seed loss, and cross-source variance."
+            )
+        else:
+            intro = (
             "This report summarizes a P1 probe that predicts safe probability "
             "and utility separately, then deploys a candidate only when the "
             "predicted utility and safety probability are sufficiently favorable."
@@ -177,11 +203,11 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             else "This report summarizes a P1 probe that directly predicts "
             "`candidate_loss - learned_loss` and deploys a candidate only when "
             "predicted regret is sufficiently favorable."
-        )
+            )
         conclusion = (
             f"The best closure is `{float(best['gap_closure_fraction']):.6f}` "
             f"(`K={best['causal_k']}`, `{best['policy']}`). P1 evaluates whether "
-            f"{'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'} closes the candidate-oracle gap while "
+            f"{'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'} closes the candidate-oracle gap while "
             "controlling harmful accepts."
             + (
                 f" The conservative best under harmful-accept <= `0.25` is "

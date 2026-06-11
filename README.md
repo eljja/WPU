@@ -431,8 +431,11 @@ near the safety limit. A separate safety/utility-head gate is a negative result:
 best closure is only `0.147450`, safe best is `0.090719`, and train-selected
 closure is `0.144863`. A cross-fit ensemble regret gate is also negative:
 best closure is `0.287268`, safe best is `0.279738`, and cross-fit selected
-closure is `0.270989`. P1 therefore needs better candidate scoring rather than
-another post-hoc gate.
+closure is `0.270989`. Descriptor standardization plus group-DRO no-harm
+training is also insufficient: best closure is `0.110889`, safe best is
+`0.110889`, and train-selected closure is `0.093863`. P1 therefore needs
+better candidate scoring learned with retrieval and propagation, not another
+post-hoc gate.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than

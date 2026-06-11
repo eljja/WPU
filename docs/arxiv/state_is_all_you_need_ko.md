@@ -407,9 +407,11 @@ train seed evidence로 고른다. Strict no-harm seed-stable gate는 K=32에서 
 set evaluator, score-margin confidence gate, strict no-harm seed-stable gate,
 cross-fit ensemble regret gate는 충분하지 않았다. 최신 cross-fit probe에서도 최고
 closure는 `0.287268`, cross-fit selected closure는 `0.270989`로 direct candidate-regret
-gate보다 낮다. 따라서 v2의 다음 핵심 문제는 더 많은 candidate 생성이나 post-hoc
-deployment gate가 아니라 invariant candidate descriptor, risk-aware mechanism
-selection, retriever-propagator joint training이다.
+gate보다 낮다. Descriptor standardization과 group-DRO no-harm training도 detached
+selector로는 충분하지 않았다. Best closure는 `0.110889`, train-selected closure는
+`0.093863`에 그친다. 따라서 v2의 다음 핵심 문제는 더 많은 candidate 생성이나
+post-hoc deployment gate가 아니라 retrieval/propagation과 함께 학습되는 candidate
+scoring이다.
 
 ## 11. 현재 주장 경계
 

@@ -725,10 +725,11 @@ gates, strict no-harm seed-stable gates, and cross-fit ensemble regret gates do
 not solve the cross-seed selection problem, and the candidate oracle remains
 substantially better. In the latest cross-fit probe, best closure falls to
 0.287268 and cross-fit selected closure to 0.270989, below direct
-candidate-regret gating. The unresolved v2 problem is therefore invariant
-candidate descriptors, risk-aware mechanism selection, and joint
-retriever-propagator training, not merely the generation of more candidate sets
-or post-hoc deployment gates.
+candidate-regret gating. Descriptor standardization plus group-DRO no-harm
+training is also insufficient as a detached selector: best closure is 0.110889
+and train-selected closure is 0.093863. The unresolved v2 problem is therefore
+candidate scoring learned jointly with retrieval and propagation, not merely
+the generation of more candidate sets or post-hoc deployment gates.
 
 A separate PyBullet branch-prior audit adds an important boundary to the shift
 claim. In the \texttt{catch\_heavy} mechanism, the majority branch prior reaches

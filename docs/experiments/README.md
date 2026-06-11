@@ -397,6 +397,12 @@ Use these reports for paper-level claims:
   gate. This is a negative P1 result: best closure is `0.147450`, safe best is
   `0.090719`, and train-selected closure is `0.144863`, below the direct
   candidate-regret gate.
+- `wpu_v2_candidate_invariant_gate_results.md` and
+  `wpu_v2_candidate_invariant_gate_results.ko.md`: descriptor-standardized
+  group-DRO/no-harm candidate gate. This is a negative standalone P1 fix:
+  best closure and safe best are both `0.110889`, and train-selected closure is
+  `0.093863`, so invariant candidate scoring must be learned jointly with
+  retrieval/propagation rather than as another post-hoc gate.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -563,6 +569,10 @@ Historical or preliminary reports:
   cross-fit selected closure is `0.270989`, so the bottleneck is not only
   threshold selection; candidate scoring itself must become more transfer
   stable.
+- Descriptor-standardized group-DRO/no-harm gating is weaker than direct
+  candidate-regret gating as a standalone fix. It reaches only `0.110889`
+  closure, so the next P1 step is joint candidate scoring with retrieval and
+  propagation, not another detached selector.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

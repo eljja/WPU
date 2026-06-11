@@ -370,6 +370,10 @@ joint training이다. 별도 safety/utility-head gate는 negative result다. Bes
 P1에는 safety head만이 아니라 더 강한 candidate scoring signal이 필요하다. Cross-fit
 ensemble regret gate도 negative result다. 최고 closure는 `0.287268`, safe best는
 `0.279738`, cross-fit selected closure는 `0.270989`로 direct gate보다 낮다.
+Descriptor standardization과 group-DRO no-harm training도 단독 해결책이 아니다.
+Best closure와 safe best는 모두 `0.110889`, train-selected closure는 `0.093863`에
+그친다. 따라서 P1은 또 다른 post-hoc gate가 아니라 retrieval/propagation과 함께
+학습되는 candidate scoring을 필요로 한다.
 
 ## 논문 및 문서
 

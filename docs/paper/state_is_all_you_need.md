@@ -319,8 +319,10 @@ Not supported:
 - Fixed `rho` thresholds as a final routing policy.
 - Closed oracle gap for cross-seed candidate scoring; current risk-adjusted
   mechanism selection is positive but still far from the candidate oracle.
-  Cross-fit ensemble regret gating also fails to improve the gap, so the next
-  issue is transfer-stable candidate scoring rather than another deployment
+  Cross-fit ensemble regret gating also fails to improve the gap, and
+  descriptor-standardized group-DRO/no-harm gating is weaker than direct
+  candidate-regret gating. The next issue is transfer-stable candidate scoring
+  learned with retrieval and propagation rather than another detached deployment
   threshold.
 - Robust branch-prior adaptation under mechanism shift. The PyBullet
   branch-prior audit shows that `catch_heavy` is prior-dominated: majority

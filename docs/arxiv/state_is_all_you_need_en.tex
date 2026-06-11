@@ -856,11 +856,13 @@ integrity 0.958735 with zero rollback and zero dense escalation, and it reduces
 the corrected-object fraction to 0.027461. However, the correction trigger still
 fires on 0.784166 of updates. This is evidence for a bounded memory-safety
 layer, not evidence that raw sparse dynamics are already stable.
-A separate PyBullet coverage audit reaches a WPU-only large-background
-extension at \(N_{\mathrm{bg}}=512\), total \(N=517\), but the graph-transformer
-baseline did not complete under the attempted protocol. We therefore treat this
-as systems feasibility evidence and a benchmark-design warning, not as
-matched-baseline accuracy evidence.
+A separate PyBullet coverage audit includes a low-training matched screen at
+\(N_{\mathrm{bg}}=256\), total \(N=261\), where WPU, graph, and token baselines
+all complete. This is useful feasibility evidence, but the training budget is
+too small for a strong accuracy-superiority claim. The WPU-only
+\(N_{\mathrm{bg}}=512\), total \(N=517\) extension remains systems feasibility
+evidence because the graph-transformer baseline did not complete under the
+attempted protocol.
 
 These limitations change the paper's scientific posture. The current claim is
 not that WPU already surpasses Transformers, GNN simulators, Dreamer-style

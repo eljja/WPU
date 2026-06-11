@@ -346,10 +346,11 @@ Not supported:
   `0.071428`, but mean ECE ratio is `1.014879`, so accuracy and calibration
   remain separate claims.
 - Baseline-complete large-`N` simulator superiority. The PyBullet coverage
-  audit now reaches WPU-only N_bg=512, total `N=517`, but the graph-transformer
-  baseline did not complete under the attempted protocol. This is systems
-  feasibility evidence and a benchmark-design warning, not an accuracy
-  superiority result.
+  audit now includes a low-training matched screen at N_bg=256, total `N=261`,
+  where WPU, graph, and token baselines all complete, but the setting is too
+  small to support strong accuracy superiority. The WPU-only N_bg=512, total
+  `N=517` extension remains systems feasibility evidence because the
+  graph-transformer baseline did not complete under the attempted protocol.
 
 ## Application Boundary
 

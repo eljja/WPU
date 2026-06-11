@@ -153,6 +153,12 @@ python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws
 python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 0 128 --seeds 11 13 17 19 23 29 31 --steps 20 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --runtime-repeats 3 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_7seed.csv
 ```
 
+저훈련 N_bg=256 matched screen은 다음 명령으로 재현할 수 있다.
+
+```bash
+python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 256 --seeds 11 13 17 19 23 --steps 2 --sim-steps 120 --samples 12 --batch-size 4 --hidden-dim 32 --num-heads 4 --working-set-size 12 --runtime-repeats 1 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_n256_baseline_screen.csv
+```
+
 Large-background WPU-only PyBullet extension은 systems feasibility run이지
 matched-baseline accuracy comparison이 아니다. Dense graph baseline은 attempted
 protocol에서 완료되지 않았으므로 이 CSV에서 baseline accuracy를 추론하면 안 된다.

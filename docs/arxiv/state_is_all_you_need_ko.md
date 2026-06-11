@@ -472,10 +472,12 @@ scoring이다.
   confidence gate를 학습하는 것이 아니라, accuracy, calibration, recompute cost를
   함께 최적화하는 mechanism-aware uncertainty를 학습하는 것이다.
 - Baseline-complete large-`N` simulator superiority는 아직 지지되지 않는다.
-  PyBullet coverage audit는 WPU-only N_bg=512, total `N=517` extension까지
-  도달했지만, graph-transformer baseline은 같은 protocol에서 완료되지 않았다.
-  따라서 이는 systems feasibility evidence와 benchmark-design warning이지
-  matched-baseline accuracy evidence가 아니다.
+  PyBullet coverage audit는 저훈련 matched screen으로 N_bg=256, total `N=261`에서
+  WPU/graph/token baseline을 모두 완료했지만, 이 설정은 강한 accuracy superiority를
+  지지하기에는 작다. WPU-only N_bg=512, total `N=517` extension은
+  graph-transformer baseline이 같은 protocol에서 완료되지 않았으므로 systems
+  feasibility evidence와 benchmark-design warning이지 matched-baseline accuracy
+  evidence가 아니다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

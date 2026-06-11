@@ -5,6 +5,7 @@
 Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout.csv`
 - `docs/experiments/pybullet_cup_benchmark_7seed.csv`
+- `docs/experiments/pybullet_cup_benchmark_n256_baseline_screen.csv`
 - `docs/experiments/pybullet_cup_benchmark_n512.csv`
 - `docs/experiments/pybullet_objectification_quality.csv`
 - `docs/experiments/pybullet_shift_generalization.csv`
@@ -14,6 +15,7 @@ Source CSVs:
 | 축 | Seeds | Models | Mechanisms | N_bg max | N max | Horizon max | Corruptions | Baseline complete |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
 | cup_7seed_baseline_complete | 7 | 4 | 1 | 128 | 133 | 1 | 1 | True |
+| cup_n256_baseline_screen | 5 | 4 | 1 | 256 | 261 | 1 | 1 | True |
 | cup_n512_wpu_only_extension | 7 | 2 | 1 | 512 | 517 | 1 | 1 | False |
 | mechanism_shift_generalization | 7 | 4 | 4 | 32 | 37 | 1 | 1 | True |
 | closed_loop_rollout | 2 | 3 | 1 | 32 | 37 | 25 | 1 | True |
@@ -24,12 +26,14 @@ Source CSVs:
 ## 해석
 
 - 현재 PyBullet evidence는 cup benchmark, mechanism shift, closed-loop rollout, objectification corruption, CPU/CUDA systems profile까지 포함한다.
+- `cup_n256_baseline_screen`은 N_bg=256, total N=261에서 WPU, graph, token baseline을 모두 완료한 matched large-N screen이지만, 저훈련 설정이므로 강한 accuracy superiority claim에는 쓰지 않는다.
 - `cup_n512_wpu_only_extension`은 N_bg=512, total N=517까지 WPU가 실행된다는 evidence지만, dense graph baseline이 같은 protocol에서 완료되지 않았으므로 accuracy superiority evidence가 아니다.
 - P3의 다음 병목은 단일 PyBullet cup family를 넘어서는 mechanism 다양성, baseline-complete large-N comparison, 그리고 perception/state adapter를 포함한 end-to-end objectification이다.
 
 ## 행별 메모
 
 - `cup_7seed_baseline_complete`: 7-seed cup benchmark with WPU, graph, and token baselines; accuracy claims remain limited to this cup-task protocol.
+- `cup_n256_baseline_screen`: Low-training 5-seed N_bg=256 screen with WPU, graph, and token baselines; useful for matched large-N feasibility, not for strong accuracy-superiority claims.
 - `cup_n512_wpu_only_extension`: Large-background WPU-only extension. The graph-transformer baseline did not finish under the attempted 20-minute run, so this is systems feasibility evidence, not matched baseline superiority evidence.
 - `mechanism_shift_generalization`: Nominal plus 3 shifted mechanism families: catch_heavy, edge_shift, high_force.
 - `closed_loop_rollout`: Multi-step delta-overlay rollout diagnostic; finite-corrected safety is tracked in the separate state-integrity audit.

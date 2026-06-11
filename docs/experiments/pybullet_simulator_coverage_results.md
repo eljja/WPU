@@ -5,6 +5,7 @@ This audit separates simulator grounding breadth from superiority claims. A row 
 Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout.csv`
 - `docs/experiments/pybullet_cup_benchmark_7seed.csv`
+- `docs/experiments/pybullet_cup_benchmark_n256_baseline_screen.csv`
 - `docs/experiments/pybullet_cup_benchmark_n512.csv`
 - `docs/experiments/pybullet_objectification_quality.csv`
 - `docs/experiments/pybullet_shift_generalization.csv`
@@ -14,6 +15,7 @@ Source CSVs:
 | Axis | Seeds | Models | Mechanisms | N_bg max | N max | Horizon max | Corruptions | Baseline complete |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
 | cup_7seed_baseline_complete | 7 | 4 | 1 | 128 | 133 | 1 | 1 | True |
+| cup_n256_baseline_screen | 5 | 4 | 1 | 256 | 261 | 1 | 1 | True |
 | cup_n512_wpu_only_extension | 7 | 2 | 1 | 512 | 517 | 1 | 1 | False |
 | mechanism_shift_generalization | 7 | 4 | 4 | 32 | 37 | 1 | 1 | True |
 | closed_loop_rollout | 2 | 3 | 1 | 32 | 37 | 25 | 1 | True |
@@ -24,12 +26,14 @@ Source CSVs:
 ## Interpretation
 
 - Current PyBullet evidence covers cup prediction, mechanism shift, closed-loop rollout, objectification corruption, and CPU/CUDA systems profiling.
+- `cup_n256_baseline_screen` completes WPU, graph, and token baselines at N_bg=256 and total N=261, but it is a low-training screen and should not be used as a strong accuracy-superiority claim.
 - `cup_n512_wpu_only_extension` shows WPU execution at N_bg=512 and total N=517, but it is not accuracy-superiority evidence because the dense graph baseline did not complete under the same protocol.
 - The next P3 bottleneck is not another small cup run; it is mechanism diversity, baseline-complete large-N comparison, and end-to-end objectification through a perception/state adapter.
 
 ## Row Notes
 
 - `cup_7seed_baseline_complete`: 7-seed cup benchmark with WPU, graph, and token baselines; accuracy claims remain limited to this cup-task protocol.
+- `cup_n256_baseline_screen`: Low-training 5-seed N_bg=256 screen with WPU, graph, and token baselines; useful for matched large-N feasibility, not for strong accuracy-superiority claims.
 - `cup_n512_wpu_only_extension`: Large-background WPU-only extension. The graph-transformer baseline did not finish under the attempted 20-minute run, so this is systems feasibility evidence, not matched baseline superiority evidence.
 - `mechanism_shift_generalization`: Nominal plus 3 shifted mechanism families: catch_heavy, edge_shift, high_force.
 - `closed_loop_rollout`: Multi-step delta-overlay rollout diagnostic; finite-corrected safety is tracked in the separate state-integrity audit.

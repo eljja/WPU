@@ -293,6 +293,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
   consistency, and the benchmark shows relation-drop driving event-frontier
   recall to `0.585417` while position noise reduces semantic consistency to
   `0.675541`.
+- A PyBullet objectification-loss coupling audit now joins quality components
+  to downstream degradation. The strongest MSE failure is WPU sparse under
+  heavy relation drop (`+0.087356` MSE), and the strongest MSE predictor is
+  selected-K deficit (`|r|=0.481851`). Branch-accuracy movement remains small,
+  so P7 is improved but still needs closed-loop or multi-horizon corruption.
 - A parameter-matched PyBullet pilot shows WPU sparse preserving accuracy from
   background N=0 to N=128 at roughly 50k parameters, while full-state baselines
   drop in this short run. Serialized-token remains faster at this scale, so the

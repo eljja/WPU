@@ -1,0 +1,36 @@
+row_type,model,corruption,predictor,sample_count,accuracy_drop,mse_increase,objectification_score_drop,frontier_causal_recall_drop,selected_k_drop,pearson_accuracy_drop,pearson_mse_increase,abs_pearson_accuracy_drop,abs_pearson_mse_increase,interpretation
+corruption_summary,graph-transformer,clean,,2,0.0,0.0,0.0,0.0,0.0,,,,,reference condition
+corruption_summary,graph-transformer,combined,,2,0.0,0.00287,0.104456,0.248611,0.2875,,,,,"combined corruption mixes topology, confidence, geometry, and identity failures"
+corruption_summary,graph-transformer,drop_relations_heavy,,2,0.0,-0.000929,0.003424,0.397917,0.0,,,,,relation corruption should primarily reduce frontier recall and selected K
+corruption_summary,graph-transformer,drop_relations_light,,2,0.0,-0.000414,0.001346,0.152084,0.0,,,,,relation corruption should primarily reduce frontier recall and selected K
+corruption_summary,graph-transformer,identity_swap,,2,0.0,0.000135,0.0,0.0,0.0,,,,,semantic identity corruption should require role/history checks
+corruption_summary,graph-transformer,low_confidence,,2,0.013889,0.009951,0.154911,0.0,0.0,,,,,confidence corruption should change contract score without changing topology
+corruption_summary,graph-transformer,position_noise,,2,0.0,0.000138,0.0,0.0,0.0,,,,,position corruption should affect geometry-sensitive predictions
+corruption_summary,wpu-cws-indexed-local-dense,clean,,2,0.0,0.0,0.0,0.0,0.0,,,,,reference condition
+corruption_summary,wpu-cws-indexed-local-dense,combined,,2,0.027778,-0.011876,0.104456,0.248611,1.1,,,,,"combined corruption mixes topology, confidence, geometry, and identity failures"
+corruption_summary,wpu-cws-indexed-local-dense,drop_relations_heavy,,2,0.027778,0.027078,0.003424,0.397917,1.7625,,,,,relation corruption should primarily reduce frontier recall and selected K
+corruption_summary,wpu-cws-indexed-local-dense,drop_relations_light,,2,0.0,-0.025027,0.001346,0.152084,0.6875,,,,,relation corruption should primarily reduce frontier recall and selected K
+corruption_summary,wpu-cws-indexed-local-dense,identity_swap,,2,0.0,0.0,0.0,0.0,0.0,,,,,semantic identity corruption should require role/history checks
+corruption_summary,wpu-cws-indexed-local-dense,low_confidence,,2,0.027778,0.001755,0.154911,0.0,0.0,,,,,confidence corruption should change contract score without changing topology
+corruption_summary,wpu-cws-indexed-local-dense,position_noise,,2,0.0,-5.1e-05,0.0,0.0,0.0,,,,,position corruption should affect geometry-sensitive predictions
+corruption_summary,wpu-cws-indexed-sparse,clean,,2,0.0,0.0,0.0,0.0,0.0,,,,,reference condition
+corruption_summary,wpu-cws-indexed-sparse,combined,,2,-0.013889,0.026208,0.104456,0.248611,1.1,,,,,"combined corruption mixes topology, confidence, geometry, and identity failures"
+corruption_summary,wpu-cws-indexed-sparse,drop_relations_heavy,,2,0.0,0.087356,0.003424,0.397917,1.7625,,,,,relation corruption should primarily reduce frontier recall and selected K
+corruption_summary,wpu-cws-indexed-sparse,drop_relations_light,,2,0.0,0.008038,0.001346,0.152084,0.6875,,,,,relation corruption should primarily reduce frontier recall and selected K
+corruption_summary,wpu-cws-indexed-sparse,identity_swap,,2,0.0,0.0,0.0,0.0,0.0,,,,,semantic identity corruption should require role/history checks
+corruption_summary,wpu-cws-indexed-sparse,low_confidence,,2,0.027778,-0.001589,0.154911,0.0,0.0,,,,,confidence corruption should change contract score without changing topology
+corruption_summary,wpu-cws-indexed-sparse,position_noise,,2,-0.013889,0.000109,0.0,0.0,0.0,,,,,position corruption should affect geometry-sensitive predictions
+predictor_correlation,all,non_clean,selected_k_mean,36,,,,,,0.119908,0.481851,0.119908,0.481851,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,quality_frontier_recall,30,,,,,,0.033095,0.3921,0.033095,0.3921,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,quality_frontier_completeness_report,30,,,,,,0.033095,0.3921,0.033095,0.3921,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,frontier_causal_recall_mean,36,,,,,,0.024152,0.374627,0.024152,0.374627,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,quality_semantic_identity_consistency,30,,,,,,-0.307929,-0.21232,0.307929,0.21232,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,quality_semantic_identity_consistency_report,30,,,,,,-0.307929,-0.21232,0.307929,0.21232,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,quality_relation_recall,30,,,,,,-0.014439,0.141054,0.014439,0.141054,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,quality_identity_recall,30,,,,,,-0.041487,-0.058326,0.041487,0.058326,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,object_confidence,36,,,,,,0.34612,-0.057876,0.34612,0.057876,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,objectification_score,36,,,,,,0.348867,-0.049799,0.348867,0.049799,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,relation_confidence,36,,,,,,0.352431,-0.038696,0.352431,0.038696,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,identity_coverage,36,,,,,,,,,,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,relation_validity,36,,,,,,,,,,positive means lower component quality is associated with worse downstream metric
+predictor_correlation,all,non_clean,quality_relation_precision,30,,,,,,,,,,positive means lower component quality is associated with worse downstream metric

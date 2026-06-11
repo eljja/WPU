@@ -152,6 +152,7 @@ with:
 
 ```bash
 python scripts/pybullet_objectification_quality.py --samples 12 --seeds 11 13 --background-objects 32 128 512 --corruptions clean drop_relations_heavy drop_objects_light position_noise low_confidence identity_swap combined --sim-steps 24 --out docs/experiments/pybullet_objectification_quality.csv
+python scripts/analyze_pybullet_objectification_loss_coupling.py
 ```
 
 The parameter-matched PyBullet pilot can be reproduced with:

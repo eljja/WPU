@@ -235,6 +235,11 @@ model = wpu.create_model(
   `ObjectificationReport`는 이제 frontier completeness와 semantic consistency를 포함한다.
   Benchmark는 relation-drop이 event-frontier recall을 `0.585417`까지 떨어뜨리고,
   position noise가 semantic consistency를 `0.675541`까지 낮출 수 있음을 보인다.
+- PyBullet objectification-loss coupling audit은 quality component와 downstream
+  degradation을 연결했다. 가장 큰 MSE failure는 heavy relation drop에서 WPU sparse가
+  보인 `+0.087356` MSE이고, MSE와 가장 강하게 연결된 predictor는 selected-K deficit
+  (`|r|=0.481851`)이다. Branch accuracy 변화는 아직 작으므로 P7은 개선됐지만
+  closed-loop 또는 multi-horizon corruption 검증이 필요하다.
 - Parameter-matched PyBullet pilot에서는 약 50k parameter 조건에서 WPU sparse가
   background N=0에서 N=128까지 accuracy를 유지했고 full-state baseline은 하락했다.
   하지만 serialized-token은 이 규모에서 여전히 더 빠르므로, 주장은 보편 latency

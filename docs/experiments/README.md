@@ -102,6 +102,14 @@ Use these reports for paper-level claims:
   completeness and semantic consistency, while the benchmark shows why the
   components still matter: relation-drop drives event-frontier recall to
   `0.585417`, and position noise drops semantic consistency to `0.675541`.
+- `pybullet_objectification_loss_coupling_results.md`: derived P7 audit that
+  joins objectification-quality components to downstream model degradation in
+  the PyBullet corruption stress test. It finds the largest MSE increase for
+  WPU sparse under heavy relation drop (`0.087356`) and identifies selected-K
+  deficit as the strongest MSE predictor (`|r|=0.481851`), while noting that
+  branch-accuracy movement is still small.
+- `pybullet_objectification_loss_coupling_results.ko.md`: Korean companion for
+  the objectification-loss coupling audit.
 - `pybullet_matched_baseline_benchmark_results.md`: parameter-matched PyBullet
   pilot using `--target-params`. At an approximate 50k-parameter budget, WPU
   sparse preserves branch accuracy from background N=0 to N=128 while full-state
@@ -623,6 +631,10 @@ Historical or preliminary reports:
   consistency, and the benchmark shows that relation-drop can drive
   event-frontier recall to `0.585417` while position noise reduces semantic
   consistency to `0.675541`.
+- The objectification-loss coupling audit connects that contract to downstream
+  degradation. It shows selected-K/frontier deficits are more informative for
+  MSE degradation than the aggregate score in the current one-step stress test,
+  but branch accuracy still moves too little for a solved P7 claim.
 - The PyBullet systems profile is the clearest current cost-separation result:
   when PyBullet background state grows to `N≈2052.6`, indexed WPU still
   tensorizes only `K≈4.6`, reducing tensor bytes by `0.997454`; the random CPU

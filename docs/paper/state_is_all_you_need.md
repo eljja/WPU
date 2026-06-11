@@ -307,6 +307,9 @@ Supported:
 - Systems profiling supports pre-tensor working-set selection and branch-overlay
   memory accounting as proxies: the current claim-boundary audit records `4`
   supported proxy axes and branch-overlay memory reduction `0.874128`.
+- Objectification quality is partially coupled to downstream degradation in the
+  PyBullet stress test: selected-K deficit is the strongest MSE predictor
+  (`|r|=0.481851`), but one-step branch accuracy movement remains small.
 - Regret-distilled state retrieval improves downstream loss over
   interaction-teacher retrieval in same-seed validation-to-test experiments.
 - Risk-adjusted state-native mechanism selection improves held-out-seed loss

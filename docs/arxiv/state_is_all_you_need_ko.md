@@ -77,6 +77,12 @@ relation hypothesis를 지탱할 persistent state variable이다. Toy downstream
 첫 repair-to-prediction loop를 닫는다. Role-aware learned repair는 aliased-type branch
 accuracy를 0.343750에서 0.671875로 올리고 loss를 1.319667에서 0.885275로 낮춘다.
 반대로 ungated dense-distractor repair는 frontier recall을 복구하지만 loss를 악화시킨다.
+PyBullet objectification-loss coupling audit은 같은 경계에 simulator-derived stress
+test를 추가한다. 현재 one-step corruption setting에서는 branch accuracy 변화가 작지만,
+heavy relation drop에서 WPU sparse의 MSE increase가 0.087356으로 가장 크고,
+selected-K deficit이 MSE의 가장 강한 predictor(`|r|=0.481851`)다. 따라서
+objectification quality는 downstream degradation과 연결되기 시작했지만, 이 coupling은
+아직 partial이며 closed-loop 또는 multi-horizon rollout으로 확장해야 한다.
 두 번째 toy probe는 object history에서 relation candidate를 학습하고 held-out mechanism
 family로 transfer할 수 있는지 테스트한다. `contact_transfer`와 `support_transfer`로
 학습한 history scorer는 held-out `hidden_field`에서 5개 seed 평균 relation

@@ -22,6 +22,9 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_selective_corrected.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_stride2.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_margin1.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_entropy035.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_entropy045.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_rawdelta2m.csv`
 
 Derived CSV:
 
@@ -42,6 +45,9 @@ Derived CSV:
 | selective_corrected | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.697858 | 0.784166 | 0.027461 | 0.000000 | 0.000000 | 0.000000 | 0.958735 | 0.758574 |
 | selective_corrected_stride2 | wpu-cws-indexed-sparse | 25 | 0.770000 | 0.709051 | 0.014166 | 0.027371 | 0.000000 | 0.000000 | 0.000000 | 0.535190 | 0.527543 |
 | selective_corrected_margin1 | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 | 0.527391 |
+| selective_corrected_entropy035 | wpu-cws-indexed-sparse | 25 | 0.554167 | 0.705722 | 0.230000 | 0.027458 | 0.000000 | 0.000000 | 0.000000 | 0.653668 | 0.592049 |
+| selective_corrected_entropy045 | wpu-cws-indexed-sparse | 25 | 0.574167 | 0.706006 | 0.210000 | 0.027458 | 0.000000 | 0.000000 | 0.000000 | 0.642658 | 0.586039 |
+| selective_corrected_rawdelta2m | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 | 0.527391 |
 | rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.000000 | 0.000000 | 0.499166 | 0.000000 | 0.000000 | 0.946506 | 0.796756 |
 | corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.499166 | 0.499166 | 0.000000 | 0.000000 | 0.000000 | 0.909670 | 0.710004 |
 | rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.000000 | 0.000000 | 0.261667 | 0.000000 | 0.000000 | 0.843622 | 0.765122 |
@@ -93,6 +99,12 @@ corrected object fraction을 `0.027461`까지 낮추고 low-disruption score를 
 margin-1 gate처럼 trigger 자체를 줄이면 integrity가 각각 `0.535190`, `0.527391`로
 무너진다. 따라서 이번 개선은 correction의 범위를 줄인 것이지, raw transition model이
 대부분의 sparse update를 스스로 안전하게 만든 것은 아니다.
+
+Correction-trigger frontier는 이 결론을 더 강하게 만든다. Entropy gate는 correction
+rate를 `0.230000`, `0.210000`까지 낮추지만 integrity가 각각 `0.653668`, `0.642658`에
+그친다. Raw-delta threshold는 correction을 사실상 제거하면서 integrity `0.527391`로
+실패한다. 별도 frontier 감사 기준으로 integrity >= `0.8`과 correction rate <= `0.25`를
+동시에 만족한 correction-trigger policy는 `0`개다.
 
 따라서 현재 결론은 명확하다. Rollback과 correction은 state memory safety mechanism이지,
 raw dynamics가 해결됐다는 증거가 아니다. 다음 단계는 correction projection을 더 작게

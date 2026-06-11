@@ -328,8 +328,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
   correction rate remains high at `0.784166`. The newer selective-corrected
   variant preserves the same integrity while reducing corrected-object fraction
   to `0.027461` and raising low-disruption integrity to `0.758574`; however,
-  stride/margin gates that reduce the correction trigger itself collapse
-  integrity to about `0.53`.
+  correction-trigger frontier variants show that this is not a threshold-only
+  problem. Stride/margin and raw-delta gates collapse integrity to about `0.53`;
+  entropy gates lower correction rate to `0.230000` and `0.210000`, but integrity
+  only reaches `0.653668` and `0.642658`. No tested correction-trigger policy
+  meets integrity >= `0.8` with correction rate <= `0.25`.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and

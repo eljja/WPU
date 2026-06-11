@@ -268,8 +268,11 @@ model = wpu.create_model(
   H=25 integrity `0.958735`, rollback/escalation `0.000000`을 달성하지만 correction
   rate가 `0.784166`으로 높다. 최신 selective-corrected variant는 같은 integrity를
   유지하면서 corrected-object fraction을 `0.027461`로 낮추고 low-disruption integrity를
-  `0.758574`까지 올린다. 하지만 correction trigger 자체를 stride/margin gate로 줄이면
-  integrity가 약 `0.53`으로 무너진다.
+  `0.758574`까지 올린다. 하지만 correction-trigger frontier variant들은 이것이 단순
+  threshold 문제가 아님을 보인다. Stride/margin 및 raw-delta gate는 integrity를 약
+  `0.53`으로 무너뜨리고, entropy gate는 correction rate를 `0.230000`, `0.210000`까지
+  낮추지만 integrity가 각각 `0.653668`, `0.642658`에 그친다. 테스트한 correction-trigger
+  policy 중 integrity >= `0.8`과 correction rate <= `0.25`를 동시에 만족한 경우는 없다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이

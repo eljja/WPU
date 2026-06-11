@@ -24,6 +24,12 @@
 | C10 | 단기 WPU 가치는 silicon보다 software runtime/middleware에서 더 가능성이 있다. | plausible direction이며 아직 실험적으로 증명되지 않음. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | digital-twin, simulation backend, game/server, robotics middleware benchmark가 필요하다. |
 | C11 | 객체화 품질은 propagation 전에 contract로 측정 가능하고 국소적으로 repair 가능하다. | 구현 주장으로 지지됨. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `tests/test_script_entrypoints.py`, `docs/experiments/objectification_relation_repair_probe_results.md`, `docs/experiments/pybullet_objectification_quality_results.ko.md`, `docs/experiments/pybullet_objectification_loss_coupling_results.ko.md`, `README.ko.md`, `docs/objectification.ko.md`. | Relation repair와 `LocalLawHypothesis`는 보수적 hypothesis 및 revision report를 만들 뿐 ground-truth physics가 아니다. 최신 probe는 learned repair가 aliased type name을 넘어 transfer하고 toy downstream diagnostic을 개선하며 law-revision gap을 보고할 수 있음을 보인다. PyBullet loss-coupling audit은 selected-K/frontier degradation이 MSE increase와 연결됨을 보이지만 branch accuracy 변화는 아직 작다. perception-to-object construction이나 unknown-theory discovery가 해결됐다는 증거는 아니다. |
 
+P2 correction-trigger frontier는 C7의 한계를 더 명확히 한다. 테스트한 trigger policy 중
+integrity >= `0.8`과 correction rate <= `0.25`를 동시에 만족한 경우는 `0`개이며,
+최고 low-correction trigger는 `selective_corrected_entropy035`로 integrity `0.653668`에
+그친다. 따라서 현재 증거는 low-frequency stable sparse dynamics가 아니라 bounded
+memory-safety layer다.
+
 ## 반증 조건
 
 - controlled identity/locality/branching benchmark에서 serialized-token 또는 graph
@@ -55,8 +61,10 @@
   못하면, verification/rollback 없이 persistent state는 장점이 아니라 위험이 된다.
 - finite-safe 또는 selective correction이 대부분의 sparse update에서 여전히 trigger되어야
   한다면, memory layer는 applied state를 보호할 수 있지만 raw transition model은 아직
-  안정적이지 않다. 더 강한 주장을 하려면 rollback 제거나 corrected object set 축소뿐
-  아니라 correction trigger frequency를 낮춰야 한다.
+  안정적이지 않다. Correction-trigger frontier는 이 경계를 확인한다. 테스트한 trigger
+  policy 중 integrity >= `0.8`과 correction rate <= `0.25`를 동시에 만족한 경우는
+  `0`개다. 더 강한 주장을 하려면 rollback 제거나 corrected object set 축소뿐 아니라
+  learned low-frequency correction이 필요하다.
 
 ## 제출용 태도
 

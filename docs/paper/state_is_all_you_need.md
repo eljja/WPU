@@ -411,7 +411,10 @@ The next decisive step is experimental, not rhetorical:
   consistency checks. The current selective-corrected rollout reaches sparse
   H=25 integrity `0.958735` with zero rollback/escalation and corrected-object
   fraction `0.027461`, but correction trigger frequency remains `0.784166`, so
-  raw sparse dynamics are not solved;
+  raw sparse dynamics are not solved. A correction-trigger frontier makes this
+  boundary sharper: no tested trigger policy reaches integrity >= `0.8` with
+  correction rate <= `0.25`; the best low-correction entropy gate reaches only
+  `0.653668` integrity;
 - hardware-aware profiling of frontier queues, relation fetch, scatter/gather,
   delta logs, and branch overlays.
 

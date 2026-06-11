@@ -23,6 +23,9 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_selective_corrected.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_stride2.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_margin1.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_entropy035.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_entropy045.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_rawdelta2m.csv`
 
 Derived CSV:
 
@@ -68,7 +71,10 @@ Derived CSV:
 | rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.052951 | 0.000000 | 0.000000 | 0.000000 | 0.499166 | 0.000000 | 0.000000 | 0.946506 | 0.796756 |
 | rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.030382 | 0.000000 | 0.000000 | 0.000000 | 0.812500 | 0.000000 | 0.000000 | 0.988647 | 0.744897 |
 | selective_corrected | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.697858 | 0.084201 | 0.000000 | 0.784166 | 0.027461 | 0.000000 | 0.000000 | 0.000000 | 0.958735 | 0.758574 |
+| selective_corrected_entropy035 | wpu-cws-indexed-sparse | 25 | 0.554167 | 0.705722 | 0.084201 | 0.000000 | 0.230000 | 0.027458 | 0.000000 | 0.000000 | 0.000000 | 0.653668 | 0.592049 |
+| selective_corrected_entropy045 | wpu-cws-indexed-sparse | 25 | 0.574167 | 0.706006 | 0.084201 | 0.000000 | 0.210000 | 0.027458 | 0.000000 | 0.000000 | 0.000000 | 0.642658 | 0.586039 |
 | selective_corrected_margin1 | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.082465 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 | 0.527391 |
+| selective_corrected_rawdelta2m | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.082465 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 | 0.527391 |
 | selective_corrected_stride2 | wpu-cws-indexed-sparse | 25 | 0.770000 | 0.709051 | 0.082465 | 0.000000 | 0.014166 | 0.027371 | 0.000000 | 0.000000 | 0.000000 | 0.535190 | 0.527543 |
 | validity | wpu-cws-indexed-local-dense | 25 | 0.605833 | 2.222097 | 0.054688 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.578081 | 0.578081 |
 | validity | wpu-cws-indexed-sparse | 25 | 3.374166 | 1785671.546102 | 0.076389 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.084722 | 0.084722 |
@@ -121,8 +127,11 @@ The selective-correction run uses the same finite-safe correction
 trigger as finite-corrected rollout but only projects objects that
 actually violate validity bounds. It preserves sparse H=25 integrity
 while reducing the corrected-object fraction. The stride-2 and
-margin-1 variants show the current boundary: reducing correction
+margin-1 variants show the first boundary: reducing correction
 trigger frequency directly causes validity violations to return.
+Entropy-threshold and raw-delta-threshold variants sharpen the
+same conclusion: lower trigger rates improve intervention cost,
+but current hand-coded gates do not preserve the integrity target.
 This narrows the P2 problem to learning a more stable transition or
 a better correction trigger, not merely shrinking the correction
 projection itself.

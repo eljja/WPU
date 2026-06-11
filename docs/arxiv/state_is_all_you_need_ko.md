@@ -530,8 +530,11 @@ matched or acceptable accuracy at lower routed work
 - long-horizon rollout에서 delta overlay가 누적 오차와 state corruption을 제어하지
   못한다. 최신 selective-corrected rollout은 sparse WPU H=25 integrity `0.958735`를
   rollback과 dense escalation 없이 유지하면서 corrected-object fraction을 `0.027461`로
-  낮춘다. 그러나 correction trigger rate는 여전히 `0.784166`이다. 따라서 이는 bounded
-  memory-safety layer의 증거이지 raw sparse dynamics 안정화의 증거는 아니다.
+  낮춘다. 그러나 correction trigger rate는 여전히 `0.784166`이다. Correction-trigger
+  frontier는 이 경계를 더 선명하게 만든다. 테스트한 trigger policy 중 integrity >=
+  `0.8`과 correction rate <= `0.25`를 동시에 만족한 경우는 없고, 최고 low-correction
+  entropy gate도 integrity `0.653668`에 그친다. 따라서 이는 bounded memory-safety
+  layer의 증거이지 raw sparse dynamics 안정화의 증거는 아니다.
 - sparse advantage가 실제 sparse kernel, memory traffic, branch overlay 비용을
   포함하면 사라진다.
 

@@ -154,10 +154,17 @@ Use these reports for paper-level claims:
   finite-corrected sparse reaches integrity `0.958735` with rollback and
   escalation both `0.000000` at correction rate `0.784166`. Selective correction
   preserves that integrity while reducing corrected-object fraction to
-  `0.027461` and raising low-disruption integrity to `0.758574`, but stride-2
-  and margin-1 correction gates collapse sparse integrity to `0.535190` and
-  `0.527391`. This strengthens the memory-safety result without solving raw
-  sparse dynamics or correction-trigger frequency.
+  `0.027461` and raising low-disruption integrity to `0.758574`, but stride-2,
+  margin-1, and raw-delta gates collapse sparse integrity to about `0.53`.
+  Entropy gates reduce correction rate to `0.230000` and `0.210000`, but only
+  reach integrity `0.653668` and `0.642658`. This strengthens the memory-safety
+  result without solving raw sparse dynamics or correction-trigger frequency.
+- `pybullet_correction_trigger_frontier_results.md` and
+  `pybullet_correction_trigger_frontier_results.ko.md`: P2 frontier audit over
+  finite/selective correction-trigger variants. It finds `0` tested trigger
+  policies meeting integrity >= `0.8` and correction rate <= `0.25`; the best
+  low-correction trigger is `selective_corrected_entropy035` with integrity
+  `0.653668` at correction rate `0.230000`.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -672,7 +679,9 @@ Historical or preliminary reports:
   lower-disruption safety result so far: H=25 integrity `0.958735`, rollback and
   escalation both zero, corrected-object fraction `0.027461`, and
   low-disruption integrity `0.758574`; correction trigger frequency remains the
-  unsolved issue.
+  unsolved issue. The correction-trigger frontier confirms that hand-coded
+  low-frequency gates are not enough: none of the tested trigger policies meets
+  integrity >= `0.8` with correction rate <= `0.25`.
 - The PyBullet shift benchmark adds the first mechanism-family generalization
   and calibration table. It is mixed: WPU local-dense leads on `catch_heavy`,
   but `serialized-token` is stronger on `edge_shift` and `high_force`.

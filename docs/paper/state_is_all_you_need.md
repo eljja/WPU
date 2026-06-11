@@ -369,11 +369,14 @@ Not supported:
   current result is therefore a precise open problem for WPU routing, not a
   solved calibration claim.
 - Baseline-complete large-`N` simulator superiority. The PyBullet coverage
-  audit now includes a low-training matched screen at N_bg=256, total `N=261`,
-  where WPU, graph, and token baselines all complete, but the setting is too
-  small to support strong accuracy superiority. The WPU-only N_bg=512, total
-  `N=517` extension remains systems feasibility evidence because the
-  graph-transformer baseline did not complete under the attempted protocol.
+  audit now includes matched N_bg=256, total `N=261` runs where WPU, graph, and
+  token baselines all complete. A medium-training run improves the evidence:
+  best WPU reaches branch accuracy `0.466667` versus best baseline `0.450000`,
+  with `60.629526x` lower forward latency than that best-accuracy baseline.
+  However, the margin is small and the task is still one cup family, so this is
+  positive P3 evidence rather than strong simulator superiority. The WPU-only
+  N_bg=512, total `N=517` extension remains systems feasibility evidence because
+  the graph-transformer baseline did not complete under the attempted protocol.
 
 ## Application Boundary
 

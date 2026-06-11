@@ -222,12 +222,17 @@ model = wpu.create_model(
   결과이지 accuracy dominance 결과는 아니다.
 - PyBullet simulator coverage audit는 simulator breadth와 superiority claim을 분리한다.
   본훈련 baseline-complete cup evidence는 7 seeds와 `N=133`까지이고,
-  저훈련 matched screen은 `N=261`까지 도달하지만 feasibility evidence로만
-  사용한다. Shift evidence는 4개 mechanism family, rollout diagnostic은 horizon
-  25, objectification-quality evidence는 7개 corruption setting, systems profile은
-  `N≈2052`까지 포함한다. N_bg=512 cup extension은 total `N=517`에서 WPU 실행
-  가능성을 보이지만, 같은 protocol에서 dense graph baseline이 완료되지 않았으므로
-  accuracy-superiority result가 아니라 WPU-only systems feasibility evidence다.
+  matched `N=261` evidence는 저훈련 screen과 medium-training baseline-complete run을
+  모두 포함한다. Medium run에서 best WPU(`wpu-cws-indexed-local-dense`)의 branch
+  accuracy는 `0.466667`, best baseline(`graph-transformer`)은 `0.450000`이고, best
+  WPU는 해당 best-accuracy baseline보다 forward latency 기준 `60.629526x` 빠르다.
+  다만 margin이 작고 domain이 여전히 단일 cup family이므로 broad simulator-superiority
+  claim이 아니라 positive P3 evidence로만 해석한다. Shift evidence는 4개 mechanism
+  family, rollout diagnostic은 horizon 25, objectification-quality evidence는 7개
+  corruption setting, systems profile은 `N≈2052`까지 포함한다. N_bg=512 cup extension은
+  total `N=517`에서 WPU 실행 가능성을 보이지만, 같은 protocol에서 dense graph baseline이
+  완료되지 않았으므로 accuracy-superiority result가 아니라 WPU-only systems feasibility
+  evidence다.
 - 첫 PyBullet objectification stress는 causal-frontier relation 누락이 propagation
   이전에 WPU selected K를 줄인다는 점을 보였다. 또한 현재 objectification score에는
   frontier completeness와 semantic identity check가 추가되어야 한다.

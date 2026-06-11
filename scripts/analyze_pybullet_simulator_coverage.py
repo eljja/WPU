@@ -22,6 +22,9 @@ def main() -> None:
     n256 = _n256_screen_row()
     if n256 is not None:
         rows.append(n256)
+    n256_medium = _n256_medium_row()
+    if n256_medium is not None:
+        rows.append(n256_medium)
     n512 = _n512_row()
     if n512 is not None:
         rows.append(n512)
@@ -103,6 +106,28 @@ def _n256_screen_row() -> dict[str, object] | None:
         corruption_count=1,
         baseline_complete=_has_wpu_and_baseline(rows),
         notes="Low-training 5-seed N_bg=256 screen with WPU, graph, and token baselines; useful for matched large-N feasibility, not for strong accuracy-superiority claims.",
+    )
+
+
+def _n256_medium_row() -> dict[str, object] | None:
+    path = ROOT / "pybullet_cup_benchmark_n256_medium.csv"
+    if not path.exists():
+        return None
+    rows = _read_rows(path)
+    return _coverage_row(
+        axis="cup_n256_baseline_medium",
+        source=path,
+        seed_count=len(_values(rows, "seed")),
+        model_count=len(_values(rows, "model")),
+        mechanism_count=1,
+        background_min=_min_int(rows, "background_objects"),
+        background_max=_max_int(rows, "background_objects"),
+        total_n_max=_max_int(rows, "total_objects_n"),
+        horizon_max=1,
+        branch_count_max=3,
+        corruption_count=1,
+        baseline_complete=_has_wpu_and_baseline(rows),
+        notes="Medium-training 5-seed N_bg=256 run with WPU, graph, and token baselines. It improves over the low-training screen, but remains a single cup-family benchmark rather than a broad simulator claim.",
     )
 
 
@@ -263,6 +288,7 @@ def _render_markdown(rows: list[dict[str, object]], *, korean: bool) -> str:
                 "",
                 "- 현재 PyBullet evidence는 cup benchmark, mechanism shift, closed-loop rollout, objectification corruption, CPU/CUDA systems profile까지 포함한다.",
                 "- `cup_n256_baseline_screen`은 N_bg=256, total N=261에서 WPU, graph, token baseline을 모두 완료한 matched large-N screen이지만, 저훈련 설정이므로 강한 accuracy superiority claim에는 쓰지 않는다.",
+                "- `cup_n256_baseline_medium`은 같은 N=261에서 training budget을 올린 baseline-complete run이다. 더 의미 있는 large-N simulator evidence지만 단일 cup family이므로 broad superiority claim에는 부족하다.",
                 "- `cup_n512_wpu_only_extension`은 N_bg=512, total N=517까지 WPU가 실행된다는 evidence지만, dense graph baseline이 같은 protocol에서 완료되지 않았으므로 accuracy superiority evidence가 아니다.",
                 "- P3의 다음 병목은 단일 PyBullet cup family를 넘어서는 mechanism 다양성, baseline-complete large-N comparison, 그리고 perception/state adapter를 포함한 end-to-end objectification이다.",
             ]
@@ -275,6 +301,7 @@ def _render_markdown(rows: list[dict[str, object]], *, korean: bool) -> str:
                 "",
                 "- Current PyBullet evidence covers cup prediction, mechanism shift, closed-loop rollout, objectification corruption, and CPU/CUDA systems profiling.",
                 "- `cup_n256_baseline_screen` completes WPU, graph, and token baselines at N_bg=256 and total N=261, but it is a low-training screen and should not be used as a strong accuracy-superiority claim.",
+                "- `cup_n256_baseline_medium` increases the training budget at the same N=261 and is stronger large-N simulator evidence, but it is still a single cup-family benchmark rather than a broad superiority claim.",
                 "- `cup_n512_wpu_only_extension` shows WPU execution at N_bg=512 and total N=517, but it is not accuracy-superiority evidence because the dense graph baseline did not complete under the same protocol.",
                 "- The next P3 bottleneck is not another small cup run; it is mechanism diversity, baseline-complete large-N comparison, and end-to-end objectification through a perception/state adapter.",
             ]

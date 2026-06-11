@@ -44,10 +44,12 @@ Use these reports for paper-level claims:
   audit that separates breadth from superiority claims. It tracks cup
   prediction, mechanism shift, closed-loop rollout, objectification corruption,
   and CPU/CUDA systems profile axes. The N_bg=256 cup screen is baseline-complete
-  at total `N=261`, but is low-training feasibility evidence. The N_bg=512 cup
-  extension is explicitly marked baseline-incomplete because only WPU models
-  completed under the attempted protocol; it is systems feasibility evidence,
-  not matched accuracy evidence.
+  at total `N=261`, but is low-training feasibility evidence. The newer
+  N_bg=256 medium-training run is also baseline-complete and gives a small
+  positive WPU-vs-graph accuracy gap at much lower forward latency, but remains
+  a single cup-family result. The N_bg=512 cup extension is explicitly marked
+  baseline-incomplete because only WPU models completed under the attempted
+  protocol; it is systems feasibility evidence, not matched accuracy evidence.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid
@@ -126,6 +128,12 @@ Use these reports for paper-level claims:
   5-seed matched large-N screen at `N=261`. It completes WPU, graph, and token
   baselines in one protocol, but should be used as feasibility evidence rather
   than strong accuracy-superiority evidence.
+- `pybullet_cup_benchmark_n256_medium_results.md` and
+  `pybullet_cup_benchmark_n256_medium_results.ko.md`: medium-training 5-seed
+  matched large-N benchmark at `N=261`. Best WPU accuracy is `0.466667` versus
+  best baseline `0.450000`, with `60.629526x` lower forward latency than that
+  best-accuracy baseline. This improves P3 evidence but remains a single
+  cup-family result.
 - `pybullet_closed_loop_rollout_results.md`: first PyBullet-derived closed-loop
   `WorldState` rollout diagnostic. Repeated delta application exposes a
   long-horizon WPU sparse failure: raw delta explosion and high constraint
@@ -643,12 +651,15 @@ Historical or preliminary reports:
   remains comparable rather than dominant.
 - The PyBullet simulator coverage audit makes the P3 boundary explicit:
   full-training baseline-complete simulator evidence currently reaches 7 cup
-  seeds at `N=133`; a low-training matched screen reaches `N=261`; coverage also
-  includes 4 mechanism families, horizon 25 rollout diagnostics, 7 objectification
-  corruption settings, and systems profiles up to `N≈2052`. A WPU-only N_bg=512
-  cup extension reaches total `N=517`, but dense graph comparison did not
-  complete under the same protocol, so it must not be used as an accuracy
-  superiority claim.
+  seeds at `N=133`; matched `N=261` coverage now includes both a low-training
+  screen and a medium-training baseline-complete run. The medium run is positive
+  for WPU-vs-graph accuracy-latency at large `N`, but its margin is small and
+  the domain is still one cup family. Coverage also includes 4 mechanism
+  families, horizon 25 rollout diagnostics, 7 objectification corruption
+  settings, and systems profiles up to `N≈2052`. A WPU-only N_bg=512 cup
+  extension reaches total `N=517`, but dense graph comparison did not complete
+  under the same protocol, so it must not be used as an accuracy superiority
+  claim.
 - The PyBullet objectification-quality benchmark makes the object contract
   sharper: the public report now includes frontier completeness and semantic
   consistency, and the benchmark shows that relation-drop can drive

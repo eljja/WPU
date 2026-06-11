@@ -885,10 +885,13 @@ layer, not evidence that raw sparse dynamics are already stable. A
 correction-trigger frontier sharpens the boundary: no tested trigger policy
 meets integrity at least 0.8 with correction rate at most 0.25; the best
 low-correction entropy gate reaches integrity 0.653668.
-A separate PyBullet coverage audit includes a low-training matched screen at
-\(N_{\mathrm{bg}}=256\), total \(N=261\), where WPU, graph, and token baselines
-all complete. This is useful feasibility evidence, but the training budget is
-too small for a strong accuracy-superiority claim. The WPU-only
+A separate PyBullet coverage audit includes matched
+\(N_{\mathrm{bg}}=256\), total \(N=261\) runs where WPU, graph, and token
+baselines all complete. A medium-training run improves this evidence: the best
+WPU reaches branch accuracy 0.466667 versus the best baseline at 0.450000, with
+60.629526 times lower forward latency than that best-accuracy baseline.
+However, the margin is small and the task is still one cup family, so this is
+positive P3 evidence rather than strong simulator superiority. The WPU-only
 \(N_{\mathrm{bg}}=512\), total \(N=517\) extension remains systems feasibility
 evidence because the graph-transformer baseline did not complete under the
 attempted protocol.

@@ -25,6 +25,13 @@ For the formal objectification definition, see `docs/objectification.md`.
 | C10 | Near-term WPU value is more plausible as software runtime/middleware than silicon. | Plausible direction, not experimentally proven. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | Requires digital-twin, simulation backend, game/server, or robotics middleware benchmarks. |
 | C11 | Objectification quality is measurable and locally repairable as a contract before propagation. | Supported as an implementation claim. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `tests/test_script_entrypoints.py`, `docs/experiments/objectification_relation_repair_probe_results.md`, `docs/experiments/pybullet_objectification_quality_results.md`, `docs/experiments/pybullet_objectification_loss_coupling_results.md`, `README.md`, `docs/objectification.md`. | Relation repair and `LocalLawHypothesis` produce conservative hypotheses and revision reports, not ground-truth physics. The latest probes show that learned repair can transfer across aliased type names, improve a toy downstream diagnostic, and report law-revision gaps. The PyBullet loss-coupling audit links selected-K/frontier degradation to MSE increase, but branch-accuracy movement remains small; this is not evidence that perception-to-object construction or unknown-theory discovery is solved. |
 
+P3 large-N simulator evidence is stronger but still bounded. The medium-training
+N_bg=256 run is baseline-complete at total `N=261`: best WPU accuracy is
+`0.466667`, best baseline accuracy is `0.450000`, and best WPU is `60.629526x`
+faster than that best-accuracy baseline. This supports a conditional large-N
+state-native regime, but the margin is small and the task is still one cup
+family, so it does not establish broad simulator superiority.
+
 ## Falsification Tests
 
 - If serialized-token or graph baselines match WPU at equal compute across

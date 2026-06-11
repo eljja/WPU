@@ -61,6 +61,11 @@ def main() -> None:
     parser.add_argument("--correct-on-violation", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--rollback-on-violation", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--escalation-model", default="")
+    parser.add_argument("--selective-correction", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--correction-violation-margin", type=int, default=0)
+    parser.add_argument("--correction-stride", type=int, default=1)
+    parser.add_argument("--correction-entropy-threshold", type=float, default=0.0)
+    parser.add_argument("--correction-raw-delta-threshold", type=float, default=0.0)
     parser.add_argument("--integrity-projection", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--max-position-norm", type=float, default=25.0)
     parser.add_argument("--max-velocity-norm", type=float, default=25.0)
@@ -196,6 +201,8 @@ def _rollout_condition(
     raw_delta_norm_values: list[float] = []
     rejected_delta_count = 0
     correction_count = 0
+    corrected_object_count = 0
+    correction_object_denominator = 0
     rollback_count = 0
     escalation_count = 0
     escalation_success_count = 0
@@ -280,14 +287,26 @@ def _rollout_condition(
                         escalation_count += 1
                         after_violations = _constraint_violations(current)
                         escalation_success_count += int(after_violations <= before_violations)
-                    if args.correct_on_violation and after_violations > before_violations:
-                        _project_sample_state(
+                    if (
+                        args.correct_on_violation
+                        and after_violations > before_violations + args.correction_violation_margin
+                        and _correction_gate(
+                            step_index=step_index,
+                            entropy=entropy_values[-1],
+                            raw_delta_norm=raw_delta_norm,
+                            args=args,
+                        )
+                    ):
+                        corrected_objects = _project_sample_state(
                             current,
                             max_position_norm=args.max_position_norm,
                             max_velocity_norm=args.max_velocity_norm,
                             min_cup_z=args.min_cup_z,
+                            selective=args.selective_correction,
                         )
                         correction_count += 1
+                        corrected_object_count += corrected_objects
+                        correction_object_denominator += max(len(current.state.objects), 1)
                         after_violations = _constraint_violations(current)
                         applied_delta_norm = _state_delta_norm(before_world_state, current.state)
                     if args.rollback_on_violation and after_violations > before_violations:
@@ -311,6 +330,7 @@ def _rollout_condition(
         "raw_delta_norm_mean": round(_mean(raw_delta_norm_values), 6),
         "unsafe_delta_rejection_rate": round(rejected_delta_count / max(total_delta_count, 1), 6),
         "correction_rate": round(correction_count / max(total_delta_count, 1), 6),
+        "corrected_object_fraction": round(corrected_object_count / max(correction_object_denominator, 1), 6),
         "rollback_rate": round(rollback_count / max(total_delta_count, 1), 6),
         "escalation_rate": round(escalation_count / max(total_delta_count, 1), 6),
         "escalation_success_rate": round(escalation_success_count / max(escalation_count, 1), 6),
@@ -325,8 +345,30 @@ def _rollout_condition(
         "unsafe_delta_reject_norm": args.unsafe_delta_reject_norm,
         "correct_on_violation": bool(args.correct_on_violation),
         "rollback_on_violation": bool(args.rollback_on_violation),
+        "selective_correction": bool(args.selective_correction),
+        "correction_violation_margin": args.correction_violation_margin,
+        "correction_stride": args.correction_stride,
+        "correction_entropy_threshold": args.correction_entropy_threshold,
+        "correction_raw_delta_threshold": args.correction_raw_delta_threshold,
         "integrity_projection": bool(args.integrity_projection),
     }
+
+
+def _correction_gate(
+    *,
+    step_index: int,
+    entropy: float,
+    raw_delta_norm: float,
+    args: argparse.Namespace,
+) -> bool:
+    stride = max(int(args.correction_stride), 1)
+    if step_index % stride != 0:
+        return False
+    if args.correction_entropy_threshold > 0.0 and entropy < args.correction_entropy_threshold:
+        return False
+    if args.correction_raw_delta_threshold > 0.0 and raw_delta_norm < args.correction_raw_delta_threshold:
+        return False
+    return True
 
 
 def _delta_norm_excess_loss(prediction_delta: torch.Tensor, target_delta: torch.Tensor, *, slack: float) -> torch.Tensor:
@@ -449,7 +491,9 @@ def _project_sample_state(
     max_position_norm: float,
     max_velocity_norm: float,
     min_cup_z: float,
-) -> None:
+    selective: bool = False,
+) -> int:
+    corrected_objects: set[str] = set()
     for object_id, obj in sample.state.objects.items():
         position = obj.attributes.get("position", [0.0, 0.0, 0.0])
         velocity = obj.attributes.get("velocity", [0.0, 0.0, 0.0])
@@ -457,9 +501,21 @@ def _project_sample_state(
             projected_position = _project_vector([float(item) for item in position], max_position_norm)
             if object_id == "cup_001":
                 projected_position[2] = max(float(projected_position[2]), min_cup_z)
-            obj.attributes["position"] = projected_position
+            if not selective or projected_position != [float(item) for item in position]:
+                obj.attributes["position"] = projected_position
+                corrected_objects.add(object_id)
+        elif not selective:
+            obj.attributes["position"] = [0.0, 0.0, max(0.0, min_cup_z) if object_id == "cup_001" else 0.0]
+            corrected_objects.add(object_id)
         if _finite_vector(velocity):
-            obj.attributes["velocity"] = _project_vector([float(item) for item in velocity], max_velocity_norm)
+            projected_velocity = _project_vector([float(item) for item in velocity], max_velocity_norm)
+            if not selective or projected_velocity != [float(item) for item in velocity]:
+                obj.attributes["velocity"] = projected_velocity
+                corrected_objects.add(object_id)
+        elif not selective:
+            obj.attributes["velocity"] = [0.0, 0.0, 0.0]
+            corrected_objects.add(object_id)
+    return len(corrected_objects)
 
 
 def _state_delta_norm(before_state: object, after_state: object) -> float:

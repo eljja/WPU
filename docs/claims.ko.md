@@ -53,9 +53,10 @@
   벗어나지 못한 것이다.
 - long-horizon rollout에서 delta overlay가 state corruption을 누적하고 회복하지
   못하면, verification/rollback 없이 persistent state는 장점이 아니라 위험이 된다.
-- finite-safe correction이 대부분의 sparse update에서 발생해야 한다면, memory layer는
-  applied state를 보호할 수 있지만 raw transition model은 아직 안정적이지 않다. 더 강한
-  주장을 하려면 rollback 제거뿐 아니라 correction frequency를 낮춰야 한다.
+- finite-safe 또는 selective correction이 대부분의 sparse update에서 여전히 trigger되어야
+  한다면, memory layer는 applied state를 보호할 수 있지만 raw transition model은 아직
+  안정적이지 않다. 더 강한 주장을 하려면 rollback 제거나 corrected object set 축소뿐
+  아니라 correction trigger frequency를 낮춰야 한다.
 
 ## 제출용 태도
 

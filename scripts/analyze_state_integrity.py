@@ -50,10 +50,21 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         selected_k = _mean(group, "selected_k_mean")
         rejection_rate = _mean_optional(group, "unsafe_delta_rejection_rate")
         correction_rate = _mean_optional(group, "correction_rate")
+        corrected_object_fraction = _mean_optional(group, "corrected_object_fraction")
+        if corrected_object_fraction == 0.0 and correction_rate > 0.0 and not _has_optional(group, "corrected_object_fraction"):
+            corrected_object_fraction = correction_rate
         rollback_rate = _mean_optional(group, "rollback_rate")
         escalation_rate = _mean_optional(group, "escalation_rate")
         escalation_success_rate = _mean_optional(group, "escalation_success_rate")
         integrity_score = _integrity_score(violations, delta_norm, flip_rate)
+        low_disruption_score = _low_disruption_integrity_score(
+            integrity_score,
+            rejection_rate,
+            correction_rate,
+            corrected_object_fraction,
+            rollback_rate,
+            escalation_rate,
+        )
         output.append(
             {
                 "run_label": label,
@@ -67,10 +78,12 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "selected_k_mean": round(selected_k, 6),
                 "unsafe_delta_rejection_rate": round(rejection_rate, 6),
                 "correction_rate": round(correction_rate, 6),
+                "corrected_object_fraction": round(corrected_object_fraction, 6),
                 "rollback_rate": round(rollback_rate, 6),
                 "escalation_rate": round(escalation_rate, 6),
                 "escalation_success_rate": round(escalation_success_rate, 6),
                 "state_integrity_score": round(integrity_score, 6),
+                "low_disruption_integrity_score": round(low_disruption_score, 6),
             }
         )
     return output
@@ -85,11 +98,33 @@ def _mean_optional(rows: list[dict[str, str]], field: str) -> float:
     return statistics.fmean(values) if values else 0.0
 
 
+def _has_optional(rows: list[dict[str, str]], field: str) -> bool:
+    return any(row.get(field) not in {None, ""} for row in rows)
+
+
 def _integrity_score(violations: float, delta_norm: float, flip_rate: float) -> float:
     violation_penalty = min(1.0, violations / 1.0)
     delta_penalty = min(1.0, delta_norm / 10.0)
     flip_penalty = min(1.0, flip_rate / 0.5)
     return max(0.0, 1.0 - (0.55 * violation_penalty + 0.35 * delta_penalty + 0.10 * flip_penalty))
+
+
+def _low_disruption_integrity_score(
+    integrity_score: float,
+    rejection_rate: float,
+    correction_rate: float,
+    corrected_object_fraction: float,
+    rollback_rate: float,
+    escalation_rate: float,
+) -> float:
+    intervention_penalty = (
+        0.20 * min(1.0, rejection_rate)
+        + 0.25 * min(1.0, correction_rate)
+        + 0.15 * min(1.0, corrected_object_fraction)
+        + 0.30 * min(1.0, rollback_rate)
+        + 0.10 * min(1.0, escalation_rate)
+    )
+    return max(0.0, integrity_score - intervention_penalty)
 
 
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
@@ -155,6 +190,20 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "it shows that bounded local correction can protect applied state",
             "without declining or recomputing most updates.",
         ]
+    selective_correction_note = []
+    if "selective_corrected" in labels:
+        selective_correction_note = [
+            "",
+            "The selective-correction run uses the same finite-safe correction",
+            "trigger as finite-corrected rollout but only projects objects that",
+            "actually violate validity bounds. It preserves sparse H=25 integrity",
+            "while reducing the corrected-object fraction. The stride-2 and",
+            "margin-1 variants show the current boundary: reducing correction",
+            "trigger frequency directly causes validity violations to return.",
+            "This narrows the P2 problem to learning a more stable transition or",
+            "a better correction trigger, not merely shrinking the correction",
+            "projection itself.",
+        ]
     escalation_note = []
     if any(float(row.get("escalation_rate", 0.0)) > 0.0 for row in rows):
         escalation_note = [
@@ -210,8 +259,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "",
             "## Summary",
             "",
-            "| run | model | H | violations/step | delta norm | flip rate | reject rate | correction rate | rollback rate | escalation rate | escalation success | integrity score |",
-            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+            "| run | model | H | violations/step | delta norm | flip rate | reject rate | correction rate | corrected objects | rollback rate | escalation rate | escalation success | integrity score | low-disruption score |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in rows:
@@ -221,10 +270,12 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             f"{float(row['delta_norm_mean']):.6f} | {float(row['branch_flip_rate']):.6f} | "
             f"{float(row['unsafe_delta_rejection_rate']):.6f} | "
             f"{float(row['correction_rate']):.6f} | "
+            f"{float(row['corrected_object_fraction']):.6f} | "
             f"{float(row['rollback_rate']):.6f} | "
             f"{float(row['escalation_rate']):.6f} | "
             f"{float(row['escalation_success_rate']):.6f} | "
-            f"{float(row['state_integrity_score']):.6f} |"
+            f"{float(row['state_integrity_score']):.6f} | "
+            f"{float(row['low_disruption_integrity_score']):.6f} |"
         )
     lines.extend(
         [
@@ -243,6 +294,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             *correction_note,
             *finite_clamp_note,
             *finite_correction_note,
+            *selective_correction_note,
             *escalation_note,
             *consistency_note,
             *validity_note,

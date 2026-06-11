@@ -19,6 +19,9 @@ Source CSVs:
 - `docs/experiments/pybullet_closed_loop_rollout_escalated_corrected_rollback.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_finite_clamped.csv`
 - `docs/experiments/pybullet_closed_loop_rollout_finite_corrected.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_stride2.csv`
+- `docs/experiments/pybullet_closed_loop_rollout_selective_corrected_margin1.csv`
 
 Derived CSV:
 
@@ -26,20 +29,23 @@ Derived CSV:
 
 ## 핵심 결과
 
-| run | model | H | violations/step | delta norm | correction rate | rollback rate | escalation rate | escalation success | integrity score |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.084722 |
-| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.958508 |
-| rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.530270 |
-| rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.000000 | 0.812500 | 0.000000 | 0.000000 | 0.988647 |
-| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.392552 | 0.812500 | 0.564167 | 0.000000 | 0.000000 | 0.900288 |
-| escalated_corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 1.942319 | 0.710833 | 0.000000 | 0.805833 | 0.116107 | 0.914831 |
-| finite_clamped | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 |
-| finite_corrected | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.697858 | 0.784166 | 0.000000 | 0.000000 | 0.000000 | 0.958735 |
-| rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.000000 | 0.499166 | 0.000000 | 0.000000 | 0.946506 |
-| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.499166 | 0.000000 | 0.000000 | 0.000000 | 0.909670 |
-| rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.000000 | 0.261667 | 0.000000 | 0.000000 | 0.843622 |
-| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.756884 | 0.268334 | 0.000000 | 0.000000 | 0.000000 | 0.787224 |
+| run | model | H | violations/step | delta norm | correction rate | corrected objects | rollback rate | escalation rate | escalation success | integrity score | low-disruption score |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| raw | wpu-cws-indexed-sparse | 25 | 3.374166 | 1958877.607881 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.084722 | 0.084722 |
+| guarded | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.709288 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.958508 | 0.958508 |
+| rejected | wpu-cws-indexed-sparse | 25 | 0.785834 | 0.635544 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.530270 | 0.402270 |
+| rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.150753 | 0.000000 | 0.000000 | 0.812500 | 0.000000 | 0.000000 | 0.988647 | 0.744897 |
+| corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 2.392552 | 0.812500 | 0.812500 | 0.564167 | 0.000000 | 0.000000 | 0.900288 | 0.406038 |
+| escalated_corrected_rollback | wpu-cws-indexed-sparse | 25 | 0.000000 | 1.942319 | 0.710833 | 0.710833 | 0.000000 | 0.805833 | 0.116107 | 0.914831 | 0.549915 |
+| finite_clamped | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 | 0.527391 |
+| finite_corrected | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.697858 | 0.784166 | 0.784166 | 0.000000 | 0.000000 | 0.000000 | 0.958735 | 0.645068 |
+| selective_corrected | wpu-cws-indexed-sparse | 25 | 0.000000 | 0.697858 | 0.784166 | 0.027461 | 0.000000 | 0.000000 | 0.000000 | 0.958735 | 0.758574 |
+| selective_corrected_stride2 | wpu-cws-indexed-sparse | 25 | 0.770000 | 0.709051 | 0.014166 | 0.027371 | 0.000000 | 0.000000 | 0.000000 | 0.535190 | 0.527543 |
+| selective_corrected_margin1 | wpu-cws-indexed-sparse | 25 | 0.784166 | 0.709270 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.527391 | 0.527391 |
+| rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 1.225809 | 0.000000 | 0.000000 | 0.499166 | 0.000000 | 0.000000 | 0.946506 | 0.796756 |
+| corrected_rollback | wpu-cws-indexed-local-dense | 25 | 0.000000 | 2.263392 | 0.499166 | 0.499166 | 0.000000 | 0.000000 | 0.000000 | 0.909670 | 0.710004 |
+| rollback | graph-transformer | 25 | 0.000000 | 4.140561 | 0.000000 | 0.000000 | 0.261667 | 0.000000 | 0.000000 | 0.843622 | 0.765122 |
+| corrected_rollback | graph-transformer | 25 | 0.000000 | 5.756884 | 0.268334 | 0.268334 | 0.000000 | 0.000000 | 0.000000 | 0.787224 | 0.679891 |
 
 전체 audit table은 `docs/experiments/pybullet_state_integrity_audit.csv`에 있다.
 
@@ -80,7 +86,16 @@ applied-state safety를 rollback 없이 달성한다. 다만 correction rate가 
 correction이 unsafe update를 거부하거나 dense recompute하지 않고 state를 보호할 수
 있음을 보이는 결과다.
 
+Selective-corrected run은 같은 correction trigger를 유지하되 validity bound를 실제로
+위반한 object만 projection한다. Sparse WPU H=25 integrity는 `0.958735`로 유지하면서
+corrected object fraction을 `0.027461`까지 낮추고 low-disruption score를 `0.758574`까지
+올렸다. 그러나 correction trigger rate는 여전히 `0.784166`이다. Stride-2 gate나
+margin-1 gate처럼 trigger 자체를 줄이면 integrity가 각각 `0.535190`, `0.527391`로
+무너진다. 따라서 이번 개선은 correction의 범위를 줄인 것이지, raw transition model이
+대부분의 sparse update를 스스로 안전하게 만든 것은 아니다.
+
 따라서 현재 결론은 명확하다. Rollback과 correction은 state memory safety mechanism이지,
-raw dynamics가 해결됐다는 증거가 아니다. 다음 단계는 correction rate를 낮추면서
-integrity를 유지하는 learned correction, 더 정밀한 uncertainty escalation,
-state-consistency loss다.
+raw dynamics가 해결됐다는 증거가 아니다. 다음 단계는 correction projection을 더 작게
+만드는 것이 아니라, correction trigger 자체를 learned uncertainty/state-validity
+objective로 학습하고 raw transition을 안정화해 correction rate를 낮추면서 integrity를
+유지하는 것이다.

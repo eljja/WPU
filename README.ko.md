@@ -258,10 +258,12 @@ model = wpu.create_model(
   보고해야 한다. Sparse-first dense-escalation variant는 corrected-rollback
   integrity를 `0.914831`로 올리고 rollback rate를 `0.000000`으로 낮추지만,
   fallback을 자주 호출한다(`0.805833`). 따라서 이는 stable raw sparse dynamics가
-  아니라 dense-when-needed safety-layer 결과다. Finite-corrected variant는 현재
-  가장 강한 lower-disruption memory-safety 결과다. Sparse H=25 integrity는
-  `0.958735`이고 rollback/escalation은 모두 `0.000000`이지만, correction rate는
-  `0.784166`으로 높다.
+  아니라 dense-when-needed safety-layer 결과다. Finite-corrected variant는 sparse
+  H=25 integrity `0.958735`, rollback/escalation `0.000000`을 달성하지만 correction
+  rate가 `0.784166`으로 높다. 최신 selective-corrected variant는 같은 integrity를
+  유지하면서 corrected-object fraction을 `0.027461`로 낮추고 low-disruption integrity를
+  `0.758574`까지 올린다. 하지만 correction trigger 자체를 stride/margin gate로 줄이면
+  integrity가 약 `0.53`으로 무너진다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이

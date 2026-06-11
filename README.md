@@ -317,10 +317,13 @@ The current evidence supports a regime hypothesis, not universal dominance.
   variant raises corrected-rollback integrity to `0.914831` and reduces
   rollback rate to `0.000000`, but it still invokes fallback frequently
   (`0.805833`), so this is a dense-when-needed safety-layer result rather than
-  stable raw sparse dynamics. A finite-corrected variant is the strongest
-  low-disruption memory-safety result so far: sparse H=25 integrity `0.958735`
-  with rollback and escalation both `0.000000`, but correction rate remains high
-  at `0.784166`.
+  stable raw sparse dynamics. A finite-corrected variant reaches sparse H=25
+  integrity `0.958735` with rollback and escalation both `0.000000`, but
+  correction rate remains high at `0.784166`. The newer selective-corrected
+  variant preserves the same integrity while reducing corrected-object fraction
+  to `0.027461` and raising low-disruption integrity to `0.758574`; however,
+  stride/margin gates that reduce the correction trigger itself collapse
+  integrity to about `0.53`.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and

@@ -336,6 +336,12 @@ The current evidence supports a regime hypothesis, not universal dominance.
   shows sparse-forward latency reduction `0.996216`, but peak-memory reduction
   is only `0.304080`; this is systems evidence for pre-tensor state indexing,
   not proof of energy or matched-accuracy speedup.
+- A systems claim-boundary audit now separates supported proxy evidence from
+  unsupported hardware claims. It reports `4` supported proxy axes, `2` partial
+  trained axes, branch-overlay memory proxy reduction `0.874128`, weak CUDA
+  peak-memory proxy reduction `0.304080`, and `1` explicitly unmeasured
+  real-power/sparse-kernel axis. This keeps P6 as a systems hypothesis rather
+  than a chip/IP claim.
 - A screening-only energy proxy now combines tensorization latency with tensor
   bytes and CUDA forward latency with peak memory. It shows large proxy
   reductions at large `N`, but it is explicitly not wall-plug power, GPU power

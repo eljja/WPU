@@ -537,6 +537,10 @@ event가 바꾸는 영역은 국소적인 시스템이다.
 
 hardware claim은 matched accuracy에서의 speedup, sparse-kernel overhead, memory
 traffic, branch-overlay memory가 검증된 뒤에야 강하게 말할 수 있다.
+현재 systems claim-boundary audit은 supported proxy 축 `4`개, partial trained 축
+`2`개, real-power/sparse-kernel 미측정 축 `1`개를 분리한다. Branch-overlay memory
+proxy reduction은 `0.874128`까지 관측되지만 CUDA peak-memory proxy reduction은
+`0.304080`에 그치므로, hardware/chip/IP claim은 아직 지지되지 않는다.
 
 ## 14. 결론
 

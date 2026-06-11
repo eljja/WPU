@@ -373,7 +373,11 @@ frontier queue overhead, scatter/gather efficiency, kernel launch overhead, or
 state-corruption recovery. Those terms determine whether a WPU-style design
 actually outperforms dense accelerators on real hardware. The v1 experiments
 therefore report CPU latency and work proxies, but they should not be read as
-final hardware evidence. A software runtime or middleware layer is the nearer
+final hardware evidence. A derived systems claim-boundary audit currently
+separates four supported proxy axes from two partial trained axes and one
+explicitly unmeasured real-power/sparse-kernel axis; it also shows that CUDA
+peak-memory reduction is only 0.304080 despite strong latency proxy reductions.
+A software runtime or middleware layer is the nearer
 term target: only after measuring frontier queues, relation fetch, scatter/gather,
 sparse kernels, delta logs, branch-overlay memory, and recovery costs can a
 hardware target be specified responsibly.

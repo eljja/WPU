@@ -1134,6 +1134,28 @@ def _priority_systems_profile() -> dict[str, object]:
                 f" Screening-only energy proxy max is {float(best_proxy['proxy_reduction']):.6f}; "
                 f"CUDA forward proxy max is {float(best_cuda_proxy['proxy_reduction']):.6f}."
             )
+    boundary_path = ROOT / "pybullet_system_claim_boundary.csv"
+    if boundary_path.exists():
+        boundary_rows = _read_rows(boundary_path)
+        supported = [row for row in boundary_rows if row["status"].startswith("supported")]
+        partial = [row for row in boundary_rows if row["status"].startswith("partial")]
+        missing = [row for row in boundary_rows if row["status"] == "not_measured"]
+        branch_row = next((row for row in boundary_rows if row["axis"] == "branch_overlay_memory"), None)
+        peak_row = next((row for row in boundary_rows if row["axis"] == "random_cuda_peak_memory"), None)
+        boundary_note = (
+            f" Systems claim-boundary audit separates {len(supported)} supported proxy axes, "
+            f"{len(partial)} partial trained axes, and {len(missing)} unmeasured hardware "
+            f"{'axis' if len(missing) == 1 else 'axes'}."
+        )
+        if branch_row is not None:
+            boundary_note += (
+                f" Branch-overlay memory proxy reduction reaches {float(branch_row['observed']):.6f}."
+            )
+        if peak_row is not None:
+            boundary_note += (
+                f" CUDA peak-memory proxy remains weak at {float(peak_row['observed']):.6f}."
+            )
+        cuda_note += boundary_note
     return _row(
         6,
         "Systems profile and memory traffic",
@@ -1299,7 +1321,7 @@ def _ko_interpretation(priority: int) -> str:
         3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 본훈련 baseline-complete로 확장됐고, 새 N_bg=256 screen은 total N=261에서 WPU/graph/token baseline을 모두 완료했다. 단, N_bg=256 run은 저훈련 screen이므로 강한 accuracy superiority evidence가 아니라 matched large-N feasibility evidence로만 취급한다. Coverage audit는 cup benchmark, mechanism shift, closed-loop rollout, objectification corruption, CPU/CUDA systems profile을 분리해 추적한다. WPU-only large-state extension은 N_bg=512, total N=517까지 실행됐지만 graph-transformer baseline이 같은 protocol에서 완료되지 않았으므로 accuracy superiority evidence가 아니라 systems feasibility evidence로만 취급한다. Simulator-backed evidence는 강화됐지만 mechanism 다양성, baseline-complete large-N comparison, perception/state adapter가 아직 부족하다.",
         4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 7-seed composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.071428이다. Branch-prior audit은 catch_heavy가 prior-dominated shift임을 보인다. Mechanism-prior adaptation은 shifted WPU win-rate를 0.333333에서 0.666667로 올리고 prior-dominated shift를 1개에서 0개로 줄인다. Prior-strength sweep의 accuracy-best 설정은 strength=0.75, mean WPU accuracy 0.601852지만 shifted win-rate는 0.666667에 머문다. Calibration-selected prior는 mean accuracy/ECE를 개선하지만 shifted win-rate는 0.333333에 머문다. Few-shot mechanism adaptation은 shifted WPU win-rate 1.000000, mean margin change 0.050264까지 도달하지만 mechanism별 calibration set을 쓰는 adapted protocol이다. 새 mechanism-aware adaptive policy는 selected-prior와 few-shot adaptation을 선택적으로 결합해 shifted win-rate 1.000000, mean accuracy change 0.198412, margin change 0.058201, ECE change -0.099347, Brier change -0.155443에 도달한다. 그러나 이것도 detect-and-adapt protocol이지 zero-shot generalization은 아니다. 따라서 P4는 adapted regime에서 강화됐지만 single-family zero-shot solved는 아니다.",
         5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. 7-seed composition-shift stress의 평균 ECE ratio는 1.014879이고 no_catch에서 1.166073까지 악화된다. 이는 3-seed stress보다 안정적이지만 여전히 calibration 우위는 아니다. Temperature+bias calibration은 no_catch를 개선하지만 3개 mechanism 중 1개만 ECE ratio가 개선되어 보편 해결책은 아니다. Branch-prior audit은 catch_heavy에서 majority prior 0.753968이 best WPU 0.408730을 크게 앞선다는 점을 보여준다. Mechanism-prior adaptation은 accuracy를 개선하지만 shifted mean ECE를 0.024819 악화시킨다. Prior-strength sweep에서도 win-rate를 유지/개선하면서 ECE를 악화시키지 않는 비영점 strength가 없었다. Calibration-selected prior는 shifted mean ECE를 -0.046204, Brier를 -0.105470 개선하지만 baseline win-rate는 올리지 못한다. Few-shot mechanism adaptation도 ECE를 -0.055342 개선한다. 새 mechanism-aware adaptive policy는 shifted accuracy를 +0.198412, margin을 +0.058201, ECE를 -0.099347, Brier를 -0.155443 개선해 detect-and-adapt calibration에는 긍정적이다. Uncertainty-gated local-dense recompute는 aggregate accuracy를 +0.071428, ECE를 -0.016396 개선하지만 dense recompute rate가 0.985450으로 거의 full recompute다. Static low-cost gate는 recompute rate 0.025132에서 accuracy를 +0.009260 올리지만 ECE를 +0.005395 악화시킨다. Learned sparse-output benefit gate는 source low-cost에서 accuracy를 +0.052910 올리지만 ECE를 +0.010769 악화시킨다. Calibration-cost frontier audit은 cost_proxy<=0.25에서 non-reference calibration-safe policy가 0개이고 최저 비용 non-reference calibration-safe policy cost가 0.867725임을 보인다. 따라서 branch probability adaptation은 accuracy 측면에서는 개선됐지만 zero-shot calibration과 calibration-safe 저비용 selective routing은 아직 미해결이다.",
-        6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit의 판정 기준을 corrected matched-or-better로 고치면 N=133에서는 best-accuracy non-WPU baseline 대비 WPU가 더 정확하고 더 빠르다. Pareto audit에서도 WPU는 N=133에서 frontier에 올라가지만 N=5에서는 token에 지배된다. Real energy와 sparse-kernel behavior는 아직 미해결이다.",
+        6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit의 판정 기준을 corrected matched-or-better로 고치면 N=133에서는 best-accuracy non-WPU baseline 대비 WPU가 더 정확하고 더 빠르다. Pareto audit에서도 WPU는 N=133에서 frontier에 올라가지만 N=5에서는 token에 지배된다. Systems claim-boundary audit은 supported proxy 축 4개, partial trained 축 2개, real-power/sparse-kernel 미측정 축 1개를 분리한다. Branch-overlay memory proxy reduction은 0.874128이지만 CUDA peak-memory proxy reduction은 0.304080에 그친다. Real energy와 sparse-kernel behavior는 아직 미해결이다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. Objectification metric은 있지만 downstream loss 연결은 미완성이다.",
     }[priority]
 

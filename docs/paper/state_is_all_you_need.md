@@ -304,6 +304,9 @@ Supported:
   regimes.
 - WPU-hybrid is robust under irrelevant relation noise.
 - Routed sparse execution can reduce CPU latency at large `N`.
+- Systems profiling supports pre-tensor working-set selection and branch-overlay
+  memory accounting as proxies: the current claim-boundary audit records `4`
+  supported proxy axes and branch-overlay memory reduction `0.874128`.
 - Regret-distilled state retrieval improves downstream loss over
   interaction-teacher retrieval in same-seed validation-to-test experiments.
 - Risk-adjusted state-native mechanism selection improves held-out-seed loss
@@ -316,6 +319,9 @@ Not supported:
 - General physical understanding.
 - End-to-end perception-to-state construction.
 - Hardware-level advantage over GPU/NPU/TPU/LPU.
+- Real power, custom sparse-kernel behavior, hardware memory traffic, or broad
+  CUDA peak-memory dominance; the current CUDA peak-memory proxy reduction is
+  only `0.304080`.
 - Fixed `rho` thresholds as a final routing policy.
 - Closed oracle gap for cross-seed candidate scoring; current risk-adjusted
   mechanism selection is positive but still far from the candidate oracle.

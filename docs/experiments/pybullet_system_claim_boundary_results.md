@@ -1,0 +1,30 @@
+# PyBullet Systems Claim-Boundary Audit
+
+This derived audit separates P6 systems evidence by claim type. The goal is not to hide WPU systems advantages, but to make the boundary between tensorization/latency proxies and hardware claims explicit.
+
+Source CSV: `docs/experiments/pybullet_system_claim_boundary.csv`
+
+## Summary
+
+- Supported proxy axes: `4`; partial trained axes: `2`.
+- Maximum branch-overlay memory proxy reduction: `0.874128`.
+- Maximum CUDA peak-memory proxy reduction is only `0.304080`, much weaker than the latency proxy.
+- Screening/weak proxy axes: `2`; real power/sparse-kernel axes still unmeasured: `1`.
+
+## Interpretation
+
+The strongest current P6 evidence supports pre-tensor working-set selection, branch-overlay memory accounting, large-N random-forward latency proxies, and limited trained matched-speedup. It does not yet support broad GPU-memory dominance, real memory-traffic reduction, power savings, or hardware/chip/IP claims.
+
+## Boundary Rows
+
+| axis | status | observed | target | N | B | evidence | limitation |
+| --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| pre_tensor_working_set_tensor_bytes | supported_proxy | 0.997454 | 0.950000 | 2052.562 | 1 | CPU tensorization proxy | This is a tensorization proxy, not hardware memory-traffic telemetry. |
+| random_cpu_sparse_forward_latency | supported_proxy | 0.996975 | 0.950000 | 2052.562 | 3 | random-model CPU forward proxy | Random-model latency is an upper-bound signal, not trained matched-accuracy speedup. |
+| random_cuda_sparse_forward_latency | supported_proxy | 0.996216 | 0.950000 | 2052.375 | 3 | random-model CUDA forward proxy | This still uses generic PyTorch modules, not a custom sparse frontier kernel. |
+| random_cuda_peak_memory | weak_proxy | 0.304080 | 0.950000 | 2052.375 | 1 | CUDA peak-memory proxy | P6 cannot claim broad GPU-memory dominance from the current PyTorch profile. |
+| branch_overlay_memory | supported_proxy | 0.874128 | 0.800000 | 2052.562 | 8 | state-store memory proxy | This is byte accounting from state objects, not allocator-level resident-memory telemetry. |
+| trained_matched_or_better_speedup | partial_matched | 0.500000 | 1.000000 | 133.0 |  | trained benchmark audit | Current trained speedup evidence has only two N values and is not universal latency dominance. |
+| accuracy_latency_pareto_frontier | partial_pareto | 0.500000 | 1.000000 | 133 |  | trained Pareto audit | This separates matched-speedup evidence from full Pareto dominance. |
+| screening_energy_proxy | screening_only | 0.999990 | 0.950000 | 2052.562 | 8 | derived energy proxy | This is not wall-plug power, GPU power telemetry, or hardware energy measurement. |
+| real_power_or_sparse_kernel | not_measured | 0.000000 | 1.000000 |  |  | missing hardware measurement | Hardware/chip/IP claims remain unsupported until this row changes. |

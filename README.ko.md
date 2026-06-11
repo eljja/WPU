@@ -276,6 +276,11 @@ model = wpu.create_model(
   latency reduction `0.996216`을 보였지만 peak-memory reduction은 `0.304080`에
   그친다. 이것은 pre-tensor state indexing에 대한 systems evidence이지 energy나
   matched-accuracy speedup 증명은 아니다.
+- Systems claim-boundary audit은 supported proxy evidence와 unsupported hardware
+  claim을 분리한다. Supported proxy 축은 `4`개, partial trained 축은 `2`개이고,
+  branch-overlay memory proxy reduction은 `0.874128`, CUDA peak-memory proxy
+  reduction은 `0.304080`에 그친다. Real-power/sparse-kernel 축은 `1`개가 명시적으로
+  미측정이다. 따라서 P6는 chip/IP claim이 아니라 systems hypothesis다.
 - Screening-only energy proxy는 tensorization latency와 tensor byte, CUDA forward
   latency와 peak memory를 결합한 보조 지표다. Large `N`에서 큰 proxy reduction을
   보이지만, wall-plug power, GPU power telemetry, sparse-kernel evidence를 대체하지

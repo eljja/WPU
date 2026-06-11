@@ -191,6 +191,13 @@ Use these reports for paper-level claims:
   energy evidence.
 - `pybullet_system_energy_proxy_results.ko.md`: Korean companion for the
   screening-only energy proxy.
+- `pybullet_system_claim_boundary_results.md`: derived P6 audit that separates
+  systems evidence by claim type. It records `4` supported proxy axes, `2`
+  partial trained axes, branch-overlay memory proxy reduction `0.874128`, weak
+  CUDA peak-memory proxy reduction `0.304080`, and one explicitly unmeasured
+  real-power/sparse-kernel hardware axis.
+- `pybullet_system_claim_boundary_results.ko.md`: Korean companion for the
+  systems claim-boundary audit.
 - `pybullet_shift_generalization_results.md`: PyBullet mechanism-family shift
   benchmark. Models train on nominal dynamics and evaluate on `high_force`,
   `edge_shift`, and `catch_heavy`, with ECE/Brier/NLL as first-class calibration
@@ -623,6 +630,10 @@ Historical or preliminary reports:
   state-indexing premise but remains a proxy, not a hardware-power result. The
   matched benchmark now has a small Pareto audit: WPU reaches the
   accuracy-latency frontier at `N=133`, but not at `N=5`.
+- The systems claim-boundary audit makes the P6 limit explicit: the current
+  evidence has supported tensorization/latency/branch-overlay proxy axes, but
+  CUDA peak-memory reduction is only `0.304080` and real power or custom
+  sparse-kernel behavior is not measured.
 - The PyBullet state-integrity audit turns closed-loop rollout stability into
   a tracked metric. It confirms that guarded state-store projection can protect
   applied state, but it remains a safety layer, not a solution to raw WPU sparse

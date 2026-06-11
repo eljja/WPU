@@ -1,0 +1,5 @@
+eval_mechanism,selected_policy,selected_prior_strength,base_wpu_accuracy,policy_wpu_accuracy,wpu_accuracy_change,base_wpu_minus_baseline,policy_wpu_minus_baseline,wpu_margin_change,policy_wpu_win,policy_wpu_ece_change,policy_wpu_brier_change,adapted_protocol
+catch_heavy,selected_prior,1.0,0.40873,0.753968,0.345238,0.059524,0.027778,-0.031746,True,-0.141105,-0.275406,True
+edge_shift,fewshot_adaptation,0.571429,0.527778,0.642857,0.115079,-0.04365,0.031746,0.075396,True,-0.02379,-0.065298,True
+high_force,fewshot_adaptation,0.0,0.43254,0.56746,0.13492,-0.027778,0.103174,0.130952,True,-0.133147,-0.125624,True
+nominal,base_nominal,0.357143,0.444445,0.444445,0.0,-0.055555,-0.055555,0.0,False,0.0,0.0,False

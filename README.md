@@ -368,6 +368,12 @@ The current evidence supports a regime hypothesis, not universal dominance.
   changes by `0.154762`, mean WPU-baseline margin by `0.050264`, and mean ECE
   by `-0.055342`. This uses mechanism-specific calibration samples and is not
   a zero-shot claim.
+  A mechanism-aware adaptive policy is the strongest current P4/P5 adapted
+  result: it uses selected-prior adaptation for high prior-shift cases and
+  few-shot parameter adaptation otherwise. Shifted WPU win-rate is `1.000000`,
+  mean WPU accuracy changes by `0.198412`, margin by `0.058201`, ECE by
+  `-0.099347`, and Brier by `-0.155443`. This is detect-and-adapt evidence, not
+  zero-shot evidence.
   A 3-seed
   calibrated mixture-training probe improves WPU on `edge_shift` but loses
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc

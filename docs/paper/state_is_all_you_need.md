@@ -340,7 +340,12 @@ Not supported:
   generalization. A few-shot mechanism adaptation follow-up reaches shifted
   WPU-vs-baseline win-rate `1.000000` and mean margin change `0.050264`, but it
   uses mechanism-specific calibration samples. It is evidence for an adapted
-  regime, not for zero-shot physical generalization. A separate 7-seed
+  regime, not for zero-shot physical generalization. A mechanism-aware adaptive
+  policy that chooses selected-prior adaptation for high prior-shift cases and
+  few-shot parameter adaptation otherwise improves the adapted regime further:
+  shifted win-rate remains `1.000000`, mean accuracy changes by `0.198412`,
+  margin by `0.058201`, ECE by `-0.099347`, and Brier by `-0.155443`. This is
+  detect-and-adapt evidence, not zero-shot evidence. A separate 7-seed
   composition-shift stress probe is a stronger zero-shot positive sub-regime:
   WPU local-dense wins all three compound mechanisms with mean accuracy delta
   `0.071428`, but mean ECE ratio is `1.014879`, so accuracy and calibration

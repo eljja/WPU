@@ -234,6 +234,13 @@ Use these reports for paper-level claims:
   mechanism generalization.
 - `pybullet_fewshot_mechanism_adaptation_results.ko.md`: Korean companion for
   the few-shot mechanism adaptation diagnostic.
+- `pybullet_mechanism_adaptive_policy_results.md` and
+  `pybullet_mechanism_adaptive_policy_results.ko.md`: derived P4/P5 policy
+  analysis combining calibration-selected priors with few-shot mechanism
+  adaptation. It reaches shifted WPU win-rate `1.000000`, mean accuracy change
+  `0.198412`, margin change `0.058201`, ECE change `-0.099347`, and Brier
+  change `-0.155443`, but it is a detect-and-adapt protocol rather than
+  zero-shot generalization.
 - `pybullet_shift_generalization_mixture_calibrated_results.md`: 3-seed
   calibrated mixture-training probe. It shows that mixture training helps WPU
   on `edge_shift` but not on `catch_heavy`, and that post-hoc temperature
@@ -634,7 +641,14 @@ Historical or preliminary reports:
   Few-shot mechanism adaptation is the first strong P4 adapted-regime result:
   shifted WPU win-rate reaches `1.000000` with mean margin change `0.050264`,
   but it uses mechanism-specific calibration samples and therefore does not
-  prove zero-shot shift generalization. The new 7-seed composition-shift stress
+  prove zero-shot shift generalization.
+  The mechanism-aware adaptive policy is stronger than using either selected
+  priors or few-shot adaptation unconditionally: shifted WPU win-rate is
+  `1.000000`, mean accuracy change is `0.198412`, mean margin change is
+  `0.058201`, mean ECE change is `-0.099347`, and mean Brier change is
+  `-0.155443`. This narrows the next P4 target to an explicit
+  mechanism-shift detector plus selective adaptation.
+  The new 7-seed composition-shift stress
   is a stronger zero-shot positive sub-regime: WPU wins all three compound
   mechanisms with mean accuracy delta `0.071428`, but calibration remains mixed
   because mean ECE ratio is `1.014879`.

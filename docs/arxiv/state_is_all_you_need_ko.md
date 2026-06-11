@@ -453,7 +453,12 @@ scoring이다.
   Few-shot mechanism adaptation follow-up은 shifted WPU-vs-baseline win-rate
   `1.000000`, mean margin change `0.050264`까지 도달하지만 mechanism-specific
   calibration sample을 사용한다. 이는 adapted regime의 evidence이지 zero-shot
-  physical generalization evidence는 아니다. 별도 7-seed composition-shift stress
+  physical generalization evidence는 아니다. Mechanism-aware adaptive policy는
+  prior shift가 큰 경우 selected-prior adaptation을, 나머지는 few-shot parameter
+  adaptation을 사용해 adapted regime을 더 강화한다. Shifted win-rate는
+  `1.000000`, mean accuracy change는 `0.198412`, margin change는 `0.058201`,
+  ECE change는 `-0.099347`, Brier change는 `-0.155443`이다. 이는
+  detect-and-adapt evidence이지 zero-shot evidence는 아니다. 별도 7-seed composition-shift stress
   probe는 더 강한 zero-shot positive sub-regime을 보인다. WPU local-dense는 3개
   compound mechanism 모두에서 이기고 mean accuracy delta는 `0.071428`이지만,
   mean ECE ratio는 `1.014879`라서 accuracy와 calibration은 별도 claim으로 남는다.

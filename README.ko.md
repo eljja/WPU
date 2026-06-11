@@ -304,6 +304,11 @@ model = wpu.create_model(
   win-rate는 `1.000000`, mean WPU accuracy 변화는 `0.154762`, mean WPU-baseline
   margin 변화는 `0.050264`, mean ECE 변화는 `-0.055342`이다. 단, mechanism-specific
   calibration sample을 사용하므로 zero-shot 주장은 아니다.
+  Mechanism-aware adaptive policy는 현재 가장 강한 P4/P5 adapted 결과다. Prior
+  shift가 큰 경우 selected-prior adaptation을 쓰고, 나머지는 few-shot parameter
+  adaptation을 쓴다. Shifted WPU win-rate는 `1.000000`, mean WPU accuracy 변화는
+  `0.198412`, margin 변화는 `0.058201`, ECE 변화는 `-0.099347`, Brier 변화는
+  `-0.155443`이다. 이는 detect-and-adapt evidence이지 zero-shot evidence는 아니다.
   3-seed calibrated mixture-training probe는
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.

@@ -241,6 +241,7 @@ python scripts/analyze_pybullet_fewshot_adaptation.py
 python scripts/analyze_pybullet_mechanism_adaptive_policy.py
 python scripts/pybullet_uncertainty_gated_recompute.py --train-mechanisms nominal high_force edge_shift catch_heavy --eval-mechanisms no_catch edge_high_force edge_catch_heavy --seeds 11 13 17 19 23 29 31 --background-objects 32 --steps 12 --sim-steps 120 --samples 36 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --thresholds 0.34 0.4 0.45 0.5 0.55 0.6 0.65 --out docs/experiments/pybullet_uncertainty_gated_recompute.csv --out-md docs/experiments/pybullet_uncertainty_gated_recompute_results.md --out-ko-md docs/experiments/pybullet_uncertainty_gated_recompute_results.ko.md
 python scripts/pybullet_learned_uncertainty_gate.py --train-mechanisms nominal high_force edge_shift catch_heavy --eval-mechanisms no_catch edge_high_force edge_catch_heavy --seeds 11 13 17 19 23 29 31 --background-objects 32 --steps 12 --sim-steps 120 --samples 36 --gate-samples 48 --batch-size 8 --hidden-dim 64 --num-heads 4 --working-set-size 12 --gate-steps 120 --gate-penalties 0 0.01 0.02 0.04 0.08 0.12 --out docs/experiments/pybullet_learned_uncertainty_gate.csv --out-md docs/experiments/pybullet_learned_uncertainty_gate_results.md --out-ko-md docs/experiments/pybullet_learned_uncertainty_gate_results.ko.md
+python scripts/analyze_pybullet_calibration_cost_frontier.py
 ```
 
 The latest candidate-oracle gap audit can be reproduced with:

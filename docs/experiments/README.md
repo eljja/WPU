@@ -297,6 +297,15 @@ Use these reports for paper-level claims:
   calibration-aware and mechanism-aware, not only sparse-confidence based.
 - `pybullet_learned_uncertainty_gate_results.ko.md`: Korean companion for the
   learned uncertainty-gate probe.
+- `pybullet_calibration_cost_frontier_results.md`: derived P5 audit that puts
+  static threshold gates, learned gates, and mechanism-adaptive policy on common
+  accuracy, ECE, Brier, and cost-proxy axes. It finds `0` non-reference
+  calibration-safe policies under `cost_proxy <= 0.25`; the best low-cost
+  accuracy policy improves accuracy by `0.052910` but worsens ECE by
+  `0.010769`, while the strongest ECE improvement requires cost proxy
+  `1.000000`.
+- `pybullet_calibration_cost_frontier_results.ko.md`: Korean companion for the
+  calibration-cost frontier audit.
 - `wpu_v2_candidate_safety_frontier_results.md`: candidate-regret safety
   frontier showing that P1 is not solved by threshold search: stricter harmful
   accept limits sharply reduce gap closure.
@@ -664,6 +673,10 @@ Historical or preliminary reports:
   `0.010769`, and dense recompute rate is `0.205027`. Few-shot gating is more
   accurate but not low-cost/calibration-safe. The remaining P5 target is a
   calibration-aware mechanism uncertainty model.
+- The calibration-cost frontier audit makes that P5 boundary explicit:
+  non-reference calibration-safe low-cost policies under `cost_proxy <= 0.25`
+  are currently `0`, and the cheapest calibration-safe non-reference policy has
+  cost proxy `0.867725`.
 - The defensible v2 claim is therefore architectural: explicit state exposes
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does

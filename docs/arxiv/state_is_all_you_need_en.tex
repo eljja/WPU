@@ -774,6 +774,12 @@ accuracy more strongly, but exceeds the low-cost budget or worsens ECE. Thus the
 next calibration problem is not simply to learn a confidence gate; it is to learn
 mechanism-aware uncertainty that optimizes accuracy, calibration, and recompute
 cost jointly.
+A derived calibration-cost frontier audit makes this boundary explicit across
+static gates, learned gates, and mechanism-aware adaptation: it finds zero
+non-reference calibration-safe policies under cost proxy $\leq 0.25$, while the
+cheapest non-reference calibration-safe policy has cost proxy 0.867725. This
+turns P5 into a falsifiable routing target rather than a solved calibration
+claim.
 
 \section{Discussion}
 

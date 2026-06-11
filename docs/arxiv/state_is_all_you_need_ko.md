@@ -476,6 +476,11 @@ scoring이다.
   low-cost budget을 넘거나 ECE를 악화시킨다. 따라서 다음 calibration 문제는 단순히
   confidence gate를 학습하는 것이 아니라, accuracy, calibration, recompute cost를
   함께 최적화하는 mechanism-aware uncertainty를 학습하는 것이다.
+  Calibration-cost frontier audit은 static gate, learned gate,
+  mechanism-aware adaptation을 같은 축으로 비교해 이 경계를 명확히 한다.
+  `cost_proxy <= 0.25`에서 non-reference calibration-safe policy는 `0`개이고,
+  최저 비용 non-reference calibration-safe policy의 cost proxy는 `0.867725`이다.
+  따라서 P5는 해결된 calibration claim이 아니라 반증 가능한 routing target이다.
 - Baseline-complete large-`N` simulator superiority는 아직 지지되지 않는다.
   PyBullet coverage audit는 저훈련 matched screen으로 N_bg=256, total `N=261`에서
   WPU/graph/token baseline을 모두 완료했지만, 이 설정은 강한 accuracy superiority를

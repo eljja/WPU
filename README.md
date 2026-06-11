@@ -400,6 +400,13 @@ The current evidence supports a regime hypothesis, not universal dominance.
   more accurate but exceeds the low-cost budget or worsens ECE. The remaining
   target is calibration-aware mechanism uncertainty, not confidence-only
   routing.
+- A calibration-cost frontier audit now normalizes static gates, learned gates,
+  and mechanism-adaptive policy on the same axes. It finds `0` non-reference
+  calibration-safe policies under `cost_proxy <= 0.25`. The best low-cost
+  policy is still `source_learned_p0.12` (`+0.052910` accuracy, `+0.010769`
+  ECE, cost `0.205027`), while the strongest ECE improvement comes from
+  mechanism-aware detect-and-adapt at cost proxy `1.000000`. This makes P5 a
+  precise open target rather than a solved claim.
 
 The central v1 target is now precise: push the accuracy crossover beyond the
 runtime crossover while preserving sparse routed work.

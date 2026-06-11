@@ -333,6 +333,13 @@ model = wpu.create_model(
   ECE를 `0.010769` 악화시킨다. Few-shot mechanism gate는 accuracy는 더 올리지만
   low-cost budget을 넘거나 ECE를 악화시킨다. 남은 목표는 confidence-only routing이
   아니라 calibration-aware mechanism uncertainty다.
+- Calibration-cost frontier audit은 static gate, learned gate,
+  mechanism-adaptive policy를 같은 축으로 정규화한다. `cost_proxy <= 0.25`
+  안에서 non-reference calibration-safe policy는 `0`개다. 가장 좋은 low-cost
+  policy는 여전히 `source_learned_p0.12`이며 accuracy `+0.052910`, ECE
+  `+0.010769`, cost `0.205027`이다. 가장 큰 ECE 개선은 mechanism-aware
+  detect-and-adapt에서 나오지만 cost proxy가 `1.000000`이다. 따라서 P5는
+  해결된 claim이 아니라 명확한 open target이다.
 
 v1의 핵심 목표는 명확하다.
 

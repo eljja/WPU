@@ -393,6 +393,13 @@ The current evidence supports a regime hypothesis, not universal dominance.
   mean WPU accuracy changes by `0.198412`, margin by `0.058201`, ECE by
   `-0.099347`, and Brier by `-0.155443`. This is detect-and-adapt evidence, not
   zero-shot evidence.
+  A follow-up calibration-statistic shift detector recovers the same safe policy
+  without routing directly on mechanism names: using base ECE and
+  majority-prior gap, it keeps nominal false adaptation at `0` while preserving
+  shifted WPU win-rate `1.000000`, mean accuracy change `0.198412`, ECE change
+  `-0.099347`, and Brier change `-0.155443`. It is stronger than the
+  mechanism-name oracle framing, but still depends on calibration labels and
+  adaptation samples.
   A 3-seed
   calibrated mixture-training probe improves WPU on `edge_shift` but loses
   `catch_heavy` and worsens aggregate ECE ratio to `1.133834`, so post-hoc

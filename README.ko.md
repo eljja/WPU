@@ -327,6 +327,12 @@ model = wpu.create_model(
   adaptation을 쓴다. Shifted WPU win-rate는 `1.000000`, mean WPU accuracy 변화는
   `0.198412`, margin 변화는 `0.058201`, ECE 변화는 `-0.099347`, Brier 변화는
   `-0.155443`이다. 이는 detect-and-adapt evidence이지 zero-shot evidence는 아니다.
+  후속 calibration-statistic shift detector는 mechanism 이름으로 직접 route하지 않고
+  base ECE와 majority-prior gap으로 같은 safe policy를 복원한다. Nominal false
+  adaptation은 `0`이고 shifted WPU win-rate `1.000000`, mean accuracy change
+  `0.198412`, ECE change `-0.099347`, Brier change `-0.155443`를 유지한다.
+  따라서 mechanism-name oracle보다 엄격하지만, 여전히 calibration label과 adaptation
+  sample에 의존한다.
   3-seed calibrated mixture-training probe는
   `edge_shift`에서 WPU를 개선하지만 `catch_heavy`에서는 baseline에 지고 aggregate ECE
   ratio도 `1.133834`로 악화되어 post-hoc temperature calibration만으로는 부족하다.

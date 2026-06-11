@@ -271,6 +271,14 @@ Use these reports for paper-level claims:
   `0.198412`, margin change `0.058201`, ECE change `-0.099347`, and Brier
   change `-0.155443`, but it is a detect-and-adapt protocol rather than
   zero-shot generalization.
+- `pybullet_shift_detector_policy_results.md` and
+  `pybullet_shift_detector_policy_results.ko.md`: derived P4/P5 audit that
+  selects base, selected-prior, or few-shot adaptation from calibration
+  statistics instead of mechanism name. The best safe detector has shifted WPU
+  win-rate `1.000000`, mean accuracy change `0.198412`, mean margin change
+  `0.058201`, mean ECE change `-0.099347`, mean Brier change `-0.155443`, and
+  nominal false adaptation `0`. It is stricter than the mechanism-name policy,
+  but still uses calibration labels and adaptation samples.
 - `pybullet_shift_generalization_mixture_calibrated_results.md`: 3-seed
   calibrated mixture-training probe. It shows that mixture training helps WPU
   on `edge_shift` but not on `catch_heavy`, and that post-hoc temperature
@@ -716,6 +724,11 @@ Historical or preliminary reports:
   `0.058201`, mean ECE change is `-0.099347`, and mean Brier change is
   `-0.155443`. This narrows the next P4 target to an explicit
   mechanism-shift detector plus selective adaptation.
+  A follow-up calibration-statistic detector reaches the same shifted win-rate,
+  accuracy, margin, ECE, and Brier changes with nominal false adaptation `0`
+  using base ECE and majority-prior gap rather than mechanism-name routing.
+  This strengthens detect-and-adapt evidence while preserving the caveat that
+  calibration labels and adaptation samples are still required.
   The new 7-seed composition-shift stress
   is a stronger zero-shot positive sub-regime: WPU wins all three compound
   mechanisms with mean accuracy delta `0.071428`, but calibration remains mixed

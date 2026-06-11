@@ -469,7 +469,11 @@ scoring이다.
   adaptation을 사용해 adapted regime을 더 강화한다. Shifted win-rate는
   `1.000000`, mean accuracy change는 `0.198412`, margin change는 `0.058201`,
   ECE change는 `-0.099347`, Brier change는 `-0.155443`이다. 이는
-  detect-and-adapt evidence이지 zero-shot evidence는 아니다. 별도 7-seed composition-shift stress
+  detect-and-adapt evidence이지 zero-shot evidence는 아니다. 후속
+  calibration-statistic detector는 mechanism-name routing 대신 base ECE와
+  majority-prior gap으로 같은 safe policy를 복원하며 nominal false adaptation은
+  `0`이다. 이는 더 엄격한 detect-and-adapt audit이지만, 여전히 calibration label과
+  adaptation sample을 사용한다. 별도 7-seed composition-shift stress
   probe는 더 강한 zero-shot positive sub-regime을 보인다. WPU local-dense는 3개
   compound mechanism 모두에서 이기고 mean accuracy delta는 `0.071428`이지만,
   mean ECE ratio는 `1.014879`라서 accuracy와 calibration은 별도 claim으로 남는다.

@@ -769,6 +769,10 @@ adapted regime by using selected-prior adaptation for high prior-shift cases
 and few-shot parameter adaptation otherwise: shifted win-rate remains 1.000000,
 mean accuracy changes by 0.198412, margin by 0.058201, ECE by -0.099347, and
 Brier by -0.155443. This is detect-and-adapt evidence, not zero-shot evidence.
+A follow-up calibration-statistic detector recovers the same safe policy using
+base ECE and majority-prior gap rather than mechanism-name routing, with zero
+nominal false adaptation; it is a stricter detect-and-adapt audit, but still
+uses calibration labels and adaptation samples.
 A separate 7-seed composition-shift stress probe is a
 stronger zero-shot positive sub-regime: WPU local-dense wins all three compound
 mechanisms with mean accuracy delta 0.071428, but mean ECE ratio is 1.014879,

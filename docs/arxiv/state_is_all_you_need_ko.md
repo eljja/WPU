@@ -443,7 +443,12 @@ scoring이다.
 - cross-seed candidate oracle gap은 아직 닫히지 않았다. Risk-adjusted mechanism
   selection은 positive result지만 최종 candidate scorer는 아니다. Cross-fit
   ensemble regret gate도 closure를 개선하지 못했으므로, 남은 병목은 threshold
-  tuning이 아니라 transfer-stable candidate scoring이다.
+  tuning이 아니라 transfer-stable candidate scoring이다. Descriptor-standardized
+  group-DRO gate와 joint object-set candidate gate도 standalone fix로는 약하다.
+  Joint gate의 best/safe closure는 `0.101454`, train-selected closure는
+  `0.072167`, regression-heavy K=16 ablation은 `0.034751`에 그친다. 따라서
+  병목은 candidate-state feature 부재만이 아니라 retrieval, candidate
+  generation, propagation을 함께 학습하지 못한 데 있다.
 - mechanism shift에서 branch-prior adaptation이 아직 안정적이지 않다.
   PyBullet branch-prior audit은 `catch_heavy`가 prior-dominated임을 보인다.
   majority accuracy는 `0.753968`이고 best WPU는 `0.408730`이므로,

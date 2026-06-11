@@ -397,8 +397,12 @@ ensemble regret gate도 negative result다. 최고 closure는 `0.287268`, safe b
 `0.279738`, cross-fit selected closure는 `0.270989`로 direct gate보다 낮다.
 Descriptor standardization과 group-DRO no-harm training도 단독 해결책이 아니다.
 Best closure와 safe best는 모두 `0.110889`, train-selected closure는 `0.093863`에
-그친다. 따라서 P1은 또 다른 post-hoc gate가 아니라 retrieval/propagation과 함께
-학습되는 candidate scoring을 필요로 한다.
+그친다. 새 joint object-set candidate gate도 negative result다. 후보 working set을
+직접 object-set으로 인코딩했지만 best closure는 `0.101454`, safe best는 `0.101454`,
+train-selected closure는 `0.072167`에 그쳤고, regression-heavy K=16 ablation도 best
+closure `0.034751`에 머물렀다. 따라서 P1은 또 다른 post-hoc gate나 object-set-only
+gate가 아니라 retrieval, candidate generation, propagation을 함께 학습하는 구조를
+필요로 한다.
 
 ## 논문 및 문서
 

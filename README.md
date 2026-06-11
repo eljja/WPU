@@ -461,9 +461,13 @@ closure is `0.144863`. A cross-fit ensemble regret gate is also negative:
 best closure is `0.287268`, safe best is `0.279738`, and cross-fit selected
 closure is `0.270989`. Descriptor standardization plus group-DRO no-harm
 training is also insufficient: best closure is `0.110889`, safe best is
-`0.110889`, and train-selected closure is `0.093863`. P1 therefore needs
-better candidate scoring learned with retrieval and propagation, not another
-post-hoc gate.
+`0.110889`, and train-selected closure is `0.093863`. A new joint object-set
+candidate gate, which encodes each candidate working set directly, is also a
+negative result: best closure is `0.101454`, safe best is `0.101454`, and
+train-selected closure is only `0.072167`; a regression-heavy K=16 ablation
+falls to best closure `0.034751`. P1 therefore needs retrieval, candidate
+generation, and propagation trained together, not another post-hoc or
+object-set-only gate.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than

@@ -290,9 +290,12 @@ routing as trainable pre-propagation control problems.
 
 Negative results are equally important. Opaque set evaluators, score-margin
 confidence gates, and strict no-harm seed-stable gates do not solve cross-seed
-selection. The unresolved v2 problem is therefore not simply candidate
-generation; it is invariant candidate descriptors, risk-aware mechanism
-selection, and joint retriever-propagator training.
+selection. Direct candidate-regret gating remains the strongest deployed P1
+result, while descriptor-standardized group-DRO gating and joint object-set
+candidate gating are both weaker as standalone fixes. The unresolved v2 problem
+is therefore not simply candidate generation or missing object-set features; it
+is invariant candidate descriptors, risk-aware mechanism selection, candidate
+generation, and joint retriever-propagator training.
 
 ## Current Evidence Boundary
 

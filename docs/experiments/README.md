@@ -444,6 +444,17 @@ Use these reports for paper-level claims:
   best closure and safe best are both `0.110889`, and train-selected closure is
   `0.093863`, so invariant candidate scoring must be learned jointly with
   retrieval/propagation rather than as another post-hoc gate.
+- `wpu_v2_candidate_joint_gate_results.md` and
+  `wpu_v2_candidate_joint_gate_results.ko.md`: joint object-set candidate gate.
+  It encodes each candidate working set directly instead of only aggregate
+  descriptors, but remains a negative P1 fix: best/safe closure is `0.101454`,
+  train-selected closure is `0.072167`, and mean regret correlation is near
+  zero.
+- `wpu_v2_candidate_joint_gate_regression_heavy_k16_results.md` and
+  `wpu_v2_candidate_joint_gate_regression_heavy_k16_results.ko.md`: K=16
+  regression-heavy ablation for the joint object-set gate. It lowers best
+  closure to `0.034751`, confirming that the failure is not simply caused by
+  no-harm or group-DRO terms overpowering regression.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -614,6 +625,11 @@ Historical or preliminary reports:
   candidate-regret gating as a standalone fix. It reaches only `0.110889`
   closure, so the next P1 step is joint candidate scoring with retrieval and
   propagation, not another detached selector.
+- Joint object-set candidate gating is also weaker than direct candidate-regret
+  gating. Encoding the candidate state itself reaches only `0.101454` closure
+  and the regression-heavy K=16 ablation reaches `0.034751`, so the P1
+  bottleneck is not merely missing object-set features. Candidate generation,
+  retrieval, and propagation must be trained as a coupled objective.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

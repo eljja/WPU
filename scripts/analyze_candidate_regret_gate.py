@@ -120,6 +120,7 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
 def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: bool) -> str:
     is_safety_gate = "candidate_safety_gate" in source.name
     is_invariant_gate = "candidate_invariant_gate" in source.name
+    is_joint_gate = "candidate_joint_gate" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
@@ -138,11 +139,19 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         title = (
             "# Candidate Invariant Gate 결과"
             if is_invariant_gate
+            else "# Joint Object-Set Candidate Gate 결과"
+            if is_joint_gate
             else "# Candidate Safety/Utility Gate 결과"
             if is_safety_gate
             else "# Candidate Regret Gate 결과"
         )
-        if is_invariant_gate:
+        if is_joint_gate:
+            intro = (
+                "이 문서는 후보 working set의 명시적 object-set feature와 compact context를 함께 인코딩하는 "
+                "P1 probe를 요약한다. 목표는 post-hoc threshold가 아니라 후보 state 자체를 보고 "
+                "candidate regret와 no-harm accept를 예측할 수 있는지 평가하는 것이다."
+            )
+        elif is_invariant_gate:
             intro = (
                 "이 문서는 candidate descriptor를 train split에서 표준화하고, "
                 "train seed별 worst-group loss와 no-harm objective를 함께 줄이는 P1 probe를 요약한다."
@@ -158,7 +167,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         conclusion = (
             f"최고 closure는 `{float(best['gap_closure_fraction']):.6f}` "
             f"(`K={best['causal_k']}`, `{best['policy']}`)다. P1 목표 `0.5`를 기준으로 "
-            f"{'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'}가 candidate-oracle gap을 충분히 닫는지와 "
+            f"{'joint object-set deployment' if is_joint_gate else 'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'}가 candidate-oracle gap을 충분히 닫는지와 "
             "harmful accept를 억제하는지를 동시에 본다."
             + (
                 f" Harmful accept <= `0.25` 조건의 conservative best는 "
@@ -180,15 +189,29 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             "아래 표는 K별 최고 정책과 전체 상위 정책만 보여준다.",
             "좋은 정책은 closure만 높으면 부족하고, harmful accept도 낮아야 한다.",
         ]
+        if is_joint_gate:
+            notes.append(
+                "이 실험이 direct candidate-regret gate보다 약하면, 병목은 object-set feature 부재만이 아니라 cross-seed regret target 자체의 안정성 부족으로 해석한다."
+            )
     else:
         title = (
             "# Candidate Invariant Gate Results"
             if is_invariant_gate
+            else "# Joint Object-Set Candidate Gate Results"
+            if is_joint_gate
             else "# Candidate Safety/Utility Gate Results"
             if is_safety_gate
             else "# Candidate Regret Gate Results"
         )
-        if is_invariant_gate:
+        if is_joint_gate:
+            intro = (
+                "This report summarizes a P1 probe that jointly encodes each candidate "
+                "working set as an explicit object set plus compact context. It tests "
+                "whether candidate regret and no-harm acceptance become more transferable "
+                "when the selector sees the candidate state itself rather than only "
+                "aggregate descriptors."
+            )
+        elif is_invariant_gate:
             intro = (
                 "This report summarizes a P1 probe that standardizes candidate descriptors "
                 "on the training split and jointly minimizes no-harm utility loss, "
@@ -207,7 +230,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         conclusion = (
             f"The best closure is `{float(best['gap_closure_fraction']):.6f}` "
             f"(`K={best['causal_k']}`, `{best['policy']}`). P1 evaluates whether "
-            f"{'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'} closes the candidate-oracle gap while "
+            f"{'joint object-set deployment' if is_joint_gate else 'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'} closes the candidate-oracle gap while "
             "controlling harmful accepts."
             + (
                 f" The conservative best under harmful-accept <= `0.25` is "
@@ -229,6 +252,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             "The table below shows the best policy per K and the strongest overall policies.",
             "A useful deployed policy needs both high closure and low harmful accepts.",
         ]
+        if is_joint_gate:
+            notes.append(
+                "If this probe underperforms the direct candidate-regret gate, the bottleneck is not merely missing object-set features; the cross-seed regret target itself remains unstable."
+            )
 
     lines = [
         title,

@@ -8,6 +8,7 @@ Source CSVs:
 - `docs/experiments/wpu_v2_candidate_regret_gate_perturbed_summary.csv`
 - `docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv`
 - `docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv`
+- `docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv`
 
 Derived CSV:
 
@@ -39,9 +40,16 @@ Derived CSV:
 | crossfit | 0.20 | `crossfit_regret_gate_m0p0025_r0_d2_v0` | 16 | 0.221481 | 0.191111 | 0.635555 | 149 |
 | crossfit | 0.25 | `crossfit_regret_gate_m0_r0_d0_v1` | 16 | 0.279738 | 0.244445 | 0.824444 | 193 |
 | crossfit | 0.30 | `crossfit_regret_gate_m0p0025_r0_d0_v0` | 16 | 0.287268 | 0.284444 | 0.928889 | 250 |
+| end_to_end | 0.05 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.10 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.15 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.20 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.25 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.30 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
 
 ## Interpretation
 
 - P1의 실패는 단순히 threshold를 못 찾은 문제가 아니다.
 - 높은 closure를 얻는 구간은 harmful accept가 커지고, harmful accept를 강하게 낮추면 closure가 급격히 줄어든다.
 - 따라서 다음 개선은 post-hoc threshold가 아니라 candidate scoring 자체의 ranking, no-harm, uncertainty target을 함께 바꾸어야 한다.
+- End-to-end downstream-loss selector도 더 엄격한 negative check로 포함한다. 현재 protocol에서는 low-harm frontier에 feasible point를 추가하지 못한다.

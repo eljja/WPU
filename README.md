@@ -481,9 +481,12 @@ training is also insufficient: best closure is `0.110889`, safe best is
 candidate gate, which encodes each candidate working set directly, is also a
 negative result: best closure is `0.101454`, safe best is `0.101454`, and
 train-selected closure is only `0.072167`; a regression-heavy K=16 ablation
-falls to best closure `0.034751`. P1 therefore needs retrieval, candidate
-generation, and propagation trained together, not another post-hoc or
-object-set-only gate.
+falls to best closure `0.034751`. An end-to-end downstream-loss selector,
+trained on expected propagation loss and no-harm mass, is also negative: best
+closure is `0.106927`, no deployment satisfies harmful accept `<=0.25`, and
+train-selected closure is `0.096833`. P1 therefore needs deeper joint
+retriever-candidate-propagator training, not another post-hoc, object-set-only,
+or shallow selector-loss gate.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than

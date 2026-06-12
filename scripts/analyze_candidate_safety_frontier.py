@@ -9,6 +9,8 @@ DEFAULT_INPUTS = [
     Path("docs/experiments/wpu_v2_candidate_regret_gate_summary.csv"),
     Path("docs/experiments/wpu_v2_candidate_regret_gate_perturbed_summary.csv"),
     Path("docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv"),
+    Path("docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv"),
+    Path("docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv"),
 ]
 
 
@@ -20,7 +22,7 @@ def main() -> None:
     parser.add_argument(
         "--labels",
         nargs="+",
-        default=["direct", "perturbed", "penalty"],
+        default=["direct", "perturbed", "penalty", "crossfit", "end_to_end"],
     )
     parser.add_argument("--harmful-limits", type=float, nargs="+", default=[0.05, 0.10, 0.15, 0.20, 0.25, 0.30])
     parser.add_argument("--out-csv", type=Path, default=Path("docs/experiments/wpu_v2_candidate_safety_frontier.csv"))
@@ -109,6 +111,7 @@ def _render(rows: list[dict[str, object]], input_paths: list[Path], output_csv: 
             "P1의 실패는 단순히 threshold를 못 찾은 문제가 아니다.",
             "높은 closure를 얻는 구간은 harmful accept가 커지고, harmful accept를 강하게 낮추면 closure가 급격히 줄어든다.",
             "따라서 다음 개선은 post-hoc threshold가 아니라 candidate scoring 자체의 ranking, no-harm, uncertainty target을 함께 바꾸어야 한다.",
+            "End-to-end downstream-loss selector도 더 엄격한 negative check로 포함한다. 현재 protocol에서는 low-harm frontier에 feasible point를 추가하지 못한다.",
         ]
     else:
         title = "# Candidate Safety Frontier"
@@ -120,6 +123,7 @@ def _render(rows: list[dict[str, object]], input_paths: list[Path], output_csv: 
             "P1 is not failing because a single threshold is missing.",
             "High closure coincides with higher harmful accepts, while strict harmful-accept limits collapse closure.",
             "The next improvement must change candidate scoring itself: ranking, no-harm, and uncertainty targets have to be learned jointly rather than tuned post hoc.",
+            "The end-to-end downstream-loss selector is included as a stricter negative check: under the current protocol it adds no feasible low-harm frontier point.",
         ]
     lines = [
         title,

@@ -8,6 +8,7 @@ Source CSVs:
 - `docs/experiments/wpu_v2_candidate_regret_gate_perturbed_summary.csv`
 - `docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv`
 - `docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv`
+- `docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv`
 
 Derived CSV:
 
@@ -39,9 +40,16 @@ Derived CSV:
 | crossfit | 0.20 | `crossfit_regret_gate_m0p0025_r0_d2_v0` | 16 | 0.221481 | 0.191111 | 0.635555 | 149 |
 | crossfit | 0.25 | `crossfit_regret_gate_m0_r0_d0_v1` | 16 | 0.279738 | 0.244445 | 0.824444 | 193 |
 | crossfit | 0.30 | `crossfit_regret_gate_m0p0025_r0_d0_v0` | 16 | 0.287268 | 0.284444 | 0.928889 | 250 |
+| end_to_end | 0.05 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.10 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.15 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.20 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.25 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| end_to_end | 0.30 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
 
 ## Interpretation
 
 - P1 is not failing because a single threshold is missing.
 - High closure coincides with higher harmful accepts, while strict harmful-accept limits collapse closure.
 - The next improvement must change candidate scoring itself: ranking, no-harm, and uncertainty targets have to be learned jointly rather than tuned post hoc.
+- The end-to-end downstream-loss selector is included as a stricter negative check: under the current protocol it adds no feasible low-harm frontier point.

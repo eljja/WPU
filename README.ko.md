@@ -415,8 +415,8 @@ Best closure와 safe best는 모두 `0.110889`, train-selected closure는 `0.093
 직접 object-set으로 인코딩했지만 best closure는 `0.101454`, safe best는 `0.101454`,
 train-selected closure는 `0.072167`에 그쳤고, regression-heavy K=16 ablation도 best
 closure `0.034751`에 머물렀다. Expected propagation loss와 no-harm mass에 직접
-맞춘 end-to-end downstream-loss selector도 negative result다. Best closure는
-`0.106927`, harmful accept `<=0.25`를 만족하는 deployment는 없고,
+맞춘 fixed-candidate/fixed-propagator downstream-loss selector도 negative result다.
+Best closure는 `0.106927`, harmful accept `<=0.25`를 만족하는 deployment는 없고,
 train-selected closure는 `0.096833`에 그쳤다. 따라서 P1은 또 다른 post-hoc gate,
 object-set-only gate, 또는 얕은 selector-loss 교체가 아니라 retrieval, candidate
 generation, propagation을 더 깊게 함께 학습하는 구조를 필요로 한다.
@@ -430,6 +430,7 @@ generation, propagation을 더 깊게 함께 학습하는 구조를 필요로 �
 - Claim ledger: `docs/claims.ko.md`
 - Objectification definition: `docs/objectification.ko.md`
 - Publication readiness / gap register: `docs/publication_readiness.ko.md`
+- Process-unit release audit: `docs/process_unit_release_audit.ko.md`
 - Reproducibility guide: `docs/reproducibility.ko.md`
 - Experiment index: `docs/experiments/README.md`
 - PyBullet benchmark: `docs/experiments/pybullet_cup_benchmark_results.ko.md`

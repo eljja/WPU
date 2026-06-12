@@ -1,6 +1,6 @@
 # End-to-End Candidate Selector Results
 
-This report summarizes a P1 probe that trains the candidate working-set selector directly on downstream propagation loss and no-harm mass relative to the learned baseline. The objective is policy-level expected loss, not only oracle-label imitation.
+This report summarizes a P1 probe that trains the candidate working-set selector directly on downstream propagation loss and no-harm mass relative to the learned baseline. The objective is policy-level expected loss, not only oracle-label imitation. The candidate generator and propagation model are fixed, so this is not full joint retriever-propagator training.
 
 Source CSV: `docs/experiments/wpu_v2_end_to_end_candidate_selector.csv`
 
@@ -32,4 +32,4 @@ The best closure is `0.106927` (`K=16`, `end_to_end_selector_pg0p2_pmin0`). P1 e
 - The CSV keeps all reject-margin/risk-penalty deployment sweep points.
 - The table below shows the best policy per K and the strongest overall policies.
 - A useful deployed policy needs both high closure and low harmful accepts.
-- If this probe underperforms the direct candidate-regret gate, P1 is not merely a post-hoc thresholding problem; candidate generation, propagation, and selector training need deeper joint supervision.
+- If this fixed-candidate/fixed-propagator probe underperforms the direct candidate-regret gate, P1 is not merely a post-hoc thresholding problem; candidate generation, propagation, and selector training need deeper joint supervision.

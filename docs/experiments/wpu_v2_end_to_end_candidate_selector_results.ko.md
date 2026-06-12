@@ -1,6 +1,6 @@
 # End-to-End Candidate Selector 결과
 
-이 문서는 후보 working set selector를 downstream propagation loss와 baseline보다 나빠지는 no-harm mass에 직접 맞춰 학습한 P1 probe를 요약한다. 목표는 oracle label imitation이 아니라 선택 정책의 실제 expected loss를 줄이는 것이다.
+이 문서는 후보 working set selector를 downstream propagation loss와 baseline보다 나빠지는 no-harm mass에 직접 맞춰 학습한 P1 probe를 요약한다. 목표는 oracle label imitation이 아니라 선택 정책의 실제 expected loss를 줄이는 것이다. 단, 후보 생성기와 propagation model은 고정되어 있으므로 full joint retriever-propagator training으로 해석하면 안 된다.
 
 Source CSV: `docs/experiments/wpu_v2_end_to_end_candidate_selector.csv`
 

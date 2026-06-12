@@ -416,10 +416,11 @@ closure는 `0.287268`, cross-fit selected closure는 `0.270989`로 direct candid
 gate보다 낮다. Descriptor standardization과 group-DRO no-harm training도 detached
 selector로는 충분하지 않았다. Best closure는 `0.110889`, train-selected closure는
 `0.093863`에 그친다. Joint object-set candidate gate도 negative result였고,
-end-to-end downstream-loss selector도 best closure `0.106927`, feasible low-harm
-deployment `0`개, train-selected closure `0.096833`에 그쳤다. 따라서 v2의 다음 핵심
-문제는 더 많은 candidate 생성, post-hoc deployment gate, 또는 얕은 selector-loss
-교체가 아니라 retrieval/propagation과 함께 더 깊게 학습되는 candidate scoring이다.
+fixed-candidate/fixed-propagator downstream-loss selector도 best closure
+`0.106927`, feasible low-harm deployment `0`개, train-selected closure
+`0.096833`에 그쳤다. 따라서 v2의 다음 핵심 문제는 더 많은 candidate 생성,
+post-hoc deployment gate, 또는 얕은 selector-loss 교체가 아니라
+retrieval/propagation과 함께 더 깊게 학습되는 candidate scoring이다.
 
 ## 11. 현재 주장 경계
 
@@ -449,10 +450,11 @@ deployment `0`개, train-selected closure `0.096833`에 그쳤다. 따라서 v2�
   group-DRO gate와 joint object-set candidate gate도 standalone fix로는 약하다.
   Joint gate의 best/safe closure는 `0.101454`, train-selected closure는
   `0.072167`, regression-heavy K=16 ablation은 `0.034751`에 그친다.
-  End-to-end downstream-loss selector도 best closure `0.106927`, feasible
-  low-harm deployment `0`개, train-selected closure `0.096833`에 그친다. 따라서
-  병목은 candidate-state feature 부재나 selector-loss 교체만이 아니라 retrieval,
-  candidate generation, propagation을 함께 학습하지 못한 데 있다.
+  Fixed-candidate/fixed-propagator downstream-loss selector도 best closure
+  `0.106927`, feasible low-harm deployment `0`개, train-selected closure
+  `0.096833`에 그친다. 따라서 병목은 candidate-state feature 부재나
+  selector-loss 교체만이 아니라 retrieval, candidate generation, propagation을
+  함께 학습하지 못한 데 있다.
 - mechanism shift에서 branch-prior adaptation이 아직 안정적이지 않다.
   PyBullet branch-prior audit은 `catch_heavy`가 prior-dominated임을 보인다.
   majority accuracy는 `0.753968`이고 best WPU는 `0.408730`이므로,

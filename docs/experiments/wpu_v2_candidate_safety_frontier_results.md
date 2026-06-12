@@ -52,4 +52,4 @@ Derived CSV:
 - P1 is not failing because a single threshold is missing.
 - High closure coincides with higher harmful accepts, while strict harmful-accept limits collapse closure.
 - The next improvement must change candidate scoring itself: ranking, no-harm, and uncertainty targets have to be learned jointly rather than tuned post hoc.
-- The end-to-end downstream-loss selector is included as a stricter negative check: under the current protocol it adds no feasible low-harm frontier point.
+- The fixed-candidate/fixed-propagator downstream-loss selector is included as a stricter negative check: under the current protocol it adds no feasible low-harm frontier point.

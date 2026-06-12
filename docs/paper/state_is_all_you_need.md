@@ -292,12 +292,12 @@ Negative results are equally important. Opaque set evaluators, score-margin
 confidence gates, and strict no-harm seed-stable gates do not solve cross-seed
 selection. Direct candidate-regret gating remains the strongest deployed P1
 result, while descriptor-standardized group-DRO gating and joint object-set
-candidate gating are both weaker as standalone fixes. An end-to-end
-downstream-loss selector trained on expected propagation loss and no-harm mass
-is also weaker: best closure is `0.106927`, no deployment satisfies harmful
-accept `<=0.25`, and train-selected closure is `0.096833`. The unresolved v2
-problem is therefore not simply candidate generation, missing object-set
-features, or replacing the selector loss; it is invariant candidate
+candidate gating are both weaker as standalone fixes. A fixed-candidate and
+fixed-propagator downstream-loss selector trained on expected propagation loss
+and no-harm mass is also weaker: best closure is `0.106927`, no deployment
+satisfies harmful accept `<=0.25`, and train-selected closure is `0.096833`.
+The unresolved v2 problem is therefore not simply candidate generation, missing
+object-set features, or replacing the selector loss; it is invariant candidate
 descriptors, risk-aware mechanism selection, candidate generation, and deeper
 joint retriever-propagator training.
 

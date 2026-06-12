@@ -668,10 +668,11 @@ Historical or preliminary reports:
   and the regression-heavy K=16 ablation reaches `0.034751`, so the P1
   bottleneck is not merely missing object-set features. Candidate generation,
   retrieval, and propagation must be trained as a coupled objective.
-- End-to-end downstream-loss selector training is also weaker than direct
-  candidate-regret gating. It reaches only `0.106927` best closure, has no
-  harmful-accept `<=0.25` deployment, and train-selected closure is `0.096833`.
-  This rules out a shallow selector-loss replacement as the missing fix.
+- Fixed-candidate/fixed-propagator downstream-loss selector training is also
+  weaker than direct candidate-regret gating. It reaches only `0.106927` best
+  closure, has no harmful-accept `<=0.25` deployment, and train-selected closure
+  is `0.096833`. This rules out a shallow selector-loss replacement as the
+  missing fix, but it is not full joint retriever-propagator training.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

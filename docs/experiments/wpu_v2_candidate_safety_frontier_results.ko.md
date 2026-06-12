@@ -52,4 +52,4 @@ Derived CSV:
 - P1의 실패는 단순히 threshold를 못 찾은 문제가 아니다.
 - 높은 closure를 얻는 구간은 harmful accept가 커지고, harmful accept를 강하게 낮추면 closure가 급격히 줄어든다.
 - 따라서 다음 개선은 post-hoc threshold가 아니라 candidate scoring 자체의 ranking, no-harm, uncertainty target을 함께 바꾸어야 한다.
-- End-to-end downstream-loss selector도 더 엄격한 negative check로 포함한다. 현재 protocol에서는 low-harm frontier에 feasible point를 추가하지 못한다.
+- Fixed-candidate/fixed-propagator downstream-loss selector도 더 엄격한 negative check로 포함한다. 현재 protocol에서는 low-harm frontier에 feasible point를 추가하지 못한다.

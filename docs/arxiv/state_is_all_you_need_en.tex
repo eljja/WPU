@@ -741,14 +741,14 @@ training is also insufficient as a detached selector: best closure is 0.110889
 and train-selected closure is 0.093863. A joint object-set candidate gate,
 which encodes each candidate working set before scoring it, is also negative:
 best and safe closure are 0.101454, train-selected closure is 0.072167, and a
-regression-heavy \(K=16\) ablation reaches only 0.034751. An end-to-end
-downstream-loss selector trained on expected propagation loss and no-harm mass
-is also negative: best closure is 0.106927, no deployment satisfies harmful
-accept \(\leq 0.25\), and train-selected closure is 0.096833. The unresolved v2
-problem is therefore candidate generation and scoring learned jointly with
-retrieval and propagation, not merely the generation of more candidate sets,
-candidate-state features, post-hoc deployment gates, or a shallow selector-loss
-replacement.
+regression-heavy \(K=16\) ablation reaches only 0.034751. A fixed-candidate and
+fixed-propagator downstream-loss selector trained on expected propagation loss
+and no-harm mass is also negative: best closure is 0.106927, no deployment
+satisfies harmful accept \(\leq 0.25\), and train-selected closure is 0.096833.
+The unresolved v2 problem is therefore candidate generation and scoring learned
+jointly with retrieval and propagation, not merely the generation of more
+candidate sets, candidate-state features, post-hoc deployment gates, or a
+shallow selector-loss replacement.
 
 A separate PyBullet branch-prior audit adds an important boundary to the shift
 claim. In the \texttt{catch\_heavy} mechanism, the majority branch prior reaches

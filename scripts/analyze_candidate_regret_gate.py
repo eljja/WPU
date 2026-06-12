@@ -152,7 +152,9 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             intro = (
                 "이 문서는 후보 working set selector를 downstream propagation loss와 "
                 "baseline보다 나빠지는 no-harm mass에 직접 맞춰 학습한 P1 probe를 요약한다. "
-                "목표는 oracle label imitation이 아니라 선택 정책의 실제 expected loss를 줄이는 것이다."
+                "목표는 oracle label imitation이 아니라 선택 정책의 실제 expected loss를 줄이는 것이다. "
+                "단, 후보 생성기와 propagation model은 고정되어 있으므로 full joint "
+                "retriever-propagator training으로 해석하면 안 된다."
             )
         elif is_joint_gate:
             intro = (
@@ -223,7 +225,9 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
                 "This report summarizes a P1 probe that trains the candidate "
                 "working-set selector directly on downstream propagation loss and "
                 "no-harm mass relative to the learned baseline. The objective is "
-                "policy-level expected loss, not only oracle-label imitation."
+                "policy-level expected loss, not only oracle-label imitation. "
+                "The candidate generator and propagation model are fixed, so this "
+                "is not full joint retriever-propagator training."
             )
         elif is_joint_gate:
             intro = (
@@ -280,7 +284,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             )
         if is_end_to_end_selector:
             notes.append(
-                "If this probe underperforms the direct candidate-regret gate, P1 is not merely a post-hoc thresholding problem; candidate generation, propagation, and selector training need deeper joint supervision."
+                "If this fixed-candidate/fixed-propagator probe underperforms the direct candidate-regret gate, P1 is not merely a post-hoc thresholding problem; candidate generation, propagation, and selector training need deeper joint supervision."
             )
 
     lines = [

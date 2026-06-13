@@ -418,9 +418,11 @@ selector로는 충분하지 않았다. Best closure는 `0.110889`, train-selecte
 `0.093863`에 그친다. Joint object-set candidate gate도 negative result였고,
 fixed-candidate/fixed-propagator downstream-loss selector도 best closure
 `0.106927`, feasible low-harm deployment `0`개, train-selected closure
-`0.096833`에 그쳤다. 따라서 v2의 다음 핵심 문제는 더 많은 candidate 생성,
-post-hoc deployment gate, 또는 얕은 selector-loss 교체가 아니라
-retrieval/propagation과 함께 더 깊게 학습되는 candidate scoring이다.
+`0.096833`에 그쳤다. Downstream-regret object membership으로 학습한 learned
+candidate generator는 `K=16`에서 oracle closure `0.361251`의 headroom을 만들지만
+deployed evaluator는 `0.042951`만 회수한다. 따라서 v2의 다음 핵심 문제는 더 많은
+candidate 생성, post-hoc deployment gate, 또는 얕은 selector-loss 교체가 아니라
+retrieval, verification, propagation과 함께 더 깊게 학습되는 candidate scoring이다.
 
 ## 11. 현재 주장 경계
 

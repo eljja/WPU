@@ -25,6 +25,15 @@ Process-unit 공개 감사는 `docs/process_unit_release_audit.ko.md`를 함께 
 | C10 | 단기 WPU 가치는 silicon보다 software runtime/middleware에서 더 가능성이 있다. | plausible direction이며 아직 실험적으로 증명되지 않음. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | digital-twin, simulation backend, game/server, robotics middleware benchmark가 필요하다. |
 | C11 | 객체화 품질은 propagation 전에 contract로 측정 가능하고 국소적으로 repair 가능하다. | 구현 주장으로 지지됨. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `tests/test_script_entrypoints.py`, `docs/experiments/objectification_relation_repair_probe_results.md`, `docs/experiments/pybullet_objectification_quality_results.ko.md`, `docs/experiments/pybullet_objectification_loss_coupling_results.ko.md`, `README.ko.md`, `docs/objectification.ko.md`. | Relation repair와 `LocalLawHypothesis`는 보수적 hypothesis 및 revision report를 만들 뿐 ground-truth physics가 아니다. 최신 probe는 learned repair가 aliased type name을 넘어 transfer하고 toy downstream diagnostic을 개선하며 law-revision gap을 보고할 수 있음을 보인다. PyBullet loss-coupling audit은 selected-K/frontier degradation이 MSE increase와 연결됨을 보이지만 branch accuracy 변화는 아직 작다. perception-to-object construction이나 unknown-theory discovery가 해결됐다는 증거는 아니다. |
 
+P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
+Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수
+있음을 보인다. `K=16`에서 learned-generator oracle closure는 `0.361251`까지 도달하지만,
+실제 deployed set evaluator closure는 `0.042951`에 그친다. 따라서 WPU v2는 candidate
+generation만으로 working-set selection을 해결했다고 주장할 수 없다. 다음 단계는 candidate
+generation, retrieval, propagation verification, calibrated no-harm training을 함께 묶는
+joint objective다. 자세한 결과는
+`docs/experiments/wpu_v2_joint_candidate_generator_results.ko.md`를 본다.
+
 P3 large-N simulator evidence는 강화됐지만 여전히 제한적이다. Medium-training N_bg=256
 run은 total `N=261`에서 baseline-complete다. Best WPU accuracy는 `0.466667`, best
 baseline accuracy는 `0.450000`이고, best WPU는 해당 best-accuracy baseline보다

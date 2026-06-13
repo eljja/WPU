@@ -296,10 +296,13 @@ candidate gating are both weaker as standalone fixes. A fixed-candidate and
 fixed-propagator downstream-loss selector trained on expected propagation loss
 and no-harm mass is also weaker: best closure is `0.106927`, no deployment
 satisfies harmful accept `<=0.25`, and train-selected closure is `0.096833`.
-The unresolved v2 problem is therefore not simply candidate generation, missing
-object-set features, or replacing the selector loss; it is invariant candidate
-descriptors, risk-aware mechanism selection, candidate generation, and deeper
-joint retriever-propagator training.
+A learned candidate generator trained from downstream-regret object membership
+creates additional oracle headroom (`0.361251` closure at `K=16`), but the
+deployed evaluator recovers only `0.042951`. The unresolved v2 problem is
+therefore not simply candidate generation, missing object-set features, or
+replacing the selector loss; it is invariant candidate descriptors, risk-aware
+mechanism selection, candidate generation, verification, and deeper joint
+retriever-propagator training.
 
 ## Current Evidence Boundary
 

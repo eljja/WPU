@@ -78,10 +78,13 @@ projection 덕분에 fail에서 partial로 올라갔지만 raw delta instability
    perturbation은 train-selected deployment를 개선하지 못했으며 cross-fit ensemble
    gate도 closure를 낮췄고 descriptor-standardized group-DRO gate도 direct regret
    gate보다 약하다. Joint object-set gate와 fixed-candidate/fixed-propagator
-   downstream-loss selector도 약하므로 병목은 candidate-state feature 부재나
-   selector-loss 교체만이 아니다. 다음 단계는 margin-only gate가 아니라 candidate
-   generation, retrieval, propagation을 함께 학습하는 더 깊은 joint training과
-   calibrated accept/reject loss다.
+   downstream-loss selector도 약하다. Learned candidate generator는 `K=16`에서
+   oracle closure `0.361251`의 headroom을 만들지만 deployed evaluator는
+   `0.042951`만 회수한다. 따라서 병목은 candidate-state feature 부재,
+   selector-loss 교체, candidate generation 단독의 문제가 아니다. 다음 단계는
+   margin-only gate가 아니라 candidate generation, retrieval, propagation
+   verification, propagation을 함께 학습하는 더 깊은 joint training과 calibrated
+   accept/reject loss다.
 2. long-horizon state integrity를 단순히 보고하는 것을 넘어 개선한다. 단순
    delta-norm, rollout-consistency, state-validity, rejection-only loss는
    부족하다. Selective correction은 correction이 발생했을 때 수정되는 state 범위를

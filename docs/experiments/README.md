@@ -673,6 +673,14 @@ Historical or preliminary reports:
   closure, has no harmful-accept `<=0.25` deployment, and train-selected closure
   is `0.096833`. This rules out a shallow selector-loss replacement as the
   missing fix, but it is not full joint retriever-propagator training.
+- A downstream-regret learned candidate generator creates additional oracle
+  headroom but does not make it deployable. Learned-generated oracle closure
+  reaches `0.361251` at `K=16`, while the deployed evaluator reaches only
+  `0.042951`. This rules out generator-only P1 improvement.
+- `wpu_v2_joint_candidate_generator_results.md` /
+  `wpu_v2_joint_candidate_generator_results.ko.md`: downstream-regret learned
+  candidate generator probe. It separates learned-generator oracle headroom from
+  deployed evaluator closure.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

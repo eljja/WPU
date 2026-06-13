@@ -487,15 +487,18 @@ downstream-loss selector, trained on expected propagation loss and no-harm mass,
 is also negative: best closure is `0.106927`, no deployment satisfies harmful
 accept `<=0.25`, and train-selected closure is `0.096833`. P1 therefore needs
 deeper joint retriever-candidate-propagator training, not another post-hoc,
-object-set-only, or shallow selector-loss gate.
+object-set-only, or shallow selector-loss gate. A new downstream-regret learned
+candidate generator creates oracle headroom (`0.361251` closure at `K=16`) but
+the deployed evaluator recovers only `0.042951`, so candidate generation alone
+is not enough.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than
   teacher overlap;
 - make candidate descriptors invariant across seeds and model instances;
 - use risk-adjusted mechanism routing instead of a single opaque reranker;
-- jointly train retriever and propagator instead of treating retrieval as a
-  post-hoc selector;
+- jointly train candidate generation, retriever, propagation verification, and
+  propagator instead of treating retrieval as a post-hoc selector;
 - preserve sparse routed work while improving large-`N` accuracy;
 - add long-horizon branch consistency, calibration, and state-integrity
   mechanisms;

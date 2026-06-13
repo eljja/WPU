@@ -85,10 +85,13 @@ claim of broad superiority.
    train-selected deployment, cross-fit ensemble gating lowers closure, and
    descriptor-standardized group-DRO gating is weaker than direct regret gating.
    Joint object-set gating and fixed-candidate/fixed-propagator downstream-loss
-   selector training are also weaker, so the bottleneck is not merely missing
-   candidate-state features or selector-loss replacement. The next step is
-   deeper joint candidate generation, retrieval, propagation, and calibrated
-   accept/reject losses, not another post-hoc gate.
+   selector training are also weaker. A learned candidate generator creates
+   oracle headroom (`0.361251` closure at `K=16`) but its deployed evaluator
+   recovers only `0.042951`, so the bottleneck is not merely missing
+   candidate-state features, selector-loss replacement, or candidate generation
+   alone. The next step is deeper joint candidate generation, retrieval,
+   propagation verification, propagation, and calibrated accept/reject losses,
+   not another post-hoc gate.
 2. Improve long-horizon state integrity, not only report it. Simple delta-norm,
    rollout-consistency, state-validity, and rejection-only losses are
    insufficient. Selective correction lowers how much state is modified when

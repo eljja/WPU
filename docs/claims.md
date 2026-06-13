@@ -26,6 +26,15 @@ For the formal objectification definition, see `docs/objectification.md`.
 | C10 | Near-term WPU value is more plausible as software runtime/middleware than silicon. | Plausible direction, not experimentally proven. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | Requires digital-twin, simulation backend, game/server, or robotics middleware benchmarks. |
 | C11 | Objectification quality is measurable and locally repairable as a contract before propagation. | Supported as an implementation claim. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `tests/test_script_entrypoints.py`, `docs/experiments/objectification_relation_repair_probe_results.md`, `docs/experiments/pybullet_objectification_quality_results.md`, `docs/experiments/pybullet_objectification_loss_coupling_results.md`, `README.md`, `docs/objectification.md`. | Relation repair and `LocalLawHypothesis` produce conservative hypotheses and revision reports, not ground-truth physics. The latest probes show that learned repair can transfer across aliased type names, improve a toy downstream diagnostic, and report law-revision gaps. The PyBullet loss-coupling audit links selected-K/frontier degradation to MSE increase, but branch-accuracy movement remains small; this is not evidence that perception-to-object construction or unknown-theory discovery is solved. |
 
+P1 candidate-generation evidence is now explicitly negative as a standalone fix.
+The joint candidate-generator probe shows that learned generated candidates can
+create oracle headroom, with learned-generator oracle closure reaching
+`0.361251` at `K=16`, but the deployed set evaluator reaches only `0.042951`.
+This means WPU v2 cannot claim solved working-set selection from candidate
+generation alone; it needs joint candidate generation, retrieval, propagation
+verification, and calibrated no-harm training. See
+`docs/experiments/wpu_v2_joint_candidate_generator_results.md`.
+
 P3 large-N simulator evidence is stronger but still bounded. The medium-training
 N_bg=256 run is baseline-complete at total `N=261`: best WPU accuracy is
 `0.466667`, best baseline accuracy is `0.450000`, and best WPU is `60.629526x`

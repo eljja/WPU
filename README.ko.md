@@ -419,7 +419,10 @@ closure `0.034751`에 머물렀다. Expected propagation loss와 no-harm mass에
 Best closure는 `0.106927`, harmful accept `<=0.25`를 만족하는 deployment는 없고,
 train-selected closure는 `0.096833`에 그쳤다. 따라서 P1은 또 다른 post-hoc gate,
 object-set-only gate, 또는 얕은 selector-loss 교체가 아니라 retrieval, candidate
-generation, propagation을 더 깊게 함께 학습하는 구조를 필요로 한다.
+generation, propagation을 더 깊게 함께 학습하는 구조를 필요로 한다. 새
+downstream-regret learned candidate generator는 `K=16`에서 oracle closure
+`0.361251`의 headroom을 만들지만 deployed evaluator는 `0.042951`만 회수한다.
+따라서 candidate generation 단독도 충분하지 않다.
 
 ## 논문 및 문서
 

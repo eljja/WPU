@@ -290,6 +290,8 @@ python scripts/retriever_cross_seed_joint_candidate_gate_probe.py --k-values 16 
 python scripts/analyze_candidate_regret_gate.py --input docs/experiments/wpu_v2_candidate_joint_gate_regression_heavy_k16.csv --out-csv docs/experiments/wpu_v2_candidate_joint_gate_regression_heavy_k16_summary.csv --out-md docs/experiments/wpu_v2_candidate_joint_gate_regression_heavy_k16_results.md --out-ko-md docs/experiments/wpu_v2_candidate_joint_gate_regression_heavy_k16_results.ko.md
 python scripts/retriever_cross_seed_end_to_end_candidate_selector_probe.py --out docs/experiments/wpu_v2_end_to_end_candidate_selector.csv
 python scripts/analyze_candidate_regret_gate.py --input docs/experiments/wpu_v2_end_to_end_candidate_selector.csv --out-csv docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv --out-md docs/experiments/wpu_v2_end_to_end_candidate_selector_results.md --out-ko-md docs/experiments/wpu_v2_end_to_end_candidate_selector_results.ko.md
+python scripts/retriever_cross_seed_joint_candidate_generator_probe.py --out docs/experiments/wpu_v2_joint_candidate_generator.csv
+python scripts/analyze_joint_candidate_generator.py
 python scripts/analyze_candidate_safety_frontier.py --inputs docs/experiments/wpu_v2_candidate_regret_gate_summary.csv docs/experiments/wpu_v2_candidate_regret_gate_perturbed_summary.csv docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv --labels direct perturbed penalty crossfit end_to_end
 python scripts/analyze_matched_accuracy_speedup.py
 python scripts/analyze_matched_speedup_tolerance.py

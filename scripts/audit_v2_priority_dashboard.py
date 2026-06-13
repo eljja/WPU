@@ -66,6 +66,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
     joint_path = ROOT / "wpu_v2_candidate_joint_gate_summary.csv"
     joint_regression_path = ROOT / "wpu_v2_candidate_joint_gate_regression_heavy_k16_summary.csv"
     end_to_end_path = ROOT / "wpu_v2_end_to_end_candidate_selector_summary.csv"
+    joint_generator_path = ROOT / "wpu_v2_joint_candidate_generator_summary.csv"
     regret_best = None
     regret_safe_best = None
     regret_unconstrained_best = None
@@ -354,6 +355,19 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
                 else "."
             )
         )
+    joint_generator_best = None
+    joint_generator_note = ""
+    if joint_generator_path.exists():
+        generator_rows = _read_rows(joint_generator_path)
+        best_generator_oracle = max(generator_rows, key=lambda row: float(row["learned_generator_oracle_closure"]))
+        best_generator_evaluator = max(generator_rows, key=lambda row: float(row["evaluator_gap_closure"]))
+        joint_generator_best = float(best_generator_evaluator["evaluator_gap_closure"])
+        joint_generator_note = (
+            f" Joint candidate generation is a new negative diagnostic: learned-generated oracle closure reaches "
+            f"{float(best_generator_oracle['learned_generator_oracle_closure']):.6f} at K={best_generator_oracle['causal_k']}, "
+            f"but deployed evaluator closure reaches only {joint_generator_best:.6f} at K={best_generator_evaluator['causal_k']}. "
+            f"This shows candidate generation creates headroom but does not make it deployable without joint verification."
+        )
     best = max(
         value
         for value in [
@@ -365,6 +379,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
             invariant_best,
             joint_best,
             end_to_end_best,
+            joint_generator_best,
         ]
         if value is not None
     )
@@ -377,6 +392,8 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         if invariant_best == best
         else regret_path
         if regret_best == best
+        else joint_generator_path
+        if joint_generator_best == best
         else path
     )
     return _row(
@@ -387,8 +404,8 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         0.5,
         "gap_closure_fraction",
         source,
-        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}{crossfit_note}{invariant_note}{joint_note}{joint_regression_note}{end_to_end_note}",
-        "Move beyond post-hoc, object-set-only, and selector-loss-only gates: jointly train candidate generation, retrieval, and propagation with calibrated no-harm objectives and held-out seed selection.",
+        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}{crossfit_note}{invariant_note}{joint_note}{joint_regression_note}{end_to_end_note}{joint_generator_note}",
+        "Move beyond post-hoc, object-set-only, selector-loss-only, and generator-only probes: jointly train candidate generation, retrieval, propagation verification, and calibrated no-harm objectives with held-out seed selection.",
     )
 
 
@@ -1560,7 +1577,7 @@ def _ko_status(status: str) -> str:
 
 def _ko_interpretation(priority: int) -> str:
     return {
-        1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다. 별도 safety/utility head도 negative result다. Best closure는 0.147450, safe best는 0.090719, train-selected closure는 0.144863에 그친다. Cross-fit ensemble regret gate도 train-selected overfit 가설을 부정하는 negative result다. 최고 closure는 0.287268, safe best는 0.279738, cross-fit selected closure는 0.270989로 direct regret gate보다 낮다. Descriptor standardization과 group-DRO no-harm training도 standalone 해결책이 아니며 train-selected closure는 0.093863이다. 새 joint object-set candidate gate도 negative result다. Best closure는 0.101454, safe best는 0.101454, train-selected closure는 0.072167이고 mean regret correlation은 -0.000180에 가깝다. Regression-heavy ablation도 K=16에서 best closure 0.034751, train-selected closure -0.003089에 그친다. Fixed-candidate/fixed-propagator downstream-loss selector도 negative result다. Best closure는 0.106927이고 harmful-accept <= 0.25를 만족하는 deployment가 없으며 train-selected closure는 0.096833에 그친다. 따라서 P1 병목은 object-set feature 부재나 selector-loss 교체만의 문제가 아니라 cross-seed candidate regret target, 후보 생성, retrieval, 전파 모델을 함께 안정화해야 하는 문제다.",
+        1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다. 별도 safety/utility head도 negative result다. Best closure는 0.147450, safe best는 0.090719, train-selected closure는 0.144863에 그친다. Cross-fit ensemble regret gate도 train-selected overfit 가설을 부정하는 negative result다. 최고 closure는 0.287268, safe best는 0.279738, cross-fit selected closure는 0.270989로 direct regret gate보다 낮다. Descriptor standardization과 group-DRO no-harm training도 standalone 해결책이 아니며 train-selected closure는 0.093863이다. 새 joint object-set candidate gate도 negative result다. Best closure는 0.101454, safe best는 0.101454, train-selected closure는 0.072167이고 mean regret correlation은 -0.000180에 가깝다. Regression-heavy ablation도 K=16에서 best closure 0.034751, train-selected closure -0.003089에 그친다. Fixed-candidate/fixed-propagator downstream-loss selector도 negative result다. Best closure는 0.106927이고 harmful-accept <= 0.25를 만족하는 deployment가 없으며 train-selected closure는 0.096833에 그친다. 새 joint candidate generator도 learned-generated oracle closure는 K=16에서 0.361251까지 만들지만 deployed evaluator closure는 0.042951에 그친다. 따라서 P1 병목은 object-set feature 부재, selector-loss 교체, 후보 생성 단독의 문제가 아니라 cross-seed candidate regret target, 후보 생성, retrieval, 전파 검증을 함께 안정화해야 하는 문제다.",
         2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.900288로 떨어진다. Escalated corrected rollback은 local-dense fallback을 사용해 integrity를 0.914831로 올리고 rollback rate를 0.000000으로 낮춘다. Finite-corrected run은 finite-safe delta clipping과 correction-only projection으로 integrity 0.958735, rollback rate 0.000000, escalation rate 0.000000을 달성하지만 correction rate가 0.784166으로 높다. 새 selective correction은 같은 integrity 0.958735를 유지하면서 corrected object fraction을 0.027461로 낮추고 low-disruption integrity를 0.758574까지 올린다. 그러나 correction trigger rate는 여전히 0.784166이다. Correction-trigger frontier audit은 integrity>=0.8 및 correction_rate<=0.25를 동시에 만족하는 trigger policy가 0개임을 보인다. 최고 low-correction trigger는 selective_corrected_entropy035이고 integrity 0.653668, correction rate 0.230000에 그친다. 따라서 P2는 memory-layer disruption은 줄였지만 raw delta stability와 low-frequency correction-trigger 학습은 아직 해결되지 않았다.",
         3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 본훈련 baseline-complete로 확장됐고, N_bg=256 screen은 total N=261에서 WPU/graph/token baseline을 모두 완료했다. 새 medium-training N_bg=256 baseline-complete run은 evidence quality를 올린다. Best WPU인 wpu-cws-indexed-local-dense는 accuracy 0.466667이고 best baseline인 graph-transformer는 0.450000이며, best WPU는 해당 best-accuracy baseline보다 forward latency 기준 60.629526x 빠르다. 단, margin이 작고 단일 cup family이므로 broad superiority claim은 아니다. Coverage audit는 9개 PyBullet 축을 추적하고, WPU-only large-state extension은 N_bg=512, total N=517까지 실행됐지만 graph-transformer baseline이 같은 protocol에서 완료되지 않았으므로 accuracy superiority evidence가 아니라 systems feasibility evidence로만 취급한다. Simulator-backed evidence는 강화됐지만 mechanism 다양성, baseline-complete large-N comparison, perception/state adapter가 아직 부족하다.",
         4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 7-seed composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.071428이다. Branch-prior audit은 catch_heavy가 prior-dominated shift임을 보인다. Mechanism-prior adaptation은 shifted WPU win-rate를 0.333333에서 0.666667로 올리고 prior-dominated shift를 1개에서 0개로 줄인다. Prior-strength sweep의 accuracy-best 설정은 strength=0.75, mean WPU accuracy 0.601852지만 shifted win-rate는 0.666667에 머문다. Calibration-selected prior는 mean accuracy/ECE를 개선하지만 shifted win-rate는 0.333333에 머문다. Few-shot mechanism adaptation은 shifted WPU win-rate 1.000000, mean margin change 0.050264까지 도달하지만 mechanism별 calibration set을 쓰는 adapted protocol이다. Mechanism-aware adaptive policy는 selected-prior와 few-shot adaptation을 선택적으로 결합해 shifted win-rate 1.000000, mean accuracy change 0.198412, margin change 0.058201, ECE change -0.099347, Brier change -0.155443에 도달한다. 새 calibration-statistic shift detector는 mechanism 이름 대신 base ECE와 majority-prior gap으로 같은 정책을 복원하며 nominal false adaptation 0, shifted win-rate 1.000000을 달성한다. 그러나 calibration label과 adaptation sample을 쓰므로 detect-and-adapt protocol이지 zero-shot generalization은 아니다. 따라서 P4는 adapted regime에서 강화됐지만 single-family zero-shot solved는 아니다.",
@@ -1572,7 +1589,7 @@ def _ko_interpretation(priority: int) -> str:
 
 def _ko_next_action(priority: int) -> str:
     return {
-        1: "Post-hoc gate, object-set-only gate, selector-loss-only gate를 더 튜닝하기보다 candidate generation, retrieval, propagation을 joint objective로 묶고, no-harm/calibration target을 held-out seed 전이에 맞게 학습한다.",
+        1: "Post-hoc gate, object-set-only gate, selector-loss-only gate, generator-only probe를 더 튜닝하기보다 candidate generation, retrieval, propagation verification을 joint objective로 묶고, no-harm/calibration target을 held-out seed 전이에 맞게 학습한다.",
         2: "Selective correction으로 수정 범위는 줄였지만 correction trigger rate는 줄이지 못했다. 다음은 transition model 자체를 안정화하고, correction trigger를 learned uncertainty/state-validity objective로 학습해 대부분의 sparse update를 수정하지 않아도 integrity가 유지되게 만든다.",
         3: "N_bg=256 이상에서 training budget을 키운 baseline-complete run, 더 많은 mechanism, long-horizon simulator rollout, perception/state adapter를 추가한다.",
         4: "명시적인 mechanism-shift detector를 학습하고, 더 어려운 held-out mechanism에서 selective adaptation policy를 평가한다.",

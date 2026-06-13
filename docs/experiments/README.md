@@ -173,6 +173,13 @@ Use these reports for paper-level claims:
   policies meeting integrity >= `0.8` and correction rate <= `0.25`; the best
   low-correction trigger is `selective_corrected_entropy035` with integrity
   `0.653668` at correction rate `0.230000`.
+- `pybullet_learned_correction_trigger_results.md` and
+  `pybullet_learned_correction_trigger_results.ko.md`: P2 learned-trigger audit
+  on the hard held-out seed split. It finds `0` summary policies meeting
+  integrity >= `0.8` and correction rate <= `0.25`. The best learned trigger
+  preserves integrity `0.958931` only at correction rate `0.791667`, while the
+  best low-correction policy reaches integrity `0.523279`. This makes the next
+  P2 target stable transition training, not another trigger threshold.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -748,7 +755,9 @@ Historical or preliminary reports:
   low-disruption integrity `0.758574`; correction trigger frequency remains the
   unsolved issue. The correction-trigger frontier confirms that hand-coded
   low-frequency gates are not enough: none of the tested trigger policies meets
-  integrity >= `0.8` with correction rate <= `0.25`.
+  integrity >= `0.8` with correction rate <= `0.25`. The learned-trigger audit
+  confirms the same boundary on hard held-out seeds: the best learned trigger
+  reaches integrity `0.958931` only with correction rate `0.791667`.
 - The PyBullet shift benchmark adds the first mechanism-family generalization
   and calibration table. It is mixed: WPU local-dense leads on `catch_heavy`,
   but `serialized-token` is stronger on `edge_shift` and `high_force`.

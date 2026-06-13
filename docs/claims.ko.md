@@ -61,6 +61,14 @@ integrity >= `0.8`과 correction rate <= `0.25`를 동시에 만족한 경우는
 그친다. 따라서 현재 증거는 low-frequency stable sparse dynamics가 아니라 bounded
 memory-safety layer다.
 
+P2 learned correction-trigger 증거도 hard seed split에서 negative result다.
+`docs/experiments/pybullet_learned_correction_trigger_results.ko.md`의 audit은 integrity
+>= `0.8`과 correction rate <= `0.25`를 동시에 만족한 summary policy가 `0`개임을
+보인다. 최고 learned trigger integrity는 `0.958931`이지만 correction rate가
+`0.791667`이고, correction rate <= `0.25` 조건의 최고 integrity는 `0.523279`에
+그친다. 따라서 단순 learned trigger가 missing fix라는 가설은 약해졌고, 다음 단계는
+state-validity 및 correction objective를 포함한 stable transition training이다.
+
 ## 반증 조건
 
 - controlled identity/locality/branching benchmark에서 serialized-token 또는 graph

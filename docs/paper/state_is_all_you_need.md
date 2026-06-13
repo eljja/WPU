@@ -436,7 +436,10 @@ The next decisive step is experimental, not rhetorical:
   raw sparse dynamics are not solved. A correction-trigger frontier makes this
   boundary sharper: no tested trigger policy reaches integrity >= `0.8` with
   correction rate <= `0.25`; the best low-correction entropy gate reaches only
-  `0.653668` integrity;
+  `0.653668` integrity. A learned correction trigger does not remove the
+  boundary on the hard seed split: the best learned trigger reaches integrity
+  `0.958931` only at correction rate `0.791667`, while the best policy under
+  correction rate <= `0.25` reaches integrity `0.523279`;
 - hardware-aware profiling of frontier queues, relation fetch, scatter/gather,
   delta logs, and branch overlays.
 

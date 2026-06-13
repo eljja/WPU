@@ -556,8 +556,11 @@ matched or acceptable accuracy at lower routed work
   낮춘다. 그러나 correction trigger rate는 여전히 `0.784166`이다. Correction-trigger
   frontier는 이 경계를 더 선명하게 만든다. 테스트한 trigger policy 중 integrity >=
   `0.8`과 correction rate <= `0.25`를 동시에 만족한 경우는 없고, 최고 low-correction
-  entropy gate도 integrity `0.653668`에 그친다. 따라서 이는 bounded memory-safety
-  layer의 증거이지 raw sparse dynamics 안정화의 증거는 아니다.
+  entropy gate도 integrity `0.653668`에 그친다. Learned correction trigger도 hard seed
+  split에서 이 경계를 제거하지 못한다. 최고 learned trigger integrity는 `0.958931`이지만
+  correction rate가 `0.791667`이고, correction rate <= `0.25` 조건의 최고 integrity는
+  `0.523279`에 그친다. 따라서 이는 bounded memory-safety layer의 증거이지 raw sparse
+  dynamics 안정화의 증거는 아니다.
 - sparse advantage가 실제 sparse kernel, memory traffic, branch overlay 비용을
   포함하면 사라진다.
 

@@ -278,6 +278,10 @@ model = wpu.create_model(
   `0.53`으로 무너뜨리고, entropy gate는 correction rate를 `0.230000`, `0.210000`까지
   낮추지만 integrity가 각각 `0.653668`, `0.642658`에 그친다. 테스트한 correction-trigger
   policy 중 integrity >= `0.8`과 correction rate <= `0.25`를 동시에 만족한 경우는 없다.
+  Learned correction-trigger hard-seed audit도 integrity `0.958931`에 도달하지만
+  correction rate가 `0.791667`로 높고, correction rate <= `0.25` 조건의 최고
+  integrity는 `0.523279`에 그친다. 따라서 P2는 다른 trigger threshold가 아니라
+  transition 자체의 안정화가 필요하다.
 - 첫 PyBullet local-law revision probe는 제한된 positive regime을 보였다.
   Object-state 기반 단순 법칙은 `high_force`와 `edge_shift`에서 cup-delta MSE를
   낮췄지만, `nominal`과 `catch_heavy`에서는 overfit과 candidate-selection gap이

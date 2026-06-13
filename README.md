@@ -338,7 +338,11 @@ The current evidence supports a regime hypothesis, not universal dominance.
   problem. Stride/margin and raw-delta gates collapse integrity to about `0.53`;
   entropy gates lower correction rate to `0.230000` and `0.210000`, but integrity
   only reaches `0.653668` and `0.642658`. No tested correction-trigger policy
-  meets integrity >= `0.8` with correction rate <= `0.25`.
+  meets integrity >= `0.8` with correction rate <= `0.25`. A learned
+  correction-trigger audit on the hard seed split reaches integrity `0.958931`,
+  but only at correction rate `0.791667`; under correction rate <= `0.25`, the
+  best integrity is `0.523279`. P2 therefore needs more stable transition
+  training, not another trigger threshold.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and

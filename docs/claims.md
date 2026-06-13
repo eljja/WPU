@@ -58,6 +58,15 @@ faster than that best-accuracy baseline. This supports a conditional large-N
 state-native regime, but the margin is small and the task is still one cup
 family, so it does not establish broad simulator superiority.
 
+P2 learned correction-trigger evidence is also negative on the hard seed split.
+The audit in `docs/experiments/pybullet_learned_correction_trigger_results.md`
+finds `0` summary policies meeting integrity >= `0.8` and correction rate <=
+`0.25`. The best learned trigger reaches integrity `0.958931`, but only at
+correction rate `0.791667`; the best policy under correction rate <= `0.25`
+reaches integrity `0.523279`. This rules out a simple learned trigger as the
+missing fix and points to stable transition training with state-validity and
+correction objectives.
+
 ## Falsification Tests
 
 - If serialized-token or graph baselines match WPU at equal compute across

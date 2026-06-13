@@ -303,10 +303,13 @@ therefore not simply candidate generation, missing object-set features, or
 replacing the selector loss. A verified candidate controller that adds
 label-free sparse/local-dense propagation signatures is also weaker than direct
 candidate-regret gating: best closure is `0.024989`, safe best is `0.023029`,
-and train-selected closure is `0.024989`. The unresolved v2 problem is therefore
-invariant candidate descriptors, risk-aware mechanism selection, candidate
-generation, verification, propagation dynamics, and deeper joint
-retriever-propagator training.
+and train-selected closure is `0.024989`. A shallow candidate-aware branch-logit
+propagation adapter is also weaker than direct candidate-regret gating:
+best/safe closure is `0.092185`, and train-selected closure is `0.069911`.
+The unresolved v2 problem is therefore invariant candidate descriptors,
+risk-aware mechanism selection, candidate generation, verification,
+propagation dynamics, and deeper joint retriever-propagator training, not a
+small output adapter.
 
 ## Current Evidence Boundary
 

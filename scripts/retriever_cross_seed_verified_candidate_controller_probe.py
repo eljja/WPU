@@ -256,6 +256,7 @@ def _collect_verified_examples(
         row: dict[str, object] = {}
         candidate_losses = {name: losses[name][0][sample_index] for name in candidate_names}
         best_name = min(candidate_names, key=lambda name: (candidate_losses[name], name))
+        row["branch_label"] = int(sample.branch_label)
         row["best_mode"] = best_name
         row["oracle_loss"] = round(candidate_losses[best_name], 6)
         row["oracle_correct"] = losses[best_name][1][sample_index]

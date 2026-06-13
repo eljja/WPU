@@ -494,16 +494,20 @@ is not enough. A verified candidate controller that adds label-free
 sparse/local-dense propagation signatures is also weaker than the direct regret
 gate: best closure is `0.024989`, safe best is `0.023029`, and train-selected
 closure is `0.024989`. Verification features must therefore be trained jointly
-with retrieval and propagation, not appended as post-hoc descriptors.
+with retrieval and propagation, not appended as post-hoc descriptors. A shallow
+candidate-aware branch-logit propagation adapter is also weaker than direct
+regret gating: best/safe closure is `0.092185`, and train-selected closure is
+`0.069911`. P1 therefore requires deeper joint training, not a small output
+adapter.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than
   teacher overlap;
 - make candidate descriptors invariant across seeds and model instances;
 - use risk-adjusted mechanism routing instead of a single opaque reranker;
-- jointly train candidate generation, retriever, propagation verification,
-  propagation dynamics, and calibrated no-harm rejection instead of treating
-  retrieval as a post-hoc selector;
+- jointly train candidate generation, retriever, propagation dynamics,
+  propagation verification, and calibrated no-harm rejection instead of
+  treating retrieval as a post-hoc selector or shallow output adapter;
 - preserve sparse routed work while improving large-`N` accuracy;
 - add long-horizon branch consistency, calibration, and state-integrity
   mechanisms;

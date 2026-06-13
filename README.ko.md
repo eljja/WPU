@@ -426,7 +426,10 @@ downstream-regret learned candidate generator는 `K=16`에서 oracle closure
 propagation signature를 추가한 verified candidate controller도 direct regret gate보다
 약하다. Best closure는 `0.024989`, safe best는 `0.023029`, train-selected closure는
 `0.024989`에 그친다. 따라서 verification feature도 post-hoc descriptor로 붙이는 것이
-아니라 retrieval과 propagation dynamics와 함께 학습해야 한다.
+아니라 retrieval과 propagation dynamics와 함께 학습해야 한다. 후보별 branch-logit
+propagation adapter를 붙인 shallow joint step도 direct regret gate보다 약하다.
+Best/safe closure는 `0.092185`, train-selected closure는 `0.069911`에 그친다.
+따라서 P1은 작은 output adapter가 아니라 더 깊은 joint training이 필요하다.
 
 ## 논문 및 문서
 

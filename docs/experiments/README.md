@@ -499,6 +499,12 @@ Use these reports for paper-level claims:
   to each candidate descriptor, but remains weaker than direct regret gating:
   best closure is `0.024989`, safe best is `0.023029`, and train-selected
   closure is `0.024989`.
+- `wpu_v2_joint_propagation_adapter_results.md` and
+  `wpu_v2_joint_propagation_adapter_results.ko.md`: shallow joint propagation
+  adapter. It trains a candidate-aware branch-logit adapter from sparse/local
+  dense verification features, then evaluates candidate-regret/no-harm
+  deployment on adapted losses. It remains a negative P1 result: best/safe
+  closure is `0.092185`, and train-selected closure is `0.069911`.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -691,6 +697,10 @@ Historical or preliminary reports:
   when appended as post-hoc selector features. The verified candidate controller
   reaches only `0.024989` best closure and `0.023029` safe-best closure, so
   verification must be trained jointly with retrieval and propagation dynamics.
+- A shallow candidate-aware branch-logit propagation adapter is also
+  insufficient. It reaches only `0.092185` best/safe closure and `0.069911`
+  train-selected closure, so the missing P1 mechanism is deeper joint training,
+  not a small output correction head.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

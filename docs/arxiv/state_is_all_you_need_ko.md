@@ -460,8 +460,10 @@ retrieval, verification, propagation과 함께 더 깊게 학습되는 candidate
   추가한 verified candidate controller도 best closure `0.024989`, safe best
   `0.023029`, train-selected closure `0.024989`에 그친다. 따라서 병목은
   candidate-state feature 부재, selector-loss 교체, candidate generation 단독,
-  post-hoc verification feature가 아니라 retrieval, candidate generation,
-  verification, propagation dynamics를 함께 학습하지 못한 데 있다.
+  post-hoc verification feature가 아니다. Candidate-aware branch-logit propagation
+  adapter도 best/safe closure `0.092185`, train-selected closure `0.069911`에
+  그친다. 따라서 병목은 작은 output adapter가 아니라 retrieval, candidate
+  generation, verification, propagation dynamics를 함께 학습하지 못한 데 있다.
 - mechanism shift에서 branch-prior adaptation이 아직 안정적이지 않다.
   PyBullet branch-prior audit은 `catch_heavy`가 prior-dominated임을 보인다.
   majority accuracy는 `0.753968`이고 best WPU는 `0.408730`이므로,

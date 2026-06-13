@@ -454,9 +454,14 @@ retrieval, verification, propagation과 함께 더 깊게 학습되는 candidate
   `0.072167`, regression-heavy K=16 ablation은 `0.034751`에 그친다.
   Fixed-candidate/fixed-propagator downstream-loss selector도 best closure
   `0.106927`, feasible low-harm deployment `0`개, train-selected closure
-  `0.096833`에 그친다. 따라서 병목은 candidate-state feature 부재나
-  selector-loss 교체만이 아니라 retrieval, candidate generation, propagation을
-  함께 학습하지 못한 데 있다.
+  `0.096833`에 그친다. Downstream-regret learned candidate generator는
+  `K=16`에서 oracle closure `0.361251`의 headroom을 만들지만 deployed evaluator는
+  `0.042951`만 회수한다. Label-free sparse/local-dense verification signature를
+  추가한 verified candidate controller도 best closure `0.024989`, safe best
+  `0.023029`, train-selected closure `0.024989`에 그친다. 따라서 병목은
+  candidate-state feature 부재, selector-loss 교체, candidate generation 단독,
+  post-hoc verification feature가 아니라 retrieval, candidate generation,
+  verification, propagation dynamics를 함께 학습하지 못한 데 있다.
 - mechanism shift에서 branch-prior adaptation이 아직 안정적이지 않다.
   PyBullet branch-prior audit은 `catch_heavy`가 prior-dominated임을 보인다.
   majority accuracy는 `0.753968`이고 best WPU는 `0.408730`이므로,

@@ -422,7 +422,11 @@ object-set-only gate, 또는 얕은 selector-loss 교체가 아니라 retrieval,
 generation, propagation을 더 깊게 함께 학습하는 구조를 필요로 한다. 새
 downstream-regret learned candidate generator는 `K=16`에서 oracle closure
 `0.361251`의 headroom을 만들지만 deployed evaluator는 `0.042951`만 회수한다.
-따라서 candidate generation 단독도 충분하지 않다.
+따라서 candidate generation 단독도 충분하지 않다. Label-free sparse/local-dense
+propagation signature를 추가한 verified candidate controller도 direct regret gate보다
+약하다. Best closure는 `0.024989`, safe best는 `0.023029`, train-selected closure는
+`0.024989`에 그친다. 따라서 verification feature도 post-hoc descriptor로 붙이는 것이
+아니라 retrieval과 propagation dynamics와 함께 학습해야 한다.
 
 ## 논문 및 문서
 

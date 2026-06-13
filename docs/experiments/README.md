@@ -493,6 +493,12 @@ Use these reports for paper-level claims:
   and no-harm mass relative to the learned baseline, but remains a negative P1
   result: best closure is `0.106927`, no policy satisfies harmful accept
   `<=0.25`, and train-selected closure is `0.096833`.
+- `wpu_v2_verified_candidate_controller_results.md` and
+  `wpu_v2_verified_candidate_controller_results.ko.md`: verified candidate
+  controller. It appends label-free sparse/local-dense propagation signatures
+  to each candidate descriptor, but remains weaker than direct regret gating:
+  best closure is `0.024989`, safe best is `0.023029`, and train-selected
+  closure is `0.024989`.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -681,6 +687,10 @@ Historical or preliminary reports:
   `wpu_v2_joint_candidate_generator_results.ko.md`: downstream-regret learned
   candidate generator probe. It separates learned-generator oracle headroom from
   deployed evaluator closure.
+- Label-free sparse/local-dense verification signatures are also insufficient
+  when appended as post-hoc selector features. The verified candidate controller
+  reaches only `0.024989` best closure and `0.023029` safe-best closure, so
+  verification must be trained jointly with retrieval and propagation dynamics.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

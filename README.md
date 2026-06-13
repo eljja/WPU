@@ -490,15 +490,20 @@ deeper joint retriever-candidate-propagator training, not another post-hoc,
 object-set-only, or shallow selector-loss gate. A new downstream-regret learned
 candidate generator creates oracle headroom (`0.361251` closure at `K=16`) but
 the deployed evaluator recovers only `0.042951`, so candidate generation alone
-is not enough.
+is not enough. A verified candidate controller that adds label-free
+sparse/local-dense propagation signatures is also weaker than the direct regret
+gate: best closure is `0.024989`, safe best is `0.023029`, and train-selected
+closure is `0.024989`. Verification features must therefore be trained jointly
+with retrieval and propagation, not appended as post-hoc descriptors.
 The next technical target is therefore:
 
 - train retrieval and mechanism selection against downstream regret rather than
   teacher overlap;
 - make candidate descriptors invariant across seeds and model instances;
 - use risk-adjusted mechanism routing instead of a single opaque reranker;
-- jointly train candidate generation, retriever, propagation verification, and
-  propagator instead of treating retrieval as a post-hoc selector;
+- jointly train candidate generation, retriever, propagation verification,
+  propagation dynamics, and calibrated no-harm rejection instead of treating
+  retrieval as a post-hoc selector;
 - preserve sparse routed work while improving large-`N` accuracy;
 - add long-horizon branch consistency, calibration, and state-integrity
   mechanisms;

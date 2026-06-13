@@ -64,7 +64,8 @@ working-set selection이 native execution operation이 된다.
 1. Candidate selection은 아직 oracle gain의 대부분을 회수하지 못한다. Best deployed
    P1 closure는 목표보다 낮다. Fixed-candidate downstream-loss selector는 negative이고,
    learned candidate generation도 headroom은 만들지만 deployed evaluator가 안정적으로
-   쓰지 못한다.
+   쓰지 못하고, label-free sparse/dense verification signature도 post-hoc selector
+   feature로는 negative result다.
 2. Long-horizon raw sparse dynamics는 memory-layer correction, rollback, fallback
    없이는 불안정하다.
 3. Calibration-safe low-cost adaptation은 좁은 mechanism-selective regime에서만

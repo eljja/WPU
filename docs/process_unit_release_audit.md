@@ -63,8 +63,9 @@ execution operations only after objectification.
 
 1. Candidate selection still leaves most oracle gain unused. The best deployed
    P1 closure remains below the target. Fixed-candidate downstream-loss selector
-   training is negative, and learned candidate generation creates headroom that
-   the deployed evaluator still cannot use reliably.
+   training is negative, learned candidate generation creates headroom that the
+   deployed evaluator still cannot use reliably, and label-free sparse/dense
+   verification signatures are negative as post-hoc selector features.
 2. Long-horizon raw sparse dynamics remain unstable without memory-layer
    correction, rollback, or fallback.
 3. Calibration-safe low-cost adaptation exists only in a narrow

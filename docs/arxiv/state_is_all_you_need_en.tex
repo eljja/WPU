@@ -747,11 +747,14 @@ and no-harm mass is also negative: best closure is 0.106927, no deployment
 satisfies harmful accept \(\leq 0.25\), and train-selected closure is 0.096833.
 A learned candidate generator trained from downstream-regret object membership
 creates additional oracle headroom, reaching 0.361251 closure at \(K=16\), but
-the deployed evaluator recovers only 0.042951. The unresolved v2 problem is
-therefore candidate generation and scoring learned jointly with retrieval,
-verification, and propagation, not merely the generation of more candidate sets,
-candidate-state features, post-hoc deployment gates, or a shallow selector-loss
-replacement.
+the deployed evaluator recovers only 0.042951. A verified candidate controller
+that appends label-free sparse/local-dense propagation signatures is also
+weaker than direct candidate-regret gating: best closure is 0.024989, safe best
+is 0.023029, and train-selected closure is 0.024989. The unresolved v2 problem
+is therefore candidate generation and scoring learned jointly with retrieval,
+verification, and propagation dynamics, not merely the generation of more
+candidate sets, candidate-state features, post-hoc deployment gates,
+verification-feature descriptors, or a shallow selector-loss replacement.
 
 A separate PyBullet branch-prior audit adds an important boundary to the shift
 claim. In the \texttt{catch\_heavy} mechanism, the majority branch prior reaches

@@ -300,8 +300,12 @@ A learned candidate generator trained from downstream-regret object membership
 creates additional oracle headroom (`0.361251` closure at `K=16`), but the
 deployed evaluator recovers only `0.042951`. The unresolved v2 problem is
 therefore not simply candidate generation, missing object-set features, or
-replacing the selector loss; it is invariant candidate descriptors, risk-aware
-mechanism selection, candidate generation, verification, and deeper joint
+replacing the selector loss. A verified candidate controller that adds
+label-free sparse/local-dense propagation signatures is also weaker than direct
+candidate-regret gating: best closure is `0.024989`, safe best is `0.023029`,
+and train-selected closure is `0.024989`. The unresolved v2 problem is therefore
+invariant candidate descriptors, risk-aware mechanism selection, candidate
+generation, verification, propagation dynamics, and deeper joint
 retriever-propagator training.
 
 ## Current Evidence Boundary

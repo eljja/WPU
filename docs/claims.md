@@ -35,6 +35,14 @@ generation alone; it needs joint candidate generation, retrieval, propagation
 verification, and calibrated no-harm training. See
 `docs/experiments/wpu_v2_joint_candidate_generator_results.md`.
 
+P1 verification-feature evidence is also negative as a standalone fix. The
+verified candidate-controller probe appends label-free sparse/local-dense
+propagation signatures to candidate descriptors, but reaches only `0.024989`
+best closure, `0.023029` safe-best closure, and `0.024989` train-selected
+closure. This means verification must be trained jointly with retrieval and
+propagation dynamics rather than appended as a post-hoc selector feature. See
+`docs/experiments/wpu_v2_verified_candidate_controller_results.md`.
+
 P3 large-N simulator evidence is stronger but still bounded. The medium-training
 N_bg=256 run is baseline-complete at total `N=261`: best WPU accuracy is
 `0.466667`, best baseline accuracy is `0.450000`, and best WPU is `60.629526x`

@@ -34,6 +34,14 @@ generation, retrieval, propagation verification, calibrated no-harm training을 
 joint objective다. 자세한 결과는
 `docs/experiments/wpu_v2_joint_candidate_generator_results.ko.md`를 본다.
 
+P1 verification-feature 증거도 단독 해결책으로는 negative result다. Verified
+candidate-controller probe는 label-free sparse/local-dense propagation signature를
+candidate descriptor에 추가했지만 best closure `0.024989`, safe-best closure
+`0.023029`, train-selected closure `0.024989`에 그친다. 따라서 verification은 post-hoc
+selector feature로 붙이는 것이 아니라 retrieval 및 propagation dynamics와 함께 학습해야
+한다. 자세한 결과는
+`docs/experiments/wpu_v2_verified_candidate_controller_results.ko.md`를 본다.
+
 P3 large-N simulator evidence는 강화됐지만 여전히 제한적이다. Medium-training N_bg=256
 run은 total `N=261`에서 baseline-complete다. Best WPU accuracy는 `0.466667`, best
 baseline accuracy는 `0.450000`이고, best WPU는 해당 best-accuracy baseline보다

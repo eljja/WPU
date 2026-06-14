@@ -95,9 +95,13 @@ projection 덕분에 fail에서 partial로 올라갔지만 raw delta instability
    부족하다. Selective correction은 correction이 발생했을 때 수정되는 state 범위를
    줄였지만 entropy/raw-delta/stride/margin trigger frontier는 낮은 correction
    frequency에서 integrity를 유지하지 못했다. Learned trigger도 hard seed split에서
-   높은 correction frequency로 수렴한다. 다음 단계는 hand-coded threshold나 trigger
+   높은 correction frequency로 수렴한다. Stable-transition loss sweep은 partial
+   positive다. `delta_norm_strong`은 raw finite-clamped integrity를 `0.633398`,
+   selective low-disruption score를 `0.809071`까지 올리고 correction rate를
+   `0.598333`까지 낮춘다. 그러나 integrity >= `0.8` 및 correction_rate <= `0.25`를
+   동시에 만족하는 row는 `0`개다. 다음 단계는 hand-coded threshold나 trigger
    classifier가 아니라 state-validity/correction objective와 uncertainty escalation을
-   포함한 stable transition training이다.
+   포함한 multi-step 또는 simulator-resynchronized transition training이다.
 3. 현재 PyBullet cup task를 넘어 simulator-backed benchmark를 넓힌다. 더 많은
    mechanism, longer rollout, 최소 1개의 추가 simulator 또는 digital-twin
    environment에서 explicit object state를 평가하고, baseline-complete large-N

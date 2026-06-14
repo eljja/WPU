@@ -341,8 +341,12 @@ The current evidence supports a regime hypothesis, not universal dominance.
   meets integrity >= `0.8` with correction rate <= `0.25`. A learned
   correction-trigger audit on the hard seed split reaches integrity `0.958931`,
   but only at correction rate `0.791667`; under correction rate <= `0.25`, the
-  best integrity is `0.523279`. P2 therefore needs more stable transition
-  training, not another trigger threshold.
+  best integrity is `0.523279`. A stable-transition loss sweep is a partial
+  positive: `delta_norm_strong` raises raw finite-clamped integrity to
+  `0.633398`, raises selective-correction low-disruption score to `0.809071`,
+  and lowers correction rate to `0.598333`, but no row meets integrity >= `0.8`
+  with correction rate <= `0.25`. P2 therefore needs multi-step or
+  simulator-resynchronized transition training, not another trigger threshold.
 - The first PyBullet local-law revision probe shows a bounded positive regime:
   simple object-state laws reduce cup-delta MSE under `high_force` and
   `edge_shift`, while `nominal` and `catch_heavy` expose overfitting and

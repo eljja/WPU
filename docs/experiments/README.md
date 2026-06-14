@@ -180,6 +180,13 @@ Use these reports for paper-level claims:
   preserves integrity `0.958931` only at correction rate `0.791667`, while the
   best low-correction policy reaches integrity `0.523279`. This makes the next
   P2 target stable transition training, not another trigger threshold.
+- `pybullet_stable_transition_sweep_results.md` and
+  `pybullet_stable_transition_sweep_results.ko.md`: P2 transition-stability
+  training sweep. It is a partial positive: `delta_norm_strong` raises raw
+  finite-clamped integrity to `0.633398`, raises selective-correction
+  low-disruption score to `0.809071`, and lowers correction rate to `0.598333`,
+  but still finds `0` rows meeting integrity >= `0.8` and correction rate <=
+  `0.25`.
 - `pybullet_local_law_revision_results.md`: first PyBullet-derived local-law
   revision probe. Simple candidate laws over objectified simulator state reduce
   cup-delta MSE under shifted `high_force` and `edge_shift` mechanisms, but
@@ -768,7 +775,12 @@ Historical or preliminary reports:
   low-frequency gates are not enough: none of the tested trigger policies meets
   integrity >= `0.8` with correction rate <= `0.25`. The learned-trigger audit
   confirms the same boundary on hard held-out seeds: the best learned trigger
-  reaches integrity `0.958931` only with correction rate `0.791667`.
+  reaches integrity `0.958931` only with correction rate `0.791667`. The
+  stable-transition sweep is the first partial positive on the transition side:
+  `delta_norm_strong` raises raw finite-clamped integrity to `0.633398` and
+  lowers selective correction rate to `0.598333` while improving low-disruption
+  score to `0.809071`; however, it still has `0` rows meeting integrity >=
+  `0.8` and correction rate <= `0.25`.
 - The PyBullet shift benchmark adds the first mechanism-family generalization
   and calibration table. It is mixed: WPU local-dense leads on `catch_heavy`,
   but `serialized-token` is stronger on `edge_shift` and `high_force`.

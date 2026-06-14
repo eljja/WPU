@@ -77,6 +77,14 @@ P2 learned correction-trigger 증거도 hard seed split에서 negative result다
 그친다. 따라서 단순 learned trigger가 missing fix라는 가설은 약해졌고, 다음 단계는
 state-validity 및 correction objective를 포함한 stable transition training이다.
 
+P2 stable-transition loss 증거는 partial positive이지만 해결책은 아니다.
+`docs/experiments/pybullet_stable_transition_sweep_results.ko.md`의 sweep에서
+`delta_norm_strong`은 raw finite-clamped integrity를 `0.633398`,
+selective-correction low-disruption score를 `0.809071`까지 올리고 correction rate를
+`0.598333`까지 낮춘다. 하지만 integrity >= `0.8` 및 correction rate <= `0.25`를
+동시에 만족하는 row는 `0`개다. 따라서 P2에는 one-step loss weight tuning이 아니라
+multi-step 또는 simulator-resynchronized transition training이 필요하다.
+
 ## 반증 조건
 
 - controlled identity/locality/branching benchmark에서 serialized-token 또는 graph

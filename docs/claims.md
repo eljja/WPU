@@ -76,6 +76,15 @@ reaches integrity `0.523279`. This rules out a simple learned trigger as the
 missing fix and points to stable transition training with state-validity and
 correction objectives.
 
+P2 stable-transition loss evidence is a partial positive, not a solution. The
+sweep in `docs/experiments/pybullet_stable_transition_sweep_results.md` shows
+that `delta_norm_strong` raises raw finite-clamped integrity to `0.633398`,
+raises selective-correction low-disruption score to `0.809071`, and lowers
+correction rate to `0.598333`. However, it still finds `0` rows meeting
+integrity >= `0.8` and correction rate <= `0.25`, so P2 needs multi-step or
+simulator-resynchronized transition training rather than more one-step loss
+weight tuning.
+
 ## Falsification Tests
 
 - If serialized-token or graph baselines match WPU at equal compute across

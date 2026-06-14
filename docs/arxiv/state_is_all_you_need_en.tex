@@ -909,7 +909,12 @@ meets integrity at least 0.8 with correction rate at most 0.25; the best
 low-correction entropy gate reaches integrity 0.653668. A learned correction
 trigger does not remove this boundary on the hard seed split: the best learned
 trigger reaches integrity 0.958931 only at correction rate 0.791667, while the
-best policy under correction rate at most 0.25 reaches integrity 0.523279.
+best policy under correction rate at most 0.25 reaches integrity 0.523279. A
+stable-transition loss sweep is a partial positive: the strongest delta-norm
+configuration raises raw finite-clamped integrity to 0.633398, raises
+selective-correction low-disruption score to 0.809071, and lowers correction
+rate to 0.598333, but still yields no row satisfying both integrity at least
+0.8 and correction rate at most 0.25.
 A separate PyBullet coverage audit includes matched
 \(N_{\mathrm{bg}}=256\), total \(N=261\) runs where WPU, graph, and token
 baselines all complete. A medium-training run improves this evidence: the best

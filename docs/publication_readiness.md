@@ -101,8 +101,13 @@ claim of broad superiority.
    insufficient. Selective correction lowers how much state is modified when
    correction fires, but entropy/raw-delta/stride/margin trigger frontiers do
    not preserve integrity at low correction frequency. A learned trigger also
-   collapses to high correction frequency on the hard seed split. The next
-   step is stable transition training with state-validity/correction
+   collapses to high correction frequency on the hard seed split. A
+   stable-transition loss sweep is partially positive: `delta_norm_strong`
+   raises raw finite-clamped integrity to `0.633398`, raises selective
+   low-disruption score to `0.809071`, and lowers correction rate to
+   `0.598333`, but still has `0` rows meeting integrity >= `0.8` and
+   correction_rate <= `0.25`. The next step is multi-step or
+   simulator-resynchronized transition training with state-validity/correction
    objectives and uncertainty escalation, not another trigger threshold.
 3. Broaden the simulator-backed benchmark beyond the current PyBullet cup task:
    more mechanisms, longer rollouts, explicit object state from at least one

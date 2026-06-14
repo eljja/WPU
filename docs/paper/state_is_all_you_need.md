@@ -443,7 +443,12 @@ The next decisive step is experimental, not rhetorical:
   `0.653668` integrity. A learned correction trigger does not remove the
   boundary on the hard seed split: the best learned trigger reaches integrity
   `0.958931` only at correction rate `0.791667`, while the best policy under
-  correction rate <= `0.25` reaches integrity `0.523279`;
+  correction rate <= `0.25` reaches integrity `0.523279`. A stable-transition
+  loss sweep is the first partial positive on transition training:
+  `delta_norm_strong` raises raw finite-clamped integrity to `0.633398`,
+  raises selective-correction low-disruption score to `0.809071`, and lowers
+  correction rate to `0.598333`, but still produces `0` rows meeting integrity
+  >= `0.8` and correction rate <= `0.25`;
 - hardware-aware profiling of frontier queues, relation fetch, scatter/gather,
   delta logs, and branch overlays.
 

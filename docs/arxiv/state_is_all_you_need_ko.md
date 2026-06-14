@@ -562,8 +562,12 @@ matched or acceptable accuracy at lower routed work
   entropy gate도 integrity `0.653668`에 그친다. Learned correction trigger도 hard seed
   split에서 이 경계를 제거하지 못한다. 최고 learned trigger integrity는 `0.958931`이지만
   correction rate가 `0.791667`이고, correction rate <= `0.25` 조건의 최고 integrity는
-  `0.523279`에 그친다. 따라서 이는 bounded memory-safety layer의 증거이지 raw sparse
-  dynamics 안정화의 증거는 아니다.
+  `0.523279`에 그친다. Stable-transition loss sweep은 partial positive다. 가장 강한
+  delta-norm 설정은 raw finite-clamped integrity를 `0.633398`, selective-correction
+  low-disruption score를 `0.809071`까지 올리고 correction rate를 `0.598333`까지 낮춘다.
+  하지만 integrity >= `0.8`과 correction rate <= `0.25`를 동시에 만족한 row는 없다.
+  따라서 이는 bounded memory-safety layer와 부분적 transition 안정화의 증거이지 raw
+  sparse dynamics 해결의 증거는 아니다.
 - sparse advantage가 실제 sparse kernel, memory traffic, branch overlay 비용을
   포함하면 사라진다.
 

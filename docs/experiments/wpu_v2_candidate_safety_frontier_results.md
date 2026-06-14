@@ -9,6 +9,7 @@ Source CSVs:
 - `docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv`
 - `docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv`
 - `docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv`
+- `docs/experiments/wpu_v2_joint_utility_verifier_summary.csv`
 
 Derived CSV:
 
@@ -46,6 +47,12 @@ Derived CSV:
 | end_to_end | 0.20 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
 | end_to_end | 0.25 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
 | end_to_end | 0.30 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| joint_utility | 0.05 | `joint_utility_uncertainty_regret_gate_r3_m0p01_s0p5` | 32 | 0.031378 | 0.044444 | 0.104445 | 30 |
+| joint_utility | 0.10 | `joint_utility_uncertainty_regret_gate_r2_m0p01_s0p5` | 8 | 0.075787 | 0.100000 | 0.246667 | 110 |
+| joint_utility | 0.15 | `joint_utility_uncertainty_regret_gate_r2_m0p01_s0p5` | 8 | 0.075787 | 0.100000 | 0.246667 | 153 |
+| joint_utility | 0.20 | `joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35` | 8 | 0.097845 | 0.182222 | 0.451111 | 204 |
+| joint_utility | 0.25 | `joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35` | 8 | 0.097845 | 0.182222 | 0.451111 | 222 |
+| joint_utility | 0.30 | `joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35` | 8 | 0.097845 | 0.182222 | 0.451111 | 277 |
 
 ## Interpretation
 
@@ -53,3 +60,4 @@ Derived CSV:
 - High closure coincides with higher harmful accepts, while strict harmful-accept limits collapse closure.
 - The next improvement must change candidate scoring itself: ranking, no-harm, and uncertainty targets have to be learned jointly rather than tuned post hoc.
 - The fixed-candidate/fixed-propagator downstream-loss selector is included as a stricter negative check: under the current protocol it adds no feasible low-harm frontier point.
+- The fixed-propagator joint utility verifier is included as another negative check: it tests candidate object-set, verification, uncertainty, and no-harm heads without changing propagation dynamics.

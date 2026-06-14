@@ -11,6 +11,7 @@ DEFAULT_INPUTS = [
     Path("docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv"),
     Path("docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv"),
     Path("docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv"),
+    Path("docs/experiments/wpu_v2_joint_utility_verifier_summary.csv"),
 ]
 
 
@@ -22,7 +23,7 @@ def main() -> None:
     parser.add_argument(
         "--labels",
         nargs="+",
-        default=["direct", "perturbed", "penalty", "crossfit", "end_to_end"],
+        default=["direct", "perturbed", "penalty", "crossfit", "end_to_end", "joint_utility"],
     )
     parser.add_argument("--harmful-limits", type=float, nargs="+", default=[0.05, 0.10, 0.15, 0.20, 0.25, 0.30])
     parser.add_argument("--out-csv", type=Path, default=Path("docs/experiments/wpu_v2_candidate_safety_frontier.csv"))
@@ -112,6 +113,7 @@ def _render(rows: list[dict[str, object]], input_paths: list[Path], output_csv: 
             "높은 closure를 얻는 구간은 harmful accept가 커지고, harmful accept를 강하게 낮추면 closure가 급격히 줄어든다.",
             "따라서 다음 개선은 post-hoc threshold가 아니라 candidate scoring 자체의 ranking, no-harm, uncertainty target을 함께 바꾸어야 한다.",
             "Fixed-candidate/fixed-propagator downstream-loss selector도 더 엄격한 negative check로 포함한다. 현재 protocol에서는 low-harm frontier에 feasible point를 추가하지 못한다.",
+            "Fixed-propagator joint utility verifier도 포함한다. 이는 propagation dynamics를 바꾸지 않고 candidate object-set, verification, uncertainty, no-harm head만 추가했을 때의 한계를 검사한다.",
         ]
     else:
         title = "# Candidate Safety Frontier"
@@ -124,6 +126,7 @@ def _render(rows: list[dict[str, object]], input_paths: list[Path], output_csv: 
             "High closure coincides with higher harmful accepts, while strict harmful-accept limits collapse closure.",
             "The next improvement must change candidate scoring itself: ranking, no-harm, and uncertainty targets have to be learned jointly rather than tuned post hoc.",
             "The fixed-candidate/fixed-propagator downstream-loss selector is included as a stricter negative check: under the current protocol it adds no feasible low-harm frontier point.",
+            "The fixed-propagator joint utility verifier is included as another negative check: it tests candidate object-set, verification, uncertainty, and no-harm heads without changing propagation dynamics.",
         ]
     lines = [
         title,

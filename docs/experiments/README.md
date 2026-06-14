@@ -512,6 +512,12 @@ Use these reports for paper-level claims:
   dense verification features, then evaluates candidate-regret/no-harm
   deployment on adapted losses. It remains a negative P1 result: best/safe
   closure is `0.092185`, and train-selected closure is `0.069911`.
+- `wpu_v2_joint_utility_verifier_results.md` and
+  `wpu_v2_joint_utility_verifier_results.ko.md`: joint utility verifier. It
+  combines candidate object-set tensors, sparse/local-dense verification
+  signatures, uncertainty, and no-harm safety, but remains weaker than direct
+  candidate-regret gating: best/safe closure is `0.097845`, and train-selected
+  closure is `0.077781`.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -708,6 +714,11 @@ Historical or preliminary reports:
   insufficient. It reaches only `0.092185` best/safe closure and `0.069911`
   train-selected closure, so the missing P1 mechanism is deeper joint training,
   not a small output correction head.
+- A joint utility verifier is also insufficient. Combining candidate object-set
+  tensors, sparse/local-dense verification signatures, uncertainty, and
+  no-harm safety reaches only `0.097845` best/safe closure and `0.077781`
+  train-selected closure, so fixed-propagator utility/safety heads are not the
+  missing P1 fix.
 - The first PyBullet benchmark shows that the WPU state pipeline is not limited
   to hand-written synthetic labels: simulator state can be objectified and fed
   through the same WPU API. Current evidence is systems-level only; accuracy

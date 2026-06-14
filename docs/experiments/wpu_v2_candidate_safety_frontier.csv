@@ -29,3 +29,9 @@ end_to_end,docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv,0.1
 end_to_end,docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv,0.2,none,0,0.0,0.0,0.0,0
 end_to_end,docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv,0.25,none,0,0.0,0.0,0.0,0
 end_to_end,docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv,0.3,none,0,0.0,0.0,0.0,0
+joint_utility,docs/experiments/wpu_v2_joint_utility_verifier_summary.csv,0.05,joint_utility_uncertainty_regret_gate_r3_m0p01_s0p5,32,0.031378,0.044444,0.104445,30
+joint_utility,docs/experiments/wpu_v2_joint_utility_verifier_summary.csv,0.1,joint_utility_uncertainty_regret_gate_r2_m0p01_s0p5,8,0.075787,0.1,0.246667,110
+joint_utility,docs/experiments/wpu_v2_joint_utility_verifier_summary.csv,0.15,joint_utility_uncertainty_regret_gate_r2_m0p01_s0p5,8,0.075787,0.1,0.246667,153
+joint_utility,docs/experiments/wpu_v2_joint_utility_verifier_summary.csv,0.2,joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35,8,0.097845,0.182222,0.451111,204
+joint_utility,docs/experiments/wpu_v2_joint_utility_verifier_summary.csv,0.25,joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35,8,0.097845,0.182222,0.451111,222
+joint_utility,docs/experiments/wpu_v2_joint_utility_verifier_summary.csv,0.3,joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35,8,0.097845,0.182222,0.451111,277

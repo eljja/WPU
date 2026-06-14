@@ -9,6 +9,7 @@ Source CSVs:
 - `docs/experiments/wpu_v2_candidate_regret_gate_penalty_summary.csv`
 - `docs/experiments/wpu_v2_candidate_regret_crossfit_summary.csv`
 - `docs/experiments/wpu_v2_end_to_end_candidate_selector_summary.csv`
+- `docs/experiments/wpu_v2_joint_utility_verifier_summary.csv`
 
 Derived CSV:
 
@@ -46,6 +47,12 @@ Derived CSV:
 | end_to_end | 0.20 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
 | end_to_end | 0.25 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
 | end_to_end | 0.30 | `none` | 0 | 0.000000 | 0.000000 | 0.000000 | 0 |
+| joint_utility | 0.05 | `joint_utility_uncertainty_regret_gate_r3_m0p01_s0p5` | 32 | 0.031378 | 0.044444 | 0.104445 | 30 |
+| joint_utility | 0.10 | `joint_utility_uncertainty_regret_gate_r2_m0p01_s0p5` | 8 | 0.075787 | 0.100000 | 0.246667 | 110 |
+| joint_utility | 0.15 | `joint_utility_uncertainty_regret_gate_r2_m0p01_s0p5` | 8 | 0.075787 | 0.100000 | 0.246667 | 153 |
+| joint_utility | 0.20 | `joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35` | 8 | 0.097845 | 0.182222 | 0.451111 | 204 |
+| joint_utility | 0.25 | `joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35` | 8 | 0.097845 | 0.182222 | 0.451111 | 222 |
+| joint_utility | 0.30 | `joint_utility_uncertainty_regret_gate_r1p5_m0_s0p35` | 8 | 0.097845 | 0.182222 | 0.451111 | 277 |
 
 ## Interpretation
 
@@ -53,3 +60,4 @@ Derived CSV:
 - 높은 closure를 얻는 구간은 harmful accept가 커지고, harmful accept를 강하게 낮추면 closure가 급격히 줄어든다.
 - 따라서 다음 개선은 post-hoc threshold가 아니라 candidate scoring 자체의 ranking, no-harm, uncertainty target을 함께 바꾸어야 한다.
 - Fixed-candidate/fixed-propagator downstream-loss selector도 더 엄격한 negative check로 포함한다. 현재 protocol에서는 low-harm frontier에 feasible point를 추가하지 못한다.
+- Fixed-propagator joint utility verifier도 포함한다. 이는 propagation dynamics를 바꾸지 않고 candidate object-set, verification, uncertainty, no-harm head만 추가했을 때의 한계를 검사한다.

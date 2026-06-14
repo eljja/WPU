@@ -84,9 +84,12 @@ projection 덕분에 fail에서 partial로 올라갔지만 raw delta instability
    closure `0.092185`, train-selected closure `0.069911`에 그친다. 따라서 병목은
    candidate-state feature 부재, selector-loss 교체, candidate generation 단독,
    post-hoc sparse/dense verification signature, 작은 output adapter의 문제가
-   아니다. 다음 단계는 margin-only gate가 아니라 candidate generation, retrieval,
-   propagation verification, propagation dynamics를 함께 학습하는 더 깊은 joint
-   training과 calibrated accept/reject loss다.
+   아니다. Candidate object-set tensor, verification signature, uncertainty,
+   no-harm safety를 함께 쓰는 joint utility verifier도 best/safe closure
+   `0.097845`, train-selected closure `0.077781`에 그친다. 다음 단계는
+   margin-only gate가 아니라 candidate generation, retrieval, propagation
+   verification, propagation dynamics를 함께 학습하는 더 깊은 joint training과
+   calibrated accept/reject loss다.
 2. long-horizon state integrity를 단순히 보고하는 것을 넘어 개선한다. 단순
    delta-norm, rollout-consistency, state-validity, rejection-only loss는
    부족하다. Selective correction은 correction이 발생했을 때 수정되는 state 범위를

@@ -433,7 +433,11 @@ propagation signature를 추가한 verified candidate controller도 direct regre
 아니라 retrieval과 propagation dynamics와 함께 학습해야 한다. 후보별 branch-logit
 propagation adapter를 붙인 shallow joint step도 direct regret gate보다 약하다.
 Best/safe closure는 `0.092185`, train-selected closure는 `0.069911`에 그친다.
-따라서 P1은 작은 output adapter가 아니라 더 깊은 joint training이 필요하다.
+Candidate object-set tensor, sparse/local-dense verification signature,
+uncertainty, no-harm safety를 함께 쓰는 joint utility verifier도 direct regret
+gate보다 약하다. Best/safe closure는 `0.097845`, train-selected closure는
+`0.077781`에 그친다. 따라서 P1은 fixed-propagator utility head나 작은 output
+adapter가 아니라 더 깊은 joint training이 필요하다.
 
 ## 논문 및 문서
 

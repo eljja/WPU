@@ -90,9 +90,12 @@ claim of broad superiority.
    recovers only `0.042951`, so the bottleneck is not merely missing
    candidate-state features, selector-loss replacement, candidate generation
    alone, post-hoc sparse/dense verification signatures, or a shallow
-   branch-logit output adapter. The next step is deeper joint candidate
-   generation, retrieval, propagation verification, propagation dynamics, and
-   calibrated accept/reject losses, not another post-hoc gate.
+   branch-logit output adapter. A joint utility verifier that adds candidate
+   object-set tensors, verification signatures, uncertainty, and no-harm safety
+   also remains weak (`0.097845` best/safe closure, `0.077781` train-selected
+   closure). The next step is deeper joint candidate generation, retrieval,
+   propagation verification, propagation dynamics, and calibrated accept/reject
+   losses, not another fixed-propagator post-hoc gate.
 2. Improve long-horizon state integrity, not only report it. Simple delta-norm,
    rollout-consistency, state-validity, and rejection-only losses are
    insufficient. Selective correction lowers how much state is modified when

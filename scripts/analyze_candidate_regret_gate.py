@@ -124,6 +124,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     is_end_to_end_selector = "end_to_end_candidate_selector" in source.name
     is_verified_controller = "verified_candidate_controller" in source.name
     is_joint_adapter = "joint_propagation_adapter" in source.name
+    is_joint_utility_verifier = "joint_utility_verifier" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
@@ -142,6 +143,8 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         title = (
             "# Candidate Invariant Gate 결과"
             if is_invariant_gate
+            else "# Joint Utility Verifier 결과"
+            if is_joint_utility_verifier
             else "# Joint Propagation Adapter 결과"
             if is_joint_adapter
             else "# Verified Candidate Controller 결과"
@@ -154,7 +157,14 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate 결과"
         )
-        if is_joint_adapter:
+        if is_joint_utility_verifier:
+            intro = (
+                "이 문서는 후보 object set, compact context, sparse/local-dense verification "
+                "signature를 함께 인코딩하고 candidate regret, uncertainty, no-harm safety를 "
+                "동시에 예측하는 P1 probe를 요약한다. 이는 post-hoc feature 추가보다 더 "
+                "직접적인 joint utility/safety head지만, propagation model 자체는 아직 고정되어 있다."
+            )
+        elif is_joint_adapter:
             intro = (
                 "이 문서는 후보별 sparse/local-dense verification feature로 branch-logit "
                 "propagation adapter를 학습한 뒤, adapted propagation loss 위에서 "
@@ -199,7 +209,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         conclusion = (
             f"최고 closure는 `{float(best['gap_closure_fraction']):.6f}` "
             f"(`K={best['causal_k']}`, `{best['policy']}`)다. P1 목표 `0.5`를 기준으로 "
-            f"{'joint propagation-adapter deployment' if is_joint_adapter else 'verified-controller deployment' if is_verified_controller else 'end-to-end selector deployment' if is_end_to_end_selector else 'joint object-set deployment' if is_joint_gate else 'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'}가 candidate-oracle gap을 충분히 닫는지와 "
+            f"{'joint utility-verifier deployment' if is_joint_utility_verifier else 'joint propagation-adapter deployment' if is_joint_adapter else 'verified-controller deployment' if is_verified_controller else 'end-to-end selector deployment' if is_end_to_end_selector else 'joint object-set deployment' if is_joint_gate else 'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'}가 candidate-oracle gap을 충분히 닫는지와 "
             "harmful accept를 억제하는지를 동시에 본다."
             + (
                 f" Harmful accept <= `0.25` 조건의 conservative best는 "
@@ -237,10 +247,16 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             notes.append(
                 "이 실험이 direct candidate-regret gate보다 약하면, 단순 branch-logit adapter도 P1 병목을 풀기에 부족하며 retrieval, propagation dynamics, no-harm objective를 더 깊게 공동학습해야 한다."
             )
+        if is_joint_utility_verifier:
+            notes.append(
+                "이 실험이 direct candidate-regret gate보다 약하면, object set, verification signature, utility/safety head를 결합해도 propagation model이 고정된 상태에서는 P1 병목을 해결하지 못한다고 해석한다."
+            )
     else:
         title = (
             "# Candidate Invariant Gate Results"
             if is_invariant_gate
+            else "# Joint Utility Verifier Results"
+            if is_joint_utility_verifier
             else "# Joint Propagation Adapter Results"
             if is_joint_adapter
             else "# Verified Candidate Controller Results"
@@ -253,7 +269,15 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate Results"
         )
-        if is_joint_adapter:
+        if is_joint_utility_verifier:
+            intro = (
+                "This report summarizes a P1 probe that jointly encodes candidate "
+                "object sets, compact context, and sparse/local-dense verification "
+                "signatures, then predicts candidate regret, uncertainty, and "
+                "no-harm safety. It is a more direct joint utility/safety head than "
+                "post-hoc feature addition, but the propagation model is still fixed."
+            )
+        elif is_joint_adapter:
             intro = (
                 "This report summarizes a P1 probe that trains a candidate-aware "
                 "branch-logit propagation adapter from sparse/local-dense "
@@ -306,7 +330,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         conclusion = (
             f"The best closure is `{float(best['gap_closure_fraction']):.6f}` "
             f"(`K={best['causal_k']}`, `{best['policy']}`). P1 evaluates whether "
-            f"{'joint propagation-adapter deployment' if is_joint_adapter else 'verified-controller deployment' if is_verified_controller else 'end-to-end selector deployment' if is_end_to_end_selector else 'joint object-set deployment' if is_joint_gate else 'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'} closes the candidate-oracle gap while "
+            f"{'joint utility-verifier deployment' if is_joint_utility_verifier else 'joint propagation-adapter deployment' if is_joint_adapter else 'verified-controller deployment' if is_verified_controller else 'end-to-end selector deployment' if is_end_to_end_selector else 'joint object-set deployment' if is_joint_gate else 'invariant-gate deployment' if is_invariant_gate else 'safety/utility deployment' if is_safety_gate else 'candidate-regret deployment'} closes the candidate-oracle gap while "
             "controlling harmful accepts."
             + (
                 f" The conservative best under harmful-accept <= `0.25` is "
@@ -343,6 +367,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         if is_joint_adapter:
             notes.append(
                 "If this probe underperforms the direct candidate-regret gate, a shallow branch-logit adapter is still insufficient; retrieval, propagation dynamics, and no-harm objectives need deeper joint training."
+            )
+        if is_joint_utility_verifier:
+            notes.append(
+                "If this probe underperforms the direct candidate-regret gate, combining object sets, verification signatures, and utility/safety heads is still insufficient while the propagation model remains fixed."
             )
 
     lines = [

@@ -501,7 +501,11 @@ closure is `0.024989`. Verification features must therefore be trained jointly
 with retrieval and propagation, not appended as post-hoc descriptors. A shallow
 candidate-aware branch-logit propagation adapter is also weaker than direct
 regret gating: best/safe closure is `0.092185`, and train-selected closure is
-`0.069911`. P1 therefore requires deeper joint training, not a small output
+`0.069911`. A joint utility verifier that combines candidate object-set
+tensors, sparse/local-dense verification signatures, uncertainty, and no-harm
+safety is likewise weaker than direct regret gating: best/safe closure is
+`0.097845`, and train-selected closure is `0.077781`. P1 therefore requires
+deeper joint training, not a fixed-propagator utility head or small output
 adapter.
 The next technical target is therefore:
 

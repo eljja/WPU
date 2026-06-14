@@ -51,6 +51,15 @@ is deeper joint training of retrieval, candidate generation, propagation
 dynamics, propagation verification, and calibrated no-harm rejection. See
 `docs/experiments/wpu_v2_joint_propagation_adapter_results.md`.
 
+P1 joint utility-verifier evidence is also negative. A verifier that combines
+candidate object-set tensors, sparse/local-dense verification signatures,
+uncertainty, and no-harm safety reaches only `0.097845` best/safe closure and
+`0.077781` train-selected closure. This rules out fixed-propagator utility and
+safety heads as the missing fix; the remaining target is end-to-end coupling of
+candidate generation, retrieval, propagation dynamics, verification, and
+calibrated no-harm rejection. See
+`docs/experiments/wpu_v2_joint_utility_verifier_results.md`.
+
 P3 large-N simulator evidence is stronger but still bounded. The medium-training
 N_bg=256 run is baseline-complete at total `N=261`: best WPU accuracy is
 `0.466667`, best baseline accuracy is `0.450000`, and best WPU is `60.629526x`

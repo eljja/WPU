@@ -522,9 +522,13 @@ retrieval, verification, propagation과 함께 더 깊게 학습되는 candidate
   Best WPU accuracy는 `0.466667`, best baseline은 `0.450000`이고, best WPU는 해당
   best-accuracy baseline보다 forward latency 기준 `60.629526x` 빠르다. 그러나 margin이
   작고 task가 여전히 단일 cup family이므로 이는 positive P3 evidence이지 strong
-  simulator superiority는 아니다. WPU-only N_bg=512, total `N=517` extension은
-  graph-transformer baseline이 같은 protocol에서 완료되지 않았으므로 systems feasibility
-  evidence와 benchmark-design warning이지 matched-baseline accuracy evidence가 아니다.
+  simulator superiority는 아니다. 저훈련 N_bg=512, total `N=517` baseline-complete
+  micro-screen은 더 큰 state size에서 WPU, graph, token baseline을 모두 포함한다. Best
+  WPU는 `0.375000`, best baseline은 `0.333333`에 도달하지만, 3 seeds, 2 training
+  steps, 8 samples만 사용하므로 coverage evidence로만 해석한다. 별도의 higher-budget
+  WPU-only N_bg=512 extension은 graph-transformer baseline이 같은 protocol에서 완료되지
+  않았으므로 systems feasibility evidence와 benchmark-design warning이지 matched-baseline
+  accuracy evidence가 아니다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

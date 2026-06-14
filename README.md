@@ -286,10 +286,14 @@ The current evidence supports a regime hypothesis, not universal dominance.
   domain is still one cup family, so this is positive P3 evidence rather than a
   broad simulator-superiority claim. Shift evidence covers 4 mechanism families;
   rollout diagnostics reach horizon 25; objectification-quality evidence covers
-  7 corruption settings; systems profiles reach `N≈2052`. The N_bg=512 cup
-  extension runs WPU at total `N=517`, but it is WPU-only because the dense graph
-  baseline did not complete under the attempted protocol, so it is not an
-  accuracy-superiority result.
+  7 corruption settings; systems profiles reach `N≈2052`. A low-training
+  N_bg=512 baseline-complete micro-screen reaches total `N=517` with WPU,
+  graph-transformer, and serialized-token baselines; best WPU accuracy is
+  `0.375000` versus best baseline `0.333333`, but the run uses only 3 seeds, 2
+  training steps, and 8 samples, so it is large-N coverage evidence rather than
+  strong accuracy-superiority evidence. The separate higher-budget N_bg=512 cup
+  extension remains WPU-only because the dense graph baseline did not complete
+  under the attempted protocol, so it is systems feasibility evidence.
 - The first PyBullet objectification stress shows that missing causal-frontier
   relations reduce WPU selected K before propagation. It also shows that the
   current objectification score must be extended with frontier completeness and

@@ -921,10 +921,14 @@ baselines all complete. A medium-training run improves this evidence: the best
 WPU reaches branch accuracy 0.466667 versus the best baseline at 0.450000, with
 60.629526 times lower forward latency than that best-accuracy baseline.
 However, the margin is small and the task is still one cup family, so this is
-positive P3 evidence rather than strong simulator superiority. The WPU-only
-\(N_{\mathrm{bg}}=512\), total \(N=517\) extension remains systems feasibility
-evidence because the graph-transformer baseline did not complete under the
-attempted protocol.
+positive P3 evidence rather than strong simulator superiority. A low-training
+\(N_{\mathrm{bg}}=512\), total \(N=517\) baseline-complete micro-screen adds
+WPU, graph, and token baselines at larger state size; the best WPU reaches
+0.375000 versus the best baseline at 0.333333, but this is only coverage
+evidence because it uses 3 seeds, 2 training steps, and 8 samples. The separate
+higher-budget WPU-only \(N_{\mathrm{bg}}=512\) extension remains systems
+feasibility evidence because the graph-transformer baseline did not complete
+under the attempted protocol.
 
 These limitations change the paper's scientific posture. The current claim is
 not that WPU already surpasses Transformers, GNN simulators, Dreamer-style

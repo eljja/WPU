@@ -229,10 +229,13 @@ model = wpu.create_model(
   다만 margin이 작고 domain이 여전히 단일 cup family이므로 broad simulator-superiority
   claim이 아니라 positive P3 evidence로만 해석한다. Shift evidence는 4개 mechanism
   family, rollout diagnostic은 horizon 25, objectification-quality evidence는 7개
-  corruption setting, systems profile은 `N≈2052`까지 포함한다. N_bg=512 cup extension은
-  total `N=517`에서 WPU 실행 가능성을 보이지만, 같은 protocol에서 dense graph baseline이
-  완료되지 않았으므로 accuracy-superiority result가 아니라 WPU-only systems feasibility
-  evidence다.
+  corruption setting, systems profile은 `N≈2052`까지 포함한다. 저훈련 N_bg=512
+  baseline-complete micro-screen은 total `N=517`에서 WPU, graph-transformer,
+  serialized-token baseline을 모두 포함한다. Best WPU accuracy는 `0.375000`, best
+  baseline은 `0.333333`이지만, 3 seeds, 2 training steps, 8 samples만 사용했으므로
+  strong accuracy-superiority evidence가 아니라 large-N coverage evidence로만 해석한다.
+  별도의 higher-budget N_bg=512 cup extension은 dense graph baseline이 완료되지 않아
+  WPU-only systems feasibility evidence로 남는다.
 - 첫 PyBullet objectification stress는 causal-frontier relation 누락이 propagation
   이전에 WPU selected K를 줄인다는 점을 보였다. 또한 현재 objectification score에는
   frontier completeness와 semantic identity check가 추가되어야 한다.

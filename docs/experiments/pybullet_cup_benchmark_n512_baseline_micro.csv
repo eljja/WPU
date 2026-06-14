@@ -1,0 +1,13 @@
+background_objects,balanced_labels,branch_accuracy,causal_recall_mean,cuda_peak_mb,dense_compute_ratio,hidden_dim,layers,majority_accuracy,model,ms_per_sample_forward,mse,param_match_error,params,pre_tensor_indexed,seed,selected_k_mean,target_params,total_objects_n,train_loss
+512,True,0.375,1.0,17.344727,0.0,16,1,0.375,wpu-cws-indexed-sparse,1.7212,0.439233,0,2236,True,11,4.25,0,517,1.386842
+512,True,0.375,1.0,17.345215,0.0,16,1,0.375,wpu-cws-indexed-sparse,2.38255,0.385766,0,2236,True,13,4.25,0,517,1.169959
+512,True,0.375,1.0,17.344727,0.0,16,1,0.375,wpu-cws-indexed-sparse,1.91635,0.480876,0,2236,True,17,4.375,0,517,1.137741
+512,True,0.375,1.0,17.408691,1.0,16,1,0.375,wpu-cws-indexed-local-dense,2.25605,0.762699,0,5516,True,11,4.25,0,517,1.549357
+512,True,0.25,1.0,17.40918,1.0,16,1,0.375,wpu-cws-indexed-local-dense,2.8398,0.582801,0,5516,True,13,4.25,0,517,1.247458
+512,True,0.375,1.0,17.408691,1.0,16,1,0.375,wpu-cws-indexed-local-dense,2.34995,0.69794,0,5516,True,17,4.375,0,517,1.274522
+512,True,0.375,1.0,18.706055,1.0,16,1,0.375,graph-transformer,151.70745,0.312999,0,5030,False,11,4.25,0,517,1.499717
+512,True,0.25,1.0,18.706543,1.0,16,1,0.375,graph-transformer,152.24455,0.33901,0,5030,False,13,4.25,0,517,0.969864
+512,True,0.375,1.0,18.706055,1.0,16,1,0.375,graph-transformer,150.39615,0.365721,0,5030,False,17,4.375,0,517,1.613067
+512,True,0.375,1.0,18.822266,1.0,16,1,0.375,serialized-token,0.5947,0.634532,0,3954,False,11,4.25,0,517,1.366879
+512,True,0.375,1.0,18.822266,1.0,16,1,0.375,serialized-token,0.67675,0.393118,0,3954,False,13,4.25,0,517,1.251936
+512,True,0.25,1.0,18.822266,1.0,16,1,0.375,serialized-token,0.7184,0.325629,0,3954,False,17,4.375,0,517,0.891816

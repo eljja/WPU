@@ -65,12 +65,13 @@ N_bg=256 run is baseline-complete at total `N=261`: best WPU accuracy is
 `0.466667`, best baseline accuracy is `0.450000`, and best WPU is `60.629526x`
 faster than that best-accuracy baseline. This supports a conditional large-N
 state-native regime, but the margin is small and the task is still one cup
-family, so it does not establish broad simulator superiority. A low-training
-N_bg=512 baseline-complete micro-screen now reaches total `N=517`: best WPU
-accuracy is `0.375000`, best baseline accuracy is `0.333333`, and best WPU is
-`75.471861x` faster than that best-accuracy baseline. Because this screen uses
-only 3 seeds, 2 training steps, and 8 samples, it should be cited as large-N
-coverage evidence, not as strong accuracy-superiority evidence.
+family, so it does not establish broad simulator superiority. A 5-seed N_bg=512
+baseline-complete medium run now reaches total `N=517`: best WPU accuracy is
+`0.387500`, best baseline accuracy is `0.362500`, and best WPU is `67.400400x`
+faster than that best-accuracy baseline. This is stronger than the earlier
+micro-screen, but it should still be cited as conditional large-N evidence, not
+as broad simulator superiority, because it is one cup-family and one-step with a
+small margin.
 
 P2 learned correction-trigger evidence is also negative on the hard seed split.
 The audit in `docs/experiments/pybullet_learned_correction_trigger_results.md`

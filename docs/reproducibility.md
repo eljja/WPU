@@ -180,6 +180,12 @@ The low-training N_bg=512 matched micro-screen can be reproduced with:
 python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 512 --seeds 11 13 17 --steps 2 --sim-steps 120 --samples 8 --batch-size 2 --hidden-dim 16 --layers 1 --num-heads 2 --working-set-size 12 --runtime-repeats 1 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_n512_baseline_micro.csv
 ```
 
+The 5-seed N_bg=512 matched medium benchmark can be reproduced with:
+
+```bash
+python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 512 --seeds 11 13 17 19 23 --steps 6 --sim-steps 120 --samples 16 --batch-size 2 --hidden-dim 24 --layers 1 --num-heads 4 --working-set-size 12 --runtime-repeats 1 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_n512_medium.csv
+```
+
 The large-background WPU-only PyBullet extension is a systems feasibility run,
 not a matched-baseline accuracy comparison. The dense graph baseline did not
 complete under the attempted protocol and should not be inferred from this CSV.

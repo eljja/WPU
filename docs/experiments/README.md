@@ -47,12 +47,13 @@ Use these reports for paper-level claims:
   at total `N=261`, but is low-training feasibility evidence. The newer
   N_bg=256 medium-training run is also baseline-complete and gives a small
   positive WPU-vs-graph accuracy gap at much lower forward latency, but remains
-  a single cup-family result. A low-training N_bg=512 baseline-complete
-  micro-screen reaches total `N=517`, but is marked as coverage evidence because
-  it uses only 3 seeds, 2 training steps, and 8 samples. The higher-budget
-  N_bg=512 cup extension is explicitly marked baseline-incomplete because only
-  WPU models completed under the attempted protocol; it is systems feasibility
-  evidence, not matched accuracy evidence.
+  a single cup-family result. Matched N_bg=512 evidence now includes both a
+  low-training micro-screen and a 5-seed medium run. The medium run reaches
+  total `N=517` with a small positive WPU-vs-graph accuracy gap at much lower
+  forward latency, but remains a single cup-family, one-step result. The
+  higher-budget N_bg=512 cup extension is explicitly marked baseline-incomplete
+  because only WPU models completed under the attempted protocol; it is systems
+  feasibility evidence, not matched accuracy evidence.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid
@@ -144,6 +145,12 @@ Use these reports for paper-level claims:
   best-accuracy baseline. This closes a coverage gap at total `N=517`, but the
   tiny training budget makes it coverage evidence rather than a strong
   superiority result.
+- `pybullet_cup_benchmark_n512_medium_results.md` and
+  `pybullet_cup_benchmark_n512_medium_results.ko.md`: 5-seed N_bg=512 matched
+  medium benchmark. Best WPU accuracy is `0.387500` versus best baseline
+  `0.362500`, with `67.400400x` lower forward latency than that best-accuracy
+  baseline. This strengthens P3 evidence but remains a single cup-family,
+  one-step, small-margin result.
 - `pybullet_closed_loop_rollout_results.md`: first PyBullet-derived closed-loop
   `WorldState` rollout diagnostic. Repeated delta application exposes a
   long-horizon WPU sparse failure: raw delta explosion and high constraint
@@ -747,9 +754,10 @@ Historical or preliminary reports:
   for WPU-vs-graph accuracy-latency at large `N`, but its margin is small and
   the domain is still one cup family. Coverage also includes 4 mechanism
   families, horizon 25 rollout diagnostics, 7 objectification corruption
-  settings, and systems profiles up to `N≈2052`. A low-training N_bg=512
-  baseline-complete micro-screen reaches total `N=517`, but should be used only
-  as coverage evidence because it has 3 seeds, 2 training steps, and 8 samples.
+  settings, and systems profiles up to `N≈2052`. Matched `N=517` coverage now
+  includes both a low-training micro-screen and a 5-seed baseline-complete
+  medium run. The N=517 medium run is positive for WPU-vs-graph
+  accuracy-latency, but it is still one cup family, one-step, and small-margin.
   The higher-budget WPU-only N_bg=512 cup extension also reaches total `N=517`,
   but dense graph comparison did not complete under the same protocol, so it
   must not be used as an accuracy superiority claim.

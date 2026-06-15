@@ -71,6 +71,13 @@ projection 덕분에 fail에서 partial로 올라갔지만 raw delta instability
 아니다. Priority 3~7도 solved가 아니라 partial이다. 따라서 올바른 외부 공표 태도는
 보편 우월성 주장이 아니라 반증 가능한 WPU regime hypothesis다.
 
+Route-state contract follow-up은 구현 gap 하나를 닫았지만 P1을 해결하지는 못했다.
+5-seed staged-regret router 비교를 재생성한 결과, 확장된 physical/action context를 단순
+concatenation으로 붙이는 것은 neutral하다. `physics_hidden` routed loss는 `0.962987`,
+internal route head는 `0.962894`이고, `state_only`는 `0.982804`로 더 나쁘다. 따라서 다음
+mechanism-shift rerun은 regret-hybrid model을 PyBullet path에 단순 삽입하는 것이 아니라
+explicit route-regret training을 추가해야 한다.
+
 ## 즉시 개선 우선순위
 
 1. token processing으로 돌아가지 않고 현재 conservative gap-closure fraction

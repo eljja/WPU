@@ -408,9 +408,11 @@ Use these reports for paper-level claims:
   low-harm frontier point.
 - `wpu_v2_candidate_safety_frontier_results.ko.md`: Korean companion for the
   candidate safety frontier.
-- `wpu_v2_regret_router_variant_results.md`: compares internal, physics-hidden,
-  and state-only regret routers; rejects scalar state-only routing for the
-  current v2 model.
+- `wpu_v2_regret_router_variant_results.md` and
+  `wpu_v2_regret_router_variant_results.ko.md`: compares internal,
+  physics-hidden, and state-only regret routers after the route-state contract
+  fix; rejects scalar state-only routing and shows expanded physical/action
+  context is neutral by simple concatenation.
 - `wpu_v2_structured_verifier_probe_results.md`: evaluates state/diagnostic
   verifier gates and K-expansion upper bounds after staged regret routing.
 - `wpu_v2_staged_verifier_hybrid_results.md`: stricter deployed verifier test

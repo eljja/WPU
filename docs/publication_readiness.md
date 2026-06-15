@@ -77,6 +77,14 @@ solved. This is the correct publication posture:
 the repository supports a falsifiable WPU regime hypothesis, not a completed
 claim of broad superiority.
 
+The route-state contract follow-up closes one implementation gap but not P1.
+After regenerating the 5-seed staged-regret router comparison, expanded
+physical/action context is neutral by simple concatenation: `physics_hidden`
+routed loss is `0.962987` versus `0.962894` for the internal route head, while
+`state_only` remains worse at `0.982804`. The next mechanism-shift rerun must
+therefore add explicit route-regret training to the PyBullet path rather than
+only inserting a regret-hybrid model.
+
 ## Immediate Improvement Priorities
 
 1. Close the candidate-oracle gap beyond the current conservative gap-closure

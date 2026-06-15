@@ -62,17 +62,29 @@ def main() -> None:
     parser.add_argument("--retriever-lr", type=float, default=3e-3)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--out", type=Path, default=Path("artifacts/staged_regret_hybrid.csv"))
+    parser.add_argument(
+        "--resume",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Load existing rows from --out and skip completed model/N/K/seed conditions.",
+    )
     args = parser.parse_args()
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    rows: list[dict[str, object]] = []
+    rows: list[dict[str, object]] = _read_existing_rows(args.out) if args.resume else []
+    completed = _completed_keys(rows)
     for n_value in args.n_values:
         for k_value in args.k_values:
             causal_obstacles = max(0, k_value - 4)
             background_objects = max(0, n_value - 4 - causal_obstacles)
             for seed in args.seeds:
+                key = (args.model_name, n_value, k_value, seed)
+                if key in completed:
+                    print(f"skip-completed model={args.model_name} seed={seed} N={n_value} K={k_value}", flush=True)
+                    continue
                 print(f"staged-regret model={args.model_name} seed={seed} N={n_value} K={k_value}", flush=True)
                 rows.append(_run_condition(background_objects, causal_obstacles, seed, args))
+                completed.add(key)
                 _write_csv(args.out, rows)
     _write_csv(args.out, rows)
     print(f"wrote={args.out}", flush=True)
@@ -434,6 +446,30 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _read_existing_rows(path: Path) -> list[dict[str, object]]:
+    if not path.exists():
+        return []
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _completed_keys(rows: list[dict[str, object]]) -> set[tuple[str, int, int, int]]:
+    completed: set[tuple[str, int, int, int]] = set()
+    for row in rows:
+        try:
+            completed.add(
+                (
+                    str(row["model"]),
+                    int(row["total_objects_n"]),
+                    int(row["causal_k"]),
+                    int(row["seed"]),
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return completed
 
 
 if __name__ == "__main__":

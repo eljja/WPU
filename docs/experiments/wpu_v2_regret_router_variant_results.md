@@ -6,7 +6,9 @@ Source CSVs:
 - `docs/experiments/wpu_v2_regret_router_variant_summary.csv`
 
 This experiment tests whether the staged regret router improves when its input
-is made more state-native.
+is made more state-native. The CSVs were regenerated after the route-state
+contract fix that passes `catch_action` and physical object-state scalars into
+the physics/state regret heads.
 
 ## Question
 
@@ -17,9 +19,12 @@ model. This run compares three internal router variants:
 
 - `internal`: original staged regret head using sparse hidden summary plus K
   pressure, selector confidence, and interaction density.
-- `physics_hidden`: sparse hidden summary plus physical route features.
+- `physics_hidden`: sparse hidden summary plus expanded physical route features
+  including pair geometry, target physical scalars, selected-set physical
+  scalars, `force`, and `catch_action`.
 - `state_only`: no hidden summary; only K pressure, interaction density,
-  pair-distance statistics, target position, and event magnitude.
+  pair geometry, target physical scalars, selected-set physical scalars,
+  `force`, and `catch_action`.
 
 ## Protocol
 
@@ -64,10 +69,11 @@ removes the hidden summary too aggressively: regret correlation falls from
 `0.351` to `0.161`, routed loss becomes slightly worse than sparse-only, and
 oracle excess increases from `0.045` to `0.074`.
 
-Adding physical features to the hidden-summary router is mostly neutral. It
-slightly improves routed accuracy, but loss is unchanged overall and worse at
-`K=32`. This means the post-hoc physical-state result does not transfer by
-simple concatenation.
+Adding the expanded physical/action feature context to the hidden-summary
+router is mostly neutral. It slightly improves routed accuracy, but loss is
+unchanged overall and worse at `K=32`. This means the route-state contract fix
+was necessary for correctness, but it does not by itself close P1. The post-hoc
+physical-state result still does not transfer by simple concatenation.
 
 The best current deployed router remains the original staged internal regret
 router. It is not final, but it is the only tested internal route head that
@@ -87,4 +93,6 @@ The useful direction is a structured verifier:
 
 This preserves the WPU thesis: the router should remain state-native, but the
 state signal must be represented as structured constraints and verification,
-not merely as a small scalar feature vector.
+not merely as a small scalar feature vector. The next PyBullet mechanism-shift
+test also needs explicit route-regret training; simply inserting a regret
+hybrid model into that script would compare an untrained route head.

@@ -43,6 +43,12 @@ receives pair geometry, target physical scalars, selected-set physical scalars,
 distances, target xy, and event norm. This is not a solved P1 result, but it
 prevents follow-up route experiments from silently discarding mechanism-defining
 state variables.
+The full 5-seed staged-regret rerun in
+`docs/experiments/wpu_v2_regret_router_variant_results.md` confirms the boundary:
+expanded physical/action context is neutral by simple concatenation
+(`physics_hidden` routed loss `0.962987` versus internal `0.962894`), while
+`state_only` remains worse (`0.982804`). Structured verification or joint route
+training is still required.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

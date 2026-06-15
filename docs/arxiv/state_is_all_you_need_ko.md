@@ -526,10 +526,16 @@ retrieval, verification, propagation과 함께 더 깊게 학습되는 candidate
   baseline-complete run은 더 강한 large-state evidence를 추가한다. Best WPU는
   `0.433333`, best baseline은 `0.425000`에 도달하고, best WPU는 해당 best-accuracy
   baseline보다 forward latency 기준 `57.595711x` 빠르다. 더 큰 budget에서도 WPU edge는
-  유지되지만 margin은 줄어들기 때문에 conditional evidence로 남는다. 별도의
-  higher-budget WPU-only N_bg=512 extension은 graph-transformer baseline이 같은
-  protocol에서 완료되지 않았으므로 systems feasibility evidence와 benchmark-design
-  warning이지 matched-baseline accuracy evidence가 아니다.
+  유지되지만 margin은 줄어들기 때문에 conditional evidence로 남는다. 같은 total
+  `N=517`에서 수행한 새 N_bg=512 mechanism-diversity screens는 negative
+  claim-boundary evidence다. Nominal-train evaluation은 7개 mechanism에서 WPU
+  win/tie/loss `2/1/4`, mean margin `-0.047619`를 보이고, multi-mechanism training은
+  `2/0/5`, mean margin `-0.095238`를 보인다. 따라서 large explicit state와 작은
+  identifiable `K`만으로는 mechanism-law generalization이 해결되지 않는다. WPU에는
+  학습되거나 적응된 mechanism-aware propagation이 필요하다. 별도의 higher-budget
+  WPU-only N_bg=512 extension은 graph-transformer baseline이 같은 protocol에서 완료되지
+  않았으므로 systems feasibility evidence와 benchmark-design warning이지
+  matched-baseline accuracy evidence가 아니다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

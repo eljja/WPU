@@ -1055,11 +1055,8 @@ def _priority_simulator_grounding() -> dict[str, object]:
                     f"with WPU {n512_high_speedup:.6f}x faster than that best-accuracy baseline. "
                     "The margin shrinks at higher budget, so this is not a broad superiority result."
                 )
-        mechanism_axis = next(
-            (row for row in coverage_rows if row["axis"] == "mechanism_shift_generalization"),
-            None,
-        )
-        mechanism_count = int(float(mechanism_axis["mechanism_count"])) if mechanism_axis else 1
+        mechanism_count = max(int(float(row["mechanism_count"])) for row in coverage_rows)
+        n512_shift_note = _n512_shift_screen_note()
         incomplete_axes = [
             row["axis"]
             for row in coverage_rows
@@ -1080,6 +1077,7 @@ def _priority_simulator_grounding() -> dict[str, object]:
             f"{micro_note}"
             f"{n512_medium_note}"
             f"{n512_high_note}"
+            f"{n512_shift_note}"
             f"{incomplete_note}"
         )
     status = "partial" if seed_count >= 2 and max_background >= 128 else "fail"
@@ -1092,7 +1090,7 @@ def _priority_simulator_grounding() -> dict[str, object]:
         "seed_count",
         source_path,
         f"PyBullet benchmark exists with {seed_count} seeds and background up to N_bg={max_background}; the 7-seed extension is still small but less seed-fragile.{coverage_note}",
-        "Add mechanism diversity and long-horizon simulator rollouts; higher-budget N_bg=512 remains small-margin.",
+        "Add mechanism-aware propagation and long-horizon simulator rollouts; higher-budget N_bg=512 remains small-margin and N_bg=512 mechanism screens are mixed/negative.",
     )
 
 
@@ -1289,6 +1287,9 @@ def _priority_shift_generalization() -> dict[str, object]:
                 f"{int(best_detector['nominal_false_adaptation'])}, decisions {best_detector['decisions']}; "
                 "this still uses calibration labels and adaptation samples"
             )
+    n512_shift_note = _n512_shift_screen_note()
+    if n512_shift_note:
+        notes.append(n512_shift_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -1301,7 +1302,7 @@ def _priority_shift_generalization() -> dict[str, object]:
         "wpu_shift_win_rate",
         source_path,
         "; ".join(notes),
-        "Train an explicit mechanism-shift detector and evaluate selective adaptation on harder held-out mechanisms.",
+        "Train mechanism-aware propagation, explicit shift detection, and selective adaptation on harder large-N held-out mechanisms.",
     )
 
 
@@ -1770,6 +1771,60 @@ def _rows_of_type(rows: list[dict[str, str]], row_type: str) -> list[dict[str, s
     return typed or rows
 
 
+def _n512_shift_screen_note() -> str:
+    parts: list[str] = []
+    for path, label in [
+        (ROOT / "pybullet_shift_generalization_n512_screen.csv", "N_bg=512 nominal-train mechanism screen"),
+        (ROOT / "pybullet_shift_generalization_n512_multimech.csv", "N_bg=512 multi-mechanism-train screen"),
+    ]:
+        if not path.exists():
+            continue
+        rows = _rows_of_type(_read_rows(path), "summary")
+        if not rows:
+            continue
+        mechanisms = sorted({row["eval_mechanism"] for row in rows})
+        wins = 0
+        ties = 0
+        losses = 0
+        deltas: list[float] = []
+        wpu_models = sorted({row["model"] for row in rows if row["model"].startswith("wpu-")})
+        baseline_models = sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
+        for mechanism in mechanisms:
+            group = [row for row in rows if row["eval_mechanism"] == mechanism]
+            best_wpu = max(float(row["branch_accuracy"]) for row in group if row["model"].startswith("wpu-"))
+            best_baseline = max(float(row["branch_accuracy"]) for row in group if not row["model"].startswith("wpu-"))
+            delta = best_wpu - best_baseline
+            deltas.append(delta)
+            if delta > 1e-9:
+                wins += 1
+            elif delta < -1e-9:
+                losses += 1
+            else:
+                ties += 1
+        total_n = max(int(float(row["total_objects_n"])) for row in rows if row.get("total_objects_n", ""))
+        seed_count = max(int(float(row["seed_count"])) for row in rows if row.get("seed_count", ""))
+        macro_wpu = max(
+            statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+            for model in wpu_models
+        )
+        macro_baseline = max(
+            statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+            for model in baseline_models
+        )
+        parts.append(
+            f"{label} at total N={total_n} covers {len(mechanisms)} mechanisms over {seed_count} seeds: "
+            f"WPU win/tie/loss is {wins}/{ties}/{losses}, mean best-WPU-minus-best-baseline margin is "
+            f"{statistics.fmean(deltas):+.6f}, and best macro WPU/baseline accuracies are "
+            f"{macro_wpu:.6f}/{macro_baseline:.6f}."
+        )
+    if not parts:
+        return ""
+    return (
+        " " + " ".join(parts) + " These large-N mechanism screens expand coverage but are mixed/negative: "
+        "small identifiable K does not by itself solve mechanism generalization."
+    )
+
+
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -1861,8 +1916,8 @@ def _ko_interpretation(priority: int) -> str:
     return {
         1: "Candidate-regret deployment sweep은 margin-only gate보다 강하지만, 논문용 observed 값은 test-best sweep이 아니라 train-selected deployment를 우선 사용한다. 현재 train-selected closure는 0.328025로 목표 0.5에 못 미치고 harmful accept도 0.251111로 threshold 근처에 남아 있어 P1은 fail이다. Harmful-accept/ranking penalty 학습은 안전하지만 closure가 0.081253으로 떨어지고, feature perturbation은 test-sweep safe closure를 0.329756까지 조금 올리지만 train-selected closure는 0.312586에 머문다. 별도 safety/utility head도 negative result다. Best closure는 0.147450, safe best는 0.090719, train-selected closure는 0.144863에 그친다. Cross-fit ensemble regret gate도 train-selected overfit 가설을 부정하는 negative result다. 최고 closure는 0.287268, safe best는 0.279738, cross-fit selected closure는 0.270989로 direct regret gate보다 낮다. Descriptor standardization과 group-DRO no-harm training도 standalone 해결책이 아니며 train-selected closure는 0.093863이다. 새 joint object-set candidate gate도 negative result다. Best closure는 0.101454, safe best는 0.101454, train-selected closure는 0.072167이고 mean regret correlation은 -0.000180에 가깝다. Regression-heavy ablation도 K=16에서 best closure 0.034751, train-selected closure -0.003089에 그친다. Fixed-candidate/fixed-propagator downstream-loss selector도 negative result다. Best closure는 0.106927이고 harmful-accept <= 0.25를 만족하는 deployment가 없으며 train-selected closure는 0.096833에 그친다. 새 joint candidate generator도 learned-generated oracle closure는 K=16에서 0.361251까지 만들지만 deployed evaluator closure는 0.042951에 그친다. Label-free sparse/local-dense verification signature도 standalone 해결책이 아니다. Best closure는 0.024989, safe best는 0.023029, train-selected closure는 0.024989로 direct regret gate보다 낮다. Shallow candidate-aware branch-logit propagation adapter도 standalone 해결책이 아니다. Best/safe closure는 0.092185, train-selected closure는 0.069911로 direct regret gate보다 낮다. 새 joint utility verifier는 object-set tensor, verification signature, uncertainty, no-harm safety를 같이 쓰지만 best/safe closure 0.097845, train-selected closure 0.077781에 그쳐 direct regret gate보다 낮다. 따라서 P1 병목은 object-set feature 부재, selector-loss 교체, 후보 생성 단독, verification feature 단독, 작은 output adapter, fixed-propagator utility/safety head의 문제가 아니라 cross-seed candidate regret target, 후보 생성, retrieval, 전파 검증, propagation dynamics를 함께 안정화해야 하는 문제다.",
         2: "Rollback-only memory layer는 sparse WPU H=25 integrity를 0.988647까지 올리지만 rollback rate가 0.812500으로 매우 높다. Corrected rollback은 rollback rate를 0.564167까지 낮추지만 integrity가 0.900288로 떨어진다. Escalated corrected rollback은 local-dense fallback을 사용해 integrity를 0.914831로 올리고 rollback rate를 0.000000으로 낮춘다. Finite-corrected run은 finite-safe delta clipping과 correction-only projection으로 integrity 0.958735, rollback rate 0.000000, escalation rate 0.000000을 달성하지만 correction rate가 0.784166으로 높다. 새 selective correction은 같은 integrity 0.958735를 유지하면서 corrected object fraction을 0.027461로 낮추고 low-disruption integrity를 0.758574까지 올린다. 그러나 correction trigger rate는 여전히 0.784166이다. Correction-trigger frontier audit은 integrity>=0.8 및 correction_rate<=0.25를 동시에 만족하는 trigger policy가 0개임을 보인다. 최고 low-correction trigger는 selective_corrected_entropy035이고 integrity 0.653668, correction rate 0.230000에 그친다. 새 learned correction-trigger hard-seed audit도 joint target을 만족한 summary policy가 0개다. 최고 learned trigger integrity는 0.958931이지만 correction rate가 0.791667이고, correction_rate<=0.25 조건의 최고 integrity는 0.523279에 그친다. Stable-transition sweep은 partial positive다. delta_norm_strong은 raw finite-clamped integrity를 0.633398까지 올리고, selective-correction low-disruption score를 0.809071까지 올리며 correction rate를 0.598333까지 낮춘다. 하지만 joint target row는 여전히 0개다. 따라서 P2는 memory-layer disruption과 correction frequency를 일부 줄였지만 raw delta stability와 low-frequency correction-trigger 학습은 아직 해결되지 않았다.",
-        3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 본훈련 baseline-complete로 확장됐고, N_bg=256 screen은 total N=261에서 WPU/graph/token baseline을 모두 완료했다. Medium-training N_bg=256 baseline-complete run은 evidence quality를 올린다. Best WPU인 wpu-cws-indexed-local-dense는 accuracy 0.466667이고 best baseline인 graph-transformer는 0.450000이며, best WPU는 해당 best-accuracy baseline보다 forward latency 기준 60.629526x 빠르다. 단, margin이 작고 단일 cup family이므로 broad superiority claim은 아니다. N_bg=512 baseline-complete micro-screen은 total N=517에서 WPU/graph/token baseline을 모두 포함하고 best WPU accuracy 0.375000 vs best baseline 0.333333을 보였지만, 3 seeds, 2 steps, 8 samples의 coverage evidence로만 해석한다. 5-seed N_bg=512 baseline-complete medium run은 best WPU 0.387500 vs best baseline 0.362500, speedup 67.400400x로 evidence를 강화했다. 새 higher-budget N_bg=512 run은 best WPU wpu-cws-indexed-local-dense accuracy 0.433333 vs best baseline graph-transformer 0.425000, speedup 57.595711x를 보인다. Edge는 유지되지만 margin은 더 작아졌으므로 조건부 evidence이지 broad superiority claim은 아니다. Coverage audit는 12개 PyBullet 축을 추적하고, 별도의 WPU-only large-state extension도 N_bg=512, total N=517까지 실행됐지만 dense graph baseline이 같은 higher-budget protocol에서 완료되지 않았으므로 systems feasibility evidence로만 취급한다. Simulator-backed evidence는 강화됐지만 mechanism 다양성, long-horizon rollout, perception/state adapter가 아직 부족하다.",
-        4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 7-seed composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.071428이다. Branch-prior audit은 catch_heavy가 prior-dominated shift임을 보인다. Mechanism-prior adaptation은 shifted WPU win-rate를 0.333333에서 0.666667로 올리고 prior-dominated shift를 1개에서 0개로 줄인다. Prior-strength sweep의 accuracy-best 설정은 strength=0.75, mean WPU accuracy 0.601852지만 shifted win-rate는 0.666667에 머문다. Calibration-selected prior는 mean accuracy/ECE를 개선하지만 shifted win-rate는 0.333333에 머문다. Few-shot mechanism adaptation은 shifted WPU win-rate 1.000000, mean margin change 0.050264까지 도달하지만 mechanism별 calibration set을 쓰는 adapted protocol이다. Mechanism-aware adaptive policy는 selected-prior와 few-shot adaptation을 선택적으로 결합해 shifted win-rate 1.000000, mean accuracy change 0.198412, margin change 0.058201, ECE change -0.099347, Brier change -0.155443에 도달한다. 새 calibration-statistic shift detector는 mechanism 이름 대신 base ECE와 majority-prior gap으로 같은 정책을 복원하며 nominal false adaptation 0, shifted win-rate 1.000000을 달성한다. 그러나 calibration label과 adaptation sample을 쓰므로 detect-and-adapt protocol이지 zero-shot generalization은 아니다. 따라서 P4는 adapted regime에서 강화됐지만 single-family zero-shot solved는 아니다.",
+        3: "PyBullet benchmark는 7개 seed와 background N_bg=128까지 본훈련 baseline-complete로 확장됐고, N_bg=256 screen은 total N=261에서 WPU/graph/token baseline을 모두 완료했다. Medium-training N_bg=256 baseline-complete run은 evidence quality를 올린다. Best WPU인 wpu-cws-indexed-local-dense는 accuracy 0.466667이고 best baseline인 graph-transformer는 0.450000이며, best WPU는 해당 best-accuracy baseline보다 forward latency 기준 60.629526x 빠르다. 단, margin이 작고 단일 cup family이므로 broad superiority claim은 아니다. N_bg=512 baseline-complete micro-screen은 total N=517에서 WPU/graph/token baseline을 모두 포함하고 best WPU accuracy 0.375000 vs best baseline 0.333333을 보였지만, 3 seeds, 2 steps, 8 samples의 coverage evidence로만 해석한다. 5-seed N_bg=512 baseline-complete medium run은 best WPU 0.387500 vs best baseline 0.362500, speedup 67.400400x로 evidence를 강화했다. 새 higher-budget N_bg=512 run은 best WPU wpu-cws-indexed-local-dense accuracy 0.433333 vs best baseline graph-transformer 0.425000, speedup 57.595711x를 보인다. Edge는 유지되지만 margin은 더 작아졌으므로 조건부 evidence이지 broad superiority claim은 아니다. 새 N_bg=512 mechanism screens는 total N=517에서 7개 mechanism을 다루며 coverage를 넓혔지만 mixed/negative다. 따라서 large-N 계산 이점이 mechanism generalization을 자동으로 보장하지 않는다. Coverage audit는 PyBullet 축을 추적하고, 별도의 WPU-only large-state extension도 N_bg=512, total N=517까지 실행됐지만 dense graph baseline이 같은 higher-budget protocol에서 완료되지 않았으므로 systems feasibility evidence로만 취급한다. Simulator-backed evidence는 강화됐지만 mechanism-aware propagation, long-horizon rollout, perception/state adapter가 아직 부족하다.",
+        4: "7-seed nominal-shift benchmark는 mixed이고, 3-seed leave-family-out probe는 win-rate 0.750000을 보인다. 7-seed composition-shift stress에서는 WPU가 accuracy 기준 3/3에서 baseline 이상이며 평균 accuracy delta가 0.071428이다. Branch-prior audit은 catch_heavy가 prior-dominated shift임을 보인다. Mechanism-prior adaptation은 shifted WPU win-rate를 0.333333에서 0.666667로 올리고 prior-dominated shift를 1개에서 0개로 줄인다. Prior-strength sweep의 accuracy-best 설정은 strength=0.75, mean WPU accuracy 0.601852지만 shifted win-rate는 0.666667에 머문다. Calibration-selected prior는 mean accuracy/ECE를 개선하지만 shifted win-rate는 0.333333에 머문다. Few-shot mechanism adaptation은 shifted WPU win-rate 1.000000, mean margin change 0.050264까지 도달하지만 mechanism별 calibration set을 쓰는 adapted protocol이다. Mechanism-aware adaptive policy는 selected-prior와 few-shot adaptation을 선택적으로 결합해 shifted win-rate 1.000000, mean accuracy change 0.198412, margin change 0.058201, ECE change -0.099347, Brier change -0.155443에 도달한다. 새 calibration-statistic shift detector는 mechanism 이름 대신 base ECE와 majority-prior gap으로 같은 정책을 복원하며 nominal false adaptation 0, shifted win-rate 1.000000을 달성한다. 그러나 calibration label과 adaptation sample을 쓰므로 detect-and-adapt protocol이지 zero-shot generalization은 아니다. 새 N_bg=512 nominal-train screen은 7개 mechanism에서 WPU win/tie/loss 2/1/4, 평균 best-WPU-minus-best-baseline margin -0.047619이고, multi-mechanism-train screen도 2/0/5와 -0.095238로 더 약하다. 따라서 large-N에서 작은 K가 식별되어도 mechanism law를 안정적으로 학습하지 못하면 WPU 정확도 우위는 사라진다. P4는 adapted regime에서 강화됐지만 large-N zero-shot mechanism generalization은 solved가 아니다.",
         5: "7-seed 평균 WPU ECE ratio는 0.963449이고, leave-family-out 평균 ECE ratio는 0.972745로 양호하지만, calibrated mixture probe에서는 1.133834로 악화된다. 7-seed composition-shift stress의 평균 ECE ratio는 1.014879이고 no_catch에서 1.166073까지 악화된다. 이는 3-seed stress보다 안정적이지만 여전히 calibration 우위는 아니다. Temperature+bias calibration은 no_catch를 개선하지만 3개 mechanism 중 1개만 ECE ratio가 개선되어 보편 해결책은 아니다. Branch-prior audit은 catch_heavy에서 majority prior 0.753968이 best WPU 0.408730을 크게 앞선다는 점을 보여준다. Mechanism-prior adaptation은 accuracy를 개선하지만 shifted mean ECE를 0.024819 악화시킨다. Prior-strength sweep에서도 win-rate를 유지/개선하면서 ECE를 악화시키지 않는 비영점 strength가 없었다. Calibration-selected prior는 shifted mean ECE를 -0.046204, Brier를 -0.105470 개선하지만 baseline win-rate는 올리지 못한다. Few-shot mechanism adaptation도 ECE를 -0.055342 개선한다. Mechanism-aware adaptive policy와 calibration-statistic shift detector는 shifted accuracy를 +0.198412, margin을 +0.058201, ECE를 -0.099347, Brier를 -0.155443 개선해 detect-and-adapt calibration에는 긍정적이다. Uncertainty-gated local-dense recompute는 aggregate accuracy를 +0.071428, ECE를 -0.016396 개선하지만 dense recompute rate가 0.985450으로 거의 full recompute다. Static low-cost gate는 recompute rate 0.025132에서 accuracy를 +0.009260 올리지만 ECE를 +0.005395 악화시킨다. Learned sparse-output benefit gate는 source low-cost에서 accuracy를 +0.052910 올리지만 ECE를 +0.010769 악화시킨다. 새 mechanism-selective calibration gate는 cost_proxy<=0.25에서 non-reference calibration-safe policy 1개를 만든다. Best safe policy는 cost 0.247355, accuracy delta +0.029100, ECE delta -0.001652, Brier delta -0.030758이다. 따라서 P5는 전역/zero-shot gate로는 미해결이지만, mechanism-aware adapted routing에서는 약한 positive sub-regime이 확인됐다.",
         6: "Tensor-byte reduction은 0.997454, CPU sparse-forward reduction은 0.996975, CUDA sparse-forward reduction은 0.996216까지 관측됐다. Screening-only energy proxy도 추가됐지만 실제 전력 측정은 아니다. Matched-speedup audit의 판정 기준을 corrected matched-or-better로 고치면 N=133에서는 best-accuracy non-WPU baseline 대비 WPU가 더 정확하고 더 빠르다. Pareto audit에서도 WPU는 N=133에서 frontier에 올라가지만 N=5에서는 token에 지배된다. Systems claim-boundary audit은 supported proxy 축 4개, partial trained 축 2개, real-power/sparse-kernel 미측정 축 1개를 분리한다. Branch-overlay memory proxy reduction은 0.874128이지만 CUDA peak-memory proxy reduction은 0.304080에 그친다. Real energy와 sparse-kernel behavior는 아직 미해결이다.",
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. 새 loss-coupling audit은 worst mean accuracy drop이 wpu-cws-indexed-local-dense/combined에서 0.027778, worst mean MSE increase가 wpu-cws-indexed-sparse/drop_relations_heavy에서 0.087356임을 보인다. MSE degradation과 가장 강하게 연결된 component deficit은 selected_k_mean(|r|=0.481851)이고 accuracy degradation과 가장 강하게 연결된 component deficit은 relation_confidence(|r|=0.352431)이다. 따라서 objectification metric과 downstream loss의 연결은 시작됐지만 branch accuracy 변화가 작아 closed-loop/multi-horizon 검증이 필요하다.",
@@ -1873,8 +1928,8 @@ def _ko_next_action(priority: int) -> str:
     return {
         1: "Post-hoc gate, object-set-only gate, selector-loss-only gate, generator-only probe, verification-feature-only probe, shallow output-adapter probe, fixed-propagator utility/safety verifier를 더 튜닝하기보다 candidate generation, retrieval, propagation verification, propagation dynamics를 하나의 joint objective로 묶고, no-harm/calibration target을 held-out seed 전이에 맞게 학습한다.",
         2: "Stable-transition loss sweep은 correction frequency와 low-disruption integrity를 일부 개선했지만 low-correction joint target은 여전히 만족하지 못한다. 다음은 trigger threshold가 아니라 multi-step/simulator-resynchronized transition training 또는 구조 변경이다.",
-        3: "N_bg=512 higher-budget run에서도 margin이 작으므로, 이제 더 많은 mechanism, long-horizon simulator rollout, perception/state adapter를 추가한다.",
-        4: "명시적인 mechanism-shift detector를 학습하고, 더 어려운 held-out mechanism에서 selective adaptation policy를 평가한다.",
+        3: "N_bg=512 higher-budget run에서도 margin이 작고 N_bg=512 mechanism screens가 mixed/negative이므로, mechanism-aware propagation, long-horizon simulator rollout, perception/state adapter를 추가한다.",
+        4: "Mechanism-aware propagation, 명시적인 mechanism-shift detector, selective adaptation을 더 어려운 large-N held-out mechanism에서 평가한다.",
         5: "Sparse-output gate를 넘어 calibration-aware mechanism uncertainty, branch calibration loss, multi-step ECE/Brier/NLL을 학습한다.",
         6: "Energy, allocator traffic, sparse-kernel behavior, Pareto frontier, trained matched-or-better speedup을 측정한다.",
         7: "더 강한 closed-loop 또는 multi-horizon corruption 실험을 수행하고, objectification component가 큰 branch/rollout loss를 설명하는지 검증한다.",

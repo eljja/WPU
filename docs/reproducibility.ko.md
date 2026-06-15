@@ -184,6 +184,13 @@ Higher-budget 5-seed N_bg=512 matched benchmark는 다음 명령으로 재현할
 python scripts/pybullet_cup_benchmark.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --background-objects 512 --seeds 11 13 17 19 23 --steps 10 --sim-steps 120 --samples 24 --batch-size 2 --hidden-dim 32 --layers 1 --num-heads 4 --working-set-size 12 --runtime-repeats 1 --balanced-labels --out docs/experiments/pybullet_cup_benchmark_n512_high_budget.csv
 ```
 
+N_bg=512 mechanism-diversity claim-boundary screens는 다음 명령으로 재현할 수 있다.
+
+```bash
+python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --train-mechanisms nominal --eval-mechanisms nominal high_force edge_shift catch_heavy no_catch edge_high_force edge_catch_heavy --background-objects 512 --seeds 11 13 17 --steps 6 --sim-steps 120 --samples 16 --batch-size 2 --hidden-dim 24 --layers 1 --num-heads 4 --working-set-size 12 --balanced-labels --out docs/experiments/pybullet_shift_generalization_n512_screen.csv
+python scripts/pybullet_shift_generalization.py --models wpu-cws-indexed-sparse wpu-cws-indexed-local-dense graph-transformer serialized-token --train-mechanisms nominal high_force edge_shift catch_heavy no_catch edge_high_force edge_catch_heavy --eval-mechanisms nominal high_force edge_shift catch_heavy no_catch edge_high_force edge_catch_heavy --background-objects 512 --seeds 11 13 17 --steps 6 --sim-steps 120 --samples 16 --batch-size 2 --hidden-dim 24 --layers 1 --num-heads 4 --working-set-size 12 --balanced-labels --out docs/experiments/pybullet_shift_generalization_n512_multimech.csv
+```
+
 Large-background WPU-only PyBullet extension은 systems feasibility run이지
 matched-baseline accuracy comparison이 아니다. Dense graph baseline은 attempted
 protocol에서 완료되지 않았으므로 이 CSV에서 baseline accuracy를 추론하면 안 된다.

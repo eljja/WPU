@@ -926,10 +926,16 @@ positive P3 evidence rather than strong simulator superiority. A higher-budget
 stronger large-state evidence: the best WPU reaches 0.433333 versus the best
 baseline at 0.425000, with 57.595711 times lower forward latency than that
 best-accuracy baseline. The WPU edge persists under a larger budget, but the
-margin shrinks, so this remains conditional evidence. The separate
-higher-budget WPU-only \(N_{\mathrm{bg}}=512\) extension remains systems
-feasibility evidence because the graph-transformer baseline did not complete
-under the attempted protocol.
+margin shrinks, so this remains conditional evidence. New
+\(N_{\mathrm{bg}}=512\) mechanism-diversity screens at the same total \(N=517\)
+are negative claim-boundary evidence: nominal-train evaluation over seven
+mechanisms gives WPU win/tie/loss 2/1/4 and mean margin -0.047619, while
+multi-mechanism training gives 2/0/5 and mean margin -0.095238. Thus large
+explicit state and small identifiable \(K\) do not by themselves solve
+mechanism-law generalization; WPU needs learned or adapted mechanism-aware
+propagation. The separate higher-budget WPU-only \(N_{\mathrm{bg}}=512\)
+extension remains systems feasibility evidence because the graph-transformer
+baseline did not complete under the attempted protocol.
 
 These limitations change the paper's scientific posture. The current claim is
 not that WPU already surpasses Transformers, GNN simulators, Dreamer-style

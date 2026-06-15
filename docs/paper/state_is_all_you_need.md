@@ -402,9 +402,15 @@ Not supported:
   evidence: best WPU reaches `0.433333` versus best baseline `0.425000`, with
   `57.595711x` lower forward latency than that best-accuracy baseline. The WPU
   edge persists under a larger budget, but the margin shrinks, so this remains
-  conditional evidence. The separate higher-budget WPU-only N_bg=512 extension
-  remains systems feasibility evidence because the graph-transformer baseline
-  did not complete under the attempted protocol.
+  conditional evidence. New N_bg=512 mechanism-diversity screens at the same
+  total `N=517` are negative claim-boundary evidence: nominal-train evaluation
+  over 7 mechanisms gives WPU win/tie/loss `2/1/4` and mean margin `-0.047619`,
+  while multi-mechanism training gives `2/0/5` and mean margin `-0.095238`.
+  Thus large explicit state and small identifiable K do not by themselves solve
+  mechanism-law generalization; WPU needs learned or adapted mechanism-aware
+  propagation. The separate higher-budget WPU-only N_bg=512 extension remains
+  systems feasibility evidence because the graph-transformer baseline did not
+  complete under the attempted protocol.
 
 ## Application Boundary
 

@@ -297,6 +297,13 @@ The current evidence supports a regime hypothesis, not universal dominance.
   N_bg=512 cup extension remains WPU-only because the dense graph baseline did
   not complete under that larger attempted protocol, so it is systems feasibility
   evidence.
+- The N_bg=512 mechanism-diversity screens are deliberately negative
+  claim-boundary evidence. At total `N=517`, the nominal-train screen over 7
+  mechanisms gives WPU win/tie/loss `2/1/4` and mean best-WPU-minus-best-baseline
+  margin `-0.047619`; the multi-mechanism-train screen gives `2/0/5` and
+  `-0.095238`. This means the large-N sparse execution advantage does not
+  automatically imply mechanism generalization. WPU needs small identifiable K
+  plus a learned or adapted local propagation law.
 - The first PyBullet objectification stress shows that missing causal-frontier
   relations reduce WPU selected K before propagation. It also shows that the
   current objectification score must be extended with frontier completeness and

@@ -158,6 +158,13 @@ Use these reports for paper-level claims:
   baseline `0.425000`, with `57.595711x` lower forward latency than that
   best-accuracy baseline. The WPU edge persists, but the margin shrinks, so the
   result remains conditional large-N evidence.
+- `pybullet_shift_generalization_n512_results.md` and
+  `pybullet_shift_generalization_n512_results.ko.md`: N_bg=512 mechanism
+  diversity screens at total `N=517`. The nominal-train screen covers 7
+  mechanisms and gives WPU win/tie/loss `2/1/4` with mean margin `-0.047619`.
+  The multi-mechanism-train screen gives `2/0/5` with mean margin `-0.095238`.
+  This is negative/claim-boundary evidence: large-N sparse execution does not
+  automatically solve mechanism generalization.
 - `pybullet_closed_loop_rollout_results.md`: first PyBullet-derived closed-loop
   `WorldState` rollout diagnostic. Repeated delta application exposes a
   long-horizon WPU sparse failure: raw delta explosion and high constraint
@@ -765,7 +772,11 @@ Historical or preliminary reports:
   includes a low-training micro-screen, a 5-seed baseline-complete medium run,
   and a higher-budget 5-seed run. The higher-budget run is positive for
   WPU-vs-graph accuracy-latency, but the margin shrinks, so it is still
-  conditional one-cup, one-step evidence.
+  conditional one-cup, one-step evidence. New N_bg=512 mechanism-diversity
+  screens expand coverage to 7 mechanisms at total `N=517`, but are
+  mixed/negative for WPU accuracy. They show that small identifiable K must be
+  paired with a learned or adapted local mechanism law; large N alone is not
+  enough.
   The higher-budget WPU-only N_bg=512 cup extension also reaches total `N=517`,
   but dense graph comparison did not complete under the same protocol, so it
   must not be used as an accuracy superiority claim.

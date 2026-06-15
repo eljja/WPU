@@ -13,6 +13,8 @@ Source CSVs:
 - `docs/experiments/pybullet_cup_benchmark_n512_medium.csv`
 - `docs/experiments/pybullet_objectification_quality.csv`
 - `docs/experiments/pybullet_shift_generalization.csv`
+- `docs/experiments/pybullet_shift_generalization_n512_multimech.csv`
+- `docs/experiments/pybullet_shift_generalization_n512_screen.csv`
 - `docs/experiments/pybullet_system_profile.csv`
 - `docs/experiments/pybullet_system_profile_cuda.csv`
 
@@ -26,6 +28,8 @@ Source CSVs:
 | cup_n512_baseline_high_budget | 5 | 4 | 1 | 512 | 517 | 1 | 1 | True |
 | cup_n512_wpu_only_extension | 7 | 2 | 1 | 512 | 517 | 1 | 1 | False |
 | mechanism_shift_generalization | 7 | 4 | 4 | 32 | 37 | 1 | 1 | True |
+| mechanism_shift_n512_nominal_train | 3 | 4 | 7 | 512 | 517 | 1 | 1 | True |
+| mechanism_shift_n512_multimechanism_train | 3 | 4 | 7 | 512 | 517 | 1 | 1 | True |
 | closed_loop_rollout | 2 | 3 | 1 | 32 | 37 | 25 | 1 | True |
 | objectification_quality | 2 | 0 | 1 | 512 | 516 | 1 | 7 | True |
 | system_profile_cpu | 2 | 0 | 1 | 2048 | 2052 | 1 | 1 | True |
@@ -39,8 +43,9 @@ Source CSVs:
 - `cup_n512_baseline_micro` includes WPU, graph, and token baselines at N_bg=512 and total N=517, but with only 3 seeds, 2 steps, and 8 samples it is large-N coverage evidence rather than strong accuracy-superiority evidence.
 - `cup_n512_baseline_medium` is a stronger baseline-complete N_bg=512, total N=517 run with 5 seeds, 6 steps, and 16 samples. The best WPU slightly exceeds the best baseline, but the single cup family and small margin still rule out a broad superiority claim.
 - `cup_n512_baseline_high_budget` further increases the budget to 5 seeds, 10 steps, and 24 samples. The best-WPU edge persists, but the margin shrinks, so it remains conditional evidence.
+- `mechanism_shift_n512_nominal_train` and `mechanism_shift_n512_multimechanism_train` cover 7 mechanisms at total N=517. These axes are claim-boundary evidence: WPU's large-N compute advantage does not automatically imply mechanism generalization.
 - `cup_n512_wpu_only_extension` shows WPU execution at N_bg=512 and total N=517, but it is not accuracy-superiority evidence because the dense graph baseline did not complete under the same protocol.
-- The next P3 bottleneck is not another small cup run; it is mechanism diversity, baseline-complete large-N comparison, and end-to-end objectification through a perception/state adapter.
+- The next P3 bottleneck is not simply adding more mechanism names; it is mechanism-aware propagation, long-horizon simulator rollout, and end-to-end objectification through a perception/state adapter.
 
 ## Row Notes
 
@@ -52,6 +57,8 @@ Source CSVs:
 - `cup_n512_baseline_high_budget`: Higher-budget 5-seed N_bg=512 run with WPU, graph, and token baselines. It keeps a small best-WPU accuracy edge over the best baseline at total N=517, but the margin shrinks, so it is conditional evidence rather than a broad superiority claim.
 - `cup_n512_wpu_only_extension`: Large-background WPU-only extension. The graph-transformer baseline did not finish under the attempted 20-minute run, so this is systems feasibility evidence, not matched baseline superiority evidence.
 - `mechanism_shift_generalization`: Nominal plus 3 shifted mechanism families: catch_heavy, edge_shift, high_force.
+- `mechanism_shift_n512_nominal_train`: N_bg=512, total N=517 large-state mechanism-diversity screen. Training uses nominal only; evaluation covers nominal plus 6 shifts: catch_heavy, edge_catch_heavy, edge_high_force, edge_shift, high_force, no_catch. This is a claim-boundary/OOD diagnostic, not a superiority result.
+- `mechanism_shift_n512_multimechanism_train`: N_bg=512, total N=517 multi-mechanism training screen over 7 mechanisms. It tests whether mechanism diversity alone recovers WPU accuracy at large N; current results are mixed/negative.
 - `closed_loop_rollout`: Multi-step delta-overlay rollout diagnostic; finite-corrected safety is tracked in the separate state-integrity audit.
 - `objectification_quality`: Objectification-contract audit over clean and corrupted simulator-derived state; it measures input quality, not model superiority.
 - `system_profile_cpu`: Systems profile separating full-state tensorization from indexed WPU working-set tensorization and random forward proxies.

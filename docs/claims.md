@@ -74,6 +74,16 @@ accuracy `0.541667` versus `0.500000` for the best non-WPU baseline, with dense
 compute `0.000000` and win/tie/loss `1/2/1`. This is a promising screen, not a
 solved claim: `edge_shift` remains negative, and the result must be expanded to
 larger seed/mechanism sweeps before being used as strong evidence.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_adapter_multitrain_results.md`
+then clarifies the boundary. The nominal-only 5-seed/7-mechanism expansion is
+negative (`0.433333` macro accuracy versus `0.476190` best baseline), and an
+object-wise adapter is also negative under nominal-only training. However, when
+the adapter is trained on primitive mechanisms, it reaches 5-seed N_bg=512 macro
+accuracy `0.497143` versus `0.472857` for the best baseline, with dense compute
+`0.000000` and win/tie/loss `3/1/3`. This supports a narrower claim: WPU needs
+object-wise mechanism-conditioned propagation trained on primitive mechanism
+variation; large-N sparse state alone and nominal-only zero-shot extrapolation
+are insufficient.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

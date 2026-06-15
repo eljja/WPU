@@ -98,6 +98,12 @@ condition하는 것이다.
 non-WPU baseline은 `0.500000`이었다. 4개 shifted mechanism에서 win/tie/loss는 `1/2/1`이다.
 하지만 `edge_shift` 실패가 남아 있으므로 이는 더 큰 sweep으로 확장할 우선 방향이지,
 그 자체로 publication-level superiority claim은 아니다.
+더 큰 follow-up은 이 문장을 좁힌다. 5 seeds와 7 mechanisms로 확장한 nominal-only
+mechanism-conditioned 결과는 negative이고, object-wise mechanism adapter도 nominal-only
+training에서는 negative다. Positive regime은 adapter가 primitive mechanism으로 학습될 때만
+나온다. N_bg=512에서 macro accuracy는 `0.497143`, best baseline은 `0.472857`, dense
+compute는 `0.000000`, win/tie/loss는 `3/1/3`이다. 이는 조건부 accuracy/compute result이지
+broad zero-shot generalization claim이 아니다.
 
 ## 즉시 개선 우선순위
 

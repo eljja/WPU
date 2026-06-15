@@ -1296,6 +1296,9 @@ def _priority_shift_generalization() -> dict[str, object]:
     mechanism_conditioned_note = _n512_mechanism_conditioned_note()
     if mechanism_conditioned_note:
         notes.append(mechanism_conditioned_note.strip())
+    mechanism_adapter_note = _n512_mechanism_adapter_multitrain_note()
+    if mechanism_adapter_note:
+        notes.append(mechanism_adapter_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -1931,6 +1934,85 @@ def _n512_mechanism_conditioned_note() -> str:
     )
 
 
+def _n512_mechanism_adapter_multitrain_note() -> str:
+    nominal_path = ROOT / "pybullet_shift_generalization_n512_mechanism_conditioned_5seed.csv"
+    multitrain_path = ROOT / "pybullet_shift_generalization_n512_mechanism_adapter_multitrain_5seed.csv"
+    if not multitrain_path.exists():
+        return ""
+    parts: list[str] = []
+    if nominal_path.exists():
+        nominal_rows = _rows_of_type(_read_rows(nominal_path), "summary")
+        target_model = "wpu-cws-indexed-mechanism-conditioned"
+        target_rows = [row for row in nominal_rows if row["model"] == target_model]
+        if target_rows:
+            mechanisms = sorted({row["eval_mechanism"] for row in nominal_rows})
+            wins = 0
+            ties = 0
+            losses = 0
+            deltas: list[float] = []
+            for mechanism in mechanisms:
+                group = [row for row in nominal_rows if row["eval_mechanism"] == mechanism]
+                wpu = next(row for row in group if row["model"] == target_model)
+                best_baseline = max(
+                    float(row["branch_accuracy"]) for row in group if not row["model"].startswith("wpu-")
+                )
+                delta = float(wpu["branch_accuracy"]) - best_baseline
+                deltas.append(delta)
+                if delta > 1e-9:
+                    wins += 1
+                elif delta < -1e-9:
+                    losses += 1
+                else:
+                    ties += 1
+            macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+            best_macro_baseline = max(
+                statistics.fmean(float(row["branch_accuracy"]) for row in nominal_rows if row["model"] == model)
+                for model in sorted({row["model"] for row in nominal_rows if not row["model"].startswith("wpu-")})
+            )
+            parts.append(
+                f"Nominal-only 5-seed mechanism-conditioned expansion is negative: win/tie/loss "
+                f"{wins}/{ties}/{losses}, mean margin {statistics.fmean(deltas):+.6f}, and macro "
+                f"WPU/baseline accuracy {macro_wpu:.6f}/{best_macro_baseline:.6f}."
+            )
+    rows = _rows_of_type(_read_rows(multitrain_path), "summary")
+    target_model = "wpu-cws-indexed-mechanism-adapter"
+    target_rows = [row for row in rows if row["model"] == target_model]
+    if not target_rows:
+        return " ".join(parts)
+    mechanisms = sorted({row["eval_mechanism"] for row in rows})
+    wins = 0
+    ties = 0
+    losses = 0
+    deltas: list[float] = []
+    for mechanism in mechanisms:
+        group = [row for row in rows if row["eval_mechanism"] == mechanism]
+        wpu = next(row for row in group if row["model"] == target_model)
+        best_baseline = max(float(row["branch_accuracy"]) for row in group if not row["model"].startswith("wpu-"))
+        delta = float(wpu["branch_accuracy"]) - best_baseline
+        deltas.append(delta)
+        if delta > 1e-9:
+            wins += 1
+        elif delta < -1e-9:
+            losses += 1
+        else:
+            ties += 1
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+    macro_ece = statistics.fmean(float(row["ece"]) for row in target_rows)
+    macro_dense = statistics.fmean(float(row["dense_compute_ratio"]) for row in target_rows)
+    best_macro_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+        for model in sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
+    )
+    parts.append(
+        f"Primitive multi-mechanism training with an object-wise sparse mechanism adapter is conditionally "
+        f"positive: win/tie/loss {wins}/{ties}/{losses}, mean margin {statistics.fmean(deltas):+.6f}, "
+        f"macro WPU/baseline accuracy {macro_wpu:.6f}/{best_macro_baseline:.6f}, ECE {macro_ece:.6f}, "
+        f"and dense compute {macro_dense:.6f}. Remaining failures are edge-composition and no_catch shifts, "
+        "so this is not broad zero-shot mechanism generalization."
+    )
+    return " ".join(parts)
+
+
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -2051,6 +2133,16 @@ def _ko_interpretation(priority: int) -> str:
             "best baseline 대비 win/tie/loss는 1/2/1이며 dense compute는 0.000000이다. "
             "다만 edge_shift는 여전히 negative이므로 이는 solved zero-shot mechanism generalization이 "
             "아니라 mechanism-conditioned propagation을 더 큰 sweep으로 확장해야 한다는 증거다."
+        )
+    if priority in {4, 5} and (ROOT / "pybullet_shift_generalization_n512_mechanism_adapter_multitrain_5seed.csv").exists():
+        text += (
+            " 더 큰 follow-up은 조건을 좁힌다. Nominal-only 5-seed/7-mechanism 확장은 "
+            "negative이고, object-wise adapter도 nominal-only training에서는 negative다. "
+            "하지만 primitive mechanisms로 학습한 object-wise sparse mechanism adapter는 "
+            "N_bg=512 5-seed에서 macro WPU/baseline accuracy 0.497143/0.472857, "
+            "win/tie/loss 3/1/3, dense compute 0.000000을 달성한다. 따라서 P4/P5의 "
+            "현실적인 다음 주장은 broad zero-shot이 아니라 primitive mechanism variation을 "
+            "학습한 sparse local-law composition이다."
         )
     return text
 

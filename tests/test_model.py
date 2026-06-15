@@ -508,6 +508,28 @@ def test_mechanism_conditioned_route_uses_physics_context_without_dense_compute(
     assert model.mechanism_context_encoder[-1].weight.grad.norm().item() > 0.0
 
 
+def test_mechanism_adapter_route_uses_objectwise_physics_context_without_dense_compute() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, target_delta, labels, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = create_model(
+        "wpu-cws-indexed-mechanism-adapter",
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+    )
+
+    prediction = model(batch, num_branches=3)
+    loss = torch.nn.functional.mse_loss(prediction.object_delta, target_delta)
+    loss = loss + torch.nn.functional.cross_entropy(prediction.branch_logits, labels)
+    loss.backward()
+
+    assert model.last_working_set_stats is not None
+    assert model.last_working_set_stats.dense_compute_ratio == 0.0
+    assert model.mechanism_object_adapter[-1].weight.grad is not None
+    assert model.mechanism_object_adapter[-1].weight.grad.norm().item() > 0.0
+
+
 def test_route_physics_features_preserve_action_and_physical_scalars() -> None:
     state = create_robot_cup_state()
     cup = state.objects["cup_001"]

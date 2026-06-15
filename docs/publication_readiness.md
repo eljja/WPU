@@ -107,6 +107,14 @@ versus `0.500000` for the best non-WPU baseline and wins/ties/loses `1/2/1`
 over four shifted mechanisms. The remaining `edge_shift` failure means this is
 now a priority direction for larger sweeps, not a publication-level superiority
 claim by itself.
+The larger follow-up narrows that statement. Nominal-only mechanism-conditioned
+expansion over 5 seeds and 7 mechanisms is negative, and the object-wise
+mechanism adapter is also negative under nominal-only training. The positive
+regime appears only when the adapter is trained on primitive mechanisms: at
+N_bg=512 it reaches macro accuracy `0.497143` versus `0.472857` for the best
+baseline, with dense compute `0.000000` and win/tie/loss `3/1/3`. This is a
+conditional accuracy/compute result, not a broad zero-shot generalization
+claim.
 
 ## Immediate Improvement Priorities
 

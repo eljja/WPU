@@ -191,6 +191,15 @@ Use these reports for paper-level claims:
   dense compute is `0.000000`, and win/tie/loss versus best baseline is `1/2/1`.
   The `edge_shift` failure remains, so this is a candidate direction rather
   than a solved large-N zero-shot mechanism-generalization result.
+- `pybullet_shift_generalization_n512_mechanism_adapter_multitrain_results.md`
+  and `pybullet_shift_generalization_n512_mechanism_adapter_multitrain_results.ko.md`:
+  follow-up that separates nominal-only zero-shot failure from primitive
+  multi-mechanism training. Nominal-only expansion is negative, but an
+  object-wise sparse mechanism adapter trained on primitive mechanisms reaches
+  5-seed N_bg=512 macro accuracy `0.497143` versus best baseline `0.472857`,
+  dense compute `0.000000`, and win/tie/loss `3/1/3`. This is a narrow
+  accuracy/compute positive result with remaining edge-composition and
+  calibration failures.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

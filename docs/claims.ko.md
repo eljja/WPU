@@ -68,6 +68,15 @@ mechanism-conditioned WPU는 macro accuracy `0.541667`을 달성했고, best non
 `0.500000`이었다. Dense compute는 `0.000000`, win/tie/loss는 `1/2/1`이다. 이는 유망한
 screen이지 해결된 주장이 아니다. `edge_shift`는 여전히 negative이며, 더 큰 seed/mechanism
 sweep으로 확장해야 강한 증거가 된다.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_adapter_multitrain_results.ko.md`는
+그 경계를 더 선명하게 만든다. Nominal-only 5-seed/7-mechanism 확장은 negative다.
+Macro accuracy는 `0.433333`이고 best baseline은 `0.476190`이다. Object-wise adapter도
+nominal-only training에서는 negative다. 그러나 adapter를 primitive mechanisms로 학습하면
+5-seed N_bg=512 macro accuracy `0.497143`에 도달하고, best baseline은 `0.472857`이다.
+Dense compute는 `0.000000`, win/tie/loss는 `3/1/3`이다. 따라서 주장은 더 좁아진다.
+WPU에는 primitive mechanism variation으로 학습된 object-wise mechanism-conditioned
+propagation이 필요하며, large-N sparse state만으로 또는 nominal-only zero-shot
+extrapolation만으로는 부족하다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

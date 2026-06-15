@@ -96,6 +96,10 @@ selected route-regret WPU keeps dense compute low (`0.071429`) but best-WPU
 versus best-baseline win/tie/loss is only `2/1/4`, and graph-transformer keeps
 higher macro accuracy. This reinforces that P4/P5 needs mechanism-aware
 propagation or adaptation, not another threshold-only route selector.
+A matched mechanism-prior adaptation screen is also negative for the route-regret
+WPU (`0/0/4` versus best baseline over four shifted mechanisms), so the next
+step should condition propagation dynamics directly rather than add another
+post-hoc prior or route threshold.
 
 ## Immediate Improvement Priorities
 

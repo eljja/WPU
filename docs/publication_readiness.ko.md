@@ -88,6 +88,10 @@ route-regret WPU는 dense compute를 낮게 유지하지만(`0.071429`), best-WP
 best-baseline win/tie/loss는 `2/1/4`이고 graph-transformer가 더 높은 macro accuracy를
 유지한다. 이는 P4/P5가 threshold-only route selector가 아니라 mechanism-aware
 propagation 또는 adaptation을 필요로 함을 강화한다.
+Matched mechanism-prior adaptation screen도 route-regret WPU에는 negative다. 4개
+shifted mechanism에서 best baseline 대비 `0/0/4`에 그쳤으므로, 다음 단계는 또 다른
+post-hoc prior나 route threshold가 아니라 propagation dynamics 자체를 mechanism state로
+condition하는 것이다.
 
 ## 즉시 개선 우선순위
 

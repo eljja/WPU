@@ -61,6 +61,11 @@ extends this to a 3-seed N_bg=512 mechanism screen. The result is mixed/negative
 selected route-regret WPU uses low dense compute (`0.071429`) and helps on
 `no_catch`, but best-WPU versus best-baseline win/tie/loss is only `2/1/4` and
 graph-transformer retains higher macro accuracy.
+`docs/experiments/pybullet_shift_generalization_n512_route_regret_adapted_screen_results.md`
+adds matched mechanism-prior adaptation on four shifted mechanisms. It is also
+negative for the route-regret WPU: win/tie/loss is `0/0/4` versus best baseline.
+This narrows the next step from prior-bias adaptation to mechanism-conditioned
+propagation dynamics.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

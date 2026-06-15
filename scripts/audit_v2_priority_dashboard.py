@@ -1290,6 +1290,9 @@ def _priority_shift_generalization() -> dict[str, object]:
     n512_shift_note = _n512_shift_screen_note()
     if n512_shift_note:
         notes.append(n512_shift_note.strip())
+    adapted_route_regret_note = _n512_route_regret_adapted_note()
+    if adapted_route_regret_note:
+        notes.append(adapted_route_regret_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -1838,6 +1841,47 @@ def _n512_shift_screen_note() -> str:
     )
 
 
+def _n512_route_regret_adapted_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n512_route_regret_adapted_screen.csv"
+    if not path.exists():
+        return ""
+    rows = _rows_of_type(_read_rows(path), "summary")
+    if not rows:
+        return ""
+    mechanisms = sorted({row["eval_mechanism"] for row in rows})
+    wins = 0
+    ties = 0
+    losses = 0
+    deltas: list[float] = []
+    wpu_rows = [row for row in rows if row["model"] == "wpu-cws-indexed-physics-regret-hybrid"]
+    for mechanism in mechanisms:
+        group = [row for row in rows if row["eval_mechanism"] == mechanism]
+        wpu = next(row for row in group if row["model"] == "wpu-cws-indexed-physics-regret-hybrid")
+        best_baseline = max(float(row["branch_accuracy"]) for row in group if not row["model"].startswith("wpu-"))
+        delta = float(wpu["branch_accuracy"]) - best_baseline
+        deltas.append(delta)
+        if delta > 1e-9:
+            wins += 1
+        elif delta < -1e-9:
+            losses += 1
+        else:
+            ties += 1
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in wpu_rows)
+    macro_dense = statistics.fmean(float(row["dense_compute_ratio"]) for row in wpu_rows)
+    best_macro_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+        for model in sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
+    )
+    return (
+        f"N_bg=512 selected route-regret plus matched mechanism-prior adaptation covers {len(mechanisms)} "
+        f"shifted mechanisms: route-regret WPU win/tie/loss versus best baseline is {wins}/{ties}/{losses}, "
+        f"mean margin is {statistics.fmean(deltas):+.6f}, macro WPU/baseline accuracy is "
+        f"{macro_wpu:.6f}/{best_macro_baseline:.6f}, and dense compute is {macro_dense:.6f}. "
+        "Thus matched prior adaptation does not rescue route-regret WPU; mechanism state must condition "
+        "propagation dynamics, not only post-hoc priors or thresholds."
+    )
+
+
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -1943,6 +1987,13 @@ def _ko_interpretation(priority: int) -> str:
             "best-WPU 대 best-baseline win/tie/loss는 2/1/4이고, best macro WPU/baseline "
             "accuracy는 0.377976/0.508929에 그친다. 따라서 route-regret threshold selection은 "
             "계산량 제어에는 도움이 되지만 mechanism-law shift를 해결하지 못한다."
+        )
+    if priority in {4, 5} and (ROOT / "pybullet_shift_generalization_n512_route_regret_adapted_screen.csv").exists():
+        text += (
+            " Matched mechanism-prior adaptation screen도 route-regret WPU에는 negative다. "
+            "4개 shifted mechanism에서 best baseline 대비 win/tie/loss는 0/0/4이고, "
+            "macro WPU/baseline accuracy는 0.312500/0.527778이다. 이는 post-hoc prior나 "
+            "threshold가 아니라 mechanism-conditioned propagation dynamics가 필요함을 보여준다."
         )
     return text
 

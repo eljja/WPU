@@ -177,6 +177,12 @@ Use these reports for paper-level claims:
   (`0.071429`) and wins/ties two shifted regimes, but best WPU versus best
   baseline is only `2/1/4` over seven mechanisms and graph-transformer still
   has higher macro accuracy.
+- `pybullet_shift_generalization_n512_route_regret_adapted_screen_results.md`
+  and `pybullet_shift_generalization_n512_route_regret_adapted_screen_results.ko.md`:
+  adapted follow-up using selected mechanism-prior strength on four shifted
+  mechanisms. It is negative for the route-regret WPU under matched adaptation
+  access: WPU versus best baseline is `0/0/4`, despite low dense compute
+  (`0.097222`).
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

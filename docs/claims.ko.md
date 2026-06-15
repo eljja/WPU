@@ -57,6 +57,10 @@ accuracy를 개선하지는 않는다.
 Selected route-regret WPU는 낮은 dense compute(`0.071429`)를 쓰고 `no_catch`에서는
 도움이 되지만, best-WPU 대 best-baseline win/tie/loss는 `2/1/4`에 그치며
 graph-transformer가 더 높은 macro accuracy를 유지한다.
+`docs/experiments/pybullet_shift_generalization_n512_route_regret_adapted_screen_results.ko.md`는
+4개 shifted mechanism에서 matched mechanism-prior adaptation을 추가한다. 이 결과도
+route-regret WPU에는 negative다. Best baseline 대비 win/tie/loss는 `0/0/4`다. 따라서
+다음 단계는 prior-bias adaptation이 아니라 mechanism-conditioned propagation dynamics다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

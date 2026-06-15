@@ -84,6 +84,11 @@ routed loss is `0.962987` versus `0.962894` for the internal route head, while
 `state_only` remains worse at `0.982804`. The next mechanism-shift rerun must
 therefore add explicit route-regret training to the PyBullet path rather than
 only inserting a regret-hybrid model.
+That infrastructure is now present: the PyBullet route-regret smoke wires
+counterfactual sparse/dense route supervision and configurable route thresholds
+into `scripts/pybullet_shift_generalization.py`. The smoke is not performance
+evidence; it shows that zero-threshold routing can collapse to all-dense and
+that validation-selected thresholds are required before a full shift claim.
 
 ## Immediate Improvement Priorities
 

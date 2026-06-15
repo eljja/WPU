@@ -170,6 +170,11 @@ Use these reports for paper-level claims:
   `-0.032738`. This is claim-boundary evidence: large-N sparse execution helps
   only when relevant action/physical state is preserved and the local
   propagation law is learned or adapted.
+- `pybullet_route_regret_training_smoke_results.md` and
+  `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
+  training smoke. It wires explicit sparse/dense counterfactual route-regret
+  supervision and configurable route thresholds into the PyBullet shift path.
+  This is infrastructure evidence, not a mechanism-shift performance result.
 - `pybullet_closed_loop_rollout_results.md`: first PyBullet-derived closed-loop
   `WorldState` rollout diagnostic. Repeated delta application exposes a
   long-horizon WPU sparse failure: raw delta explosion and high constraint

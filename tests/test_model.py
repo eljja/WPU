@@ -457,6 +457,35 @@ def test_state_regret_hybrid_head_excludes_hidden_summary() -> None:
     assert model.route_regret_head[-1].weight.grad.norm().item() > 0.0
 
 
+def test_regret_hybrid_threshold_controls_dense_route() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    sparse_threshold_model = create_model(
+        "wpu-cws-indexed-physics-regret-hybrid",
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+        route_regret_threshold=-1e9,
+    )
+    dense_threshold_model = create_model(
+        "wpu-cws-indexed-physics-regret-hybrid",
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+        route_regret_threshold=1e9,
+    )
+
+    sparse_threshold_model(batch, num_branches=3)
+    dense_threshold_model(batch, num_branches=3)
+
+    assert sparse_threshold_model.last_working_set_stats is not None
+    assert dense_threshold_model.last_working_set_stats is not None
+    assert sparse_threshold_model.last_working_set_stats.dense_compute_ratio == 0.0
+    assert dense_threshold_model.last_working_set_stats.dense_compute_ratio == 1.0
+
+
 def test_route_physics_features_preserve_action_and_physical_scalars() -> None:
     state = create_robot_cup_state()
     cup = state.objects["cup_001"]

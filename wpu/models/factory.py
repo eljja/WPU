@@ -62,6 +62,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         working_set_size = int(kwargs.get("working_set_size", 16))
         layers = int(kwargs.get("layers", 2))
         interaction_dense_threshold = float(kwargs.get("interaction_dense_threshold", 0.15))
+        route_regret_threshold = float(kwargs.get("route_regret_threshold", 0.0))
         return CausalWorkingSetProcessor(
             hidden_dim=hidden_dim,
             num_heads=num_heads,
@@ -83,6 +84,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
             },
             adaptive_route=_adaptive_route(name),
             interaction_dense_threshold=interaction_dense_threshold,
+            route_regret_threshold=route_regret_threshold,
         )
     if name.startswith("wpu-cws-"):
         selector = name.removeprefix("wpu-cws-")

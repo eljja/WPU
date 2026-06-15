@@ -49,6 +49,7 @@ class CausalWorkingSetProcessor(nn.Module):
         adaptive_confidence_threshold: float = 0.45,
         adaptive_k_threshold: int | None = None,
         interaction_dense_threshold: float = 0.15,
+        route_regret_threshold: float = 0.0,
     ) -> None:
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
@@ -73,6 +74,7 @@ class CausalWorkingSetProcessor(nn.Module):
         self.adaptive_confidence_threshold = adaptive_confidence_threshold
         self.adaptive_k_threshold = adaptive_k_threshold or max(4, int(working_set_size * 0.75))
         self.interaction_dense_threshold = interaction_dense_threshold
+        self.route_regret_threshold = route_regret_threshold
         self.object_encoder = nn.Linear(object_feature_dim, hidden_dim)
         self.relation_encoder = nn.Linear(relation_feature_dim, hidden_dim)
         self.event_encoder = nn.Linear(event_feature_dim, hidden_dim)
@@ -222,7 +224,7 @@ class CausalWorkingSetProcessor(nn.Module):
                 )
         elif self.adaptive_hybrid and self.adaptive_route in {"regret", "physics_regret", "state_regret"}:
             assert regret_prediction is not None
-            dense_sample_mask = regret_prediction < 0.0
+            dense_sample_mask = regret_prediction < self.route_regret_threshold
             dense_gathered = sparse_gathered.clone()
             dense_compute_weight = dense_sample_mask.to(selector_confidence.dtype)
             if bool(dense_sample_mask.any().detach().cpu().item()):

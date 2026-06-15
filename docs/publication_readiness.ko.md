@@ -77,6 +77,11 @@ concatenation으로 붙이는 것은 neutral하다. `physics_hidden` routed loss
 internal route head는 `0.962894`이고, `state_only`는 `0.982804`로 더 나쁘다. 따라서 다음
 mechanism-shift rerun은 regret-hybrid model을 PyBullet path에 단순 삽입하는 것이 아니라
 explicit route-regret training을 추가해야 한다.
+이 infrastructure는 이제 존재한다. PyBullet route-regret smoke는 counterfactual
+sparse/dense route supervision과 configurable route threshold를
+`scripts/pybullet_shift_generalization.py`에 연결했다. 이 smoke는 성능 증거가 아니다.
+Zero-threshold routing이 all-dense로 붕괴할 수 있고, full shift claim 전에는
+validation-selected threshold가 필요함을 보인다.
 
 ## 즉시 개선 우선순위
 

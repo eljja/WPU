@@ -31,6 +31,9 @@ def main() -> None:
     n512_medium = _n512_medium_row()
     if n512_medium is not None:
         rows.append(n512_medium)
+    n512_high = _n512_high_budget_row()
+    if n512_high is not None:
+        rows.append(n512_high)
     n512 = _n512_row()
     if n512 is not None:
         rows.append(n512)
@@ -178,6 +181,28 @@ def _n512_medium_row() -> dict[str, object] | None:
         corruption_count=1,
         baseline_complete=_has_wpu_and_baseline(rows),
         notes="Medium 5-seed N_bg=512 run with WPU, graph, and token baselines. It strengthens matched large-N simulator evidence at total N=517, but remains one cup-family, one-step, small-margin evidence rather than broad simulator superiority.",
+    )
+
+
+def _n512_high_budget_row() -> dict[str, object] | None:
+    path = ROOT / "pybullet_cup_benchmark_n512_high_budget.csv"
+    if not path.exists():
+        return None
+    rows = _read_rows(path)
+    return _coverage_row(
+        axis="cup_n512_baseline_high_budget",
+        source=path,
+        seed_count=len(_values(rows, "seed")),
+        model_count=len(_values(rows, "model")),
+        mechanism_count=1,
+        background_min=_min_int(rows, "background_objects"),
+        background_max=_max_int(rows, "background_objects"),
+        total_n_max=_max_int(rows, "total_objects_n"),
+        horizon_max=1,
+        branch_count_max=3,
+        corruption_count=1,
+        baseline_complete=_has_wpu_and_baseline(rows),
+        notes="Higher-budget 5-seed N_bg=512 run with WPU, graph, and token baselines. It keeps a small best-WPU accuracy edge over the best baseline at total N=517, but the margin shrinks, so it is conditional evidence rather than a broad superiority claim.",
     )
 
 
@@ -341,6 +366,7 @@ def _render_markdown(rows: list[dict[str, object]], *, korean: bool) -> str:
                 "- `cup_n256_baseline_medium`은 같은 N=261에서 training budget을 올린 baseline-complete run이다. 더 의미 있는 large-N simulator evidence지만 단일 cup family이므로 broad superiority claim에는 부족하다.",
                 "- `cup_n512_baseline_micro`는 N_bg=512, total N=517에서 WPU/graph/token baseline을 모두 포함하지만 3 seeds, 2 steps, 8 samples의 micro-screen이므로 large-N coverage evidence로만 사용한다.",
                 "- `cup_n512_baseline_medium`은 N_bg=512, total N=517에서 5 seeds, 6 steps, 16 samples로 micro보다 강한 baseline-complete run이다. Best WPU가 best baseline보다 약간 높지만 단일 cup family와 small margin 때문에 broad superiority claim은 아니다.",
+                "- `cup_n512_baseline_high_budget`은 5 seeds, 10 steps, 24 samples로 budget을 더 올린 run이다. Best WPU edge가 유지되지만 margin이 더 작아져 조건부 evidence로 해석해야 한다.",
                 "- `cup_n512_wpu_only_extension`은 N_bg=512, total N=517까지 WPU가 실행된다는 evidence지만, dense graph baseline이 같은 protocol에서 완료되지 않았으므로 accuracy superiority evidence가 아니다.",
                 "- P3의 다음 병목은 단일 PyBullet cup family를 넘어서는 mechanism 다양성, baseline-complete large-N comparison, 그리고 perception/state adapter를 포함한 end-to-end objectification이다.",
             ]
@@ -356,6 +382,7 @@ def _render_markdown(rows: list[dict[str, object]], *, korean: bool) -> str:
                 "- `cup_n256_baseline_medium` increases the training budget at the same N=261 and is stronger large-N simulator evidence, but it is still a single cup-family benchmark rather than a broad superiority claim.",
                 "- `cup_n512_baseline_micro` includes WPU, graph, and token baselines at N_bg=512 and total N=517, but with only 3 seeds, 2 steps, and 8 samples it is large-N coverage evidence rather than strong accuracy-superiority evidence.",
                 "- `cup_n512_baseline_medium` is a stronger baseline-complete N_bg=512, total N=517 run with 5 seeds, 6 steps, and 16 samples. The best WPU slightly exceeds the best baseline, but the single cup family and small margin still rule out a broad superiority claim.",
+                "- `cup_n512_baseline_high_budget` further increases the budget to 5 seeds, 10 steps, and 24 samples. The best-WPU edge persists, but the margin shrinks, so it remains conditional evidence.",
                 "- `cup_n512_wpu_only_extension` shows WPU execution at N_bg=512 and total N=517, but it is not accuracy-superiority evidence because the dense graph baseline did not complete under the same protocol.",
                 "- The next P3 bottleneck is not another small cup run; it is mechanism diversity, baseline-complete large-N comparison, and end-to-end objectification through a perception/state adapter.",
             ]

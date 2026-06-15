@@ -397,14 +397,14 @@ Not supported:
   best WPU reaches branch accuracy `0.466667` versus best baseline `0.450000`,
   with `60.629526x` lower forward latency than that best-accuracy baseline.
   However, the margin is small and the task is still one cup family, so this is
-  positive P3 evidence rather than strong simulator superiority. A 5-seed
-  N_bg=512, total `N=517` baseline-complete medium run adds stronger large-state
-  evidence: best WPU reaches `0.387500` versus best baseline `0.362500`, with
-  `67.400400x` lower forward latency than that best-accuracy baseline. This is
-  stronger than the earlier micro-screen, but it is still one cup family,
-  one-step, and small-margin. The separate higher-budget WPU-only N_bg=512
-  extension remains systems feasibility evidence because the graph-transformer
-  baseline did not complete under the attempted protocol.
+  positive P3 evidence rather than strong simulator superiority. A higher-budget
+  5-seed N_bg=512, total `N=517` baseline-complete run adds stronger large-state
+  evidence: best WPU reaches `0.433333` versus best baseline `0.425000`, with
+  `57.595711x` lower forward latency than that best-accuracy baseline. The WPU
+  edge persists under a larger budget, but the margin shrinks, so this remains
+  conditional evidence. The separate higher-budget WPU-only N_bg=512 extension
+  remains systems feasibility evidence because the graph-transformer baseline
+  did not complete under the attempted protocol.
 
 ## Application Boundary
 

@@ -287,14 +287,15 @@ The current evidence supports a regime hypothesis, not universal dominance.
   broad simulator-superiority claim. Shift evidence covers 4 mechanism families;
   rollout diagnostics reach horizon 25; objectification-quality evidence covers
   7 corruption settings; systems profiles reach `N≈2052`. Matched `N=517`
-  evidence now includes a low-training micro-screen and a 5-seed
-  baseline-complete medium run. In the medium run, best WPU
-  (`wpu-cws-indexed-sparse`) reaches branch accuracy `0.387500` versus best
-  baseline (`graph-transformer`) at `0.362500`, with `67.400400x` lower forward
-  latency than that best-accuracy baseline. This strengthens P3 but remains a
-  single cup-family, one-step, small-margin result. The separate higher-budget
+  evidence now includes a low-training micro-screen, a 5-seed medium run, and a
+  higher-budget 5-seed run. In the higher-budget run, best WPU
+  (`wpu-cws-indexed-local-dense`) reaches branch accuracy `0.433333` versus best
+  baseline (`graph-transformer`) at `0.425000`, with `57.595711x` lower forward
+  latency than that best-accuracy baseline. The edge persists at higher budget
+  but the margin shrinks, so this strengthens conditional P3 evidence without
+  becoming a broad simulator-superiority claim. The separate higher-budget
   N_bg=512 cup extension remains WPU-only because the dense graph baseline did
-  not complete under the attempted protocol, so it is systems feasibility
+  not complete under that larger attempted protocol, so it is systems feasibility
   evidence.
 - The first PyBullet objectification stress shows that missing causal-frontier
   relations reduce WPU selected K before propagation. It also shows that the

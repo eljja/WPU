@@ -62,10 +62,10 @@ run은 total `N=261`에서 baseline-complete다. Best WPU accuracy는 `0.466667`
 baseline accuracy는 `0.450000`이고, best WPU는 해당 best-accuracy baseline보다
 `60.629526x` 빠르다. 이는 조건부 large-N state-native regime을 지지하지만, margin이
 작고 task가 여전히 단일 cup family이므로 broad simulator superiority를 증명하지 않는다.
-5-seed N_bg=512 baseline-complete medium run은 total `N=517`까지 도달했다. Best WPU
-accuracy는 `0.387500`, best baseline accuracy는 `0.362500`이고, best WPU는 해당
-best-accuracy baseline보다 `67.400400x` 빠르다. 이는 이전 micro-screen보다 강한
-evidence지만, 단일 cup-family, one-step, small-margin result이므로 broad simulator
+Higher-budget 5-seed N_bg=512 baseline-complete run은 total `N=517`까지 도달했다.
+Best WPU accuracy는 `0.433333`, best baseline accuracy는 `0.425000`이고, best WPU는
+해당 best-accuracy baseline보다 `57.595711x` 빠르다. 더 큰 training/evaluation
+budget에서도 WPU edge는 유지되지만 margin은 줄어들기 때문에, 이는 broad simulator
 superiority가 아니라 conditional large-N evidence로 인용해야 한다.
 
 P2 correction-trigger frontier는 C7의 한계를 더 명확히 한다. 테스트한 trigger policy 중

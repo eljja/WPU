@@ -81,7 +81,8 @@ explicit route-regret training을 추가해야 한다.
 sparse/dense route supervision과 configurable route threshold를
 `scripts/pybullet_shift_generalization.py`에 연결했다. 이 smoke는 성능 증거가 아니다.
 Zero-threshold routing이 all-dense로 붕괴할 수 있고, full shift claim 전에는
-validation-selected threshold가 필요함을 보인다.
+validation-selected threshold가 필요함을 보인다. Selected-threshold smoke는
+all-dense/all-sparse endpoint를 피하지만, tiny run의 accuracy는 바꾸지 못했다.
 
 ## 즉시 개선 우선순위
 

@@ -82,6 +82,10 @@ def main() -> None:
     parser.add_argument("--route-regret-loss-weight", type=float, default=0.0)
     parser.add_argument("--route-regret-compute-cost", type=float, default=0.05)
     parser.add_argument("--route-regret-threshold", type=float, default=0.0)
+    parser.add_argument("--route-regret-thresholds", type=float, nargs="+", default=None)
+    parser.add_argument("--select-route-regret-threshold", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--route-regret-selection-samples", type=int, default=96)
+    parser.add_argument("--route-regret-selection-metric", choices=["nll", "compute_adjusted_nll"], default="compute_adjusted_nll")
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--calibrate-temperature", action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument("--calibrate-bias", action=argparse.BooleanOptionalAction, default=False)
@@ -119,6 +123,7 @@ def main() -> None:
             train_label = "+".join(args.train_mechanisms)
             print(f"train {train_label} model={model_name} seed={seed}", flush=True)
             model = _train_model(model_name, seed, args)
+            route_threshold_selection = _select_route_regret_threshold(model, model_name, seed, args)
             base_calibrator = _fit_calibrator(model, model_name, seed, args) if args.calibrate_temperature else _default_calibrator()
             for mechanism in args.eval_mechanisms:
                 print(f"eval model={model_name} seed={seed} mechanism={mechanism}", flush=True)
@@ -133,15 +138,15 @@ def main() -> None:
                             base_calibrator,
                             mechanism_prior_strengths,
                         )
-                        rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, args))
+                        rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, route_threshold_selection, args))
                         _write_csv(args.out, rows)
                     else:
                         for strength in mechanism_prior_strengths:
                             calibrator = _fit_mechanism_prior_calibrator(mechanism, seed, args, base_calibrator, strength)
-                            rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, args))
+                            rows.append(_evaluate(model, model_name, seed, mechanism, calibrator, route_threshold_selection, args))
                             _write_csv(args.out, rows)
                 else:
-                    rows.append(_evaluate(model, model_name, seed, mechanism, base_calibrator, args))
+                    rows.append(_evaluate(model, model_name, seed, mechanism, base_calibrator, route_threshold_selection, args))
                     _write_csv(args.out, rows)
     rows.extend(_summary(rows))
     _write_csv(args.out, rows)
@@ -208,6 +213,70 @@ def _default_calibrator() -> dict[str, object]:
         "mechanism_prior_policy": "none",
         "mechanism_prior_selection_metric": "",
         "mechanism_prior_selection_score": "",
+    }
+
+
+def _default_route_threshold_selection(model: torch.nn.Module, args: argparse.Namespace) -> dict[str, object]:
+    threshold = _current_route_regret_threshold(model, args)
+    return {
+        "route_regret_threshold": round(float(threshold), 6),
+        "route_regret_threshold_policy": "fixed",
+        "route_regret_selection_metric": "",
+        "route_regret_selection_score": "",
+    }
+
+
+def _select_route_regret_threshold(
+    model: torch.nn.Module,
+    model_name: str,
+    seed: int,
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    if not bool(args.select_route_regret_threshold) or not hasattr(model, "route_regret_threshold"):
+        return _default_route_threshold_selection(model, args)
+    candidate_thresholds = (
+        [float(value) for value in args.route_regret_thresholds]
+        if args.route_regret_thresholds is not None
+        else [-0.75, -0.5, -0.25, 0.0, 0.25]
+    )
+    device = torch.device(args.device)
+    dataset = _route_regret_selection_dataset(seed + 60_000, args)
+    loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args, model_name))
+    original_threshold = float(model.route_regret_threshold)  # type: ignore[attr-defined]
+    best_threshold = candidate_thresholds[0]
+    best_score = float("inf")
+    model.eval()
+    for threshold in candidate_thresholds:
+        model.route_regret_threshold = float(threshold)  # type: ignore[attr-defined]
+        total_nll = 0.0
+        total_dense = 0.0
+        total = 0
+        with torch.no_grad():
+            for batch, _, labels, _ in loader:
+                batch = _move_batch(batch, device)
+                labels = labels.to(device)
+                prediction = model(batch, num_branches=3, route_branches=3)
+                probabilities = F.softmax(prediction.branch_logits, dim=-1)
+                count = int(labels.numel())
+                total_nll += float(F.nll_loss(probabilities.clamp_min(1e-8).log(), labels, reduction="sum").item())
+                _, _, dense_compute = _working_set_stats(model, torch.zeros_like(labels, dtype=torch.float32).cpu())
+                total_dense += dense_compute * count
+                total += count
+        mean_nll = total_nll / max(total, 1)
+        dense_ratio = total_dense / max(total, 1)
+        score = mean_nll
+        if args.route_regret_selection_metric == "compute_adjusted_nll":
+            score = mean_nll + float(args.route_regret_compute_cost) * dense_ratio
+        if (score, abs(float(threshold))) < (best_score, abs(float(best_threshold))):
+            best_score = score
+            best_threshold = float(threshold)
+    model.route_regret_threshold = float(best_threshold)  # type: ignore[attr-defined]
+    return {
+        "route_regret_threshold": round(float(best_threshold), 6),
+        "route_regret_threshold_policy": "selected",
+        "route_regret_selection_metric": args.route_regret_selection_metric,
+        "route_regret_selection_score": round(float(best_score), 6),
+        "route_regret_original_threshold": round(float(original_threshold), 6),
     }
 
 
@@ -377,6 +446,7 @@ def _evaluate(
     seed: int,
     mechanism: str,
     calibrator: dict[str, object],
+    route_threshold_selection: dict[str, object],
     args: argparse.Namespace,
 ) -> dict[str, object]:
     device = torch.device(args.device)
@@ -464,7 +534,10 @@ def _evaluate(
         ),
         "route_regret_loss_weight": args.route_regret_loss_weight,
         "route_regret_compute_cost": args.route_regret_compute_cost,
-        "route_regret_threshold": args.route_regret_threshold,
+        "route_regret_threshold": route_threshold_selection["route_regret_threshold"],
+        "route_regret_threshold_policy": route_threshold_selection["route_regret_threshold_policy"],
+        "route_regret_selection_metric": route_threshold_selection["route_regret_selection_metric"],
+        "route_regret_selection_score": route_threshold_selection["route_regret_selection_score"],
         "seed_count": 1,
     }
 
@@ -485,6 +558,21 @@ def _dataset(*, mechanism: str, samples: int, seed: int, args: argparse.Namespac
 
 def _calibration_dataset(seed: int, args: argparse.Namespace):
     per_mechanism = max(args.batch_size, args.calibration_samples // max(len(args.train_mechanisms), 1))
+    datasets = [
+        _dataset(
+            mechanism=mechanism,
+            samples=per_mechanism,
+            seed=seed + 101 * index,
+            args=args,
+            balanced_labels=False,
+        )
+        for index, mechanism in enumerate(args.train_mechanisms)
+    ]
+    return datasets[0] if len(datasets) == 1 else ConcatDataset(datasets)
+
+
+def _route_regret_selection_dataset(seed: int, args: argparse.Namespace):
+    per_mechanism = max(args.batch_size, args.route_regret_selection_samples // max(len(args.train_mechanisms), 1))
     datasets = [
         _dataset(
             mechanism=mechanism,
@@ -585,8 +673,14 @@ def _route_regret_stats(model: torch.nn.Module) -> tuple[float, float]:
     )
 
 
+def _current_route_regret_threshold(model: torch.nn.Module, args: argparse.Namespace) -> float:
+    if hasattr(model, "route_regret_threshold"):
+        return float(model.route_regret_threshold)  # type: ignore[attr-defined]
+    return float(args.route_regret_threshold)
+
+
 def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    grouped: dict[tuple[str, str, str, str, str, str, float], list[dict[str, object]]] = {}
+    grouped: dict[tuple[str, str, str, str, str, str, float, str, str, float], list[dict[str, object]]] = {}
     for row in rows:
         if row["row_type"] != "seed":
             continue
@@ -601,6 +695,9 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
                 policy,
                 str(row.get("mechanism_prior_selection_metric", "")),
                 grouped_strength,
+                str(row.get("route_regret_threshold_policy", "fixed")),
+                str(row.get("route_regret_selection_metric", "")),
+                float(row.get("route_regret_threshold", 0.0)),
             ),
             [],
         ).append(row)
@@ -631,6 +728,9 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
         mechanism_prior_policy,
         selection_metric,
         mechanism_prior_strength,
+        route_threshold_policy,
+        route_selection_metric,
+        route_regret_threshold,
     ), group in sorted(grouped.items()):
         row = {
             "row_type": "summary",
@@ -644,6 +744,9 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
             "mechanism_prior_policy": mechanism_prior_policy,
             "mechanism_prior_selection_metric": selection_metric,
             "mechanism_prior_selection_score": "",
+            "route_regret_threshold_policy": route_threshold_policy,
+            "route_regret_selection_metric": route_selection_metric,
+            "route_regret_selection_score": "",
             "calibration_bias": "",
             "background_objects": group[0]["background_objects"],
             "total_objects_n": group[0]["total_objects_n"],

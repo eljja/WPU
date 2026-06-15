@@ -53,7 +53,9 @@ training is still required.
 same explicit route-regret training into the PyBullet mechanism-shift path. It is
 infrastructure evidence only: the tiny smoke run shows that route metrics are
 emitted and that a configurable threshold is necessary to avoid all-dense
-routing collapse.
+routing collapse. The follow-up selected-threshold smoke avoids trivial
+all-dense/all-sparse endpoints, but does not improve shifted accuracy in the
+tiny run.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

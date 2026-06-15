@@ -88,7 +88,9 @@ That infrastructure is now present: the PyBullet route-regret smoke wires
 counterfactual sparse/dense route supervision and configurable route thresholds
 into `scripts/pybullet_shift_generalization.py`. The smoke is not performance
 evidence; it shows that zero-threshold routing can collapse to all-dense and
-that validation-selected thresholds are required before a full shift claim.
+that validation-selected thresholds are required before a full shift claim. A
+selected-threshold smoke now avoids all-dense/all-sparse endpoints, but the
+accuracy is unchanged in the tiny run.
 
 ## Immediate Improvement Priorities
 

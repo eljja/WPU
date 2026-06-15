@@ -49,7 +49,9 @@ verification 또는 joint route training이 필요하다.
 `docs/experiments/pybullet_route_regret_training_smoke_results.ko.md`는 같은 explicit
 route-regret training을 PyBullet mechanism-shift path에 연결한다. 이는 infrastructure
 evidence일 뿐이다. 작은 smoke run은 route metric이 출력되고, all-dense routing 붕괴를
-피하려면 configurable threshold가 필요하다는 점을 보인다.
+피하려면 configurable threshold가 필요하다는 점을 보인다. 이어진 selected-threshold
+smoke는 trivial all-dense/all-sparse endpoint를 피하지만, tiny run에서 shifted
+accuracy를 개선하지는 않는다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

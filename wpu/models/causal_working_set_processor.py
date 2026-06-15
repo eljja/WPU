@@ -11,6 +11,8 @@ from wpu.engines.scheduler import ExecutionPath
 from wpu.models.batch import EVENT_FEATURE_DIM, OBJECT_FEATURE_DIM, RELATION_FEATURE_DIM, StateGraphBatch
 from wpu.models.world_state_processor import StatePrediction
 
+ROUTE_PHYSICS_FEATURE_DIM = 14
+
 
 @dataclass(frozen=True, slots=True)
 class WorkingSetStats:
@@ -112,9 +114,9 @@ class CausalWorkingSetProcessor(nn.Module):
         )
         route_regret_input_dim = hidden_dim + 3
         if adaptive_route == "state_regret":
-            route_regret_input_dim = 7
+            route_regret_input_dim = 2 + ROUTE_PHYSICS_FEATURE_DIM
         elif adaptive_route == "physics_regret":
-            route_regret_input_dim += 5
+            route_regret_input_dim += ROUTE_PHYSICS_FEATURE_DIM
         self.route_regret_head = nn.Sequential(
             nn.LayerNorm(route_regret_input_dim),
             nn.Linear(route_regret_input_dim, max(hidden_dim // 2, 1)),
@@ -543,14 +545,28 @@ class CausalWorkingSetProcessor(nn.Module):
         selected_mask: torch.Tensor,
     ) -> torch.Tensor:
         min_pair_distance, mean_pair_distance = _pair_distance_stats(selected_object_features, selected_mask)
+        selected_physics = _masked_mean(selected_object_features[..., 8:12], selected_mask)
         target_features = torch.gather(
             batch.object_features,
             1,
             batch.target_indices.view(-1, 1, 1).expand(-1, 1, batch.object_features.size(-1)),
         ).squeeze(1)
         target_xy = target_features[:, 1:3]
-        event_norm = batch.event_features.norm(dim=-1, keepdim=True)
-        return torch.cat([min_pair_distance, mean_pair_distance, target_xy, event_norm], dim=-1)
+        target_physics = target_features[:, 8:12]
+        event_force = batch.event_features[:, 5:6]
+        event_catch_action = batch.event_features[:, 6:7]
+        return torch.cat(
+            [
+                min_pair_distance,
+                mean_pair_distance,
+                target_xy,
+                target_physics,
+                selected_physics,
+                event_force,
+                event_catch_action,
+            ],
+            dim=-1,
+        )
 
     def _interaction_dense_weight(
         self,

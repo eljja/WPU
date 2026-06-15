@@ -561,6 +561,11 @@ Use these reports for paper-level claims:
   signatures, uncertainty, and no-harm safety, but remains weaker than direct
   candidate-regret gating: best/safe closure is `0.097845`, and train-selected
   closure is `0.077781`.
+- `wpu_v2_route_physics_contract_smoke_results.md` and
+  `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
+  smoke. It verifies that adaptive route-regret heads receive action and
+  physical object-state scalars instead of only compressed geometry/event norm.
+  This is implementation-contract evidence, not performance evidence.
 - `wpu_v2_pairwise_reranker_results.md`: tests pairwise ranking loss for the
   larger generated-candidate pool and rejects it as a standalone fix.
 - `wpu_v2_cross_seed_reranker_results.md`: applies a stricter
@@ -880,6 +885,12 @@ Historical or preliminary reports:
   working-set generation, candidate description, mechanism routing, and
   risk-aware deployment as trainable pre-propagation control surfaces. It does
   not yet prove broad accuracy dominance over token or graph baselines.
+- The route-physics contract smoke closes a smaller implementation gap in that
+  architecture: route-regret decisions now receive `catch_action` and physical
+  object-state scalars rather than only compressed geometry and event norm.
+  This is not performance evidence, but it prevents P1/P4 follow-up experiments
+  from silently discarding the objectified state variables needed for
+  mechanism-aware routing.
 
 The v2 target is to move the accuracy crossover beyond the runtime crossover
 while preserving sparse routed work.

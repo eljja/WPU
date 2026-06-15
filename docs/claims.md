@@ -36,6 +36,14 @@ multi-mechanism training remains mixed/negative at `2/2/3` with mean margin
 small identifiable `K`, faithful object/action state tensorization, and
 mechanism-aware propagation or adaptation.
 
+Latest route-state contract correction: `docs/experiments/wpu_v2_route_physics_contract_smoke_results.md`
+records a smaller implementation fix. The adaptive route-regret context now
+receives pair geometry, target physical scalars, selected-set physical scalars,
+`force`, and `catch_action`; previously it compressed this context to pair
+distances, target xy, and event norm. This is not a solved P1 result, but it
+prevents follow-up route experiments from silently discarding mechanism-defining
+state variables.
+
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can
 create oracle headroom, with learned-generator oracle closure reaching

@@ -13,7 +13,7 @@ from wpu.models.factory import create_model
 from wpu.models.factory import MODEL_NAMES
 from wpu.core.state import Event
 from wpu.models.batch import EVENT_FEATURE_DIM, StateGraphBatch
-from wpu.models.causal_working_set_processor import CausalWorkingSetProcessor
+from wpu.models.causal_working_set_processor import CausalWorkingSetProcessor, ROUTE_PHYSICS_FEATURE_DIM
 from wpu.models.world_state_processor import WorldStateProcessor
 
 
@@ -429,7 +429,7 @@ def test_physics_regret_hybrid_head_uses_state_context() -> None:
     loss.backward()
 
     assert model.route_regret_prediction().shape == labels.shape
-    assert model.route_regret_head[0].normalized_shape == (40,)
+    assert model.route_regret_head[0].normalized_shape == (32 + 3 + ROUTE_PHYSICS_FEATURE_DIM,)
     assert model.route_regret_head[-1].weight.grad is not None
     assert model.route_regret_head[-1].weight.grad.norm().item() > 0.0
 
@@ -452,9 +452,48 @@ def test_state_regret_hybrid_head_excludes_hidden_summary() -> None:
     loss.backward()
 
     assert model.route_regret_prediction().shape == labels.shape
-    assert model.route_regret_head[0].normalized_shape == (7,)
+    assert model.route_regret_head[0].normalized_shape == (2 + ROUTE_PHYSICS_FEATURE_DIM,)
     assert model.route_regret_head[-1].weight.grad is not None
     assert model.route_regret_head[-1].weight.grad.norm().item() > 0.0
+
+
+def test_route_physics_features_preserve_action_and_physical_scalars() -> None:
+    state = create_robot_cup_state()
+    cup = state.objects["cup_001"]
+    cup.attributes["edge_distance"] = 0.23
+    cup.attributes["hand_distance"] = 0.41
+    cup.attributes["fall_risk"] = 0.17
+    cup.attributes["angular_velocity"] = [0.0, 3.0, 4.0]
+    base_delta = {"position": [0.1, 0.0, 0.0], "force": 2.5}
+    no_catch = Event(
+        type="simulated_hand_impulse",
+        target="cup_001",
+        delta={**base_delta, "catch_action": 0.0},
+        confidence=0.98,
+        time=1.0,
+    )
+    catch = Event(
+        type="simulated_hand_impulse",
+        target="cup_001",
+        delta={**base_delta, "catch_action": 1.0},
+        confidence=0.98,
+        time=1.0,
+    )
+    batch = StateGraphBatch.from_world_states([state, state], [no_catch, catch])
+    target_features = torch.gather(
+        batch.object_features,
+        1,
+        batch.target_indices.view(-1, 1, 1).expand(-1, 1, batch.object_features.size(-1)),
+    )
+    selected_mask = torch.ones((2, 1), dtype=torch.bool)
+    model = create_model("wpu-cws-indexed-state-regret-hybrid", hidden_dim=32, num_heads=4, layers=1, working_set_size=4)
+
+    features = model._route_physics_features(batch, target_features, selected_mask)
+
+    assert features.shape == (2, ROUTE_PHYSICS_FEATURE_DIM)
+    assert torch.allclose(features[:, 4:8], torch.tensor([[0.23, 0.41, 0.17, 5.0], [0.23, 0.41, 0.17, 5.0]]))
+    assert torch.allclose(features[:, 12], torch.tensor([2.5, 2.5]))
+    assert torch.allclose(features[:, 13], torch.tensor([0.0, 1.0]))
 
 
 def test_pre_tensor_indexed_collate_projects_state_before_tensorization() -> None:

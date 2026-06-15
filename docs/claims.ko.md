@@ -34,6 +34,14 @@ mixed/negative라는 것이다. 따라서 주장은 더 좁아진다. WPU의 lar
 작은 identifiable `K`, 충실한 object/action state tensorization, 그리고
 mechanism-aware propagation 또는 adaptation이 필요하다.
 
+최신 route-state contract 보정:
+`docs/experiments/wpu_v2_route_physics_contract_smoke_results.ko.md`는 더 작은 구현
+수정을 기록한다. Adaptive route-regret context는 이제 pair geometry, target physical
+scalar, selected-set physical scalar, `force`, `catch_action`을 받는다. 이전에는 이
+context가 pair distance, target xy, event norm으로 압축됐다. 이는 P1 해결 결과가
+아니지만, 후속 route 실험이 mechanism을 정의하는 state variable을 조용히 버리는 문제를
+막는다.
+
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수
 있음을 보인다. `K=16`에서 learned-generator oracle closure는 `0.361251`까지 도달하지만,

@@ -56,6 +56,11 @@ emitted and that a configurable threshold is necessary to avoid all-dense
 routing collapse. The follow-up selected-threshold smoke avoids trivial
 all-dense/all-sparse endpoints, but does not improve shifted accuracy in the
 tiny run.
+`docs/experiments/pybullet_shift_generalization_n512_route_regret_selected_results.md`
+extends this to a 3-seed N_bg=512 mechanism screen. The result is mixed/negative:
+selected route-regret WPU uses low dense compute (`0.071429`) and helps on
+`no_catch`, but best-WPU versus best-baseline win/tie/loss is only `2/1/4` and
+graph-transformer retains higher macro accuracy.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

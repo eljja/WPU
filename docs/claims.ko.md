@@ -52,6 +52,11 @@ evidence일 뿐이다. 작은 smoke run은 route metric이 출력되고, all-den
 피하려면 configurable threshold가 필요하다는 점을 보인다. 이어진 selected-threshold
 smoke는 trivial all-dense/all-sparse endpoint를 피하지만, tiny run에서 shifted
 accuracy를 개선하지는 않는다.
+`docs/experiments/pybullet_shift_generalization_n512_route_regret_selected_results.ko.md`는
+이를 3-seed N_bg=512 mechanism screen으로 확장한다. 결과는 mixed/negative다.
+Selected route-regret WPU는 낮은 dense compute(`0.071429`)를 쓰고 `no_catch`에서는
+도움이 되지만, best-WPU 대 best-baseline win/tie/loss는 `2/1/4`에 그치며
+graph-transformer가 더 높은 macro accuracy를 유지한다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

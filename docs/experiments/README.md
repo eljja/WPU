@@ -170,6 +170,13 @@ Use these reports for paper-level claims:
   `-0.032738`. This is claim-boundary evidence: large-N sparse execution helps
   only when relevant action/physical state is preserved and the local
   propagation law is learned or adapted.
+- `pybullet_shift_generalization_n512_route_regret_selected_results.md` and
+  `pybullet_shift_generalization_n512_route_regret_selected_results.ko.md`:
+  selected route-regret follow-up on the N_bg=512 mechanism screen. It is
+  mixed/negative: selected route-regret WPU uses little dense recompute
+  (`0.071429`) and wins/ties two shifted regimes, but best WPU versus best
+  baseline is only `2/1/4` over seven mechanisms and graph-transformer still
+  has higher macro accuracy.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

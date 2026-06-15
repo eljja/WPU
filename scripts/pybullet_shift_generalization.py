@@ -176,7 +176,7 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
         prediction = model(batch, num_branches=3, route_branches=3)
         loss = F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
         loss = loss + 0.1 * F.mse_loss(prediction.object_delta, target_delta)
-        if args.route_regret_loss_weight > 0.0 and hasattr(model, "route_regret_loss"):
+        if args.route_regret_loss_weight > 0.0 and _supports_route_regret_training(model):
             target_regret = _counterfactual_route_regret(model, batch, labels, args.route_regret_compute_cost)
             prediction = model(batch, num_branches=3, route_branches=3)
             loss = loss + args.route_regret_loss_weight * model.route_regret_loss(target_regret)
@@ -232,7 +232,7 @@ def _select_route_regret_threshold(
     seed: int,
     args: argparse.Namespace,
 ) -> dict[str, object]:
-    if not bool(args.select_route_regret_threshold) or not hasattr(model, "route_regret_threshold"):
+    if not bool(args.select_route_regret_threshold) or not _supports_route_regret_training(model):
         return _default_route_threshold_selection(model, args)
     candidate_thresholds = (
         [float(value) for value in args.route_regret_thresholds]
@@ -679,8 +679,16 @@ def _current_route_regret_threshold(model: torch.nn.Module, args: argparse.Names
     return float(args.route_regret_threshold)
 
 
+def _supports_route_regret_training(model: torch.nn.Module) -> bool:
+    return (
+        isinstance(model, CausalWorkingSetProcessor)
+        and model.adaptive_hybrid
+        and model.adaptive_route in {"regret", "physics_regret", "state_regret"}
+    )
+
+
 def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    grouped: dict[tuple[str, str, str, str, str, str, float, str, str, float], list[dict[str, object]]] = {}
+    grouped: dict[tuple[str, str, str, str, str, str, float, str, str], list[dict[str, object]]] = {}
     for row in rows:
         if row["row_type"] != "seed":
             continue
@@ -697,7 +705,6 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
                 grouped_strength,
                 str(row.get("route_regret_threshold_policy", "fixed")),
                 str(row.get("route_regret_selection_metric", "")),
-                float(row.get("route_regret_threshold", 0.0)),
             ),
             [],
         ).append(row)
@@ -730,7 +737,6 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
         mechanism_prior_strength,
         route_threshold_policy,
         route_selection_metric,
-        route_regret_threshold,
     ), group in sorted(grouped.items()):
         row = {
             "row_type": "summary",

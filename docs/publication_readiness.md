@@ -91,6 +91,11 @@ evidence; it shows that zero-threshold routing can collapse to all-dense and
 that validation-selected thresholds are required before a full shift claim. A
 selected-threshold smoke now avoids all-dense/all-sparse endpoints, but the
 accuracy is unchanged in the tiny run.
+The N_bg=512 selected route-regret mechanism screen is mixed/negative:
+selected route-regret WPU keeps dense compute low (`0.071429`) but best-WPU
+versus best-baseline win/tie/loss is only `2/1/4`, and graph-transformer keeps
+higher macro accuracy. This reinforces that P4/P5 needs mechanism-aware
+propagation or adaptation, not another threshold-only route selector.
 
 ## Immediate Improvement Priorities
 

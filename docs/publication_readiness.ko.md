@@ -83,6 +83,11 @@ sparse/dense route supervision과 configurable route threshold를
 Zero-threshold routing이 all-dense로 붕괴할 수 있고, full shift claim 전에는
 validation-selected threshold가 필요함을 보인다. Selected-threshold smoke는
 all-dense/all-sparse endpoint를 피하지만, tiny run의 accuracy는 바꾸지 못했다.
+N_bg=512 selected route-regret mechanism screen은 mixed/negative다. Selected
+route-regret WPU는 dense compute를 낮게 유지하지만(`0.071429`), best-WPU 대
+best-baseline win/tie/loss는 `2/1/4`이고 graph-transformer가 더 높은 macro accuracy를
+유지한다. 이는 P4/P5가 threshold-only route selector가 아니라 mechanism-aware
+propagation 또는 adaptation을 필요로 함을 강화한다.
 
 ## 즉시 개선 우선순위
 

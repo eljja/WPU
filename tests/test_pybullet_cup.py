@@ -211,3 +211,55 @@ def test_pybullet_shift_generalization_help_runs() -> None:
     )
 
     assert result.returncode == 0, result.stderr
+
+
+def test_pybullet_shift_route_regret_options_skip_sparse_baseline(tmp_path: Path) -> None:
+    output = tmp_path / "route_regret_sparse_skip.csv"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/pybullet_shift_generalization.py",
+            "--models",
+            "wpu-cws-indexed-sparse",
+            "wpu-cws-indexed-physics-regret-hybrid",
+            "--train-mechanisms",
+            "nominal",
+            "--eval-mechanisms",
+            "nominal",
+            "--background-objects",
+            "4",
+            "--seeds",
+            "11",
+            "--steps",
+            "1",
+            "--sim-steps",
+            "20",
+            "--samples",
+            "2",
+            "--batch-size",
+            "1",
+            "--hidden-dim",
+            "16",
+            "--layers",
+            "1",
+            "--num-heads",
+            "4",
+            "--working-set-size",
+            "8",
+            "--route-regret-loss-weight",
+            "1.0",
+            "--select-route-regret-threshold",
+            "--route-regret-selection-samples",
+            "2",
+            "--out",
+            str(output),
+        ],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=60,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output.exists()

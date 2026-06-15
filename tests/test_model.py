@@ -11,7 +11,8 @@ from wpu.data.working_set_physics import (
 )
 from wpu.models.factory import create_model
 from wpu.models.factory import MODEL_NAMES
-from wpu.models.batch import StateGraphBatch
+from wpu.core.state import Event
+from wpu.models.batch import EVENT_FEATURE_DIM, StateGraphBatch
 from wpu.models.causal_working_set_processor import CausalWorkingSetProcessor
 from wpu.models.world_state_processor import WorldStateProcessor
 
@@ -27,6 +28,48 @@ def test_world_state_processor_forward_shapes() -> None:
     assert prediction.relation_logits.shape[:2] == batch.relation_features.shape[:2]
     assert prediction.branch_probabilities.shape == (1, 3)
     assert torch.allclose(prediction.branch_probabilities.sum(dim=-1), torch.ones(1))
+
+
+def test_event_encoder_preserves_action_condition() -> None:
+    state = create_robot_cup_state()
+    base_delta = {"position": [0.1, 0.0, 0.0], "force": 1.0}
+    no_catch = Event(
+        type="simulated_hand_impulse",
+        target="cup_001",
+        delta={**base_delta, "catch_action": 0.0},
+        confidence=0.98,
+        time=1.0,
+    )
+    catch = Event(
+        type="simulated_hand_impulse",
+        target="cup_001",
+        delta={**base_delta, "catch_action": 1.0},
+        confidence=0.98,
+        time=1.0,
+    )
+
+    batch = StateGraphBatch.from_world_states([state, state], [no_catch, catch])
+
+    assert batch.event_features.shape[-1] == EVENT_FEATURE_DIM
+    assert batch.event_features[0, 6].item() == 0.0
+    assert batch.event_features[1, 6].item() == 1.0
+
+
+def test_object_encoder_preserves_physical_state_scalars() -> None:
+    state = create_robot_cup_state()
+    cup = state.objects["cup_001"]
+    cup.attributes["edge_distance"] = 0.23
+    cup.attributes["hand_distance"] = 0.41
+    cup.attributes["fall_risk"] = 0.17
+    cup.attributes["angular_velocity"] = [0.0, 3.0, 4.0]
+
+    batch = StateGraphBatch.from_world_states([state], [create_touch_event()])
+
+    assert batch.object_features.shape[-1] == 12
+    assert torch.isclose(batch.object_features[0, 0, 8], torch.tensor(0.23))
+    assert torch.isclose(batch.object_features[0, 0, 9], torch.tensor(0.41))
+    assert torch.isclose(batch.object_features[0, 0, 10], torch.tensor(0.17))
+    assert torch.isclose(batch.object_features[0, 0, 11], torch.tensor(5.0))
 
 
 def test_training_smoke_backward() -> None:

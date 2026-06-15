@@ -160,11 +160,16 @@ Use these reports for paper-level claims:
   result remains conditional large-N evidence.
 - `pybullet_shift_generalization_n512_results.md` and
   `pybullet_shift_generalization_n512_results.ko.md`: N_bg=512 mechanism
-  diversity screens at total `N=517`. The nominal-train screen covers 7
-  mechanisms and gives WPU win/tie/loss `2/1/4` with mean margin `-0.047619`.
-  The multi-mechanism-train screen gives `2/0/5` with mean margin `-0.095238`.
-  This is negative/claim-boundary evidence: large-N sparse execution does not
-  automatically solve mechanism generalization.
+  diversity screens at total `N=517`. The original screens were negative and
+  exposed an input-contract bug: `catch_action` and physical object-state
+  scalars were present in the objectified PyBullet state but omitted during
+  tensorization. After preserving `catch_action`, `edge_distance`,
+  `hand_distance`, `fall_risk`, and `angular_speed`, the nominal-train screen
+  improves to WPU win/tie/loss `4/0/3` with mean margin `+0.002976`, while the
+  multi-mechanism screen remains mixed/negative at `2/2/3` with mean margin
+  `-0.032738`. This is claim-boundary evidence: large-N sparse execution helps
+  only when relevant action/physical state is preserved and the local
+  propagation law is learned or adapted.
 - `pybullet_closed_loop_rollout_results.md`: first PyBullet-derived closed-loop
   `WorldState` rollout diagnostic. Repeated delta application exposes a
   long-horizon WPU sparse failure: raw delta explosion and high constraint

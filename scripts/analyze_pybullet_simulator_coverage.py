@@ -44,6 +44,12 @@ def main() -> None:
     n512_multimech = _shift_n512_multimechanism_row()
     if n512_multimech is not None:
         rows.append(n512_multimech)
+    n512_physical = _shift_n512_event_physical_screen_row()
+    if n512_physical is not None:
+        rows.append(n512_physical)
+    n512_physical_multimech = _shift_n512_event_physical_multimechanism_row()
+    if n512_physical_multimech is not None:
+        rows.append(n512_physical_multimech)
     rows.append(_closed_loop_row())
     rows.append(_objectification_row())
     rows.append(_system_profile_row(ROOT / "pybullet_system_profile.csv", "system_profile_cpu"))
@@ -288,6 +294,61 @@ def _shift_n512_multimechanism_row() -> dict[str, object] | None:
     )
 
 
+def _shift_n512_event_physical_screen_row() -> dict[str, object] | None:
+    path = ROOT / "pybullet_shift_generalization_n512_event_physical_screen.csv"
+    if not path.exists():
+        return None
+    rows = _rows_of_type(_read_rows(path), "summary")
+    mechanisms = _values(rows, "eval_mechanism")
+    shifted = sorted(mechanism for mechanism in mechanisms if mechanism != "nominal")
+    return _coverage_row(
+        axis="mechanism_shift_n512_event_physical_nominal_train",
+        source=path,
+        seed_count=_seed_count_from_summary(rows),
+        model_count=len(_values(rows, "model")),
+        mechanism_count=len(mechanisms),
+        background_min=_min_int(rows, "background_objects"),
+        background_max=_max_int(rows, "background_objects"),
+        total_n_max=_max_int(rows, "total_objects_n"),
+        horizon_max=1,
+        branch_count_max=3,
+        corruption_count=1,
+        baseline_complete=_has_wpu_and_baseline(rows),
+        notes=(
+            "N_bg=512, total N=517 mechanism-diversity screen after preserving action-conditioned "
+            "event features and physical object-state scalars. Training uses nominal only; "
+            f"evaluation covers nominal plus {len(shifted)} shifts: {', '.join(shifted)}."
+        ),
+    )
+
+
+def _shift_n512_event_physical_multimechanism_row() -> dict[str, object] | None:
+    path = ROOT / "pybullet_shift_generalization_n512_event_physical_multimech.csv"
+    if not path.exists():
+        return None
+    rows = _rows_of_type(_read_rows(path), "summary")
+    mechanisms = _values(rows, "eval_mechanism")
+    return _coverage_row(
+        axis="mechanism_shift_n512_event_physical_multimechanism_train",
+        source=path,
+        seed_count=_seed_count_from_summary(rows),
+        model_count=len(_values(rows, "model")),
+        mechanism_count=len(mechanisms),
+        background_min=_min_int(rows, "background_objects"),
+        background_max=_max_int(rows, "background_objects"),
+        total_n_max=_max_int(rows, "total_objects_n"),
+        horizon_max=1,
+        branch_count_max=3,
+        corruption_count=1,
+        baseline_complete=_has_wpu_and_baseline(rows),
+        notes=(
+            "N_bg=512, total N=517 multi-mechanism training screen after preserving action-conditioned "
+            "event features and physical object-state scalars. It tests whether better state "
+            "tensorization plus mechanism diversity is enough; current results remain mixed."
+        ),
+    )
+
+
 def _closed_loop_row() -> dict[str, object]:
     path = ROOT / "pybullet_closed_loop_rollout.csv"
     rows = _read_rows(path)
@@ -427,7 +488,7 @@ def _render_markdown(rows: list[dict[str, object]], *, korean: bool) -> str:
                 "- `cup_n512_baseline_micro`는 N_bg=512, total N=517에서 WPU/graph/token baseline을 모두 포함하지만 3 seeds, 2 steps, 8 samples의 micro-screen이므로 large-N coverage evidence로만 사용한다.",
                 "- `cup_n512_baseline_medium`은 N_bg=512, total N=517에서 5 seeds, 6 steps, 16 samples로 micro보다 강한 baseline-complete run이다. Best WPU가 best baseline보다 약간 높지만 단일 cup family와 small margin 때문에 broad superiority claim은 아니다.",
                 "- `cup_n512_baseline_high_budget`은 5 seeds, 10 steps, 24 samples로 budget을 더 올린 run이다. Best WPU edge가 유지되지만 margin이 더 작아져 조건부 evidence로 해석해야 한다.",
-                "- `mechanism_shift_n512_nominal_train`과 `mechanism_shift_n512_multimechanism_train`은 total N=517에서 7개 mechanism을 포함한다. 두 축은 WPU의 large-N 계산 장점이 mechanism generalization을 자동으로 보장하지 않음을 보여주는 claim-boundary evidence다.",
+                "- N_bg=512 mechanism-diversity 축은 total N=517에서 7개 mechanism을 포함한다. 원본 screen은 WPU의 large-N 계산 장점이 mechanism generalization을 자동으로 보장하지 않음을 보였고, event+physical-state 보존 후 nominal-train shift는 회복됐지만 multi-mechanism law learning은 여전히 mixed/negative다.",
                 "- `cup_n512_wpu_only_extension`은 N_bg=512, total N=517까지 WPU가 실행된다는 evidence지만, dense graph baseline이 같은 protocol에서 완료되지 않았으므로 accuracy superiority evidence가 아니다.",
                 "- P3의 다음 병목은 단순한 mechanism 목록 확장이 아니라 mechanism-aware propagation, long-horizon simulator rollout, 그리고 perception/state adapter를 포함한 end-to-end objectification이다.",
             ]
@@ -444,7 +505,7 @@ def _render_markdown(rows: list[dict[str, object]], *, korean: bool) -> str:
                 "- `cup_n512_baseline_micro` includes WPU, graph, and token baselines at N_bg=512 and total N=517, but with only 3 seeds, 2 steps, and 8 samples it is large-N coverage evidence rather than strong accuracy-superiority evidence.",
                 "- `cup_n512_baseline_medium` is a stronger baseline-complete N_bg=512, total N=517 run with 5 seeds, 6 steps, and 16 samples. The best WPU slightly exceeds the best baseline, but the single cup family and small margin still rule out a broad superiority claim.",
                 "- `cup_n512_baseline_high_budget` further increases the budget to 5 seeds, 10 steps, and 24 samples. The best-WPU edge persists, but the margin shrinks, so it remains conditional evidence.",
-                "- `mechanism_shift_n512_nominal_train` and `mechanism_shift_n512_multimechanism_train` cover 7 mechanisms at total N=517. These axes are claim-boundary evidence: WPU's large-N compute advantage does not automatically imply mechanism generalization.",
+                "- The N_bg=512 mechanism-diversity axes cover 7 mechanisms at total N=517. The original screens showed that WPU's large-N compute advantage does not automatically imply mechanism generalization; preserving event+physical state recovers the nominal-train shift screen, but multi-mechanism law learning remains mixed/negative.",
                 "- `cup_n512_wpu_only_extension` shows WPU execution at N_bg=512 and total N=517, but it is not accuracy-superiority evidence because the dense graph baseline did not complete under the same protocol.",
                 "- The next P3 bottleneck is not simply adding more mechanism names; it is mechanism-aware propagation, long-horizon simulator rollout, and end-to-end objectification through a perception/state adapter.",
             ]

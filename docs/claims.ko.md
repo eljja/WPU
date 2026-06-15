@@ -25,6 +25,15 @@ Process-unit 공개 감사는 `docs/process_unit_release_audit.ko.md`를 함께 
 | C10 | 단기 WPU 가치는 silicon보다 software runtime/middleware에서 더 가능성이 있다. | plausible direction이며 아직 실험적으로 증명되지 않음. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | digital-twin, simulation backend, game/server, robotics middleware benchmark가 필요하다. |
 | C11 | 객체화 품질은 propagation 전에 contract로 측정 가능하고 국소적으로 repair 가능하다. | 구현 주장으로 지지됨. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `tests/test_script_entrypoints.py`, `docs/experiments/objectification_relation_repair_probe_results.md`, `docs/experiments/pybullet_objectification_quality_results.ko.md`, `docs/experiments/pybullet_objectification_loss_coupling_results.ko.md`, `README.ko.md`, `docs/objectification.ko.md`. | Relation repair와 `LocalLawHypothesis`는 보수적 hypothesis 및 revision report를 만들 뿐 ground-truth physics가 아니다. 최신 probe는 learned repair가 aliased type name을 넘어 transfer하고 toy downstream diagnostic을 개선하며 law-revision gap을 보고할 수 있음을 보인다. PyBullet loss-coupling audit은 selected-K/frontier degradation이 MSE increase와 연결됨을 보이지만 branch accuracy 변화는 아직 작다. perception-to-object construction이나 unknown-theory discovery가 해결됐다는 증거는 아니다. |
 
+최신 C7 large-state 보정: 원본 N_bg=512 mechanism-diversity screen은 여전히 유효한
+failure-boundary evidence지만, 이제 단독으로 읽으면 안 된다. 현재 해석은
+action-conditioned event state와 physical object-state scalar를 보존하면 nominal-train
+large-N shift screen이 `4/0/3`, 평균 margin `+0.002976`까지 회복되지만,
+multi-mechanism training은 `2/2/3`, 평균 margin `-0.032738`로 여전히
+mixed/negative라는 것이다. 따라서 주장은 더 좁아진다. WPU의 large-state advantage에는
+작은 identifiable `K`, 충실한 object/action state tensorization, 그리고
+mechanism-aware propagation 또는 adaptation이 필요하다.
+
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수
 있음을 보인다. `K=16`에서 learned-generator oracle closure는 `0.361251`까지 도달하지만,
@@ -68,13 +77,18 @@ Best WPU accuracy는 `0.433333`, best baseline accuracy는 `0.425000`이고, bes
 budget에서도 WPU edge는 유지되지만 margin은 줄어들기 때문에, 이는 broad simulator
 superiority가 아니라 conditional large-N evidence로 인용해야 한다.
 
-P3/P4 large-state mechanism diversity는 현재 negative다. Total `N=517`의 N_bg=512
-mechanism-diversity screens는 7개 mechanism을 포함한다. Nominal-train screen에서 WPU
-win/tie/loss는 `2/1/4`, 평균 best-WPU-minus-best-baseline margin은 `-0.047619`이다.
-Multi-mechanism-train screen에서는 `2/0/5`, 평균 margin `-0.095238`이다. 이 결과는
+P3/P4 large-state mechanism diversity는 더 선명한 claim-boundary result가 됐다.
+원본 total `N=517`의 N_bg=512 mechanism-diversity screens는 negative였다.
+Nominal-train screen에서 WPU win/tie/loss는 `2/1/4`, 평균 margin은 `-0.047619`이고,
+multi-mechanism-train screen에서는 `2/0/5`, 평균 margin `-0.095238`이었다. 이 audit은
+state-input contract 결함을 드러냈다. PyBullet event의 `catch_action`과 objectified
+state의 physical scalar가 존재했지만 tensorization에서 빠져 있었다. `catch_action`,
+`edge_distance`, `hand_distance`, `fall_risk`, `angular_speed`를 보존한 후 nominal-train
+screen은 `4/0/3`, 평균 margin `+0.002976`으로 회복됐다. 그러나 multi-mechanism
+screen은 `2/2/3`, 평균 margin `-0.032738`로 여전히 mixed/negative다. 이 결과는
 WPU가 full-state tensorization을 피할 수 있다는 systems claim을 약화하지는 않지만,
-large N 또는 작은 K만으로 accuracy 우위가 보장된다는 주장은 약화한다.
-Mechanism-aware propagation과 adaptation이 필요하다.
+large N, 작은 K, 또는 mechanism diversity만으로 accuracy 우위가 보장된다는 주장은
+약화한다. Mechanism-aware propagation과 adaptation이 필요하다.
 
 P2 correction-trigger frontier는 C7의 한계를 더 명확히 한다. 테스트한 trigger policy 중
 integrity >= `0.8`과 correction rate <= `0.25`를 동시에 만족한 경우는 `0`개이며,

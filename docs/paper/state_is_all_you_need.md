@@ -402,12 +402,19 @@ Not supported:
   evidence: best WPU reaches `0.433333` versus best baseline `0.425000`, with
   `57.595711x` lower forward latency than that best-accuracy baseline. The WPU
   edge persists under a larger budget, but the margin shrinks, so this remains
-  conditional evidence. New N_bg=512 mechanism-diversity screens at the same
-  total `N=517` are negative claim-boundary evidence: nominal-train evaluation
-  over 7 mechanisms gives WPU win/tie/loss `2/1/4` and mean margin `-0.047619`,
-  while multi-mechanism training gives `2/0/5` and mean margin `-0.095238`.
-  Thus large explicit state and small identifiable K do not by themselves solve
-  mechanism-law generalization; WPU needs learned or adapted mechanism-aware
+  conditional evidence. N_bg=512 mechanism-diversity screens at the same total
+  `N=517` are a sharper claim-boundary result. The original screens were
+  negative: nominal-train evaluation over 7 mechanisms gave WPU win/tie/loss
+  `2/1/4` and mean margin `-0.047619`, while multi-mechanism training gave
+  `2/0/5` and mean margin `-0.095238`. That audit exposed an input-contract
+  defect: action-conditioned event state and physical object-state scalars were
+  present in the objectified simulator state but omitted during tensorization.
+  After preserving `catch_action`, `edge_distance`, `hand_distance`,
+  `fall_risk`, and `angular_speed`, nominal-train shift recovers to `4/0/3`
+  with mean margin `+0.002976`, but multi-mechanism training remains
+  mixed/negative at `2/2/3` with mean margin `-0.032738`. Thus large explicit
+  state and small identifiable K are not enough; WPU also needs faithful
+  action/physical state encoding and learned or adapted mechanism-aware
   propagation. The separate higher-budget WPU-only N_bg=512 extension remains
   systems feasibility evidence because the graph-transformer baseline did not
   complete under the attempted protocol.

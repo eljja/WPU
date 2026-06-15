@@ -8,9 +8,9 @@ from wpu.core.objectification import evaluate_objectification
 from wpu.core.state import Event, Relation, WorldState
 from wpu.engines.scheduler import SchedulerMetrics
 
-OBJECT_FEATURE_DIM = 8
+OBJECT_FEATURE_DIM = 12
 RELATION_FEATURE_DIM = 4
-EVENT_FEATURE_DIM = 8
+EVENT_FEATURE_DIM = 9
 
 
 @dataclass(slots=True)
@@ -95,7 +95,21 @@ def _encode_object(state: WorldState, object_id: str) -> torch.Tensor:
     obj = state.objects[object_id]
     position = _vector(obj.attributes.get("position", [0.0, 0.0, 0.0]), 3)
     velocity = _vector(obj.attributes.get("velocity", [0.0, 0.0, 0.0]), 3)
-    return torch.tensor([_stable_hash(obj.type), *position, *velocity, float(obj.confidence)], dtype=torch.float32)
+    angular_velocity = _vector(obj.attributes.get("angular_velocity", [0.0, 0.0, 0.0]), 3)
+    angular_speed = sum(value * value for value in angular_velocity) ** 0.5
+    return torch.tensor(
+        [
+            _stable_hash(obj.type),
+            *position,
+            *velocity,
+            float(obj.confidence),
+            float(obj.attributes.get("edge_distance", 0.0)),
+            float(obj.attributes.get("hand_distance", 0.0)),
+            float(obj.attributes.get("fall_risk", 0.0)),
+            float(angular_speed),
+        ],
+        dtype=torch.float32,
+    )
 
 
 def _encode_relation(relation: Relation) -> torch.Tensor:
@@ -113,12 +127,14 @@ def _encode_relation(relation: Relation) -> torch.Tensor:
 def _encode_event(event: Event, target_index: int) -> torch.Tensor:
     position_delta = _vector(event.delta.get("position", [0.0, 0.0, 0.0]), 3)
     force = float(event.delta.get("force", 0.0))
+    catch_action = float(event.delta.get("catch_action", 0.0))
     return torch.tensor(
         [
             _stable_hash(event.type),
             float(target_index),
             *position_delta,
             force,
+            catch_action,
             float(event.confidence),
             float(event.time),
         ],

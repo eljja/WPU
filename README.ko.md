@@ -238,12 +238,17 @@ model = wpu.create_model(
   simulator-superiority claim이 아니라 conditional P3 evidence를 강화하는 결과다. 별도의
   higher-budget N_bg=512 cup extension은 dense graph baseline이 완료되지 않아 WPU-only
   systems feasibility evidence로 남는다.
-- N_bg=512 mechanism-diversity screens는 의도적으로 negative claim-boundary evidence다.
-  Total `N=517`에서 7개 mechanism nominal-train screen의 WPU win/tie/loss는 `2/1/4`,
-  평균 best-WPU-minus-best-baseline margin은 `-0.047619`이다. Multi-mechanism-train
-  screen은 `2/0/5`, `-0.095238`이다. 즉 large-N sparse execution advantage가
-  mechanism generalization을 자동으로 보장하지 않는다. WPU에는 작은 identifiable K와
-  함께 학습되거나 적응된 local propagation law가 필요하다.
+- N_bg=512 mechanism-diversity screens는 의도적인 claim-boundary evidence다. 원본
+  total `N=517` screen은 negative였다. Nominal-train WPU win/tie/loss는 `2/1/4`,
+  평균 margin은 `-0.047619`이고, multi-mechanism-train은 `2/0/5`, 평균 margin
+  `-0.095238`이었다. 이 audit에서 PyBullet event의 `catch_action`과 objectified
+  state의 physical scalar가 tensorization에서 빠지는 입력 계약 결함을 발견했다.
+  `catch_action`, `edge_distance`, `hand_distance`, `fall_risk`, `angular_speed`를
+  보존한 뒤 nominal-train screen은 `4/0/3`, 평균 margin `+0.002976`으로 회복됐다.
+  그러나 multi-mechanism screen은 `2/2/3`, 평균 margin `-0.032738`로 여전히
+  mixed/negative다. 즉 WPU에는 작은 identifiable K, 충실한 action/physical state
+  encoding, 그리고 학습되거나 적응된 local propagation law가 함께 필요하다.
+  Large N만으로는 충분하지 않다.
 - 첫 PyBullet objectification stress는 causal-frontier relation 누락이 propagation
   이전에 WPU selected K를 줄인다는 점을 보였다. 또한 현재 objectification score에는
   frontier completeness와 semantic identity check가 추가되어야 한다.

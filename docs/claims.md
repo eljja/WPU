@@ -26,6 +26,16 @@ For the formal objectification definition, see `docs/objectification.md`.
 | C10 | Near-term WPU value is more plausible as software runtime/middleware than silicon. | Plausible direction, not experimentally proven. | `docs/reproducibility.md`, `docs/arxiv/README.md`, current PyTorch package under `wpu/`. | Requires digital-twin, simulation backend, game/server, or robotics middleware benchmarks. |
 | C11 | Objectification quality is measurable and locally repairable as a contract before propagation. | Supported as an implementation claim. | `wpu/core/objectification.py`, `tests/test_objectification.py`, `tests/test_script_entrypoints.py`, `docs/experiments/objectification_relation_repair_probe_results.md`, `docs/experiments/pybullet_objectification_quality_results.md`, `docs/experiments/pybullet_objectification_loss_coupling_results.md`, `README.md`, `docs/objectification.md`. | Relation repair and `LocalLawHypothesis` produce conservative hypotheses and revision reports, not ground-truth physics. The latest probes show that learned repair can transfer across aliased type names, improve a toy downstream diagnostic, and report law-revision gaps. The PyBullet loss-coupling audit links selected-K/frontier degradation to MSE increase, but branch-accuracy movement remains small; this is not evidence that perception-to-object construction or unknown-theory discovery is solved. |
 
+Latest C7 large-state correction: the original N_bg=512 mechanism-diversity
+screens remain valid failure-boundary evidence, but they should no longer be
+read alone. The current interpretation is that preserving action-conditioned
+event state and physical object-state scalars recovers the nominal-train
+large-N shift screen to `4/0/3` with mean margin `+0.002976`, while
+multi-mechanism training remains mixed/negative at `2/2/3` with mean margin
+`-0.032738`. This narrows the claim: WPU's large-state advantage requires
+small identifiable `K`, faithful object/action state tensorization, and
+mechanism-aware propagation or adaptation.
+
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can
 create oracle headroom, with learned-generator oracle closure reaching
@@ -73,14 +83,19 @@ under a larger training/evaluation budget, but the margin shrinks, so this
 should still be cited as conditional large-N evidence rather than broad
 simulator superiority.
 
-P3/P4 large-state mechanism diversity is currently negative. The N_bg=512
-mechanism-diversity screens at total `N=517` cover seven mechanisms. In the
-nominal-train screen, WPU win/tie/loss is `2/1/4` and the mean
-best-WPU-minus-best-baseline margin is `-0.047619`. In the multi-mechanism-train
-screen, WPU win/tie/loss is `2/0/5` and the mean margin is `-0.095238`. This
-does not weaken the systems claim that WPU can avoid full-state tensorization;
-it weakens any accuracy claim that large N or small K alone is sufficient.
-Mechanism-aware propagation and adaptation remain required.
+P3/P4 large-state mechanism diversity is now a sharper claim-boundary result.
+The original N_bg=512 mechanism-diversity screens at total `N=517` were negative:
+nominal-train WPU win/tie/loss was `2/1/4` with mean margin `-0.047619`, and
+multi-mechanism-train was `2/0/5` with mean margin `-0.095238`. That audit
+exposed a state-input contract bug: `catch_action` and physical object-state
+scalars were present in the objectified PyBullet state but omitted during
+tensorization. After preserving `catch_action`, `edge_distance`, `hand_distance`,
+`fall_risk`, and `angular_speed`, the nominal-train screen recovers to `4/0/3`
+with mean margin `+0.002976`. The multi-mechanism screen remains mixed/negative
+at `2/2/3` with mean margin `-0.032738`. This does not weaken the systems claim
+that WPU can avoid full-state tensorization; it weakens any accuracy claim that
+large N, small K, or mechanism diversity alone is sufficient. Mechanism-aware
+propagation and adaptation remain required.
 
 P2 learned correction-trigger evidence is also negative on the hard seed split.
 The audit in `docs/experiments/pybullet_learned_correction_trigger_results.md`

@@ -100,6 +100,13 @@ A matched mechanism-prior adaptation screen is also negative for the route-regre
 WPU (`0/0/4` versus best baseline over four shifted mechanisms), so the next
 step should condition propagation dynamics directly rather than add another
 post-hoc prior or route threshold.
+The first mechanism-conditioned propagation screen is a positive follow-up but
+not yet a solved result. With dense fallback disabled at N_bg=512,
+`wpu-cws-indexed-mechanism-conditioned` reaches macro accuracy `0.541667`
+versus `0.500000` for the best non-WPU baseline and wins/ties/loses `1/2/1`
+over four shifted mechanisms. The remaining `edge_shift` failure means this is
+now a priority direction for larger sweeps, not a publication-level superiority
+claim by itself.
 
 ## Immediate Improvement Priorities
 

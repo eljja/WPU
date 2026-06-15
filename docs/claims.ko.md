@@ -61,6 +61,13 @@ graph-transformer가 더 높은 macro accuracy를 유지한다.
 4개 shifted mechanism에서 matched mechanism-prior adaptation을 추가한다. 이 결과도
 route-regret WPU에는 negative다. Best baseline 대비 win/tie/loss는 `0/0/4`다. 따라서
 다음 단계는 prior-bias adaptation이 아니라 mechanism-conditioned propagation dynamics다.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_conditioned_screen_results.ko.md`는
+그 방향의 첫 positive follow-up이다. Sparse propagation을 explicit physics/action
+context로 직접 condition하고 dense fallback을 끈다. 3-seed N_bg=512 screen에서
+mechanism-conditioned WPU는 macro accuracy `0.541667`을 달성했고, best non-WPU baseline은
+`0.500000`이었다. Dense compute는 `0.000000`, win/tie/loss는 `1/2/1`이다. 이는 유망한
+screen이지 해결된 주장이 아니다. `edge_shift`는 여전히 negative이며, 더 큰 seed/mechanism
+sweep으로 확장해야 강한 증거가 된다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

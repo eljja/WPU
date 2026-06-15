@@ -183,6 +183,14 @@ Use these reports for paper-level claims:
   mechanisms. It is negative for the route-regret WPU under matched adaptation
   access: WPU versus best baseline is `0/0/4`, despite low dense compute
   (`0.097222`).
+- `pybullet_shift_generalization_n512_mechanism_conditioned_screen_results.md`
+  and `pybullet_shift_generalization_n512_mechanism_conditioned_screen_results.ko.md`:
+  mechanism-conditioned propagation follow-up after the route-regret adaptation
+  failure. It is a small positive screen: macro accuracy is `0.541667` for
+  mechanism-conditioned WPU versus `0.500000` for the best non-WPU baseline,
+  dense compute is `0.000000`, and win/tie/loss versus best baseline is `1/2/1`.
+  The `edge_shift` failure remains, so this is a candidate direction rather
+  than a solved large-N zero-shot mechanism-generalization result.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

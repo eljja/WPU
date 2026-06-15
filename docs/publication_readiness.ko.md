@@ -92,6 +92,12 @@ Matched mechanism-prior adaptation screen도 route-regret WPU에는 negative다.
 shifted mechanism에서 best baseline 대비 `0/0/4`에 그쳤으므로, 다음 단계는 또 다른
 post-hoc prior나 route threshold가 아니라 propagation dynamics 자체를 mechanism state로
 condition하는 것이다.
+첫 mechanism-conditioned propagation screen은 positive follow-up이지만 아직 해결된 결과는
+아니다. N_bg=512에서 dense fallback을 끈 상태로
+`wpu-cws-indexed-mechanism-conditioned`는 macro accuracy `0.541667`을 달성했고, best
+non-WPU baseline은 `0.500000`이었다. 4개 shifted mechanism에서 win/tie/loss는 `1/2/1`이다.
+하지만 `edge_shift` 실패가 남아 있으므로 이는 더 큰 sweep으로 확장할 우선 방향이지,
+그 자체로 publication-level superiority claim은 아니다.
 
 ## 즉시 개선 우선순위
 

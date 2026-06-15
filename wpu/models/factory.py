@@ -25,6 +25,7 @@ MODEL_NAMES = [
     "wpu-cws-indexed-interaction-hybrid",
     "wpu-cws-indexed-selective-interaction-hybrid",
     "wpu-cws-indexed-geometry-hybrid",
+    "wpu-cws-indexed-mechanism-conditioned",
     "wpu-cws-indexed-regret-hybrid",
     "wpu-cws-indexed-physics-regret-hybrid",
     "wpu-cws-indexed-state-regret-hybrid",
@@ -55,6 +56,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         "wpu-cws-indexed-interaction-hybrid",
         "wpu-cws-indexed-selective-interaction-hybrid",
         "wpu-cws-indexed-geometry-hybrid",
+        "wpu-cws-indexed-mechanism-conditioned",
         "wpu-cws-indexed-regret-hybrid",
         "wpu-cws-indexed-physics-regret-hybrid",
         "wpu-cws-indexed-state-regret-hybrid",
@@ -78,6 +80,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
                 "wpu-cws-indexed-interaction-hybrid",
                 "wpu-cws-indexed-selective-interaction-hybrid",
                 "wpu-cws-indexed-geometry-hybrid",
+                "wpu-cws-indexed-mechanism-conditioned",
                 "wpu-cws-indexed-regret-hybrid",
                 "wpu-cws-indexed-physics-regret-hybrid",
                 "wpu-cws-indexed-state-regret-hybrid",
@@ -126,6 +129,8 @@ def _adaptive_route(name: str) -> str:
         return "selective_interaction"
     if name == "wpu-cws-indexed-geometry-hybrid":
         return "geometry"
+    if name == "wpu-cws-indexed-mechanism-conditioned":
+        return "mechanism"
     if name == "wpu-cws-indexed-regret-hybrid":
         return "regret"
     if name == "wpu-cws-indexed-physics-regret-hybrid":

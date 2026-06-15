@@ -66,6 +66,14 @@ adds matched mechanism-prior adaptation on four shifted mechanisms. It is also
 negative for the route-regret WPU: win/tie/loss is `0/0/4` versus best baseline.
 This narrows the next step from prior-bias adaptation to mechanism-conditioned
 propagation dynamics.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_conditioned_screen_results.md`
+is the first positive follow-up in that direction. It conditions sparse
+propagation directly on explicit physics/action context and disables dense
+fallback. On the 3-seed N_bg=512 screen, mechanism-conditioned WPU reaches macro
+accuracy `0.541667` versus `0.500000` for the best non-WPU baseline, with dense
+compute `0.000000` and win/tie/loss `1/2/1`. This is a promising screen, not a
+solved claim: `edge_shift` remains negative, and the result must be expanded to
+larger seed/mechanism sweeps before being used as strong evidence.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

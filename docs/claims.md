@@ -104,6 +104,16 @@ weights `0.25` and `0.5` also do not recover the branch-composition gap. The
 updated boundary is therefore sharper: the next WPU improvement must change the
 transition dynamics, for example branch-conditioned or mechanism-specific local
 propagation, not merely reweight the delta loss.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_branch_results.md`
+implements that architectural change. The new
+`wpu-cws-indexed-mechanism-branch` model preserves indexed sparse execution and
+zero dense fallback, but adds a mechanism-conditioned branch transition head. On
+the 5-seed N_bg=512 shuffled multi-mechanism screen, it reaches macro branch
+accuracy `0.568571` versus `0.548571` for graph-transformer, ECE `0.247101`
+versus `0.254194`, dense compute `0.000000`, and win/tie/loss `4/0/3`. This is
+the first positive follow-up after the corrected factorized and target-local
+negative diagnostics. It is still not broad superiority: `catch_heavy`,
+`edge_shift`, and `edge_high_force` remain below the best dense baseline.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

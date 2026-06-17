@@ -1305,6 +1305,9 @@ def _priority_shift_generalization() -> dict[str, object]:
     target_local_note = _n512_target_local_loss_note()
     if target_local_note:
         notes.append(target_local_note.strip())
+    mechanism_branch_note = _n512_mechanism_branch_note()
+    if mechanism_branch_note:
+        notes.append(mechanism_branch_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -2102,6 +2105,50 @@ def _n512_target_local_loss_note() -> str:
         "macro gap. The result is a useful negative diagnostic: local state-delta supervision can expose "
         "state prediction quality, but branch-composition needs branch-conditioned or mechanism-specific "
         "transition dynamics rather than a scalar loss reweighting."
+    )
+
+
+def _n512_mechanism_branch_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n512_mechanism_branch_multitrain_5seed.csv"
+    if not path.exists():
+        return ""
+    rows = _rows_of_type(_read_rows(path), "summary")
+    target_model = "wpu-cws-indexed-mechanism-branch"
+    target_rows = [row for row in rows if row["model"] == target_model]
+    if not target_rows:
+        return ""
+    mechanisms = sorted({row["eval_mechanism"] for row in rows})
+    wins = 0
+    ties = 0
+    losses = 0
+    deltas: list[float] = []
+    for mechanism in mechanisms:
+        group = [row for row in rows if row["eval_mechanism"] == mechanism]
+        wpu = next(row for row in group if row["model"] == target_model)
+        best_baseline = max(float(row["branch_accuracy"]) for row in group if not row["model"].startswith("wpu-"))
+        delta = float(wpu["branch_accuracy"]) - best_baseline
+        deltas.append(delta)
+        if delta > 1e-9:
+            wins += 1
+        elif delta < -1e-9:
+            losses += 1
+        else:
+            ties += 1
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+    macro_ece = statistics.fmean(float(row["ece"]) for row in target_rows)
+    macro_dense = statistics.fmean(float(row["dense_compute_ratio"]) for row in target_rows)
+    best_macro_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+        for model in sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
+    )
+    return (
+        "Mechanism-conditioned branch transition is the first positive large-N follow-up after the shuffled "
+        "factorized and target-local negative diagnostics: WPU win/tie/loss is "
+        f"{wins}/{ties}/{losses}, mean margin {statistics.fmean(deltas):+.6f}, macro WPU/baseline "
+        f"accuracy {macro_wpu:.6f}/{best_macro_baseline:.6f}, ECE {macro_ece:.6f}, and dense compute "
+        f"{macro_dense:.6f}. This supports branch-conditioned transition dynamics as the next WPU direction, "
+        "but it is still a positive screen rather than broad superiority because three mechanisms remain below "
+        "the best dense baseline."
     )
 
 

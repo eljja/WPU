@@ -117,6 +117,12 @@ Weight `1.0`에서 WPU target-state MSE는 낮아지지만 macro branch accuracy
 `0.418571`로 떨어지고, 같은 run의 graph-transformer는 `0.494286`이다. 따라서 다음
 논문급 개선은 또 다른 scalar loss-weight sweep이 아니라 branch-conditioned 또는
 mechanism-specific transition dynamics 같은 architecture 변경이어야 한다.
+그 architecture 단계에 대해 첫 positive screen이 나왔다. `wpu-cws-indexed-mechanism-branch`
+모델은 mechanism-conditioned branch transition head를 추가하면서 dense compute를
+`0.000000`으로 유지한다. 5-seed N_bg=512 shuffled multi-mechanism screen에서 macro
+accuracy는 `0.568571`, graph-transformer는 `0.548571`이며 win/tie/loss는 `4/0/3`이다.
+이는 publication story를 개선하지만 여전히 screen이다. 세 mechanism은 아직 best dense
+baseline보다 낮고, 강한 주장을 위해서는 더 큰 step/sample/N sweep이 필요하다.
 
 ## 즉시 개선 우선순위
 

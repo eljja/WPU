@@ -94,6 +94,15 @@ macro branch accuracy는 `0.418571`로 떨어지고, 같은 run의 graph-transfo
 따라서 경계는 더 선명해진다. 다음 WPU 개선은 delta loss reweighting이 아니라
 branch-conditioned 또는 mechanism-specific local propagation 같은 transition dynamics
 변경이어야 한다.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_branch_results.ko.md`는
+그 architecture 변경을 구현한다. 새 `wpu-cws-indexed-mechanism-branch` 모델은 indexed
+sparse execution과 zero dense fallback을 유지하면서 mechanism-conditioned branch
+transition head를 추가한다. 5-seed N_bg=512 shuffled multi-mechanism screen에서 macro
+branch accuracy는 `0.568571`, graph-transformer는 `0.548571`이고, ECE는 `0.247101`
+대 `0.254194`, dense compute는 `0.000000`, win/tie/loss는 `4/0/3`이다. 이는 corrected
+factorized 및 target-local negative diagnostic 이후 첫 positive follow-up이다. 다만
+보편 우월성은 아니다. `catch_heavy`, `edge_shift`, `edge_high_force`는 여전히 best
+dense baseline보다 낮다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

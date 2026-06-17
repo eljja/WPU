@@ -64,6 +64,7 @@ class CausalWorkingSetProcessor(nn.Module):
             "mechanism",
             "mechanism_adapter",
             "mechanism_factorized",
+            "mechanism_branch",
             "regret",
             "physics_regret",
             "state_regret",
@@ -156,6 +157,12 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.GELU(),
             nn.Linear(hidden_dim, hidden_dim * 2),
         )
+        self.mechanism_branch_head = nn.Sequential(
+            nn.LayerNorm(hidden_dim * 2 + ROUTE_PHYSICS_FEATURE_DIM),
+            nn.Linear(hidden_dim * 2 + ROUTE_PHYSICS_FEATURE_DIM, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, 8),
+        )
         self.branch_head = nn.Linear(hidden_dim * 2, 8)
         self.last_working_set_stats: WorkingSetStats | None = None
         self._last_relevance_logits: torch.Tensor | None = None
@@ -195,7 +202,14 @@ class CausalWorkingSetProcessor(nn.Module):
         route_physics_features = (
             self._route_physics_features(batch, selected_object_features, selected_mask)
             if self.adaptive_route
-            in {"physics_regret", "state_regret", "mechanism", "mechanism_adapter", "mechanism_factorized"}
+            in {
+                "physics_regret",
+                "state_regret",
+                "mechanism",
+                "mechanism_adapter",
+                "mechanism_factorized",
+                "mechanism_branch",
+            }
             else None
         )
 
@@ -236,6 +250,9 @@ class CausalWorkingSetProcessor(nn.Module):
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "mechanism_factorized":
+            dense_gathered = sparse_gathered
+            dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_branch":
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "learned_selective":
@@ -339,6 +356,16 @@ class CausalWorkingSetProcessor(nn.Module):
             scale_shift = self.mechanism_factor_gate(factor_input)
             scale, shift = scale_shift.chunk(2, dim=-1)
             gathered = sparse_gathered * (1.0 + 0.5 * torch.tanh(scale)) + shift
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_branch":
+            if route_physics_features is None:
+                raise RuntimeError("mechanism_branch route requires physics context features")
+            dense_weight = torch.zeros_like(selector_confidence)
+            mechanism_hidden = self.mechanism_factor_encoder(route_physics_features.to(sparse_gathered.dtype))
+            mechanism_context = mechanism_hidden.unsqueeze(1).expand(-1, sparse_gathered.size(1), -1)
+            factor_input = torch.cat([mechanism_context, selected_object_features.to(sparse_gathered.dtype)], dim=-1)
+            scale_shift = self.mechanism_factor_gate(factor_input)
+            scale, shift = scale_shift.chunk(2, dim=-1)
+            gathered = sparse_gathered * (1.0 + 0.5 * torch.tanh(scale)) + shift
         elif self.adaptive_hybrid:
             dense_mask = self._adaptive_dense_mask(selected_counts, selector_confidence)
             dense_weight = dense_mask.to(sparse_gathered.dtype)
@@ -367,6 +394,14 @@ class CausalWorkingSetProcessor(nn.Module):
         delta_summary = _masked_mean(selected_delta, selected_mask)
         delta_branch_hidden = self.delta_branch_encoder(delta_summary)
         branch_logits = self.branch_head(torch.cat([pooled, delta_branch_hidden], dim=-1))[:, :num_branches]
+        if self.adaptive_hybrid and self.adaptive_route == "mechanism_branch":
+            if route_physics_features is None:
+                raise RuntimeError("mechanism_branch route requires physics context features")
+            branch_context = torch.cat(
+                [pooled, delta_branch_hidden, route_physics_features.to(pooled.dtype)],
+                dim=-1,
+            )
+            branch_logits = branch_logits + self.mechanism_branch_head(branch_context)[:, :num_branches]
         self.last_working_set_stats = WorkingSetStats(
             mean_selected=float(selected_counts.float().mean().detach().cpu().item()),
             max_selected=int(selected_counts.max().detach().cpu().item()),

@@ -218,6 +218,14 @@ Use these reports for paper-level claims:
   versus `0.494286` for graph-transformer. Lower weights `0.25` and `0.5` also
   fail to close the branch gap. The next implementation should change transition
   dynamics, not only scalar loss weights.
+- `pybullet_shift_generalization_n512_mechanism_branch_results.md`
+  and `pybullet_shift_generalization_n512_mechanism_branch_results.ko.md`:
+  architectural follow-up that adds a mechanism-conditioned branch transition
+  head while preserving sparse indexed execution. At 5 seeds and N_bg=512 it
+  reaches macro branch accuracy `0.568571` versus graph-transformer `0.548571`,
+  ECE `0.247101` versus `0.254194`, dense compute `0.000000`, and win/tie/loss
+  `4/0/3`. This is a positive screen for branch-conditioned transition dynamics,
+  not a broad superiority claim because three mechanisms remain negative.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

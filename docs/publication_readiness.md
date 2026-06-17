@@ -130,6 +130,14 @@ branch accuracy falls to `0.418571` versus `0.494286` for graph-transformer in
 the matched run. Therefore the next publishable improvement must be architectural:
 branch-conditioned or mechanism-specific transition dynamics, not another scalar
 loss-weight sweep.
+That architectural step now has a first positive screen. The
+`wpu-cws-indexed-mechanism-branch` model adds a mechanism-conditioned branch
+transition head while keeping dense compute at `0.000000`. On the 5-seed N_bg=512
+shuffled multi-mechanism screen, it reaches macro accuracy `0.568571` versus
+`0.548571` for graph-transformer, with win/tie/loss `4/0/3`. This improves the
+publication story, but it remains a screen: three mechanisms are still below the
+best dense baseline, and larger step/sample/N sweeps are required before making
+a strong claim.
 
 ## Immediate Improvement Priorities
 

@@ -124,9 +124,9 @@ working-set relation 위로 learned message를 scatter한다. h32 trainpool40/st
 stress protocol의 5-seed 확장에서 WPU macro accuracy는 `0.639286`,
 graph-transformer는 `0.597143`이고 dense compute는 `0.000000`이다. Best baseline
 대비 win/tie/loss는 `5/0/2`다. 3-seed h64 fair-capacity check에서도 WPU는
-`0.678571`, serialized-token은 `0.622619`이다. 더 큰 N=1029 distractor screen도
-positive다. WPU는 `0.644048`, graph-transformer는 `0.559524`이고 dense compute는
-`0.000000`, win/tie/loss는 `7/0/0`이다. 이는 현재 WPU v2의 가장 강한 증거지만, 아직
+`0.678571`, serialized-token은 `0.622619`이다. 더 큰 5-seed N=1029 distractor
+screen도 positive다. WPU는 `0.639286`, graph-transformer는 `0.577143`이고 dense
+compute는 `0.000000`, win/tie/loss는 `6/0/1`이다. 이는 현재 WPU v2의 가장 강한 증거지만, 아직
 PyBullet synthetic, single-step, non-causal-distractor-bounded evidence다. 따라서
 calibration-aware evaluation, rollout, 더 어려운 causal large-N 확장이 필요하다.
 

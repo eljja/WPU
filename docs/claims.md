@@ -139,9 +139,9 @@ stress protocol, the 5-seed expansion reaches macro accuracy `0.639286` versus
 `0.597143` for graph-transformer, with dense compute `0.000000` and
 win/tie/loss `5/0/2` against the best baseline. The 3-seed h64 fair-capacity
 check reaches `0.678571` versus `0.622619` for serialized-token. A larger
-N=1029 distractor screen is also positive: WPU reaches `0.644048` versus
-`0.559524` for graph-transformer, with dense compute `0.000000` and
-win/tie/loss `7/0/0`. This is the
+5-seed N=1029 distractor screen is also positive: WPU reaches `0.639286` versus
+`0.577143` for graph-transformer, with dense compute `0.000000` and
+win/tie/loss `6/0/1`. This is the
 strongest current WPU v2 evidence, but it is still PyBullet synthetic,
 single-step, and non-causal-distractor-bounded; calibration-aware, rollout, and
 harder causal large-N expansion remain required.

@@ -254,10 +254,10 @@ Use these reports for paper-level claims:
 - `pybullet_shift_generalization_n1024_mechanism_relation_results.md`
   and `pybullet_shift_generalization_n1024_mechanism_relation_results.ko.md`:
   larger distractor-world extension of relation-conditioned propagation. At
-  total `N=1029`, WPU reaches macro accuracy `0.644048` versus graph-transformer
-  `0.559524`, dense compute `0.000000`, and win/tie/loss `7/0/0`. This supports
-  the small-causal-working-set claim under larger non-causal background state,
-  not broad large-N superiority.
+  total `N=1029`, the 5-seed expansion reaches macro accuracy `0.639286` versus
+  graph-transformer `0.577143`, dense compute `0.000000`, and win/tie/loss
+  `6/0/1`. This supports the small-causal-working-set claim under larger
+  non-causal background state, not broad large-N superiority.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

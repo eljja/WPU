@@ -2292,9 +2292,12 @@ def _n512_mechanism_relation_note() -> str:
 
 
 def _n1024_mechanism_relation_note() -> str:
-    path = ROOT / "pybullet_shift_generalization_n1024_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
+    path_5seed = ROOT / "pybullet_shift_generalization_n1024_mechanism_relation_trainpool40_steps16_samples40_5seed.csv"
+    path_3seed = ROOT / "pybullet_shift_generalization_n1024_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
+    path = path_5seed if path_5seed.exists() else path_3seed
     if not path.exists():
         return ""
+    evidence_label = "5-seed" if path == path_5seed else "3-seed"
     rows = _rows_of_type(_read_rows(path), "summary")
     target_rows = [row for row in rows if row["model"] == "wpu-cws-indexed-mechanism-relation"]
     if not target_rows:
@@ -2325,7 +2328,7 @@ def _n1024_mechanism_relation_note() -> str:
         else:
             ties += 1
     return (
-        f" A larger N=1029 distractor screen is also positive: WPU {macro_wpu:.6f} vs best baseline "
+        f" A larger {evidence_label} N=1029 distractor screen is also positive: WPU {macro_wpu:.6f} vs best baseline "
         f"{best_macro_baseline:.6f}, dense compute {macro_dense:.6f}, win/tie/loss {wins}/{ties}/{losses}, "
         f"and mean margin {statistics.fmean(margins):+.6f}."
     )

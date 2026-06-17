@@ -1314,6 +1314,9 @@ def _priority_shift_generalization() -> dict[str, object]:
     branch_expert_note = _n512_branch_expert_note()
     if branch_expert_note:
         notes.append(branch_expert_note.strip())
+    mechanism_relation_note = _n512_mechanism_relation_note()
+    if mechanism_relation_note:
+        notes.append(mechanism_relation_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -2207,6 +2210,46 @@ def _n512_branch_expert_note() -> str:
         "They improve some edge/catch composed cases but lose general mechanism accuracy, so the next "
         "architecture step should condition the sparse propagation messages on relation type rather than "
         "only adding branch-logit experts."
+    )
+
+
+def _n512_mechanism_relation_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n512_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
+    h32_baseline_path = ROOT / "pybullet_shift_generalization_n512_mechanism_branch_trainpool40_steps16_samples40_3seed.csv"
+    h64_path = ROOT / "pybullet_shift_generalization_n512_mechanism_relation_h64_trainpool40_steps16_samples40_3seed.csv"
+    h64_baseline_path = ROOT / "pybullet_shift_generalization_n512_baselines_h64_trainpool40_steps16_samples40_3seed.csv"
+    if not path.exists() or not h32_baseline_path.exists():
+        return ""
+    rows = _rows_of_type(_read_rows(path), "summary") + _rows_of_type(_read_rows(h32_baseline_path), "summary")
+    target_rows = [row for row in rows if row["model"] == "wpu-cws-indexed-mechanism-relation"]
+    if not target_rows:
+        return ""
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+    macro_ece = statistics.fmean(float(row["ece"]) for row in target_rows)
+    macro_dense = statistics.fmean(float(row["dense_compute_ratio"]) for row in target_rows)
+    best_macro_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+        for model in sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
+    )
+    h64_note = ""
+    if h64_path.exists() and h64_baseline_path.exists():
+        h64_rows = _rows_of_type(_read_rows(h64_path), "summary") + _rows_of_type(_read_rows(h64_baseline_path), "summary")
+        h64_target = [row for row in h64_rows if row["model"] == "wpu-cws-indexed-mechanism-relation"]
+        if h64_target:
+            h64_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in h64_target)
+            h64_best = max(
+                statistics.fmean(float(row["branch_accuracy"]) for row in h64_rows if row["model"] == model)
+                for model in sorted({row["model"] for row in h64_rows if not row["model"].startswith("wpu-")})
+            )
+            h64_note = f" The h64 fair-capacity check is also positive: WPU {h64_wpu:.6f} vs best baseline {h64_best:.6f}."
+    return (
+        "Relation-conditioned sparse propagation is the strongest current P4 follow-up: under the h32 "
+        f"trainpool40/steps16/eval40 stress protocol WPU reaches macro accuracy {macro_wpu:.6f} vs best "
+        f"baseline {best_macro_baseline:.6f}, ECE {macro_ece:.6f}, and dense compute {macro_dense:.6f}. "
+        "It wins all seven mechanisms at h32, showing that the missing fix was propagation-level relation "
+        "conditioning rather than branch-logit experts alone."
+        + h64_note
+        + " This is still a 3-seed synthetic screen and needs 5-seed/N/rollout expansion."
     )
 
 

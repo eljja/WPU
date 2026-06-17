@@ -241,6 +241,15 @@ Use these reports for paper-level claims:
   mechanism-branch head and graph-transformer. This rules out output-expert
   branching alone as the missing fix and motivates relation-conditioned sparse
   propagation.
+- `pybullet_shift_generalization_n512_mechanism_relation_results.md`
+  and `pybullet_shift_generalization_n512_mechanism_relation_results.ko.md`:
+  relation-conditioned propagation follow-up. The sparse WPU route now scatters
+  learned messages over selected working-set relations. Under the h32
+  trainpool40/steps16/eval40 stress protocol it reaches macro accuracy
+  `0.644048` versus graph-transformer `0.598810`, dense compute `0.000000`, and
+  win/tie/loss `7/0/0`. Under h64 fair capacity it reaches `0.678571` versus
+  serialized-token `0.622619`. This is the strongest current positive screen,
+  but it remains 3-seed synthetic evidence.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

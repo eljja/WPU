@@ -130,6 +130,17 @@ under the h32 stress protocol, below the prior mechanism-branch head
 composition cases but loses general mechanism accuracy. The next architecture
 step should therefore move below branch logits into relation-type-conditioned
 sparse propagation messages.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_relation_results.md`
+implements that propagation-level change. The new
+`wpu-cws-indexed-mechanism-relation` route scatters learned messages across
+selected working-set relations using source/target hidden states, relation
+features, and route physics features. Under the h32 trainpool40/steps16/eval40
+stress protocol, it reaches macro accuracy `0.644048` versus `0.598810` for
+graph-transformer, with dense compute `0.000000` and win/tie/loss `7/0/0`. In
+the h64 fair-capacity check it reaches `0.678571` versus `0.622619` for
+serialized-token. This is the strongest current WPU v2 evidence, but still a
+3-seed PyBullet synthetic screen requiring 5-seed, larger-N, and rollout
+expansion.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

@@ -132,6 +132,13 @@ check에서도 WPU는 `0.603571`, serialized-token은 `0.622619`이다. WPU dens
 protocol에서 macro accuracy `0.505952`에 그쳐 기존 mechanism-branch head와
 graph-transformer보다 낮다. 이는 missing mechanism이 branch-logit capacity만의 문제가
 아니라 relation-conditioned local propagation을 개선해야 함을 시사한다.
+그 propagation-level fix에 대해 강한 positive screen이 나왔다.
+`wpu-cws-indexed-mechanism-relation` route는 h32 stress macro accuracy `0.644048`을
+달성했고 graph-transformer는 `0.598810`이며 dense compute는 `0.000000`이다. h64
+stress에서도 WPU는 `0.678571`, serialized-token은 `0.622619`이다. 이는 WPU 주장을
+새 classifier head가 아니라 relation-conditioned state propagation과 연결한다는 점에서
+publication readiness를 크게 개선한다. 하지만 아직 최종 증거는 아니다. 3-seed synthetic
+PyBullet evidence이므로 5-seed, larger-N, calibration, rollout test가 필요하다.
 
 ## 즉시 개선 우선순위
 

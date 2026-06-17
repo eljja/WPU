@@ -66,6 +66,7 @@ class CausalWorkingSetProcessor(nn.Module):
             "mechanism_factorized",
             "mechanism_branch",
             "mechanism_branch_expert",
+            "mechanism_relation",
             "regret",
             "physics_regret",
             "state_regret",
@@ -171,6 +172,12 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.GELU(),
             nn.Linear(hidden_dim, 1),
         )
+        self.mechanism_relation_message = nn.Sequential(
+            nn.LayerNorm(hidden_dim * 2 + relation_feature_dim + ROUTE_PHYSICS_FEATURE_DIM),
+            nn.Linear(hidden_dim * 2 + relation_feature_dim + ROUTE_PHYSICS_FEATURE_DIM, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, hidden_dim),
+        )
         self.branch_head = nn.Linear(hidden_dim * 2, 8)
         self.last_working_set_stats: WorkingSetStats | None = None
         self._last_relevance_logits: torch.Tensor | None = None
@@ -218,6 +225,7 @@ class CausalWorkingSetProcessor(nn.Module):
                 "mechanism_factorized",
                 "mechanism_branch",
                 "mechanism_branch_expert",
+                "mechanism_relation",
             }
             else None
         )
@@ -265,6 +273,9 @@ class CausalWorkingSetProcessor(nn.Module):
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "mechanism_branch_expert":
+            dense_gathered = sparse_gathered
+            dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_relation":
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "learned_selective":
@@ -388,6 +399,23 @@ class CausalWorkingSetProcessor(nn.Module):
             scale_shift = self.mechanism_factor_gate(factor_input)
             scale, shift = scale_shift.chunk(2, dim=-1)
             gathered = sparse_gathered * (1.0 + 0.5 * torch.tanh(scale)) + shift
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_relation":
+            if route_physics_features is None:
+                raise RuntimeError("mechanism_relation route requires physics context features")
+            dense_weight = torch.zeros_like(selector_confidence)
+            mechanism_hidden = self.mechanism_factor_encoder(route_physics_features.to(sparse_gathered.dtype))
+            mechanism_context = mechanism_hidden.unsqueeze(1).expand(-1, sparse_gathered.size(1), -1)
+            factor_input = torch.cat([mechanism_context, selected_object_features.to(sparse_gathered.dtype)], dim=-1)
+            scale_shift = self.mechanism_factor_gate(factor_input)
+            scale, shift = scale_shift.chunk(2, dim=-1)
+            gathered = sparse_gathered * (1.0 + 0.5 * torch.tanh(scale)) + shift
+            gathered = gathered + self._relation_conditioned_messages(
+                gathered,
+                selected_indices,
+                selected_mask,
+                route_physics_features,
+                batch,
+            )
         elif self.adaptive_hybrid:
             dense_mask = self._adaptive_dense_mask(selected_counts, selector_confidence)
             dense_weight = dense_mask.to(sparse_gathered.dtype)
@@ -436,6 +464,14 @@ class CausalWorkingSetProcessor(nn.Module):
             expert_input = torch.cat([branch_context, branch_queries], dim=-1)
             expert_logits = self.mechanism_branch_expert_head(expert_input).squeeze(-1)
             branch_logits = branch_logits + expert_logits[:, :num_branches]
+        if self.adaptive_hybrid and self.adaptive_route == "mechanism_relation":
+            if route_physics_features is None:
+                raise RuntimeError("mechanism_relation route requires physics context features")
+            branch_context = torch.cat(
+                [pooled, delta_branch_hidden, route_physics_features.to(pooled.dtype)],
+                dim=-1,
+            )
+            branch_logits = branch_logits + self.mechanism_branch_head(branch_context)[:, :num_branches]
         self.last_working_set_stats = WorkingSetStats(
             mean_selected=float(selected_counts.float().mean().detach().cpu().item()),
             max_selected=int(selected_counts.max().detach().cpu().item()),
@@ -704,6 +740,64 @@ class CausalWorkingSetProcessor(nn.Module):
                 event_catch_action,
             ],
             dim=-1,
+        )
+
+    def _relation_conditioned_messages(
+        self,
+        gathered: torch.Tensor,
+        selected_indices: torch.Tensor,
+        selected_mask: torch.Tensor,
+        physics_features: torch.Tensor,
+        batch: StateGraphBatch,
+    ) -> torch.Tensor:
+        messages = torch.zeros_like(gathered)
+        selected_cpu = selected_indices.detach().cpu()
+        mask_cpu = selected_mask.detach().cpu()
+        relation_indices_cpu = batch.relation_indices.detach().cpu()
+        relation_mask_cpu = batch.relation_mask.detach().cpu()
+        for batch_index in range(gathered.size(0)):
+            local_index = {
+                int(object_index): local
+                for local, (object_index, valid) in enumerate(
+                    zip(selected_cpu[batch_index].tolist(), mask_cpu[batch_index].tolist(), strict=True)
+                )
+                if valid
+            }
+            if not local_index:
+                continue
+            physics = physics_features[batch_index].to(gathered.dtype)
+            for edge_index, valid in enumerate(relation_mask_cpu[batch_index].tolist()):
+                if not valid:
+                    continue
+                src = int(relation_indices_cpu[batch_index, edge_index, 0].item())
+                dst = int(relation_indices_cpu[batch_index, edge_index, 1].item())
+                src_local = local_index.get(src)
+                dst_local = local_index.get(dst)
+                if src_local is not None and dst_local is not None:
+                    relation_feature = batch.relation_features[batch_index, edge_index].to(gathered.dtype)
+                    messages[batch_index, dst_local] += self._relation_message(
+                        gathered[batch_index, src_local],
+                        gathered[batch_index, dst_local],
+                        relation_feature,
+                        physics,
+                    )
+                    messages[batch_index, src_local] += self._relation_message(
+                        gathered[batch_index, dst_local],
+                        gathered[batch_index, src_local],
+                        relation_feature,
+                        physics,
+                    )
+        return messages.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
+
+    def _relation_message(
+        self,
+        source_hidden: torch.Tensor,
+        target_hidden: torch.Tensor,
+        relation_feature: torch.Tensor,
+        physics_feature: torch.Tensor,
+    ) -> torch.Tensor:
+        return self.mechanism_relation_message(
+            torch.cat([source_hidden, target_hidden, relation_feature, physics_feature], dim=-1)
         )
 
     def _interaction_dense_weight(

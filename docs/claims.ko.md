@@ -117,6 +117,15 @@ negative다. Expert model은 h32 stress protocol에서 macro accuracy `0.505952`
 일부 edge/catch composition case는 개선하지만 일반 mechanism accuracy를 잃는다. 따라서
 다음 architecture 단계는 branch logit이 아니라 relation-type-conditioned sparse
 propagation message로 내려가야 한다.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_relation_results.ko.md`는
+그 propagation-level 변경을 구현한다. 새 `wpu-cws-indexed-mechanism-relation` route는
+source/target hidden state, relation feature, route physics feature를 사용해 selected
+working-set relation 위로 learned message를 scatter한다. h32 trainpool40/steps16/eval40
+stress protocol에서 macro accuracy는 `0.644048`, graph-transformer는 `0.598810`이고,
+dense compute는 `0.000000`, win/tie/loss는 `7/0/0`이다. h64 fair-capacity check에서도
+WPU는 `0.678571`, serialized-token은 `0.622619`이다. 이는 현재 WPU v2의 가장 강한
+증거지만, 아직 3-seed PyBullet synthetic screen이므로 5-seed, larger-N, rollout 확장이
+필요하다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

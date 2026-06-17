@@ -111,6 +111,12 @@ Macro accuracy는 `0.497143`, graph-transformer는 `0.548571`, dense compute는 
 win/tie/loss는 `2/1/4`다. 따라서 다음 주장은 "primitive multi-mechanism training이
 composition을 해결했다"가 아니라 "composition이 병목이며 WPU에는 explicit
 local-law/composition supervision이 필요하다"여야 한다.
+직접적인 target-local supervision 감사는 이 주장을 한 번 더 좁힌다. Target-local delta
+MSE는 loss 정렬 측정 문제를 드러내지만 branch composition 문제를 해결하지는 못한다.
+Weight `1.0`에서 WPU target-state MSE는 낮아지지만 macro branch accuracy는
+`0.418571`로 떨어지고, 같은 run의 graph-transformer는 `0.494286`이다. 따라서 다음
+논문급 개선은 또 다른 scalar loss-weight sweep이 아니라 branch-conditioned 또는
+mechanism-specific transition dynamics 같은 architecture 변경이어야 한다.
 
 ## 즉시 개선 우선순위
 

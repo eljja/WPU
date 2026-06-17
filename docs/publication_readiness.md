@@ -123,6 +123,13 @@ graph-transformer `0.548571`, dense compute `0.000000`, and win/tie/loss
 `2/1/4`. The next claim should therefore not be "primitive multi-mechanism
 training solves composition"; it should be "composition remains the bottleneck,
 and WPU needs explicit local-law/composition supervision."
+The direct target-local supervision audit narrows this again. Adding target-local
+delta MSE fixes the loss-alignment measurement problem but not the branch
+composition problem: at weight `1.0`, WPU target-state MSE improves while macro
+branch accuracy falls to `0.418571` versus `0.494286` for graph-transformer in
+the matched run. Therefore the next publishable improvement must be architectural:
+branch-conditioned or mechanism-specific transition dynamics, not another scalar
+loss-weight sweep.
 
 ## Immediate Improvement Priorities
 

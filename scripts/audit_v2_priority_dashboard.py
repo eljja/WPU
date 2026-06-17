@@ -1302,6 +1302,9 @@ def _priority_shift_generalization() -> dict[str, object]:
     factorized_shuffled_note = _n512_mechanism_factorized_shuffled_note()
     if factorized_shuffled_note:
         notes.append(factorized_shuffled_note.strip())
+    target_local_note = _n512_target_local_loss_note()
+    if target_local_note:
+        notes.append(target_local_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -2055,6 +2058,50 @@ def _n512_mechanism_factorized_shuffled_note() -> str:
         f"{macro_wpu:.6f}/{best_macro_baseline:.6f}, and dense compute is {macro_dense:.6f}. "
         "The earlier unshuffled multi-mechanism positive should be treated as order-sensitive; "
         "edge-conditioned composition remains unsolved."
+    )
+
+
+def _n512_target_local_loss_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n512_target_local_loss_multitrain_5seed.csv"
+    if not path.exists():
+        return ""
+    rows = _rows_of_type(_read_rows(path), "summary")
+    target_model = "wpu-cws-indexed-mechanism-factorized"
+    target_rows = [row for row in rows if row["model"] == target_model]
+    if not target_rows:
+        return ""
+    mechanisms = sorted({row["eval_mechanism"] for row in rows})
+    wins = 0
+    ties = 0
+    losses = 0
+    deltas: list[float] = []
+    for mechanism in mechanisms:
+        group = [row for row in rows if row["eval_mechanism"] == mechanism]
+        wpu = next(row for row in group if row["model"] == target_model)
+        best_baseline = max(float(row["branch_accuracy"]) for row in group if not row["model"].startswith("wpu-"))
+        delta = float(wpu["branch_accuracy"]) - best_baseline
+        deltas.append(delta)
+        if delta > 1e-9:
+            wins += 1
+        elif delta < -1e-9:
+            losses += 1
+        else:
+            ties += 1
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+    macro_target_mse = statistics.fmean(float(row["target_mse"]) for row in target_rows)
+    best_macro_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+        for model in sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
+    )
+    return (
+        "Target-local delta supervision is now audited as a direct fix for large-N loss dilution. "
+        f"At weight 1.0 the factorized sparse WPU reaches win/tie/loss {wins}/{ties}/{losses}, "
+        f"mean margin {statistics.fmean(deltas):+.6f}, macro WPU/baseline accuracy "
+        f"{macro_wpu:.6f}/{best_macro_baseline:.6f}, and target-object MSE {macro_target_mse:.6f}. "
+        "Lower weights 0.25 and 0.5 also reduce neither the edge-conditioned branch failures nor the "
+        "macro gap. The result is a useful negative diagnostic: local state-delta supervision can expose "
+        "state prediction quality, but branch-composition needs branch-conditioned or mechanism-specific "
+        "transition dynamics rather than a scalar loss reweighting."
     )
 
 

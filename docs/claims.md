@@ -94,6 +94,16 @@ factorized sparse mechanism adapter is negative at 5 seeds: macro accuracy is
 multi-mechanism positive to a screen and strengthens the failure boundary:
 robust local-law composition, especially edge-conditioned composition, still
 requires explicit composition supervision.
+`docs/experiments/pybullet_shift_generalization_n512_target_local_loss_results.md`
+then audits the most direct form of that supervision: target-local delta MSE on
+the event target object. This exposes a real large-N loss-alignment problem, but
+it is also a negative standalone fix. At target-local weight `1.0`, WPU target
+MSE improves relative to lower weights, but macro branch accuracy drops to
+`0.418571` versus `0.494286` for graph-transformer in the matched run. Lower
+weights `0.25` and `0.5` also do not recover the branch-composition gap. The
+updated boundary is therefore sharper: the next WPU improvement must change the
+transition dynamics, for example branch-conditioned or mechanism-specific local
+propagation, not merely reweight the delta loss.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

@@ -209,6 +209,15 @@ Use these reports for paper-level claims:
   win/tie/loss `2/1/4`. This downgrades the previous multi-mechanism positive
   to an order-sensitive screen and makes edge-composition supervision the next
   priority.
+- `pybullet_shift_generalization_n512_target_local_loss_results.md`
+  and `pybullet_shift_generalization_n512_target_local_loss_results.ko.md`:
+  follow-up that audits whether the edge-composition failure is only caused by
+  large-N global-delta loss dilution. Target-local delta supervision exposes the
+  alignment issue, but it is a negative standalone fix: weight `1.0` lowers the
+  target-state MSE while reducing WPU macro branch accuracy to `0.418571`
+  versus `0.494286` for graph-transformer. Lower weights `0.25` and `0.5` also
+  fail to close the branch gap. The next implementation should change transition
+  dynamics, not only scalar loss weights.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

@@ -16,6 +16,7 @@ from wpu.data.pybullet_cup import (
     corrupt_pybullet_cup_sample,
 )
 from wpu.models.factory import create_model
+from scripts.pybullet_shift_generalization import _target_object_delta_loss
 
 
 pytest.importorskip("pybullet")
@@ -50,6 +51,20 @@ def test_pybullet_cup_batch_backward_smoke() -> None:
     loss.backward()
 
     assert torch.isfinite(loss)
+
+
+def test_target_object_delta_loss_ignores_background_dilution() -> None:
+    dataset = PyBulletCupDataset(size=2, seed=8, background_objects=64, steps=24)
+    batch, target_delta, _, _ = collate_indexed_pybullet_cup_samples([dataset[0], dataset[1]], max_nodes=12)
+    prediction = torch.zeros_like(target_delta)
+    baseline_loss = _target_object_delta_loss(prediction, target_delta, batch)
+
+    batch_indices = torch.arange(target_delta.size(0))
+    prediction[batch_indices, batch.target_indices] = target_delta[batch_indices, batch.target_indices]
+    matched_loss = _target_object_delta_loss(prediction, target_delta, batch)
+
+    assert baseline_loss > 0
+    assert matched_loss == 0
 
 
 def test_pybullet_cup_objectification_corruption_preserves_batch_alignment() -> None:

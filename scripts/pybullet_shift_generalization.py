@@ -79,6 +79,8 @@ def main() -> None:
     parser.add_argument("--num-heads", type=int, default=4)
     parser.add_argument("--working-set-size", type=int, default=12)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--global-delta-loss-weight", type=float, default=0.1)
+    parser.add_argument("--target-local-delta-loss-weight", type=float, default=0.0)
     parser.add_argument("--route-regret-loss-weight", type=float, default=0.0)
     parser.add_argument("--route-regret-compute-cost", type=float, default=0.05)
     parser.add_argument("--route-regret-threshold", type=float, default=0.0)
@@ -183,7 +185,14 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
         labels = labels.to(device)
         prediction = model(batch, num_branches=3, route_branches=3)
         loss = F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
-        loss = loss + 0.1 * F.mse_loss(prediction.object_delta, target_delta)
+        if args.global_delta_loss_weight > 0.0:
+            loss = loss + args.global_delta_loss_weight * F.mse_loss(prediction.object_delta, target_delta)
+        if args.target_local_delta_loss_weight > 0.0:
+            loss = loss + args.target_local_delta_loss_weight * _target_object_delta_loss(
+                prediction.object_delta,
+                target_delta,
+                batch,
+            )
         if args.route_regret_loss_weight > 0.0 and _supports_route_regret_training(model):
             target_regret = _counterfactual_route_regret(model, batch, labels, args.route_regret_compute_cost)
             prediction = model(batch, num_branches=3, route_branches=3)
@@ -470,6 +479,7 @@ def _evaluate(
     total = 0
     correct = 0
     mse_total = 0.0
+    target_mse_total = 0.0
     nll_total = 0.0
     brier_total = 0.0
     confidences: list[float] = []
@@ -497,6 +507,7 @@ def _evaluate(
             correct += int(correct_mask.sum().item())
             label_counts.update(int(label) for label in labels.detach().cpu().tolist())
             mse_total += float(F.mse_loss(prediction.object_delta, target_delta).item()) * batch_total
+            target_mse_total += float(_target_object_delta_loss(prediction.object_delta, target_delta, batch).item()) * batch_total
             nll_total += float(F.nll_loss(probabilities.clamp_min(1e-8).log(), labels, reduction="sum").item())
             brier_total += float(_brier_score(probabilities, labels).item()) * batch_total
             confidence = probabilities.max(dim=-1).values.detach().cpu()
@@ -529,6 +540,7 @@ def _evaluate(
         "branch_accuracy": round(correct / max(total, 1), 6),
         "majority_accuracy": round(max(label_counts.values(), default=0) / max(total, 1), 6),
         "mse": round(mse_total / max(total, 1), 6),
+        "target_mse": round(target_mse_total / max(total, 1), 6),
         "nll": round(nll_total / max(total, 1), 6),
         "brier": round(brier_total / max(total, 1), 6),
         "ece": round(_ece(confidences, correctness), 6),
@@ -541,6 +553,8 @@ def _evaluate(
             6,
         ),
         "route_regret_loss_weight": args.route_regret_loss_weight,
+        "global_delta_loss_weight": args.global_delta_loss_weight,
+        "target_local_delta_loss_weight": args.target_local_delta_loss_weight,
         "route_regret_compute_cost": args.route_regret_compute_cost,
         "route_regret_threshold": route_threshold_selection["route_regret_threshold"],
         "route_regret_threshold_policy": route_threshold_selection["route_regret_threshold_policy"],
@@ -597,6 +611,18 @@ def _route_regret_selection_dataset(seed: int, args: argparse.Namespace):
 def _brier_score(probabilities: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
     target = F.one_hot(labels, num_classes=probabilities.size(-1)).float()
     return ((probabilities - target) ** 2).sum(dim=-1).mean()
+
+
+def _target_object_delta_loss(
+    predicted_delta: torch.Tensor,
+    target_delta: torch.Tensor,
+    batch,
+) -> torch.Tensor:
+    batch_indices = torch.arange(predicted_delta.size(0), device=predicted_delta.device)
+    target_indices = batch.target_indices.to(predicted_delta.device).clamp(min=0, max=predicted_delta.size(1) - 1)
+    predicted_target = predicted_delta[batch_indices, target_indices]
+    target_target = target_delta[batch_indices, target_indices]
+    return F.mse_loss(predicted_target, target_target)
 
 
 def _ece(confidences: list[float], correctness: list[float], bins: int = 10) -> float:
@@ -721,6 +747,7 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
         "branch_accuracy",
         "majority_accuracy",
         "mse",
+        "target_mse",
         "nll",
         "brier",
         "ece",
@@ -732,6 +759,8 @@ def _summary(rows: list[dict[str, object]]) -> list[dict[str, object]]:
         "route_regret_mean",
         "route_regret_negative_ratio",
         "route_regret_loss_weight",
+        "global_delta_loss_weight",
+        "target_local_delta_loss_weight",
         "route_regret_compute_cost",
         "route_regret_threshold",
     ]

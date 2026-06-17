@@ -85,6 +85,15 @@ negative다. Macro accuracy는 `0.497143`, graph-transformer는 `0.548571`이고
 `0.000000`, win/tie/loss는 `2/1/4`다. 따라서 이전 multi-mechanism positive는 screen으로
 낮춰야 하며, robust local-law composition, 특히 edge-conditioned composition에는 explicit
 composition supervision이 필요하다.
+`docs/experiments/pybullet_shift_generalization_n512_target_local_loss_results.ko.md`는
+그 supervision의 가장 직접적인 형태인 event target object에 대한 target-local delta
+MSE를 감사한다. 이 실험은 large-N loss 정렬 문제가 실제로 있음을 드러냈지만, 단독
+해결책으로는 negative다. Target-local weight `1.0`에서는 WPU target MSE가 낮아지지만
+macro branch accuracy는 `0.418571`로 떨어지고, 같은 run의 graph-transformer는
+`0.494286`이다. Weight `0.25`, `0.5`도 branch-composition gap을 회복하지 못한다.
+따라서 경계는 더 선명해진다. 다음 WPU 개선은 delta loss reweighting이 아니라
+branch-conditioned 또는 mechanism-specific local propagation 같은 transition dynamics
+변경이어야 한다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

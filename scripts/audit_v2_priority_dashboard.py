@@ -1299,6 +1299,9 @@ def _priority_shift_generalization() -> dict[str, object]:
     mechanism_adapter_note = _n512_mechanism_adapter_multitrain_note()
     if mechanism_adapter_note:
         notes.append(mechanism_adapter_note.strip())
+    factorized_shuffled_note = _n512_mechanism_factorized_shuffled_note()
+    if factorized_shuffled_note:
+        notes.append(factorized_shuffled_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -2013,6 +2016,48 @@ def _n512_mechanism_adapter_multitrain_note() -> str:
     return " ".join(parts)
 
 
+def _n512_mechanism_factorized_shuffled_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n512_mechanism_factorized_shuffled_multitrain_5seed.csv"
+    if not path.exists():
+        return ""
+    rows = _rows_of_type(_read_rows(path), "summary")
+    target_model = "wpu-cws-indexed-mechanism-factorized"
+    target_rows = [row for row in rows if row["model"] == target_model]
+    if not target_rows:
+        return ""
+    mechanisms = sorted({row["eval_mechanism"] for row in rows})
+    wins = 0
+    ties = 0
+    losses = 0
+    deltas: list[float] = []
+    for mechanism in mechanisms:
+        group = [row for row in rows if row["eval_mechanism"] == mechanism]
+        wpu = next(row for row in group if row["model"] == target_model)
+        best_baseline = max(float(row["branch_accuracy"]) for row in group if not row["model"].startswith("wpu-"))
+        delta = float(wpu["branch_accuracy"]) - best_baseline
+        deltas.append(delta)
+        if delta > 1e-9:
+            wins += 1
+        elif delta < -1e-9:
+            losses += 1
+        else:
+            ties += 1
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+    macro_dense = statistics.fmean(float(row["dense_compute_ratio"]) for row in target_rows)
+    best_macro_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+        for model in sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
+    )
+    return (
+        "Corrected shuffled multi-mechanism training downgrades the previous adapter screen: "
+        f"factorized sparse WPU win/tie/loss is {wins}/{ties}/{losses}, mean margin is "
+        f"{statistics.fmean(deltas):+.6f}, macro WPU/baseline accuracy is "
+        f"{macro_wpu:.6f}/{best_macro_baseline:.6f}, and dense compute is {macro_dense:.6f}. "
+        "The earlier unshuffled multi-mechanism positive should be treated as order-sensitive; "
+        "edge-conditioned composition remains unsolved."
+    )
+
+
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -2143,6 +2188,16 @@ def _ko_interpretation(priority: int) -> str:
             "win/tie/loss 3/1/3, dense compute 0.000000을 달성한다. 따라서 P4/P5의 "
             "현실적인 다음 주장은 broad zero-shot이 아니라 primitive mechanism variation을 "
             "학습한 sparse local-law composition이다."
+        )
+    if priority in {4, 5} and (
+        ROOT / "pybullet_shift_generalization_n512_mechanism_factorized_shuffled_multitrain_5seed.csv"
+    ).exists():
+        text += (
+            " 이후 training DataLoader shuffle 누락을 발견해 seed-fixed shuffle으로 수정했다. "
+            "보정된 5-seed factorized adapter 결과는 negative다. Macro WPU/baseline accuracy는 "
+            "0.497143/0.548571이고, win/tie/loss는 2/1/4이며 dense compute는 0.000000이다. "
+            "따라서 이전 multi-mechanism positive는 order-sensitive screen으로 낮춰야 하고, "
+            "edge-conditioned composition에는 explicit local-law/composition supervision이 필요하다."
         )
     return text
 

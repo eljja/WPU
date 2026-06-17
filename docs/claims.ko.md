@@ -77,6 +77,14 @@ Dense compute는 `0.000000`, win/tie/loss는 `3/1/3`이다. 따라서 주장은 
 WPU에는 primitive mechanism variation으로 학습된 object-wise mechanism-conditioned
 propagation이 필요하며, large-N sparse state만으로 또는 nominal-only zero-shot
 extrapolation만으로는 부족하다.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_factorized_shuffled_results.ko.md`는
+multi-mechanism training protocol을 보정한다. 이전 `ConcatDataset` training loader는
+shuffle되지 않았기 때문에 작은 step budget에서 mechanism 순서에 민감할 수 있었다.
+Seed-fixed training shuffle을 추가한 뒤 factorized sparse mechanism adapter는 5 seeds에서
+negative다. Macro accuracy는 `0.497143`, graph-transformer는 `0.548571`이고, dense compute는
+`0.000000`, win/tie/loss는 `2/1/4`다. 따라서 이전 multi-mechanism positive는 screen으로
+낮춰야 하며, robust local-law composition, 특히 edge-conditioned composition에는 explicit
+composition supervision이 필요하다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

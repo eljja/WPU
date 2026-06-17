@@ -84,6 +84,16 @@ accuracy `0.497143` versus `0.472857` for the best baseline, with dense compute
 object-wise mechanism-conditioned propagation trained on primitive mechanism
 variation; large-N sparse state alone and nominal-only zero-shot extrapolation
 are insufficient.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_factorized_shuffled_results.md`
+then corrects the multi-mechanism training protocol. The previous
+`ConcatDataset` training loader was not shuffled, so small step budgets could be
+mechanism-order sensitive. After adding seed-fixed training shuffle, a
+factorized sparse mechanism adapter is negative at 5 seeds: macro accuracy is
+`0.497143` versus graph-transformer `0.548571`, dense compute remains
+`0.000000`, and win/tie/loss is `2/1/4`. This downgrades the previous
+multi-mechanism positive to a screen and strengthens the failure boundary:
+robust local-law composition, especially edge-conditioned composition, still
+requires explicit composition supervision.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

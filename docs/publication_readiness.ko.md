@@ -104,6 +104,13 @@ training에서는 negative다. Positive regime은 adapter가 primitive mechanism
 나온다. N_bg=512에서 macro accuracy는 `0.497143`, best baseline은 `0.472857`, dense
 compute는 `0.000000`, win/tie/loss는 `3/1/3`이다. 이는 조건부 accuracy/compute result이지
 broad zero-shot generalization claim이 아니다.
+이 해석은 다시 보정됐다. Multi-mechanism training DataLoader가 shuffle되지 않아 작은 step
+screen이 mechanism 순서에 민감할 수 있었다. Seed-fixed training shuffle을 추가하고
+factorized sparse mechanism adapter를 테스트한 결과, 5-seed N_bg=512 결과는 negative다.
+Macro accuracy는 `0.497143`, graph-transformer는 `0.548571`, dense compute는 `0.000000`,
+win/tie/loss는 `2/1/4`다. 따라서 다음 주장은 "primitive multi-mechanism training이
+composition을 해결했다"가 아니라 "composition이 병목이며 WPU에는 explicit
+local-law/composition supervision이 필요하다"여야 한다.
 
 ## 즉시 개선 우선순위
 

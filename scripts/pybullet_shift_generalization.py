@@ -166,7 +166,15 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
     ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     train_dataset = _training_dataset(seed, args)
-    loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args, model_name))
+    generator = torch.Generator()
+    generator.manual_seed(seed + 777)
+    loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        collate_fn=_collate_fn(args, model_name),
+        shuffle=True,
+        generator=generator,
+    )
     class_weights = _class_weights(train_dataset).to(device) if args.class_weights else None
     model.train()
     for step, (batch, target_delta, labels, _) in enumerate(loader, start=1):

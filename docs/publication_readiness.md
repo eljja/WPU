@@ -115,6 +115,14 @@ N_bg=512 it reaches macro accuracy `0.497143` versus `0.472857` for the best
 baseline, with dense compute `0.000000` and win/tie/loss `3/1/3`. This is a
 conditional accuracy/compute result, not a broad zero-shot generalization
 claim.
+This has now been corrected further. The multi-mechanism training DataLoader was
+not shuffled, making small-step screens mechanism-order sensitive. After adding
+seed-fixed training shuffle and testing a factorized sparse mechanism adapter,
+the 5-seed N_bg=512 result is negative: macro accuracy `0.497143` versus
+graph-transformer `0.548571`, dense compute `0.000000`, and win/tie/loss
+`2/1/4`. The next claim should therefore not be "primitive multi-mechanism
+training solves composition"; it should be "composition remains the bottleneck,
+and WPU needs explicit local-law/composition supervision."
 
 ## Immediate Improvement Priorities
 

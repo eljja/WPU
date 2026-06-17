@@ -200,6 +200,15 @@ Use these reports for paper-level claims:
   dense compute `0.000000`, and win/tie/loss `3/1/3`. This is a narrow
   accuracy/compute positive result with remaining edge-composition and
   calibration failures.
+- `pybullet_shift_generalization_n512_mechanism_factorized_shuffled_results.md`
+  and `pybullet_shift_generalization_n512_mechanism_factorized_shuffled_results.ko.md`:
+  corrected follow-up after fixing a multi-mechanism training DataLoader issue.
+  Training now uses seed-fixed shuffle over the concatenated mechanism dataset.
+  The factorized sparse mechanism adapter is negative at 5 seeds: macro accuracy
+  `0.497143` versus graph-transformer `0.548571`, dense compute `0.000000`, and
+  win/tie/loss `2/1/4`. This downgrades the previous multi-mechanism positive
+  to an order-sensitive screen and makes edge-composition supervision the next
+  priority.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

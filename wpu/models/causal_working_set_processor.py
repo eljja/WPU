@@ -63,6 +63,7 @@ class CausalWorkingSetProcessor(nn.Module):
             "geometry",
             "mechanism",
             "mechanism_adapter",
+            "mechanism_factorized",
             "regret",
             "physics_regret",
             "state_regret",
@@ -144,6 +145,17 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.GELU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
+        self.mechanism_factor_encoder = nn.Sequential(
+            nn.LayerNorm(ROUTE_PHYSICS_FEATURE_DIM),
+            nn.Linear(ROUTE_PHYSICS_FEATURE_DIM, hidden_dim),
+            nn.GELU(),
+        )
+        self.mechanism_factor_gate = nn.Sequential(
+            nn.LayerNorm(hidden_dim + object_feature_dim),
+            nn.Linear(hidden_dim + object_feature_dim, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, hidden_dim * 2),
+        )
         self.branch_head = nn.Linear(hidden_dim * 2, 8)
         self.last_working_set_stats: WorkingSetStats | None = None
         self._last_relevance_logits: torch.Tensor | None = None
@@ -182,7 +194,8 @@ class CausalWorkingSetProcessor(nn.Module):
         self._last_route_target_weight = interaction_dense_teacher.detach()
         route_physics_features = (
             self._route_physics_features(batch, selected_object_features, selected_mask)
-            if self.adaptive_route in {"physics_regret", "state_regret", "mechanism", "mechanism_adapter"}
+            if self.adaptive_route
+            in {"physics_regret", "state_regret", "mechanism", "mechanism_adapter", "mechanism_factorized"}
             else None
         )
 
@@ -220,6 +233,9 @@ class CausalWorkingSetProcessor(nn.Module):
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "mechanism_adapter":
+            dense_gathered = sparse_gathered
+            dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_factorized":
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "learned_selective":
@@ -313,6 +329,16 @@ class CausalWorkingSetProcessor(nn.Module):
                 dim=-1,
             )
             gathered = sparse_gathered + self.mechanism_object_adapter(adapter_input)
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_factorized":
+            if route_physics_features is None:
+                raise RuntimeError("mechanism_factorized route requires physics context features")
+            dense_weight = torch.zeros_like(selector_confidence)
+            mechanism_hidden = self.mechanism_factor_encoder(route_physics_features.to(sparse_gathered.dtype))
+            mechanism_context = mechanism_hidden.unsqueeze(1).expand(-1, sparse_gathered.size(1), -1)
+            factor_input = torch.cat([mechanism_context, selected_object_features.to(sparse_gathered.dtype)], dim=-1)
+            scale_shift = self.mechanism_factor_gate(factor_input)
+            scale, shift = scale_shift.chunk(2, dim=-1)
+            gathered = sparse_gathered * (1.0 + 0.5 * torch.tanh(scale)) + shift
         elif self.adaptive_hybrid:
             dense_mask = self._adaptive_dense_mask(selected_counts, selector_confidence)
             dense_weight = dense_mask.to(sparse_gathered.dtype)

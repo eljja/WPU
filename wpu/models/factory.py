@@ -27,6 +27,7 @@ MODEL_NAMES = [
     "wpu-cws-indexed-geometry-hybrid",
     "wpu-cws-indexed-mechanism-conditioned",
     "wpu-cws-indexed-mechanism-adapter",
+    "wpu-cws-indexed-mechanism-factorized",
     "wpu-cws-indexed-regret-hybrid",
     "wpu-cws-indexed-physics-regret-hybrid",
     "wpu-cws-indexed-state-regret-hybrid",
@@ -59,6 +60,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         "wpu-cws-indexed-geometry-hybrid",
         "wpu-cws-indexed-mechanism-conditioned",
         "wpu-cws-indexed-mechanism-adapter",
+        "wpu-cws-indexed-mechanism-factorized",
         "wpu-cws-indexed-regret-hybrid",
         "wpu-cws-indexed-physics-regret-hybrid",
         "wpu-cws-indexed-state-regret-hybrid",
@@ -84,6 +86,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
                 "wpu-cws-indexed-geometry-hybrid",
                 "wpu-cws-indexed-mechanism-conditioned",
                 "wpu-cws-indexed-mechanism-adapter",
+                "wpu-cws-indexed-mechanism-factorized",
                 "wpu-cws-indexed-regret-hybrid",
                 "wpu-cws-indexed-physics-regret-hybrid",
                 "wpu-cws-indexed-state-regret-hybrid",
@@ -136,6 +139,8 @@ def _adaptive_route(name: str) -> str:
         return "mechanism"
     if name == "wpu-cws-indexed-mechanism-adapter":
         return "mechanism_adapter"
+    if name == "wpu-cws-indexed-mechanism-factorized":
+        return "mechanism_factorized"
     if name == "wpu-cws-indexed-regret-hybrid":
         return "regret"
     if name == "wpu-cws-indexed-physics-regret-hybrid":

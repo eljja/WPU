@@ -2276,6 +2276,7 @@ def _n512_mechanism_relation_note() -> str:
                 for model in sorted({row["model"] for row in h64_rows if not row["model"].startswith("wpu-")})
             )
             h64_note = f" The h64 fair-capacity check is also positive: WPU {h64_wpu:.6f} vs best baseline {h64_best:.6f}."
+    n1024_note = _n1024_mechanism_relation_note()
     return (
         "Relation-conditioned sparse propagation is the strongest current P4 follow-up: under the "
         f"{evidence_label} h32 "
@@ -2285,7 +2286,48 @@ def _n512_mechanism_relation_note() -> str:
         "branch-logit experts alone."
         + margin_note
         + h64_note
+        + n1024_note
         + " This is still PyBullet synthetic single-step evidence and needs larger-N, calibration, and rollout expansion."
+    )
+
+
+def _n1024_mechanism_relation_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n1024_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
+    if not path.exists():
+        return ""
+    rows = _rows_of_type(_read_rows(path), "summary")
+    target_rows = [row for row in rows if row["model"] == "wpu-cws-indexed-mechanism-relation"]
+    if not target_rows:
+        return ""
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+    macro_dense = statistics.fmean(float(row["dense_compute_ratio"]) for row in target_rows)
+    best_macro_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
+        for model in sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
+    )
+    wins = ties = losses = 0
+    margins: list[float] = []
+    for mechanism in sorted({row["eval_mechanism"] for row in target_rows}):
+        wpu_rows = [row for row in target_rows if row["eval_mechanism"] == mechanism]
+        baseline_rows = [
+            row for row in rows if row["eval_mechanism"] == mechanism and not row["model"].startswith("wpu-")
+        ]
+        if not wpu_rows or not baseline_rows:
+            continue
+        wpu_acc = statistics.fmean(float(row["branch_accuracy"]) for row in wpu_rows)
+        best_baseline_acc = max(float(row["branch_accuracy"]) for row in baseline_rows)
+        margin = wpu_acc - best_baseline_acc
+        margins.append(margin)
+        if margin > 1e-12:
+            wins += 1
+        elif margin < -1e-12:
+            losses += 1
+        else:
+            ties += 1
+    return (
+        f" A larger N=1029 distractor screen is also positive: WPU {macro_wpu:.6f} vs best baseline "
+        f"{best_macro_baseline:.6f}, dense compute {macro_dense:.6f}, win/tie/loss {wins}/{ties}/{losses}, "
+        f"and mean margin {statistics.fmean(margins):+.6f}."
     )
 
 

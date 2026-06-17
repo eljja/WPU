@@ -154,10 +154,12 @@ That propagation-level fix now has a strong positive screen. The
 accuracy `0.639286` versus `0.597143` for graph-transformer with dense compute
 `0.000000`, and win/tie/loss `5/0/2` against the best baseline. The 3-seed h64
 capacity check remains positive at `0.678571` versus `0.622619` for
-serialized-token. This substantially improves publication readiness because it
+serialized-token. A larger N=1029 distractor screen is also positive:
+`0.644048` versus `0.559524` for graph-transformer, dense compute `0.000000`,
+and win/tie/loss `7/0/0`. This substantially improves publication readiness because it
 connects the WPU claim to relation-conditioned state propagation, not merely a
 new classifier head. It is not yet final evidence: it is synthetic single-step
-PyBullet evidence and needs larger-N, calibration, and rollout tests.
+PyBullet evidence and needs calibration, rollout, and harder causal large-N tests.
 
 ## Immediate Improvement Priorities
 

@@ -135,12 +135,13 @@ implements that propagation-level change. The new
 `wpu-cws-indexed-mechanism-relation` route scatters learned messages across
 selected working-set relations using source/target hidden states, relation
 features, and route physics features. Under the h32 trainpool40/steps16/eval40
-stress protocol, it reaches macro accuracy `0.644048` versus `0.598810` for
-graph-transformer, with dense compute `0.000000` and win/tie/loss `7/0/0`. In
-the h64 fair-capacity check it reaches `0.678571` versus `0.622619` for
-serialized-token. This is the strongest current WPU v2 evidence, but still a
-3-seed PyBullet synthetic screen requiring 5-seed, larger-N, and rollout
-expansion.
+stress protocol, the 5-seed expansion reaches macro accuracy `0.639286` versus
+`0.597143` for graph-transformer, with dense compute `0.000000` and
+win/tie/loss `5/0/2` against the best baseline. The 3-seed h64 fair-capacity
+check reaches `0.678571` versus `0.622619` for serialized-token. This is the
+strongest current WPU v2 evidence, but it is still PyBullet synthetic,
+single-step, and mechanism-bounded; larger-N, calibration-aware, and rollout
+expansion remain required.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

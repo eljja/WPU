@@ -150,13 +150,14 @@ prior mechanism-branch head and graph-transformer. This suggests the missing
 mechanism is not branch-logit capacity alone; relation-conditioned local
 propagation must be improved before another broad accuracy claim.
 That propagation-level fix now has a strong positive screen. The
-`wpu-cws-indexed-mechanism-relation` route reaches h32 stress macro accuracy
-`0.644048` versus `0.598810` for graph-transformer with dense compute
-`0.000000`, and h64 stress macro accuracy `0.678571` versus `0.622619` for
+`wpu-cws-indexed-mechanism-relation` route reaches 5-seed h32 stress macro
+accuracy `0.639286` versus `0.597143` for graph-transformer with dense compute
+`0.000000`, and win/tie/loss `5/0/2` against the best baseline. The 3-seed h64
+capacity check remains positive at `0.678571` versus `0.622619` for
 serialized-token. This substantially improves publication readiness because it
 connects the WPU claim to relation-conditioned state propagation, not merely a
-new classifier head. It is not yet final evidence: it is 3-seed synthetic
-PyBullet evidence and needs 5-seed, larger-N, calibration, and rollout tests.
+new classifier head. It is not yet final evidence: it is synthetic single-step
+PyBullet evidence and needs larger-N, calibration, and rollout tests.
 
 ## Immediate Improvement Priorities
 

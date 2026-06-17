@@ -2214,13 +2214,21 @@ def _n512_branch_expert_note() -> str:
 
 
 def _n512_mechanism_relation_note() -> str:
-    path = ROOT / "pybullet_shift_generalization_n512_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
+    path_5seed = ROOT / "pybullet_shift_generalization_n512_mechanism_relation_trainpool40_steps16_samples40_5seed.csv"
+    path_3seed = ROOT / "pybullet_shift_generalization_n512_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
     h32_baseline_path = ROOT / "pybullet_shift_generalization_n512_mechanism_branch_trainpool40_steps16_samples40_3seed.csv"
     h64_path = ROOT / "pybullet_shift_generalization_n512_mechanism_relation_h64_trainpool40_steps16_samples40_3seed.csv"
     h64_baseline_path = ROOT / "pybullet_shift_generalization_n512_baselines_h64_trainpool40_steps16_samples40_3seed.csv"
-    if not path.exists() or not h32_baseline_path.exists():
+    if path_5seed.exists():
+        evidence_label = "5-seed"
+        rows = _rows_of_type(_read_rows(path_5seed), "summary")
+    elif path_3seed.exists() and h32_baseline_path.exists():
+        evidence_label = "3-seed"
+        rows = _rows_of_type(_read_rows(path_3seed), "summary") + _rows_of_type(
+            _read_rows(h32_baseline_path), "summary"
+        )
+    else:
         return ""
-    rows = _rows_of_type(_read_rows(path), "summary") + _rows_of_type(_read_rows(h32_baseline_path), "summary")
     target_rows = [row for row in rows if row["model"] == "wpu-cws-indexed-mechanism-relation"]
     if not target_rows:
         return ""
@@ -2231,6 +2239,32 @@ def _n512_mechanism_relation_note() -> str:
         statistics.fmean(float(row["branch_accuracy"]) for row in rows if row["model"] == model)
         for model in sorted({row["model"] for row in rows if not row["model"].startswith("wpu-")})
     )
+    wins = ties = losses = 0
+    margins: list[float] = []
+    mechanism_key = "mechanism" if "mechanism" in target_rows[0] else "eval_mechanism"
+    for mechanism in sorted({row[mechanism_key] for row in target_rows}):
+        wpu_rows = [row for row in target_rows if row[mechanism_key] == mechanism]
+        baseline_rows = [
+            row for row in rows if row[mechanism_key] == mechanism and not row["model"].startswith("wpu-")
+        ]
+        if not wpu_rows or not baseline_rows:
+            continue
+        wpu_acc = statistics.fmean(float(row["branch_accuracy"]) for row in wpu_rows)
+        best_baseline_acc = max(float(row["branch_accuracy"]) for row in baseline_rows)
+        margin = wpu_acc - best_baseline_acc
+        margins.append(margin)
+        if margin > 1e-12:
+            wins += 1
+        elif margin < -1e-12:
+            losses += 1
+        else:
+            ties += 1
+    margin_note = ""
+    if margins:
+        margin_note = (
+            f" Mechanism win/tie/loss is {wins}/{ties}/{losses}, with mean margin "
+            f"{statistics.fmean(margins):+.6f} against the best baseline."
+        )
     h64_note = ""
     if h64_path.exists() and h64_baseline_path.exists():
         h64_rows = _rows_of_type(_read_rows(h64_path), "summary") + _rows_of_type(_read_rows(h64_baseline_path), "summary")
@@ -2243,13 +2277,15 @@ def _n512_mechanism_relation_note() -> str:
             )
             h64_note = f" The h64 fair-capacity check is also positive: WPU {h64_wpu:.6f} vs best baseline {h64_best:.6f}."
     return (
-        "Relation-conditioned sparse propagation is the strongest current P4 follow-up: under the h32 "
+        "Relation-conditioned sparse propagation is the strongest current P4 follow-up: under the "
+        f"{evidence_label} h32 "
         f"trainpool40/steps16/eval40 stress protocol WPU reaches macro accuracy {macro_wpu:.6f} vs best "
         f"baseline {best_macro_baseline:.6f}, ECE {macro_ece:.6f}, and dense compute {macro_dense:.6f}. "
-        "It wins all seven mechanisms at h32, showing that the missing fix was propagation-level relation "
-        "conditioning rather than branch-logit experts alone."
+        "This shows that the missing fix was propagation-level relation conditioning rather than "
+        "branch-logit experts alone."
+        + margin_note
         + h64_note
-        + " This is still a 3-seed synthetic screen and needs 5-seed/N/rollout expansion."
+        + " This is still PyBullet synthetic single-step evidence and needs larger-N, calibration, and rollout expansion."
     )
 
 

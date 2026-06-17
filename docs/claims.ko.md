@@ -121,11 +121,12 @@ propagation message로 내려가야 한다.
 그 propagation-level 변경을 구현한다. 새 `wpu-cws-indexed-mechanism-relation` route는
 source/target hidden state, relation feature, route physics feature를 사용해 selected
 working-set relation 위로 learned message를 scatter한다. h32 trainpool40/steps16/eval40
-stress protocol에서 macro accuracy는 `0.644048`, graph-transformer는 `0.598810`이고,
-dense compute는 `0.000000`, win/tie/loss는 `7/0/0`이다. h64 fair-capacity check에서도
-WPU는 `0.678571`, serialized-token은 `0.622619`이다. 이는 현재 WPU v2의 가장 강한
-증거지만, 아직 3-seed PyBullet synthetic screen이므로 5-seed, larger-N, rollout 확장이
-필요하다.
+stress protocol의 5-seed 확장에서 WPU macro accuracy는 `0.639286`,
+graph-transformer는 `0.597143`이고 dense compute는 `0.000000`이다. Best baseline
+대비 win/tie/loss는 `5/0/2`다. 3-seed h64 fair-capacity check에서도 WPU는
+`0.678571`, serialized-token은 `0.622619`이다. 이는 현재 WPU v2의 가장 강한 증거지만,
+아직 PyBullet synthetic, single-step, mechanism-bounded evidence다. 따라서 larger-N,
+calibration-aware evaluation, rollout 확장이 필요하다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

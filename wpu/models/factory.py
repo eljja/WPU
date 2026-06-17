@@ -29,6 +29,7 @@ MODEL_NAMES = [
     "wpu-cws-indexed-mechanism-adapter",
     "wpu-cws-indexed-mechanism-factorized",
     "wpu-cws-indexed-mechanism-branch",
+    "wpu-cws-indexed-mechanism-branch-expert",
     "wpu-cws-indexed-regret-hybrid",
     "wpu-cws-indexed-physics-regret-hybrid",
     "wpu-cws-indexed-state-regret-hybrid",
@@ -63,6 +64,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         "wpu-cws-indexed-mechanism-adapter",
         "wpu-cws-indexed-mechanism-factorized",
         "wpu-cws-indexed-mechanism-branch",
+        "wpu-cws-indexed-mechanism-branch-expert",
         "wpu-cws-indexed-regret-hybrid",
         "wpu-cws-indexed-physics-regret-hybrid",
         "wpu-cws-indexed-state-regret-hybrid",
@@ -90,6 +92,7 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
                 "wpu-cws-indexed-mechanism-adapter",
                 "wpu-cws-indexed-mechanism-factorized",
                 "wpu-cws-indexed-mechanism-branch",
+                "wpu-cws-indexed-mechanism-branch-expert",
                 "wpu-cws-indexed-regret-hybrid",
                 "wpu-cws-indexed-physics-regret-hybrid",
                 "wpu-cws-indexed-state-regret-hybrid",
@@ -146,6 +149,8 @@ def _adaptive_route(name: str) -> str:
         return "mechanism_factorized"
     if name == "wpu-cws-indexed-mechanism-branch":
         return "mechanism_branch"
+    if name == "wpu-cws-indexed-mechanism-branch-expert":
+        return "mechanism_branch_expert"
     if name == "wpu-cws-indexed-regret-hybrid":
         return "regret"
     if name == "wpu-cws-indexed-physics-regret-hybrid":

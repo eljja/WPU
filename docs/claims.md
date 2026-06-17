@@ -122,6 +122,14 @@ baseline, and a fair h64 capacity check gives WPU `0.603571` versus
 serialized-token `0.622619`. Dense compute remains `0.000000`, so the efficiency
 claim survives, but the accuracy claim must be downgraded to a short-budget
 screen until transition-head expressivity improves.
+`docs/experiments/pybullet_shift_generalization_n512_branch_expert_results.md`
+tests the first expressivity fix: branch-specific output experts. It is a
+negative standalone result. The expert model reaches macro accuracy `0.505952`
+under the h32 stress protocol, below the prior mechanism-branch head
+(`0.534524`) and graph-transformer (`0.598810`). It improves some edge/catch
+composition cases but loses general mechanism accuracy. The next architecture
+step should therefore move below branch logits into relation-type-conditioned
+sparse propagation messages.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

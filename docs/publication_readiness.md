@@ -144,6 +144,11 @@ the best baseline, and a fair h64 check reaches `0.603571` versus `0.622619` for
 serialized-token. The efficiency story remains intact because WPU dense compute
 is still `0.000000`, but the accuracy story now depends on improving sparse
 transition-head expressivity rather than simply scaling the current head.
+The first expressivity attempt is also negative. Branch-specific output experts
+reach only `0.505952` macro accuracy under the h32 stress protocol, below the
+prior mechanism-branch head and graph-transformer. This suggests the missing
+mechanism is not branch-logit capacity alone; relation-conditioned local
+propagation must be improved before another broad accuracy claim.
 
 ## Immediate Improvement Priorities
 

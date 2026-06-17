@@ -1311,6 +1311,9 @@ def _priority_shift_generalization() -> dict[str, object]:
     mechanism_branch_stress_note = _n512_mechanism_branch_stress_note()
     if mechanism_branch_stress_note:
         notes.append(mechanism_branch_stress_note.strip())
+    branch_expert_note = _n512_branch_expert_note()
+    if branch_expert_note:
+        notes.append(branch_expert_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -2184,6 +2187,26 @@ def _n512_mechanism_branch_stress_note() -> str:
         f"capacity check WPU reaches {h64_macro_wpu:.6f} versus {h64_best_baseline:.6f}. Dense compute remains "
         "0.000000, but accuracy does not beat the stronger dense/token baselines. The next fix must improve "
         "transition-head expressivity and optimization."
+    )
+
+
+def _n512_branch_expert_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n512_mechanism_branch_expert_trainpool40_steps16_samples40_3seed.csv"
+    if not path.exists():
+        return ""
+    rows = _rows_of_type(_read_rows(path), "summary")
+    target_rows = [row for row in rows if row["model"] == "wpu-cws-indexed-mechanism-branch-expert"]
+    if not target_rows:
+        return ""
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+    macro_ece = statistics.fmean(float(row["ece"]) for row in target_rows)
+    macro_dense = statistics.fmean(float(row["dense_compute_ratio"]) for row in target_rows)
+    return (
+        "Branch-specific output experts are also a negative standalone fix under the h32 stress protocol: "
+        f"macro accuracy is {macro_wpu:.6f}, ECE {macro_ece:.6f}, and dense compute {macro_dense:.6f}. "
+        "They improve some edge/catch composed cases but lose general mechanism accuracy, so the next "
+        "architecture step should condition the sparse propagation messages on relation type rather than "
+        "only adding branch-logit experts."
     )
 
 

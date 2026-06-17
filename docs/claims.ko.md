@@ -110,6 +110,13 @@ dense baseline보다 낮다.
 `0.603571`, serialized-token은 `0.622619`이다. Dense compute는 계속 `0.000000`이므로
 efficiency claim은 유지되지만, accuracy claim은 transition-head expressivity가 개선될
 때까지 short-budget screen으로 낮춰야 한다.
+`docs/experiments/pybullet_shift_generalization_n512_branch_expert_results.ko.md`는
+첫 expressivity fix인 branch-specific output expert를 검증한다. 결과는 단독 해결책으로
+negative다. Expert model은 h32 stress protocol에서 macro accuracy `0.505952`에 그쳐
+기존 mechanism-branch head (`0.534524`)와 graph-transformer (`0.598810`)보다 낮다.
+일부 edge/catch composition case는 개선하지만 일반 mechanism accuracy를 잃는다. 따라서
+다음 architecture 단계는 branch logit이 아니라 relation-type-conditioned sparse
+propagation message로 내려가야 한다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

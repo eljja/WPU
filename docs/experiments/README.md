@@ -234,6 +234,13 @@ Use these reports for paper-level claims:
   capacity, WPU reaches `0.603571` versus serialized-token `0.622619`. Dense
   compute remains `0.000000`, but accuracy superiority does not survive the
   stress screen.
+- `pybullet_shift_generalization_n512_branch_expert_results.md`
+  and `pybullet_shift_generalization_n512_branch_expert_results.ko.md`:
+  branch-specific expert follow-up. The expert model remains sparse but reaches
+  only `0.505952` macro accuracy under the h32 stress protocol, below the prior
+  mechanism-branch head and graph-transformer. This rules out output-expert
+  branching alone as the missing fix and motivates relation-conditioned sparse
+  propagation.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

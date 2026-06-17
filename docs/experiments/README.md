@@ -226,6 +226,14 @@ Use these reports for paper-level claims:
   ECE `0.247101` versus `0.254194`, dense compute `0.000000`, and win/tie/loss
   `4/0/3`. This is a positive screen for branch-conditioned transition dynamics,
   not a broad superiority claim because three mechanisms remain negative.
+- `pybullet_shift_generalization_n512_mechanism_branch_stress_results.md`
+  and `pybullet_shift_generalization_n512_mechanism_branch_stress_results.ko.md`:
+  step/sample stress follow-up. It also fixes experiment control by adding
+  `--train-samples-per-mechanism`. Under trainpool40/steps16/eval40, h32 WPU
+  falls to macro accuracy `0.534524` versus best baseline `0.598810`; with h64
+  capacity, WPU reaches `0.603571` versus serialized-token `0.622619`. Dense
+  compute remains `0.000000`, but accuracy superiority does not survive the
+  stress screen.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

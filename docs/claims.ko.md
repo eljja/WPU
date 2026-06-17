@@ -103,6 +103,13 @@ branch accuracy는 `0.568571`, graph-transformer는 `0.548571`이고, ECE는 `0.
 factorized 및 target-local negative diagnostic 이후 첫 positive follow-up이다. 다만
 보편 우월성은 아니다. `catch_heavy`, `edge_shift`, `edge_high_force`는 여전히 best
 dense baseline보다 낮다.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_branch_stress_results.ko.md`는
+그 positive screen을 stress-test한다. 명시적 `--train-samples-per-mechanism` control을
+추가한 뒤 larger train/eval pilot은 WPU accuracy 관점에서 negative다. h32 WPU는
+`0.534524`, best baseline은 `0.598810`이고, 공정한 h64 capacity check에서도 WPU는
+`0.603571`, serialized-token은 `0.622619`이다. Dense compute는 계속 `0.000000`이므로
+efficiency claim은 유지되지만, accuracy claim은 transition-head expressivity가 개선될
+때까지 short-budget screen으로 낮춰야 한다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

@@ -114,6 +114,14 @@ versus `0.254194`, dense compute `0.000000`, and win/tie/loss `4/0/3`. This is
 the first positive follow-up after the corrected factorized and target-local
 negative diagnostics. It is still not broad superiority: `catch_heavy`,
 `edge_shift`, and `edge_high_force` remain below the best dense baseline.
+`docs/experiments/pybullet_shift_generalization_n512_mechanism_branch_stress_results.md`
+then stress-tests that positive screen. After adding explicit
+`--train-samples-per-mechanism` control, the larger train/eval pilot is negative
+for WPU accuracy: h32 WPU reaches `0.534524` versus `0.598810` for the best
+baseline, and a fair h64 capacity check gives WPU `0.603571` versus
+serialized-token `0.622619`. Dense compute remains `0.000000`, so the efficiency
+claim survives, but the accuracy claim must be downgraded to a short-budget
+screen until transition-head expressivity improves.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

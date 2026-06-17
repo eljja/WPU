@@ -73,6 +73,7 @@ def main() -> None:
     parser.add_argument("--steps", type=int, default=30)
     parser.add_argument("--sim-steps", type=int, default=120)
     parser.add_argument("--samples", type=int, default=48)
+    parser.add_argument("--train-samples-per-mechanism", type=int, default=None)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--hidden-dim", type=int, default=64)
     parser.add_argument("--layers", type=int, default=2)
@@ -206,8 +207,11 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
 
 
 def _training_dataset(seed: int, args: argparse.Namespace):
-    total_samples = max(args.steps * args.batch_size, args.batch_size)
-    per_mechanism = max(args.batch_size, total_samples // max(len(args.train_mechanisms), 1))
+    if args.train_samples_per_mechanism is not None:
+        per_mechanism = max(args.batch_size, int(args.train_samples_per_mechanism))
+    else:
+        total_samples = max(args.steps * args.batch_size, args.batch_size)
+        per_mechanism = max(args.batch_size, total_samples // max(len(args.train_mechanisms), 1))
     datasets = [
         _dataset(
             mechanism=mechanism,

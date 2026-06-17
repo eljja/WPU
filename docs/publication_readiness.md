@@ -138,6 +138,12 @@ shuffled multi-mechanism screen, it reaches macro accuracy `0.568571` versus
 publication story, but it remains a screen: three mechanisms are still below the
 best dense baseline, and larger step/sample/N sweeps are required before making
 a strong claim.
+The first larger step/sample stress audit is negative for accuracy. After adding
+explicit training-pool control, h32 WPU reaches `0.534524` versus `0.598810` for
+the best baseline, and a fair h64 check reaches `0.603571` versus `0.622619` for
+serialized-token. The efficiency story remains intact because WPU dense compute
+is still `0.000000`, but the accuracy story now depends on improving sparse
+transition-head expressivity rather than simply scaling the current head.
 
 ## Immediate Improvement Priorities
 

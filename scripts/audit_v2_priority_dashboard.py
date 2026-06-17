@@ -1308,6 +1308,9 @@ def _priority_shift_generalization() -> dict[str, object]:
     mechanism_branch_note = _n512_mechanism_branch_note()
     if mechanism_branch_note:
         notes.append(mechanism_branch_note.strip())
+    mechanism_branch_stress_note = _n512_mechanism_branch_stress_note()
+    if mechanism_branch_stress_note:
+        notes.append(mechanism_branch_stress_note.strip())
     status = "partial" if observed_win_rate > 0.0 else "fail"
     if observed_win_rate == 1.0 and not used_adapted_protocol and win_rate == 1.0:
         status = "pass"
@@ -2149,6 +2152,38 @@ def _n512_mechanism_branch_note() -> str:
         f"{macro_dense:.6f}. This supports branch-conditioned transition dynamics as the next WPU direction, "
         "but it is still a positive screen rather than broad superiority because three mechanisms remain below "
         "the best dense baseline."
+    )
+
+
+def _n512_mechanism_branch_stress_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n512_mechanism_branch_trainpool40_steps16_samples40_3seed.csv"
+    wpu_h64_path = ROOT / "pybullet_shift_generalization_n512_mechanism_branch_h64_trainpool40_steps16_samples40_3seed.csv"
+    baseline_h64_path = ROOT / "pybullet_shift_generalization_n512_baselines_h64_trainpool40_steps16_samples40_3seed.csv"
+    if not path.exists() or not wpu_h64_path.exists() or not baseline_h64_path.exists():
+        return ""
+    h32_rows = _rows_of_type(_read_rows(path), "summary")
+    h64_rows = _rows_of_type(_read_rows(wpu_h64_path), "summary") + _rows_of_type(_read_rows(baseline_h64_path), "summary")
+    h32_wpu = [row for row in h32_rows if row["model"] == "wpu-cws-indexed-mechanism-branch"]
+    h64_wpu = [row for row in h64_rows if row["model"] == "wpu-cws-indexed-mechanism-branch"]
+    if not h32_wpu or not h64_wpu:
+        return ""
+    h32_macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in h32_wpu)
+    h32_best_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in h32_rows if row["model"] == model)
+        for model in sorted({row["model"] for row in h32_rows if not row["model"].startswith("wpu-")})
+    )
+    h64_macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in h64_wpu)
+    h64_best_baseline = max(
+        statistics.fmean(float(row["branch_accuracy"]) for row in h64_rows if row["model"] == model)
+        for model in sorted({row["model"] for row in h64_rows if not row["model"].startswith("wpu-")})
+    )
+    return (
+        "A step/sample stress audit downgrades the mechanism-branch result from robust accuracy evidence to "
+        "a short-budget sparse-efficiency screen. With explicit train pool control, h32 WPU reaches "
+        f"{h32_macro_wpu:.6f} versus {h32_best_baseline:.6f} for the best baseline, and in a fair h64 "
+        f"capacity check WPU reaches {h64_macro_wpu:.6f} versus {h64_best_baseline:.6f}. Dense compute remains "
+        "0.000000, but accuracy does not beat the stronger dense/token baselines. The next fix must improve "
+        "transition-head expressivity and optimization."
     )
 
 

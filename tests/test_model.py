@@ -647,6 +647,48 @@ def test_cws_bounded_delta_parameterization_limits_position_and_velocity_delta()
     assert prediction.object_delta[..., 1:7].abs().max().item() <= 0.050001
 
 
+def test_cws_adaptive_delta_bounds_limit_position_and_velocity_delta() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=10, background_objects=8, causal_obstacles=4, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = CausalWorkingSetProcessor(
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+        selector="indexed",
+        adaptive_hybrid=True,
+        adaptive_route="mechanism_relation",
+        adaptive_delta_bounds=True,
+        adaptive_delta_min=0.01,
+        adaptive_delta_max=0.07,
+    )
+
+    prediction = model(batch, num_branches=3)
+
+    assert prediction.object_delta[..., 1:7].abs().max().item() <= 0.070001
+
+
+def test_cws_split_delta_bounds_limit_position_and_velocity_separately() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=11, background_objects=8, causal_obstacles=4, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = CausalWorkingSetProcessor(
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+        selector="indexed",
+        adaptive_hybrid=True,
+        adaptive_route="mechanism_relation",
+        bounded_delta_position_max=0.08,
+        bounded_delta_velocity_max=0.03,
+    )
+
+    prediction = model(batch, num_branches=3)
+
+    assert prediction.object_delta[..., 1:4].abs().max().item() <= 0.080001
+    assert prediction.object_delta[..., 4:7].abs().max().item() <= 0.030001
+
+
 def test_route_physics_features_preserve_action_and_physical_scalars() -> None:
     state = create_robot_cup_state()
     cup = state.objects["cup_001"]

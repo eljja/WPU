@@ -146,9 +146,11 @@ rejection, dense fallback은 사용하지 않는다. 이는 P2를 순수 failure
 raw-stability 결과로 바꾼다. Simulator-resynchronized metric은 under-update 우려도 줄인다.
 Bound `0.05`는 H=25 trajectory MSE `0.707117`, branch accuracy `0.729167`을 보이며,
 finite projection의 trajectory MSE `1.695024`, branch accuracy `0.250000`보다 좋다.
-남은 gap은 target-object trajectory MSE `361.358309`가 여전히 크다는 점이다. 따라서 다음
-transition 단계는 고정 global bound가 아니라 adaptive per-feature/per-relation bound와
-trajectory training이다.
+남은 gap은 target-object trajectory MSE `361.358309`가 여전히 크다는 점이다. 후속으로
+실험한 learned adaptive bounds, 수동 position/velocity split bounds, target-object delta
+loss는 이 병목을 줄이지 못했다. target-object MSE는 `361-363` 근처에 남거나 branch
+accuracy가 악화됐다. 따라서 다음 transition 단계는 또 다른 scalar bound나 one-step
+target-loss 조정이 아니라 unrolled branch/trajectory-consistent objective다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

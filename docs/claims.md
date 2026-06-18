@@ -165,9 +165,12 @@ raw-stability result. Simulator-resynchronized metrics now reduce the
 under-update concern: bound `0.05` reaches H=25 trajectory MSE `0.707117` and
 branch accuracy `0.729167`, versus finite projection trajectory MSE `1.695024`
 and branch accuracy `0.250000`. The remaining gap is high target-object
-trajectory MSE (`361.358309`), so the next transition step is adaptive
-per-feature/per-relation bounds and trajectory training, not another fixed
-global bound.
+trajectory MSE (`361.358309`). Follow-up attempts with learned adaptive bounds,
+manual position/velocity split bounds, and target-object delta loss do not
+reduce that bottleneck: they either leave target-object MSE near `361-363` or
+reduce branch accuracy. The next transition step is therefore an unrolled
+branch/trajectory-consistent objective, not another scalar bound or one-step
+target-loss tweak.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

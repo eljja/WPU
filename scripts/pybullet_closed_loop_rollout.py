@@ -59,8 +59,14 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--grad-clip-norm", type=float, default=0.0)
     parser.add_argument("--bounded-delta-max", type=float, default=0.0)
+    parser.add_argument("--bounded-delta-position-max", type=float, default=0.0)
+    parser.add_argument("--bounded-delta-velocity-max", type=float, default=0.0)
+    parser.add_argument("--adaptive-delta-bounds", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--adaptive-delta-min", type=float, default=0.01)
+    parser.add_argument("--adaptive-delta-max", type=float, default=0.5)
     parser.add_argument("--branch-loss-weight", type=float, default=1.0)
     parser.add_argument("--delta-loss-weight", type=float, default=0.1)
+    parser.add_argument("--target-delta-loss-weight", type=float, default=0.0)
     parser.add_argument("--multihorizon-train-steps", type=int, nargs="*", default=[])
     parser.add_argument("--multihorizon-loss-weight", type=float, default=0.0)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=True)
@@ -143,6 +149,11 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
         num_heads=args.num_heads,
         working_set_size=args.working_set_size,
         bounded_delta_max=args.bounded_delta_max,
+        bounded_delta_position_max=args.bounded_delta_position_max,
+        bounded_delta_velocity_max=args.bounded_delta_velocity_max,
+        adaptive_delta_bounds=args.adaptive_delta_bounds,
+        adaptive_delta_min=args.adaptive_delta_min,
+        adaptive_delta_max=args.adaptive_delta_max,
     ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     dataset = PyBulletCupDataset(
@@ -172,6 +183,9 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
             )
         if delta_loss_weight > 0.0:
             loss = loss + delta_loss_weight * F.mse_loss(prediction.object_delta, target_delta)
+        target_delta_loss_weight = float(getattr(args, "target_delta_loss_weight", 0.0))
+        if target_delta_loss_weight > 0.0:
+            loss = loss + target_delta_loss_weight * _target_object_delta_loss(prediction.object_delta, target_delta, batch)
         if args.delta_norm_penalty > 0.0:
             loss = loss + args.delta_norm_penalty * _delta_norm_excess_loss(
                 prediction.object_delta,
@@ -414,8 +428,14 @@ def _rollout_condition(
         "delta_target_norm_slack": args.delta_target_norm_slack,
         "branch_loss_weight": float(getattr(args, "branch_loss_weight", 1.0)),
         "delta_loss_weight": float(getattr(args, "delta_loss_weight", 0.1)),
+        "target_delta_loss_weight": float(getattr(args, "target_delta_loss_weight", 0.0)),
         "grad_clip_norm": float(getattr(args, "grad_clip_norm", 0.0)),
         "bounded_delta_max": float(getattr(args, "bounded_delta_max", 0.0)),
+        "bounded_delta_position_max": float(getattr(args, "bounded_delta_position_max", 0.0)),
+        "bounded_delta_velocity_max": float(getattr(args, "bounded_delta_velocity_max", 0.0)),
+        "adaptive_delta_bounds": bool(getattr(args, "adaptive_delta_bounds", False)),
+        "adaptive_delta_min": float(getattr(args, "adaptive_delta_min", 0.01)),
+        "adaptive_delta_max": float(getattr(args, "adaptive_delta_max", 0.5)),
         "multihorizon_train_steps": "|".join(str(step) for step in _multihorizon_steps(args)),
         "multihorizon_loss_weight": float(getattr(args, "multihorizon_loss_weight", 0.0)),
         "state_validity_penalty": args.state_validity_penalty,
@@ -452,6 +472,18 @@ def _delta_norm_excess_loss(prediction_delta: torch.Tensor, target_delta: torch.
     prediction_norm = prediction_delta[..., 1:7].norm(dim=-1)
     target_norm = target_delta[..., 1:7].norm(dim=-1)
     return F.relu(prediction_norm - target_norm - slack).pow(2).mean()
+
+
+def _target_object_delta_loss(
+    prediction_delta: torch.Tensor,
+    target_delta: torch.Tensor,
+    batch: StateGraphBatch,
+) -> torch.Tensor:
+    target_indices = batch.target_indices.clamp(min=0, max=prediction_delta.size(1) - 1)
+    batch_indices = torch.arange(prediction_delta.size(0), device=prediction_delta.device)
+    predicted_target = prediction_delta[batch_indices, target_indices]
+    target = target_delta[batch_indices, target_indices]
+    return F.mse_loss(predicted_target, target)
 
 
 def _rollout_consistency_loss(

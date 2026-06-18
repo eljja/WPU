@@ -166,6 +166,8 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
             "0.5",
             "--delta-loss-weight",
             "0.2",
+            "--target-delta-loss-weight",
+            "0.3",
             "--multihorizon-train-steps",
             "4",
             "8",
@@ -174,6 +176,15 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
             "--grad-clip-norm",
             "1.0",
             "--bounded-delta-max",
+            "0.25",
+            "--bounded-delta-position-max",
+            "0.10",
+            "--bounded-delta-velocity-max",
+            "0.05",
+            "--adaptive-delta-bounds",
+            "--adaptive-delta-min",
+            "0.01",
+            "--adaptive-delta-max",
             "0.25",
             "--integrity-projection",
             "--out",
@@ -193,10 +204,16 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
     assert "train_sim_steps" in text
     assert "branch_loss_weight" in text
     assert "delta_loss_weight" in text
+    assert "target_delta_loss_weight" in text
     assert "multihorizon_train_steps" in text
     assert "multihorizon_loss_weight" in text
     assert "grad_clip_norm" in text
     assert "bounded_delta_max" in text
+    assert "bounded_delta_position_max" in text
+    assert "bounded_delta_velocity_max" in text
+    assert "adaptive_delta_bounds" in text
+    assert "adaptive_delta_min" in text
+    assert "adaptive_delta_max" in text
     assert "rollout_branch_accuracy" in text
     assert "trajectory_mse" in text
     assert "target_object_trajectory_mse" in text

@@ -51,6 +51,11 @@ class CausalWorkingSetProcessor(nn.Module):
         interaction_dense_threshold: float = 0.15,
         route_regret_threshold: float = 0.0,
         bounded_delta_max: float = 0.0,
+        bounded_delta_position_max: float = 0.0,
+        bounded_delta_velocity_max: float = 0.0,
+        adaptive_delta_bounds: bool = False,
+        adaptive_delta_min: float = 0.01,
+        adaptive_delta_max: float = 0.5,
     ) -> None:
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
@@ -83,6 +88,11 @@ class CausalWorkingSetProcessor(nn.Module):
         self.interaction_dense_threshold = interaction_dense_threshold
         self.route_regret_threshold = route_regret_threshold
         self.bounded_delta_max = float(bounded_delta_max)
+        self.bounded_delta_position_max = float(bounded_delta_position_max)
+        self.bounded_delta_velocity_max = float(bounded_delta_velocity_max)
+        self.adaptive_delta_bounds = bool(adaptive_delta_bounds)
+        self.adaptive_delta_min = float(adaptive_delta_min)
+        self.adaptive_delta_max = float(adaptive_delta_max)
         self.object_encoder = nn.Linear(object_feature_dim, hidden_dim)
         self.relation_encoder = nn.Linear(relation_feature_dim, hidden_dim)
         self.event_encoder = nn.Linear(event_feature_dim, hidden_dim)
@@ -179,6 +189,12 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.Linear(hidden_dim * 2 + relation_feature_dim + ROUTE_PHYSICS_FEATURE_DIM, hidden_dim),
             nn.GELU(),
             nn.Linear(hidden_dim, hidden_dim),
+        )
+        self.adaptive_delta_bound_head = nn.Sequential(
+            nn.LayerNorm(hidden_dim + object_feature_dim + ROUTE_PHYSICS_FEATURE_DIM),
+            nn.Linear(hidden_dim + object_feature_dim + ROUTE_PHYSICS_FEATURE_DIM, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, 6),
         )
         self.branch_head = nn.Linear(hidden_dim * 2, 8)
         self.last_working_set_stats: WorkingSetStats | None = None
@@ -435,7 +451,12 @@ class CausalWorkingSetProcessor(nn.Module):
         gathered = gathered.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
 
         object_delta = torch.zeros_like(batch.object_features)
-        selected_delta = self._bounded_object_delta(self.object_delta_head(gathered))
+        selected_delta = self._bounded_object_delta(
+            self.object_delta_head(gathered),
+            gathered=gathered,
+            selected_object_features=selected_object_features,
+            route_physics_features=route_physics_features,
+        )
         selected_delta = selected_delta.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
         object_delta.scatter_add_(1, selected_indices.unsqueeze(-1).expand(-1, -1, selected_delta.size(-1)), selected_delta)
 
@@ -496,7 +517,40 @@ class CausalWorkingSetProcessor(nn.Module):
             ],
         )
 
-    def _bounded_object_delta(self, delta: torch.Tensor) -> torch.Tensor:
+    def _bounded_object_delta(
+        self,
+        delta: torch.Tensor,
+        *,
+        gathered: torch.Tensor | None = None,
+        selected_object_features: torch.Tensor | None = None,
+        route_physics_features: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        if self.adaptive_delta_bounds:
+            if gathered is None or selected_object_features is None:
+                raise RuntimeError("adaptive delta bounds require gathered hidden state and selected object features")
+            route_context = _route_context_for_bounds(
+                route_physics_features,
+                batch_size=gathered.size(0),
+                set_size=gathered.size(1),
+                device=gathered.device,
+                dtype=gathered.dtype,
+            )
+            bound_input = torch.cat([gathered, selected_object_features.to(gathered.dtype), route_context], dim=-1)
+            min_bound = max(self.adaptive_delta_min, 1e-8)
+            max_bound = max(self.adaptive_delta_max, min_bound)
+            bounds = min_bound + torch.sigmoid(self.adaptive_delta_bound_head(bound_input)) * (max_bound - min_bound)
+            bounded = delta.clone()
+            bounded[..., 1:7] = torch.tanh(delta[..., 1:7] / bounds) * bounds
+            return bounded
+        if self.bounded_delta_position_max > 0.0 or self.bounded_delta_velocity_max > 0.0:
+            bounded = delta.clone()
+            position_max = self.bounded_delta_position_max if self.bounded_delta_position_max > 0.0 else self.bounded_delta_max
+            velocity_max = self.bounded_delta_velocity_max if self.bounded_delta_velocity_max > 0.0 else self.bounded_delta_max
+            if position_max > 0.0:
+                bounded[..., 1:4] = torch.tanh(delta[..., 1:4] / max(position_max, 1e-8)) * position_max
+            if velocity_max > 0.0:
+                bounded[..., 4:7] = torch.tanh(delta[..., 4:7] / max(velocity_max, 1e-8)) * velocity_max
+            return bounded
         if self.bounded_delta_max <= 0.0:
             return delta
         bounded = delta.clone()
@@ -862,6 +916,19 @@ def _masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     total = (values * weights).sum(dim=1)
     count = weights.sum(dim=1).clamp_min(1.0)
     return total / count
+
+
+def _route_context_for_bounds(
+    route_physics_features: torch.Tensor | None,
+    *,
+    batch_size: int,
+    set_size: int,
+    device: torch.device,
+    dtype: torch.dtype,
+) -> torch.Tensor:
+    if route_physics_features is None:
+        return torch.zeros((batch_size, set_size, ROUTE_PHYSICS_FEATURE_DIM), device=device, dtype=dtype)
+    return route_physics_features.to(device=device, dtype=dtype).unsqueeze(1).expand(-1, set_size, -1)
 
 
 def _interaction_density(selected_object_features: torch.Tensor, selected_mask: torch.Tensor) -> torch.Tensor:

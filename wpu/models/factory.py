@@ -76,6 +76,11 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
         interaction_dense_threshold = float(kwargs.get("interaction_dense_threshold", 0.15))
         route_regret_threshold = float(kwargs.get("route_regret_threshold", 0.0))
         bounded_delta_max = float(kwargs.get("bounded_delta_max", 0.0))
+        bounded_delta_position_max = float(kwargs.get("bounded_delta_position_max", 0.0))
+        bounded_delta_velocity_max = float(kwargs.get("bounded_delta_velocity_max", 0.0))
+        adaptive_delta_bounds = bool(kwargs.get("adaptive_delta_bounds", False))
+        adaptive_delta_min = float(kwargs.get("adaptive_delta_min", 0.01))
+        adaptive_delta_max = float(kwargs.get("adaptive_delta_max", 0.5))
         return CausalWorkingSetProcessor(
             hidden_dim=hidden_dim,
             num_heads=num_heads,
@@ -105,6 +110,11 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
             interaction_dense_threshold=interaction_dense_threshold,
             route_regret_threshold=route_regret_threshold,
             bounded_delta_max=bounded_delta_max,
+            bounded_delta_position_max=bounded_delta_position_max,
+            bounded_delta_velocity_max=bounded_delta_velocity_max,
+            adaptive_delta_bounds=adaptive_delta_bounds,
+            adaptive_delta_min=adaptive_delta_min,
+            adaptive_delta_max=adaptive_delta_max,
         )
     if name.startswith("wpu-cws-"):
         selector = name.removeprefix("wpu-cws-")

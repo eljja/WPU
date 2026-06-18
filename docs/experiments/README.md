@@ -282,8 +282,10 @@ Use these reports for paper-level claims:
   audit now includes simulator-resynchronized metrics: bound `0.05` reaches
   H=25 trajectory MSE `0.707117` and branch accuracy `0.729167`, versus finite
   projection trajectory MSE `1.695024` and branch accuracy `0.250000`. The
-  remaining weakness is target-object trajectory MSE `361.358309`, so the next
-  step is adaptive bounds and trajectory training.
+  remaining weakness is target-object trajectory MSE `361.358309`. Learned
+  adaptive bounds, split position/velocity bounds, and target-object delta loss
+  do not reduce that bottleneck, so the next step is unrolled
+  branch/trajectory-consistent training.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

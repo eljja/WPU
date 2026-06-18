@@ -209,8 +209,9 @@ the transition-training target set.
    trajectory MSE is `0.707117` and branch accuracy is `0.729167`, versus
    finite projection trajectory MSE `1.695024` and branch accuracy `0.250000`.
    This improves publication readiness, but target-object trajectory MSE remains
-   high at `361.358309`. The next step is adaptive per-feature/per-relation
-   bounds with simulator-resynchronized transition training.
+   high at `361.358309`. Learned adaptive bounds, split position/velocity
+   bounds, and target-object delta loss do not reduce that bottleneck. The next
+   step is unrolled branch/trajectory-consistent transition training.
 3. Broaden the simulator-backed benchmark beyond the current PyBullet cup task:
    more mechanisms, longer rollouts, explicit object state from at least one
    additional simulator or digital-twin environment, and baseline-complete

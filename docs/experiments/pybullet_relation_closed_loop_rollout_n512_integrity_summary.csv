@@ -1,7 +1,13 @@
 run_label,model,horizon,seed_count,constraint_violations_per_step,delta_norm_mean,branch_entropy_mean,branch_flip_rate,selected_k_mean,unsafe_delta_rejection_rate,correction_rate,corrected_object_fraction,rollback_rate,escalation_rate,escalation_success_rate,rollout_branch_accuracy,trajectory_mse,trajectory_position_mse,trajectory_velocity_mse,target_object_trajectory_mse,state_integrity_score,low_disruption_integrity_score
+relation_adaptive_delta025,wpu-cws-indexed-mechanism-relation,5,3,0.041667,0.549475,0.874579,0.036458,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.770833,0.014159,0.020284,0.008035,6.419266,0.95056,0.95056
+relation_adaptive_delta025,wpu-cws-indexed-mechanism-relation,10,3,0.1375,0.549388,0.920278,0.037037,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.6875,0.08887,0.162294,0.015446,42.536227,0.897739,0.897739
+relation_adaptive_delta025,wpu-cws-indexed-mechanism-relation,25,3,0.300833,0.562927,0.964743,0.033854,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.333333,0.739266,1.42043,0.058103,361.306078,0.808068,0.808068
 relation_bounded_delta005,wpu-cws-indexed-mechanism-relation,5,3,0.0,0.235083,0.790378,0.020833,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.833333,0.012121,0.018156,0.006085,6.089423,0.987605,0.987605
 relation_bounded_delta005,wpu-cws-indexed-mechanism-relation,10,3,0.0,0.23517,0.805908,0.009259,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.833333,0.081619,0.15499,0.008249,41.490147,0.989917,0.989917
 relation_bounded_delta005,wpu-cws-indexed-mechanism-relation,25,3,0.2175,0.234325,0.880074,0.009549,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.729167,0.707117,1.398124,0.016109,361.358309,0.870264,0.870264
+relation_bounded_delta005_targetloss1,wpu-cws-indexed-mechanism-relation,5,3,0.0,0.239155,0.899456,0.026042,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.791667,0.012201,0.018306,0.006096,6.115898,0.986421,0.986421
+relation_bounded_delta005_targetloss1,wpu-cws-indexed-mechanism-relation,10,3,0.0,0.23754,0.927828,0.018518,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.8125,0.082033,0.155741,0.008325,41.636998,0.987982,0.987982
+relation_bounded_delta005_targetloss1,wpu-cws-indexed-mechanism-relation,25,3,0.000833,0.236673,0.977097,0.017361,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.6875,0.711838,1.407237,0.016439,363.36847,0.987786,0.987786
 relation_bounded_delta01,wpu-cws-indexed-mechanism-relation,5,3,0.0,0.429045,0.796444,0.020833,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.833333,0.013191,0.01911,0.007273,6.289925,0.980817,0.980817
 relation_bounded_delta01,wpu-cws-indexed-mechanism-relation,10,3,0.179167,0.428478,0.844282,0.025463,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.729167,0.085312,0.15865,0.011974,42.132881,0.881369,0.881369
 relation_bounded_delta01,wpu-cws-indexed-mechanism-relation,25,3,0.3425,0.437645,0.925896,0.015625,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.708333,0.72066,1.403334,0.037985,360.705327,0.793182,0.793182
@@ -17,3 +23,6 @@ relation_finite_projection,wpu-cws-indexed-mechanism-relation,25,3,0.034167,2.68
 relation_raw,wpu-cws-indexed-mechanism-relation,5,3,0.416667,1.783713,0.899774,0.119792,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.5625,0.035057,0.043648,0.026466,12.370823,0.684445,0.684445
 relation_raw,wpu-cws-indexed-mechanism-relation,10,3,0.441667,2.062501,0.919342,0.081018,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.479167,0.201422,0.281539,0.121306,71.18241,0.668692,0.668692
 relation_raw,wpu-cws-indexed-mechanism-relation,25,3,1.184167,5.401195,0.809804,0.052951,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.208333,6.975125,7.630795,6.319454,922.699696,0.250368,0.250368
+relation_split_delta_p010_v005,wpu-cws-indexed-mechanism-relation,5,3,0.0,0.357943,0.858228,0.026042,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.833333,0.012622,0.019133,0.006111,6.124859,0.982264,0.982264
+relation_split_delta_p010_v005,wpu-cws-indexed-mechanism-relation,10,3,0.1,0.354002,0.897668,0.037037,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.6875,0.083435,0.158548,0.008323,41.64577,0.925202,0.925202
+relation_split_delta_p010_v005,wpu-cws-indexed-mechanism-relation,25,3,0.1875,0.351914,0.957387,0.023437,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.541667,0.715922,1.41468,0.017163,361.626218,0.879871,0.879871

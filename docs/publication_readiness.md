@@ -167,8 +167,10 @@ relation WPU H=25 integrity is only `0.091319`, while finite projection raises i
 to `0.739041`. This means relation propagation solves neither long-horizon state
 stability nor simulator-grounded dynamics by itself. Simple scalar learned
 stability losses and fixed temporal delta scaling also fail to repair the
-collapse, so the next step must change the transition-training protocol or
-architecture.
+collapse. Short-stride simulator targets and delta-focused loss retuning are
+also negative. The next step must therefore change the transition-training
+protocol or architecture toward true multi-step/simulator-resynchronized
+rollout learning.
 
 ## Immediate Improvement Priorities
 

@@ -10,6 +10,10 @@ to claim persistent state as more than a one-step execution primitive.
 Source CSVs:
 
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride8_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_delta1_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_branch01_delta1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_scale025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_scale010_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_norm_strong_3seed.csv`
@@ -49,6 +53,18 @@ Derived CSV:
 | relation_raw | wpu-cws-indexed-mechanism-relation | 5 | 0.379167 | 1.662182 | 0.088542 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.715574 | 0.715574 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 10 | 0.483333 | 4.552682 | 0.111111 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.552601 | 0.552601 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 25 | 3.180833 | 2379159.471470 | 0.043403 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.091319 | 0.091319 |
+| relation_train_stride4 | wpu-cws-indexed-mechanism-relation | 5 | 0.379167 | 2.053519 | 0.067708 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.706043 | 0.706043 |
+| relation_train_stride4 | wpu-cws-indexed-mechanism-relation | 10 | 0.541667 | 5.267674 | 0.104167 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.496881 | 0.496881 |
+| relation_train_stride4 | wpu-cws-indexed-mechanism-relation | 25 | 3.236667 | 2425517.613951 | 0.052952 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.089410 | 0.089410 |
+| relation_train_stride4_branch01_delta1 | wpu-cws-indexed-mechanism-relation | 5 | 0.212500 | 1.608456 | 0.114583 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.803912 | 0.803912 |
+| relation_train_stride4_branch01_delta1 | wpu-cws-indexed-mechanism-relation | 10 | 0.497917 | 4.672586 | 0.136574 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.535290 | 0.535290 |
+| relation_train_stride4_branch01_delta1 | wpu-cws-indexed-mechanism-relation | 25 | 3.215000 | 2455636.864591 | 0.065104 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.086979 | 0.086979 |
+| relation_train_stride4_delta1 | wpu-cws-indexed-mechanism-relation | 5 | 0.287500 | 1.663140 | 0.140625 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.755540 | 0.755540 |
+| relation_train_stride4_delta1 | wpu-cws-indexed-mechanism-relation | 10 | 0.554167 | 4.710854 | 0.157407 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.498847 | 0.498847 |
+| relation_train_stride4_delta1 | wpu-cws-indexed-mechanism-relation | 25 | 3.237500 | 2460938.605532 | 0.073785 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.085243 | 0.085243 |
+| relation_train_stride8 | wpu-cws-indexed-mechanism-relation | 5 | 0.383333 | 1.776338 | 0.140625 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.698870 | 0.698870 |
+| relation_train_stride8 | wpu-cws-indexed-mechanism-relation | 10 | 0.543750 | 5.025681 | 0.141204 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.496798 | 0.496798 |
+| relation_train_stride8 | wpu-cws-indexed-mechanism-relation | 25 | 3.257500 | 2424016.166901 | 0.065972 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.086806 | 0.086806 |
 | relation_validity | wpu-cws-indexed-mechanism-relation | 5 | 0.358333 | 1.666083 | 0.088542 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.726895 | 0.726895 |
 | relation_validity | wpu-cws-indexed-mechanism-relation | 10 | 0.472917 | 4.551994 | 0.111111 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.558354 | 0.558354 |
 | relation_validity | wpu-cws-indexed-mechanism-relation | 25 | 3.176667 | 2379929.526420 | 0.043403 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.091319 | 0.091319 |
@@ -69,6 +85,15 @@ fix: scale `0.25` reaches H=25 integrity `0.089410`, and scale `0.10` reaches
 `0.089583`. Scaling reduces average delta magnitude but does not convert a
 one-step target into a stable multi-step transition operator.
 
+Short-stride simulator targets are also negative in this first implementation.
+Training the relation WPU on shorter supervised simulator transitions
+(`train_sim_steps=4` or `8`, evaluated against `sim_steps=80`) gives H=25
+integrity `0.089410` and `0.086806`, respectively. Making the short-stride run
+delta-focused does not help: stride-4 delta-only training reaches `0.085243`,
+and branch `0.1` plus delta `1.0` reaches `0.086979`. This means the issue is
+not only target duration or loss weighting; the transition model still needs an
+explicit multi-step or simulator-resynchronized rollout objective.
+
 Finite projection lifts applied-state H=25 integrity to `0.739041` and keeps
 delta norm bounded at `4.051999`. This is useful as a state-store safety guard,
 but it is not evidence of learned long-horizon dynamics. Future WPU claims must
@@ -81,6 +106,7 @@ state-integrity = constraint validity + bounded delta drift + branch stability
 ```
 
 Future WPU rollout claims should report this score or its components next to
-accuracy and latency. The next architecture/training step is multi-step or
-simulator-resynchronized transition learning, not another post-hoc scalar
-regularizer or fixed delta scale.
+accuracy and latency. The next architecture/training step is true multi-step
+or simulator-resynchronized transition learning, not post-hoc scalar
+regularization, fixed delta scaling, short-stride one-step targets, or loss
+weight retuning alone.

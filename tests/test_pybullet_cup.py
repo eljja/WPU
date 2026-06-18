@@ -147,6 +147,8 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
             "1",
             "--sim-steps",
             "24",
+            "--train-sim-steps",
+            "4",
             "--samples",
             "4",
             "--batch-size",
@@ -159,6 +161,10 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
             "8",
             "--delta-clip",
             "0.25",
+            "--branch-loss-weight",
+            "0.5",
+            "--delta-loss-weight",
+            "0.2",
             "--integrity-projection",
             "--out",
             str(output),
@@ -174,6 +180,9 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
     text = output.read_text(encoding="utf-8")
     assert "integrity_projection" in text
     assert "raw_delta_norm_mean" in text
+    assert "train_sim_steps" in text
+    assert "branch_loss_weight" in text
+    assert "delta_loss_weight" in text
 
 
 def test_pybullet_local_law_revision_help_runs() -> None:

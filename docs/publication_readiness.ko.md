@@ -149,8 +149,10 @@ single-step PyBullet evidence이므로 calibration, rollout, 더 어려운 causa
 integrity는 `0.091319`에 그치고, finite projection을 적용해야 `0.739041`까지 오른다.
 따라서 relation propagation만으로 long-horizon state stability나 simulator-grounded
 dynamics가 해결됐다고 주장할 수 없다. 단순 scalar learned-stability loss와 고정
-temporal delta scaling도 collapse를 고치지 못하므로, 다음 단계는 transition-training
-protocol 또는 architecture 변경이어야 한다.
+temporal delta scaling도 collapse를 고치지 못한다. 짧은 simulator stride target과
+delta-focused loss retuning도 negative이므로, 다음 단계는 진짜 multi-step 또는
+simulator-resynchronized rollout learning을 향한 transition-training protocol 또는
+architecture 변경이어야 한다.
 
 ## 즉시 개선 우선순위
 

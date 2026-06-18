@@ -39,6 +39,16 @@ def main() -> None:
     parser.add_argument("--seeds", type=int, nargs="+", default=[11, 13])
     parser.add_argument("--steps", type=int, default=20)
     parser.add_argument("--sim-steps", type=int, default=120)
+    parser.add_argument(
+        "--train-sim-steps",
+        type=int,
+        default=0,
+        help=(
+            "Simulator steps used for the supervised transition target. "
+            "Defaults to --sim-steps. Smaller values train a short-stride "
+            "transition for closed-loop multi-step rollout diagnostics."
+        ),
+    )
     parser.add_argument("--samples", type=int, default=24)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--hidden-dim", type=int, default=64)
@@ -46,6 +56,8 @@ def main() -> None:
     parser.add_argument("--num-heads", type=int, default=4)
     parser.add_argument("--working-set-size", type=int, default=12)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--branch-loss-weight", type=float, default=1.0)
+    parser.add_argument("--delta-loss-weight", type=float, default=0.1)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=True)
@@ -131,7 +143,7 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
         size=max(args.steps * args.batch_size, args.batch_size),
         seed=seed,
         background_objects=args.background_objects,
-        steps=args.sim_steps,
+        steps=_train_sim_steps(args),
         balanced_labels=args.balanced_labels,
     )
     loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args, model_name))
@@ -142,8 +154,17 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
         target_delta = target_delta.to(device)
         labels = labels.to(device)
         prediction = model(batch, num_branches=3, route_branches=3)
-        loss = F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
-        loss = loss + 0.1 * F.mse_loss(prediction.object_delta, target_delta)
+        loss = prediction.object_delta.new_tensor(0.0)
+        branch_loss_weight = float(getattr(args, "branch_loss_weight", 1.0))
+        delta_loss_weight = float(getattr(args, "delta_loss_weight", 0.1))
+        if branch_loss_weight > 0.0:
+            loss = loss + branch_loss_weight * F.cross_entropy(
+                prediction.branch_logits,
+                labels,
+                weight=class_weights,
+            )
+        if delta_loss_weight > 0.0:
+            loss = loss + delta_loss_weight * F.mse_loss(prediction.object_delta, target_delta)
         if args.delta_norm_penalty > 0.0:
             loss = loss + args.delta_norm_penalty * _delta_norm_excess_loss(
                 prediction.object_delta,
@@ -325,6 +346,8 @@ def _rollout_condition(
         "seed": seed,
         "horizon": horizon,
         "background_objects": args.background_objects,
+        "train_sim_steps": _train_sim_steps(args),
+        "eval_sim_steps": args.sim_steps,
         "samples": args.samples,
         "branch_flip_rate": round(flip_count / max(total_transitions, 1), 6),
         "constraint_violations_per_step": round(violation_count / max(args.samples * horizon, 1), 6),
@@ -345,6 +368,8 @@ def _rollout_condition(
         "finite_delta_clamp": args.finite_delta_clamp,
         "delta_norm_penalty": args.delta_norm_penalty,
         "delta_target_norm_slack": args.delta_target_norm_slack,
+        "branch_loss_weight": float(getattr(args, "branch_loss_weight", 1.0)),
+        "delta_loss_weight": float(getattr(args, "delta_loss_weight", 0.1)),
         "state_validity_penalty": args.state_validity_penalty,
         "unsafe_delta_reject_norm": args.unsafe_delta_reject_norm,
         "correct_on_violation": bool(args.correct_on_violation),
@@ -581,6 +606,11 @@ def _collate_fn(args: argparse.Namespace, model_name: str):
         )
 
     return collate
+
+
+def _train_sim_steps(args: argparse.Namespace) -> int:
+    train_steps = int(getattr(args, "train_sim_steps", 0) or 0)
+    return train_steps if train_steps > 0 else int(args.sim_steps)
 
 
 def _uses_pre_tensor_index(args: argparse.Namespace, model_name: str) -> bool:

@@ -8,6 +8,10 @@
 Source CSVs:
 
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride8_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_delta1_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_branch01_delta1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_scale025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_scale010_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_norm_strong_3seed.csv`
@@ -36,6 +40,10 @@ Derived CSV:
 | `relation_raw` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.091319 | 3.180833 | 2379159.471470 | 4.354167 |
 | `relation_delta_scale010` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.089583 | 2.646667 | 245997.938780 | 4.354167 |
 | `relation_delta_scale025` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.089410 | 2.849167 | 610325.001919 | 4.354167 |
+| `relation_train_stride4` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.089410 | 3.236667 | 2425517.613951 | 4.458333 |
+| `relation_train_stride8` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.086806 | 3.257500 | 2424016.166901 | 4.458333 |
+| `relation_train_stride4_delta1` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.085243 | 3.237500 | 2460938.605532 | 4.458333 |
+| `relation_train_stride4_branch01_delta1` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.086979 | 3.215000 | 2455636.864591 | 4.458333 |
 | `relation_delta_norm_strong` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.087153 | 3.115833 | 2421948.183622 | 4.354167 |
 | `relation_validity` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.091319 | 3.176667 | 2379929.526420 | 4.354167 |
 | `relation_consistency` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.100000 | 4.354167 | 1000000000.000000 | 4.354167 |
@@ -63,9 +71,16 @@ Temporal delta scaling도 단독 해결책이 아니다. `rollout_delta_scale=0.
 integrity `0.089410`, `rollout_delta_scale=0.10`은 `0.089583`에 그친다. Delta magnitude는
 줄어들지만 one-step target 자체가 안정적인 multi-step transition operator가 되지는 않는다.
 
+짧은 simulator stride target도 첫 구현에서는 negative다. `train_sim_steps=4`와 `8`로
+학습하고 `sim_steps=80` rollout에서 평가하면 H=25 integrity는 각각 `0.089410`,
+`0.086806`에 그친다. Branch loss를 끄고 delta loss를 `1.0`으로 키운 stride-4 run도
+`0.085243`, branch `0.1` + delta `1.0` run도 `0.086979`에 머문다. 따라서 문제는
+단순히 target duration이나 loss weight가 아니라, 반복 적용을 직접 학습하는 multi-step 또는
+simulator-resynchronized rollout objective가 필요하다는 쪽으로 좁혀진다.
+
 따라서 다음 WPU 개선 방향은 명확하다.
 
 - one-step branch accuracy와 distractor scaling만으로 rollout claim을 하지 않는다.
-- transition head를 multi-step loss 또는 simulator-resynchronized target으로 학습한다.
+- transition head를 multi-step 또는 simulator-resynchronized rollout objective로 학습한다.
 - delta norm, constraint violation, branch stability를 accuracy와 같은 1급 metric으로 보고한다.
 - safety projection은 필요하지만, 논문에서는 learned long-horizon dynamics와 분리해 기술한다.

@@ -275,7 +275,10 @@ Use these reports for paper-level claims:
   delta-norm regularization `0.087153`, state-validity training `0.091319`, and
   rollout-consistency training `0.100000` at H=25. Temporal delta scaling is
   also negative: scale `0.25` reaches `0.089410`, and scale `0.10` reaches
-  `0.089583` at H=25.
+  `0.089583` at H=25. Short-stride simulator targets are also negative:
+  `train_sim_steps=4` reaches `0.089410`, `train_sim_steps=8` reaches
+  `0.086806`, stride-4 delta-only training reaches `0.085243`, and stride-4
+  branch `0.1` plus delta `1.0` reaches `0.086979`.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

@@ -132,28 +132,23 @@ screen은 scaling trend를 더 강화한다. WPU는 `0.644048`, graph-transforme
 PyBullet synthetic, single-step, non-causal-distractor-bounded evidence다. 따라서
 calibration-aware evaluation, rollout, 더 어려운 causal large-N 확장이 필요하다.
 Relation-conditioned closed-loop rollout diagnostic은 이 경계를 더 선명하게 만든다.
-Raw relation WPU는 작은 selected K에도 H=25 integrity가 `0.091319`에 그치고,
-finite projection을 적용하면 H=25 integrity가 `0.739041`까지 오른다. 이는 safety guard
-결과이지 learned long-horizon dynamics가 아니다. 단순 scalar learned-stability
-ablation도 negative다. H=25에서 delta-norm regularization은 `0.087153`,
-state-validity training은 `0.091319`, rollout-consistency training은 `0.100000`에 그친다.
-고정 temporal delta scaling도 negative다. H=25에서 scale `0.25`는 `0.089410`,
-scale `0.10`은 `0.089583`에 그친다. 이는 post-hoc delta scaling이 아니라
-multi-step 또는 simulator-resynchronized transition learning이 필요하다는 뜻이다.
-짧은 simulator stride target과 delta-focused loss retuning도 negative다. stride-4는
-`0.089410`, stride-8은 `0.086806`, stride-4 delta-only는 `0.085243`,
-stride-4 branch `0.1` + delta `1.0`은 `0.086979`에 그친다.
-Horizon `4/8/12`에 대한 explicit multi-horizon simulator target도 negative다. weight
-`1.0`, weight `5.0`, gradient clipping을 넣은 weight `1.0` 모두 H=25 integrity
-`0.100000`으로 non-finite delta penalty를 받는다. 첫 raw-model positive는 transition
+최신 N=517 audit에서 raw relation WPU는 selected `K = 4.354167`을 유지하지만 H=25
+integrity `0.250368`, trajectory MSE `6.975125`, branch accuracy `0.208333`으로
+붕괴한다. Finite projection은 H=25 integrity를 `0.876760`까지 올리지만 trajectory MSE
+`1.695024`, branch accuracy `0.250000`으로 예측 성능은 약하다. 이는 safety guard
+결과이지 learned long-horizon dynamics가 아니다. 이전 scalar learned-stability ablation,
+고정 temporal scaling, 짧은 simulator stride target, explicit multi-horizon target은 모두
+H=25 collapse를 막지 못했다. 첫 raw-model positive는 transition
 head 내부의 bounded delta parameterization이다. H=25 integrity는 bound `0.5`에서
-`0.593354`, `0.25`에서 `0.650669`, `0.1`에서 `0.780019`, `0.05`에서
-`0.865848`까지 오른다. selected `K`는 `4.354167`로 유지되고 correction, rollback,
+`0.611900`, `0.25`에서 `0.652870`, `0.1`에서 `0.793182`, `0.05`에서
+`0.870264`까지 오른다. selected `K`는 `4.354167`로 유지되고 correction, rollback,
 rejection, dense fallback은 사용하지 않는다. 이는 P2를 순수 failure boundary에서 부분적
-raw-stability 결과로 바꾸지만, 작은 bound가 world를 under-update하여 validity만 보존했을
-가능성은 남아 있다. 다음 transition 단계는 bounded delta를 유지하면서
-simulator-resynchronized trajectory error, branch accuracy, adaptive per-feature/per-relation
-bound를 함께 검증해야 한다.
+raw-stability 결과로 바꾼다. Simulator-resynchronized metric은 under-update 우려도 줄인다.
+Bound `0.05`는 H=25 trajectory MSE `0.707117`, branch accuracy `0.729167`을 보이며,
+finite projection의 trajectory MSE `1.695024`, branch accuracy `0.250000`보다 좋다.
+남은 gap은 target-object trajectory MSE `361.358309`가 여전히 크다는 점이다. 따라서 다음
+transition 단계는 고정 global bound가 아니라 adaptive per-feature/per-relation bound와
+trajectory training이다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

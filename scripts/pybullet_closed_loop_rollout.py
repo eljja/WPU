@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+import copy
 import csv
 import math
 from pathlib import Path
@@ -247,12 +248,25 @@ def _rollout_condition(
     escalation_success_count = 0
     total_delta_count = 0
     selected_k_values: list[float] = []
+    trajectory_mse_values: list[float] = []
+    trajectory_position_mse_values: list[float] = []
+    trajectory_velocity_mse_values: list[float] = []
+    target_object_trajectory_mse_values: list[float] = []
     final_branch_counts: Counter[int] = Counter()
+    branch_correct_count = 0
+    target_dataset = PyBulletCupDataset(
+        size=args.samples,
+        seed=seed + 20_000,
+        background_objects=args.background_objects,
+        steps=args.sim_steps * horizon,
+        balanced_labels=False,
+    )
     with torch.no_grad():
         for sample in samples:
+            base_state = type(sample.state).from_json(sample.state.to_json())
             current = PyBulletCupSample(
-                state=sample.state,
-                event=sample.event,
+                state=copy.deepcopy(sample.state),
+                event=copy.deepcopy(sample.event),
                 target_object_delta=sample.target_object_delta,
                 branch_label=sample.branch_label,
                 causal_working_set_size=sample.causal_working_set_size,
@@ -357,6 +371,14 @@ def _rollout_condition(
                         applied_delta_norm = 0.0
                 delta_norm_values.append(applied_delta_norm)
                 violation_count += _constraint_violations(current)
+            target_sample = target_dataset._make_sample(sample.source_index)
+            trajectory_errors = _trajectory_errors(base_state, current.state, target_sample)
+            trajectory_mse_values.append(trajectory_errors["trajectory_mse"])
+            trajectory_position_mse_values.append(trajectory_errors["trajectory_position_mse"])
+            trajectory_velocity_mse_values.append(trajectory_errors["trajectory_velocity_mse"])
+            target_object_trajectory_mse_values.append(trajectory_errors["target_object_trajectory_mse"])
+            if previous_branch is not None:
+                branch_correct_count += int(previous_branch == target_sample.branch_label)
     model.train()
     return {
         "model": model_name,
@@ -367,10 +389,15 @@ def _rollout_condition(
         "eval_sim_steps": args.sim_steps,
         "samples": args.samples,
         "branch_flip_rate": round(flip_count / max(total_transitions, 1), 6),
+        "rollout_branch_accuracy": round(branch_correct_count / max(args.samples, 1), 6),
         "constraint_violations_per_step": round(violation_count / max(args.samples * horizon, 1), 6),
         "branch_entropy_mean": round(_mean(entropy_values), 6),
         "delta_norm_mean": round(_mean(delta_norm_values), 6),
         "raw_delta_norm_mean": round(_mean(raw_delta_norm_values), 6),
+        "trajectory_mse": round(_mean(trajectory_mse_values), 6),
+        "trajectory_position_mse": round(_mean(trajectory_position_mse_values), 6),
+        "trajectory_velocity_mse": round(_mean(trajectory_velocity_mse_values), 6),
+        "target_object_trajectory_mse": round(_mean(target_object_trajectory_mse_values), 6),
         "unsafe_delta_rejection_rate": round(rejected_delta_count / max(total_delta_count, 1), 6),
         "correction_rate": round(correction_count / max(total_delta_count, 1), 6),
         "corrected_object_fraction": round(corrected_object_count / max(correction_object_denominator, 1), 6),
@@ -656,6 +683,54 @@ def _state_delta_norm(before_state: object, after_state: object) -> float:
             for before_item, after_item in zip(before_value, after_value, strict=False):
                 total += (float(after_item) - float(before_item)) ** 2
     return math.sqrt(total)
+
+
+def _trajectory_errors(
+    base_state: object,
+    rolled_state: object,
+    target_sample: PyBulletCupSample,
+) -> dict[str, float]:
+    base_objects = getattr(base_state, "objects", {})
+    rolled_objects = getattr(rolled_state, "objects", {})
+    target_ids = list(target_sample.state.objects)
+    target_index = {object_id: index for index, object_id in enumerate(target_ids)}
+    position_error = 0.0
+    velocity_error = 0.0
+    position_count = 0
+    velocity_count = 0
+    target_object_error = 0.0
+    target_object_count = 0
+    for object_id, base_obj in base_objects.items():
+        rolled_obj = rolled_objects.get(object_id)
+        target_row = target_index.get(object_id)
+        if rolled_obj is None or target_row is None:
+            continue
+        for offset, attribute in ((1, "position"), (4, "velocity")):
+            base_value = base_obj.attributes.get(attribute, [0.0, 0.0, 0.0])
+            rolled_value = rolled_obj.attributes.get(attribute, [0.0, 0.0, 0.0])
+            if not (_finite_vector(base_value) and _finite_vector(rolled_value)):
+                continue
+            for axis, (base_item, rolled_item) in enumerate(zip(base_value, rolled_value, strict=False)):
+                predicted_delta = float(rolled_item) - float(base_item)
+                target_delta = float(target_sample.target_object_delta[target_row, offset + axis].item())
+                squared_error = (predicted_delta - target_delta) ** 2
+                if attribute == "position":
+                    position_error += squared_error
+                    position_count += 1
+                else:
+                    velocity_error += squared_error
+                    velocity_count += 1
+                if object_id == target_sample.event.target:
+                    target_object_error += squared_error
+                    target_object_count += 1
+    total_error = position_error + velocity_error
+    total_count = position_count + velocity_count
+    return {
+        "trajectory_mse": total_error / max(total_count, 1),
+        "trajectory_position_mse": position_error / max(position_count, 1),
+        "trajectory_velocity_mse": velocity_error / max(velocity_count, 1),
+        "target_object_trajectory_mse": target_object_error / max(target_object_count, 1),
+    }
 
 
 def _clip_vector(values: torch.Tensor, max_norm: float, finite_clamp: float = 0.0) -> torch.Tensor:

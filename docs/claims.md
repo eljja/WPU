@@ -148,31 +148,26 @@ This is the
 strongest current WPU v2 evidence, but it is still PyBullet synthetic,
 single-step, and non-causal-distractor-bounded; calibration-aware, rollout, and
 harder causal large-N expansion remain required.
-The relation-conditioned closed-loop rollout diagnostic sharpens that boundary:
-raw relation WPU has H=25 integrity `0.091319` despite small selected K, while
-finite projection lifts H=25 integrity to `0.739041`. This is a safety-guard
-result, not learned long-horizon dynamics. Simple scalar learned-stability
-ablations are negative: delta-norm regularization reaches `0.087153`,
-state-validity training `0.091319`, and rollout-consistency training `0.100000`
-at H=25. Fixed temporal delta scaling is also negative: scale `0.25` reaches
-`0.089410`, and scale `0.10` reaches `0.089583` at H=25. This points to
-multi-step or simulator-resynchronized transition learning rather than
-post-hoc delta scaling. Short-stride simulator targets and delta-focused loss
-retuning are also negative: stride-4 `0.089410`, stride-8 `0.086806`,
-stride-4 delta-only `0.085243`, and stride-4 branch `0.1` plus delta `1.0`
-`0.086979`. Explicit multi-horizon simulator targets over horizons `4/8/12`
-are also negative: weight `1.0`, weight `5.0`, and weight `1.0` with gradient
-clipping all produce H=25 integrity `0.100000` under the non-finite delta
-penalty. The first raw-model positive result is bounded delta parameterization
+The relation-conditioned closed-loop rollout diagnostic sharpens that boundary.
+In the latest N=517 audit, raw relation WPU has H=25 integrity `0.250368`,
+trajectory MSE `6.975125`, and branch accuracy `0.208333` despite selected
+`K = 4.354167`; finite projection lifts H=25 integrity to `0.876760` but keeps
+trajectory MSE high (`1.695024`) and branch accuracy low (`0.250000`). This is a
+safety-guard result, not learned long-horizon dynamics. Earlier scalar
+learned-stability ablations were negative: delta-norm regularization, fixed
+temporal scaling, short-stride simulator targets, and explicit multi-horizon
+targets did not prevent H=25 collapse. The first raw-model positive result is bounded delta parameterization
 inside the transition head. H=25 integrity rises to `0.593354` at bound `0.5`,
-`0.650669` at `0.25`, `0.780019` at `0.1`, and `0.865848` at `0.05`, while
+`0.652870` at `0.25`, `0.793182` at `0.1`, and `0.870264` at `0.05`, while
 selected `K` stays `4.354167` and no correction, rollback, rejection, or dense
 fallback is used. This changes P2 from a pure failure boundary into a partial
-raw-stability result, but it does not yet prove simulator-accurate dynamics
-because small bounds may preserve validity by under-updating. The next
-transition step must pair bounded deltas with simulator-resynchronized
-trajectory error, branch accuracy, and adaptive per-feature/per-relation
-bounds.
+raw-stability result. Simulator-resynchronized metrics now reduce the
+under-update concern: bound `0.05` reaches H=25 trajectory MSE `0.707117` and
+branch accuracy `0.729167`, versus finite projection trajectory MSE `1.695024`
+and branch accuracy `0.250000`. The remaining gap is high target-object
+trajectory MSE (`361.358309`), so the next transition step is adaptive
+per-feature/per-relation bounds and trajectory training, not another fixed
+global bound.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

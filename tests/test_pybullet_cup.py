@@ -197,6 +197,9 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
     assert "multihorizon_loss_weight" in text
     assert "grad_clip_norm" in text
     assert "bounded_delta_max" in text
+    assert "rollout_branch_accuracy" in text
+    assert "trajectory_mse" in text
+    assert "target_object_trajectory_mse" in text
 
 
 def test_pybullet_local_law_revision_help_runs() -> None:

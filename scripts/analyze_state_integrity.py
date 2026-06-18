@@ -57,6 +57,11 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         rollback_rate = _mean_optional(group, "rollback_rate")
         escalation_rate = _mean_optional(group, "escalation_rate")
         escalation_success_rate = _mean_optional(group, "escalation_success_rate")
+        rollout_branch_accuracy = _mean_optional(group, "rollout_branch_accuracy")
+        trajectory_mse = _mean_optional(group, "trajectory_mse")
+        trajectory_position_mse = _mean_optional(group, "trajectory_position_mse")
+        trajectory_velocity_mse = _mean_optional(group, "trajectory_velocity_mse")
+        target_object_trajectory_mse = _mean_optional(group, "target_object_trajectory_mse")
         integrity_score = _integrity_score(violations, delta_norm, flip_rate)
         low_disruption_score = _low_disruption_integrity_score(
             integrity_score,
@@ -83,6 +88,11 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "rollback_rate": round(rollback_rate, 6),
                 "escalation_rate": round(escalation_rate, 6),
                 "escalation_success_rate": round(escalation_success_rate, 6),
+                "rollout_branch_accuracy": round(rollout_branch_accuracy, 6),
+                "trajectory_mse": round(trajectory_mse, 6),
+                "trajectory_position_mse": round(trajectory_position_mse, 6),
+                "trajectory_velocity_mse": round(trajectory_velocity_mse, 6),
+                "target_object_trajectory_mse": round(target_object_trajectory_mse, 6),
                 "state_integrity_score": round(integrity_score, 6),
                 "low_disruption_integrity_score": round(low_disruption_score, 6),
             }
@@ -270,8 +280,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "",
             "## Summary",
             "",
-            "| run | model | H | violations/step | delta norm | flip rate | reject rate | correction rate | corrected objects | rollback rate | escalation rate | escalation success | integrity score | low-disruption score |",
-            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+            "| run | model | H | violations/step | delta norm | flip rate | branch acc | trajectory MSE | target-object MSE | reject rate | correction rate | rollback rate | escalation rate | integrity score | low-disruption score |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in rows:
@@ -279,12 +289,13 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             f"| {row['run_label']} | {row['model']} | {row['horizon']} | "
             f"{float(row['constraint_violations_per_step']):.6f} | "
             f"{float(row['delta_norm_mean']):.6f} | {float(row['branch_flip_rate']):.6f} | "
+            f"{float(row['rollout_branch_accuracy']):.6f} | "
+            f"{float(row['trajectory_mse']):.6f} | "
+            f"{float(row['target_object_trajectory_mse']):.6f} | "
             f"{float(row['unsafe_delta_rejection_rate']):.6f} | "
             f"{float(row['correction_rate']):.6f} | "
-            f"{float(row['corrected_object_fraction']):.6f} | "
             f"{float(row['rollback_rate']):.6f} | "
             f"{float(row['escalation_rate']):.6f} | "
-            f"{float(row['escalation_success_rate']):.6f} | "
             f"{float(row['state_integrity_score']):.6f} | "
             f"{float(row['low_disruption_integrity_score']):.6f} |"
         )
@@ -300,6 +311,13 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "H=25 integrity above the dashboard threshold, but it does not prove",
             "the underlying delta model is stable. Future reports must distinguish",
             "raw model deltas from guarded state-store deltas.",
+            "",
+            "When simulator-resynchronized trajectory columns are present, they",
+            "compare the accumulated rollout delta against a PyBullet target",
+            "generated from the same initial condition at `horizon * sim_steps`.",
+            "These metrics prevent a bounded transition from being overclaimed:",
+            "high integrity is only useful if trajectory error and final branch",
+            "accuracy remain competitive.",
             *regularized_note,
             *rejection_note,
             *correction_note,

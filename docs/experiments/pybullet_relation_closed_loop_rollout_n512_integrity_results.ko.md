@@ -8,6 +8,8 @@
 Source CSVs:
 
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_scale025_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_scale010_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_norm_strong_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_consistency_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_validity_3seed.csv`
@@ -32,6 +34,8 @@ Derived CSV:
 | `relation_raw` | `wpu-cws-indexed-mechanism-relation` | 5 | 0.715574 | 0.379167 | 1.662182 | 4.354167 |
 | `relation_raw` | `wpu-cws-indexed-mechanism-relation` | 10 | 0.552601 | 0.483333 | 4.552682 | 4.354167 |
 | `relation_raw` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.091319 | 3.180833 | 2379159.471470 | 4.354167 |
+| `relation_delta_scale010` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.089583 | 2.646667 | 245997.938780 | 4.354167 |
+| `relation_delta_scale025` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.089410 | 2.849167 | 610325.001919 | 4.354167 |
 | `relation_delta_norm_strong` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.087153 | 3.115833 | 2421948.183622 | 4.354167 |
 | `relation_validity` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.091319 | 3.176667 | 2379929.526420 | 4.354167 |
 | `relation_consistency` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.100000 | 4.354167 | 1000000000.000000 | 4.354167 |
@@ -54,6 +58,10 @@ regularization은 H=25 integrity `0.087153`에 그쳤고, state-validity trainin
 `0.091319`에 머문다. Rollout-consistency training은 non-finite delta behavior를 만들며
 delta norm `1000000000.000000`으로 penalty 처리됐다. 따라서 단순 scalar regularizer는
 현재 collapse를 해결하지 못한다.
+
+Temporal delta scaling도 단독 해결책이 아니다. `rollout_delta_scale=0.25`는 H=25
+integrity `0.089410`, `rollout_delta_scale=0.10`은 `0.089583`에 그친다. Delta magnitude는
+줄어들지만 one-step target 자체가 안정적인 multi-step transition operator가 되지는 않는다.
 
 따라서 다음 WPU 개선 방향은 명확하다.
 

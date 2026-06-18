@@ -166,8 +166,9 @@ The new relation closed-loop rollout diagnostic prevents overclaiming: raw
 relation WPU H=25 integrity is only `0.091319`, while finite projection raises it
 to `0.739041`. This means relation propagation solves neither long-horizon state
 stability nor simulator-grounded dynamics by itself. Simple scalar learned
-stability losses also fail to repair the collapse, so the next step must change
-the transition-training protocol or architecture.
+stability losses and fixed temporal delta scaling also fail to repair the
+collapse, so the next step must change the transition-training protocol or
+architecture.
 
 ## Immediate Improvement Priorities
 

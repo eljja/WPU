@@ -137,6 +137,9 @@ finite projection을 적용하면 H=25 integrity가 `0.739041`까지 오른다. 
 결과이지 learned long-horizon dynamics가 아니다. 단순 scalar learned-stability
 ablation도 negative다. H=25에서 delta-norm regularization은 `0.087153`,
 state-validity training은 `0.091319`, rollout-consistency training은 `0.100000`에 그친다.
+고정 temporal delta scaling도 negative다. H=25에서 scale `0.25`는 `0.089410`,
+scale `0.10`은 `0.089583`에 그친다. 이는 post-hoc delta scaling이 아니라
+multi-step 또는 simulator-resynchronized transition learning이 필요하다는 뜻이다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

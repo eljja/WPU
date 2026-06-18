@@ -51,6 +51,7 @@ def main() -> None:
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--index-depth", type=int, default=1)
     parser.add_argument("--delta-clip", type=float, default=0.0)
+    parser.add_argument("--rollout-delta-scale", type=float, default=1.0)
     parser.add_argument("--finite-delta-clamp", type=float, default=0.0)
     parser.add_argument("--delta-norm-penalty", type=float, default=0.0)
     parser.add_argument("--delta-target-norm-slack", type=float, default=0.5)
@@ -234,6 +235,8 @@ def _rollout_condition(
                 final_branch_counts[branch] += int(step_index == horizon - 1)
                 selected_k_values.append(_selected_k(model, batch))
                 delta = prediction.object_delta[0].detach().cpu()
+                if args.rollout_delta_scale != 1.0:
+                    delta = delta * float(args.rollout_delta_scale)
                 raw_delta_norm = float(delta.norm().item())
                 raw_delta_norm_values.append(raw_delta_norm)
                 total_delta_count += 1
@@ -338,6 +341,7 @@ def _rollout_condition(
         "selected_k_mean": round(_mean(selected_k_values), 6),
         "final_majority_branch_ratio": round(max(final_branch_counts.values(), default=0) / max(args.samples, 1), 6),
         "delta_clip": args.delta_clip,
+        "rollout_delta_scale": args.rollout_delta_scale,
         "finite_delta_clamp": args.finite_delta_clamp,
         "delta_norm_penalty": args.delta_norm_penalty,
         "delta_target_norm_slack": args.delta_target_norm_slack,

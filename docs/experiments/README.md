@@ -273,7 +273,9 @@ Use these reports for paper-level claims:
   separates one-step sparse propagation success from learned long-horizon state
   stability. First scalar learned-stability ablations are negative:
   delta-norm regularization `0.087153`, state-validity training `0.091319`, and
-  rollout-consistency training `0.100000` at H=25.
+  rollout-consistency training `0.100000` at H=25. Temporal delta scaling is
+  also negative: scale `0.25` reaches `0.089410`, and scale `0.10` reaches
+  `0.089583` at H=25.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

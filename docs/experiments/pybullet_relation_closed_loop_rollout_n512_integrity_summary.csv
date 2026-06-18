@@ -5,6 +5,12 @@ relation_consistency,wpu-cws-indexed-mechanism-relation,25,3,4.354167,1000000000
 relation_delta_norm_strong,wpu-cws-indexed-mechanism-relation,5,3,0.166667,0.838266,0.961899,0.0625,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.866494,0.866494
 relation_delta_norm_strong,wpu-cws-indexed-mechanism-relation,10,3,0.366667,3.804898,0.908761,0.166667,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.631829,0.631829
 relation_delta_norm_strong,wpu-cws-indexed-mechanism-relation,25,3,3.115833,2421948.183622,0.368003,0.064236,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.087153,0.087153
+relation_delta_scale010,wpu-cws-indexed-mechanism-relation,5,3,0.0,0.173915,0.835964,0.026042,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.988705,0.988705
+relation_delta_scale010,wpu-cws-indexed-mechanism-relation,10,3,0.102083,0.461472,0.809615,0.138889,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.899925,0.899925
+relation_delta_scale010,wpu-cws-indexed-mechanism-relation,25,3,2.646667,245997.93878,0.325,0.052083,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.089583,0.089583
+relation_delta_scale025,wpu-cws-indexed-mechanism-relation,5,3,0.033333,0.417601,0.852366,0.041667,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.958717,0.958717
+relation_delta_scale025,wpu-cws-indexed-mechanism-relation,10,3,0.172917,1.141403,0.824259,0.141204,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.836706,0.836706
+relation_delta_scale025,wpu-cws-indexed-mechanism-relation,25,3,2.849167,610325.001919,0.331277,0.052952,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.08941,0.08941
 relation_finite_projection,wpu-cws-indexed-mechanism-relation,5,3,0.0,1.643664,0.927942,0.078125,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.926847,0.926847
 relation_finite_projection,wpu-cws-indexed-mechanism-relation,10,3,0.0,2.483041,0.865231,0.113426,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.890408,0.890408
 relation_finite_projection,wpu-cws-indexed-mechanism-relation,25,3,0.200833,4.051999,0.348089,0.043403,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.739041,0.739041

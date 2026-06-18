@@ -154,7 +154,10 @@ finite projection lifts H=25 integrity to `0.739041`. This is a safety-guard
 result, not learned long-horizon dynamics. Simple scalar learned-stability
 ablations are negative: delta-norm regularization reaches `0.087153`,
 state-validity training `0.091319`, and rollout-consistency training `0.100000`
-at H=25.
+at H=25. Fixed temporal delta scaling is also negative: scale `0.25` reaches
+`0.089410`, and scale `0.10` reaches `0.089583` at H=25. This points to
+multi-step or simulator-resynchronized transition learning rather than
+post-hoc delta scaling.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

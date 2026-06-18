@@ -271,7 +271,9 @@ Use these reports for paper-level claims:
   at H=5/H=10 but collapses at H=25 with integrity `0.091319` and delta norm
   `2379159.471470`; finite projection lifts H=25 integrity to `0.739041`. This
   separates one-step sparse propagation success from learned long-horizon state
-  stability.
+  stability. First scalar learned-stability ablations are negative:
+  delta-norm regularization `0.087153`, state-validity training `0.091319`, and
+  rollout-consistency training `0.100000` at H=25.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

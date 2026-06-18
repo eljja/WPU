@@ -151,7 +151,10 @@ harder causal large-N expansion remain required.
 The relation-conditioned closed-loop rollout diagnostic sharpens that boundary:
 raw relation WPU has H=25 integrity `0.091319` despite small selected K, while
 finite projection lifts H=25 integrity to `0.739041`. This is a safety-guard
-result, not learned long-horizon dynamics.
+result, not learned long-horizon dynamics. Simple scalar learned-stability
+ablations are negative: delta-norm regularization reaches `0.087153`,
+state-validity training `0.091319`, and rollout-consistency training `0.100000`
+at H=25.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

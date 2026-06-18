@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 from collections import defaultdict
+import math
 from pathlib import Path
 import statistics
 
@@ -90,12 +91,19 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
 
 
 def _mean(rows: list[dict[str, str]], field: str) -> float:
-    return statistics.fmean(float(row[field]) for row in rows)
+    return statistics.fmean(_finite_metric(row[field]) for row in rows)
 
 
 def _mean_optional(rows: list[dict[str, str]], field: str) -> float:
-    values = [float(row[field]) for row in rows if row.get(field) not in {None, ""}]
+    values = [_finite_metric(row[field]) for row in rows if row.get(field) not in {None, ""}]
     return statistics.fmean(values) if values else 0.0
+
+
+def _finite_metric(value: str) -> float:
+    parsed = float(value)
+    if math.isfinite(parsed):
+        return parsed
+    return 1_000_000_000.0
 
 
 def _has_optional(rows: list[dict[str, str]], field: str) -> bool:

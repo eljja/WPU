@@ -929,6 +929,9 @@ def _relation_closed_loop_rollout_note() -> str:
 
     raw = find("relation_raw", "wpu-cws-indexed-mechanism-relation", 25)
     finite = find("relation_finite_projection", "wpu-cws-indexed-mechanism-relation", 25)
+    delta_norm = find("relation_delta_norm_strong", "wpu-cws-indexed-mechanism-relation", 25)
+    consistency = find("relation_consistency", "wpu-cws-indexed-mechanism-relation", 25)
+    validity = find("relation_validity", "wpu-cws-indexed-mechanism-relation", 25)
     token = find("relation_raw", "serialized-token", 25)
     graph = find("relation_raw", "graph-transformer", 25)
     if raw is None or finite is None:
@@ -946,6 +949,12 @@ def _relation_closed_loop_rollout_note() -> str:
         f"{float(raw['selected_k_mean']):.6f}; finite projection lifts H=25 integrity to "
         f"{float(finite['state_integrity_score']):.6f} with delta norm "
         f"{float(finite['delta_norm_mean']):.6f}."
+        + (
+            f" Simple learned-stability ablations remain negative: delta-norm {float(delta_norm['state_integrity_score']):.6f}, "
+            f"validity {float(validity['state_integrity_score']):.6f}, and consistency {float(consistency['state_integrity_score']):.6f}."
+            if delta_norm is not None and validity is not None and consistency is not None
+            else ""
+        )
         + baseline_note
         + " This is a safety-guard result, not learned long-horizon stability."
     )

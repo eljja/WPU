@@ -148,7 +148,8 @@ single-step PyBullet evidence이므로 calibration, rollout, 더 어려운 causa
 새 relation closed-loop rollout diagnostic은 과장을 막는다. Raw relation WPU의 H=25
 integrity는 `0.091319`에 그치고, finite projection을 적용해야 `0.739041`까지 오른다.
 따라서 relation propagation만으로 long-horizon state stability나 simulator-grounded
-dynamics가 해결됐다고 주장할 수 없다.
+dynamics가 해결됐다고 주장할 수 없다. 단순 scalar learned-stability loss도 collapse를
+고치지 못하므로, 다음 단계는 transition-training protocol 또는 architecture 변경이어야 한다.
 
 ## 즉시 개선 우선순위
 

@@ -156,7 +156,10 @@ accuracy가 악화됐다. Full recurrent unrolled loss는 초기 probe에서 non
 trajectory MSE는 `1.063341`에서 `1.061493`으로, target-object MSE는 `544.710934`에서
 `543.834596`으로 개선된다. 이는 transition-head 방향을 지지하지만 개선폭은 작고 state-integrity는
 `0.868758`에서 `0.850574`로 낮아진다. 따라서 high-fidelity dynamics와 validity-preserving
-target dynamics는 아직 해결되지 않았다.
+target dynamics는 아직 해결되지 않았다. Channel-masked constrained target-head follow-up도
+standalone 해결책은 아니다. H=25 branch accuracy는 `0.650000`, target-object MSE는
+`544.588713`, integrity는 `0.846955`에 그친다. 따라서 다음 P2 목표는 단순 residual channel
+masking이 아니라 state-validity-aware transition learning이다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

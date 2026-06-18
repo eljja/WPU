@@ -654,6 +654,43 @@ def test_mechanism_target_route_uses_target_delta_expert_without_dense_compute()
     assert model.mechanism_target_delta_head[-1].weight.grad.norm().item() > 0.0
 
 
+def test_mechanism_target_constrained_route_only_residualizes_state_channels() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, target_delta, labels, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    base = create_model(
+        "wpu-cws-indexed-mechanism-relation",
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+        bounded_delta_max=0.05,
+    )
+    constrained = create_model(
+        "wpu-cws-indexed-mechanism-target-constrained",
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+        bounded_delta_max=0.05,
+    )
+    constrained.load_state_dict(base.state_dict(), strict=False)
+
+    base_prediction = base(batch, num_branches=3)
+    prediction = constrained(batch, num_branches=3)
+    residual = prediction.object_delta - base_prediction.object_delta
+    non_state_channels = torch.cat([residual[..., :1], residual[..., 7:]], dim=-1)
+    loss = torch.nn.functional.mse_loss(prediction.object_delta, target_delta)
+    loss = loss + torch.nn.functional.cross_entropy(prediction.branch_logits, labels)
+    loss.backward()
+
+    assert constrained.last_working_set_stats is not None
+    assert constrained.last_working_set_stats.dense_compute_ratio == 0.0
+    assert non_state_channels.abs().max().item() <= 1e-6
+    assert prediction.object_delta[..., 1:7].abs().max().item() <= 0.050001
+    assert constrained.mechanism_target_delta_head[-1].weight.grad is not None
+    assert constrained.mechanism_target_delta_head[-1].weight.grad.norm().item() > 0.0
+
+
 def test_cws_bounded_delta_parameterization_limits_position_and_velocity_delta() -> None:
     dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=8, causal_obstacles=4, interaction_mode="pairwise")
     batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])

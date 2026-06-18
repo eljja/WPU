@@ -74,6 +74,7 @@ class CausalWorkingSetProcessor(nn.Module):
             "mechanism_branch_expert",
             "mechanism_relation",
             "mechanism_target",
+            "mechanism_target_constrained",
             "regret",
             "physics_regret",
             "state_regret",
@@ -250,9 +251,10 @@ class CausalWorkingSetProcessor(nn.Module):
                 "mechanism_factorized",
                 "mechanism_branch",
                 "mechanism_branch_expert",
-                "mechanism_relation",
-                "mechanism_target",
-            }
+            "mechanism_relation",
+            "mechanism_target",
+            "mechanism_target_constrained",
+        }
             else None
         )
 
@@ -305,6 +307,9 @@ class CausalWorkingSetProcessor(nn.Module):
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "mechanism_target":
+            dense_gathered = sparse_gathered
+            dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_target_constrained":
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "learned_selective":
@@ -445,9 +450,9 @@ class CausalWorkingSetProcessor(nn.Module):
                 route_physics_features,
                 batch,
             )
-        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_target":
+        elif self.adaptive_hybrid and self.adaptive_route in {"mechanism_target", "mechanism_target_constrained"}:
             if route_physics_features is None:
-                raise RuntimeError("mechanism_target route requires physics context features")
+                raise RuntimeError(f"{self.adaptive_route} route requires physics context features")
             dense_weight = torch.zeros_like(selector_confidence)
             mechanism_hidden = self.mechanism_factor_encoder(route_physics_features.to(sparse_gathered.dtype))
             mechanism_context = mechanism_hidden.unsqueeze(1).expand(-1, sparse_gathered.size(1), -1)
@@ -480,9 +485,9 @@ class CausalWorkingSetProcessor(nn.Module):
 
         object_delta = torch.zeros_like(batch.object_features)
         raw_selected_delta = self.object_delta_head(gathered)
-        if self.adaptive_hybrid and self.adaptive_route == "mechanism_target":
+        if self.adaptive_hybrid and self.adaptive_route in {"mechanism_target", "mechanism_target_constrained"}:
             if route_physics_features is None:
-                raise RuntimeError("mechanism_target route requires physics context features")
+                raise RuntimeError(f"{self.adaptive_route} route requires physics context features")
             raw_selected_delta = raw_selected_delta + self._target_branch_delta_residual(
                 gathered,
                 selected_object_features,
@@ -491,6 +496,7 @@ class CausalWorkingSetProcessor(nn.Module):
                 route_physics_features,
                 batch,
                 num_branches=num_branches,
+                constrain_state_channels=self.adaptive_route == "mechanism_target_constrained",
             )
         selected_delta = self._bounded_object_delta(
             raw_selected_delta,
@@ -529,7 +535,11 @@ class CausalWorkingSetProcessor(nn.Module):
             expert_input = torch.cat([branch_context, branch_queries], dim=-1)
             expert_logits = self.mechanism_branch_expert_head(expert_input).squeeze(-1)
             branch_logits = branch_logits + expert_logits[:, :num_branches]
-        if self.adaptive_hybrid and self.adaptive_route in {"mechanism_relation", "mechanism_target"}:
+        if self.adaptive_hybrid and self.adaptive_route in {
+            "mechanism_relation",
+            "mechanism_target",
+            "mechanism_target_constrained",
+        }:
             if route_physics_features is None:
                 raise RuntimeError(f"{self.adaptive_route} route requires physics context features")
             branch_context = torch.cat(
@@ -609,6 +619,7 @@ class CausalWorkingSetProcessor(nn.Module):
         batch: StateGraphBatch,
         *,
         num_branches: int,
+        constrain_state_channels: bool = False,
     ) -> torch.Tensor:
         pooled = self._pool_working_set(gathered, selected_mask, self._last_relevance_logits, selected_indices)
         branch_context = torch.cat(
@@ -635,6 +646,10 @@ class CausalWorkingSetProcessor(nn.Module):
         )
         branch_weights = branch_weights.unsqueeze(1).unsqueeze(-1)
         residual = (expert_delta[:, :, :num_branches] * branch_weights).sum(dim=2)
+        if constrain_state_channels:
+            channel_mask = torch.zeros_like(residual)
+            channel_mask[..., 1:7] = 1.0
+            residual = residual * channel_mask
         return residual * target_mask.unsqueeze(-1).to(residual.dtype)
 
     def route_compute_loss(self) -> torch.Tensor:

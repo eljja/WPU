@@ -276,6 +276,9 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
     mechanism_target_h25 = _find_summary_row(
         rows, "relation_mechanism_target_bounded_delta005_5seed", 25
     ) or _find_summary_row(rows, "relation_mechanism_target_bounded_delta005", 25)
+    mechanism_target_constrained_h25 = _find_summary_row(
+        rows, "relation_mechanism_target_constrained_bounded_delta005_5seed", 25
+    )
     if bounded005_h25 is not None and mechanism_target_h25 is not None:
         mechanism_target_note = [
             "",
@@ -290,6 +293,18 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "improvement, not solved high-fidelity dynamics; target-object position",
             f"MSE remains {float(mechanism_target_h25['target_object_position_mse']):.6f}.",
         ]
+        if mechanism_target_constrained_h25 is not None:
+            mechanism_target_note.extend(
+                [
+                    "A constrained target-head variant that masks the residual to",
+                    "position/velocity channels is negative as a standalone fix:",
+                    f"H=25 branch accuracy is {float(mechanism_target_constrained_h25['rollout_branch_accuracy']):.6f},",
+                    f"target-object MSE is {float(mechanism_target_constrained_h25['target_object_trajectory_mse']):.6f},",
+                    f"and integrity is {float(mechanism_target_constrained_h25['state_integrity_score']):.6f}.",
+                    "Thus the next dynamics improvement needs state-validity-aware",
+                    "transition learning, not only channel masking.",
+                ]
+            )
     lines = [
         "# PyBullet State-Integrity Audit",
         "",

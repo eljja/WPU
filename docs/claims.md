@@ -177,6 +177,10 @@ from `1.063341` to `1.061493`, and target-object MSE from `544.710934` to
 `543.834596`. This supports the transition-head direction, but the improvement
 is small and state-integrity falls from `0.868758` to `0.850574`, so
 high-fidelity dynamics and validity-preserving target dynamics are not solved.
+A channel-masked constrained target-head follow-up is also negative as a
+standalone fix: H=25 branch accuracy is `0.650000`, target-object MSE is
+`544.588713`, and integrity is `0.846955`. The next P2 target is therefore
+state-validity-aware transition learning, not only residual channel masking.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

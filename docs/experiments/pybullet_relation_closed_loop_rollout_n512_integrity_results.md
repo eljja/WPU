@@ -17,6 +17,7 @@ Source CSVs:
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_unrolled_h2_4_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_bounded_delta005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_bounded_delta005_5seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_constrained_bounded_delta005_5seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_adaptive_delta025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_split_delta_p010_v005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_targetloss1_3seed.csv`
@@ -66,6 +67,9 @@ Derived CSV:
 | relation_mechanism_target_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target | 5 | 0.000000 | 0.240662 | 0.009375 | 0.837500 | 0.019251 | 9.753684 | 15.095012 | 4.412355 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989702 | 0.989702 |
 | relation_mechanism_target_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target | 10 | 0.000000 | 0.240189 | 0.012500 | 0.787500 | 0.124790 | 63.697114 | 122.224980 | 5.169247 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989093 | 0.989093 |
 | relation_mechanism_target_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target | 25 | 0.251500 | 0.239785 | 0.013542 | 0.675000 | 1.061493 | 543.834596 | 1081.436881 | 6.232311 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.850574 | 0.850574 |
+| relation_mechanism_target_constrained_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target-constrained | 5 | 0.000000 | 0.240025 | 0.009375 | 0.837500 | 0.019263 | 9.761936 | 15.125553 | 4.398318 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989724 | 0.989724 |
+| relation_mechanism_target_constrained_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target-constrained | 10 | 0.000000 | 0.240335 | 0.011111 | 0.800000 | 0.125105 | 63.863048 | 122.558828 | 5.167267 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989366 | 0.989366 |
+| relation_mechanism_target_constrained_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target-constrained | 25 | 0.257500 | 0.239979 | 0.015104 | 0.650000 | 1.063031 | 544.588713 | 1083.028140 | 6.149287 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.846955 | 0.846955 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 5 | 0.416667 | 1.783713 | 0.119792 | 0.562500 | 0.035057 | 12.370823 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.684445 | 0.684445 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 10 | 0.441667 | 2.062501 | 0.081018 | 0.479167 | 0.201422 | 71.182410 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.668692 | 0.668692 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 25 | 1.184167 | 5.401195 | 0.052951 | 0.208333 | 6.975125 | 922.699696 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.250368 | 0.250368 |
@@ -97,6 +101,13 @@ changes branch accuracy from 0.612500 to 0.675000, trajectory MSE from 1.063341 
 and target-object MSE from 544.710934 to 543.834596. This is a small architectural
 improvement, not solved high-fidelity dynamics; target-object position
 MSE remains 1081.436881.
+A constrained target-head variant that masks the residual to
+position/velocity channels is negative as a standalone fix:
+H=25 branch accuracy is 0.650000,
+target-object MSE is 544.588713,
+and integrity is 0.846955.
+Thus the next dynamics improvement needs state-validity-aware
+transition learning, not only channel masking.
 
 This makes state integrity a first-class WPU metric:
 

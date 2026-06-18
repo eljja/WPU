@@ -73,6 +73,7 @@ class CausalWorkingSetProcessor(nn.Module):
             "mechanism_branch",
             "mechanism_branch_expert",
             "mechanism_relation",
+            "mechanism_target",
             "regret",
             "physics_regret",
             "state_regret",
@@ -190,6 +191,12 @@ class CausalWorkingSetProcessor(nn.Module):
             nn.GELU(),
             nn.Linear(hidden_dim, hidden_dim),
         )
+        self.mechanism_target_delta_head = nn.Sequential(
+            nn.LayerNorm(hidden_dim + object_feature_dim + ROUTE_PHYSICS_FEATURE_DIM + 1),
+            nn.Linear(hidden_dim + object_feature_dim + ROUTE_PHYSICS_FEATURE_DIM + 1, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, object_feature_dim * 8),
+        )
         self.adaptive_delta_bound_head = nn.Sequential(
             nn.LayerNorm(hidden_dim + object_feature_dim + ROUTE_PHYSICS_FEATURE_DIM),
             nn.Linear(hidden_dim + object_feature_dim + ROUTE_PHYSICS_FEATURE_DIM, hidden_dim),
@@ -244,6 +251,7 @@ class CausalWorkingSetProcessor(nn.Module):
                 "mechanism_branch",
                 "mechanism_branch_expert",
                 "mechanism_relation",
+                "mechanism_target",
             }
             else None
         )
@@ -294,6 +302,9 @@ class CausalWorkingSetProcessor(nn.Module):
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "mechanism_relation":
+            dense_gathered = sparse_gathered
+            dense_compute_weight = torch.zeros_like(selector_confidence)
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_target":
             dense_gathered = sparse_gathered
             dense_compute_weight = torch.zeros_like(selector_confidence)
         elif self.adaptive_hybrid and self.adaptive_route == "learned_selective":
@@ -434,6 +445,23 @@ class CausalWorkingSetProcessor(nn.Module):
                 route_physics_features,
                 batch,
             )
+        elif self.adaptive_hybrid and self.adaptive_route == "mechanism_target":
+            if route_physics_features is None:
+                raise RuntimeError("mechanism_target route requires physics context features")
+            dense_weight = torch.zeros_like(selector_confidence)
+            mechanism_hidden = self.mechanism_factor_encoder(route_physics_features.to(sparse_gathered.dtype))
+            mechanism_context = mechanism_hidden.unsqueeze(1).expand(-1, sparse_gathered.size(1), -1)
+            factor_input = torch.cat([mechanism_context, selected_object_features.to(sparse_gathered.dtype)], dim=-1)
+            scale_shift = self.mechanism_factor_gate(factor_input)
+            scale, shift = scale_shift.chunk(2, dim=-1)
+            gathered = sparse_gathered * (1.0 + 0.5 * torch.tanh(scale)) + shift
+            gathered = gathered + self._relation_conditioned_messages(
+                gathered,
+                selected_indices,
+                selected_mask,
+                route_physics_features,
+                batch,
+            )
         elif self.adaptive_hybrid:
             dense_mask = self._adaptive_dense_mask(selected_counts, selector_confidence)
             dense_weight = dense_mask.to(sparse_gathered.dtype)
@@ -451,8 +479,21 @@ class CausalWorkingSetProcessor(nn.Module):
         gathered = gathered.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
 
         object_delta = torch.zeros_like(batch.object_features)
+        raw_selected_delta = self.object_delta_head(gathered)
+        if self.adaptive_hybrid and self.adaptive_route == "mechanism_target":
+            if route_physics_features is None:
+                raise RuntimeError("mechanism_target route requires physics context features")
+            raw_selected_delta = raw_selected_delta + self._target_branch_delta_residual(
+                gathered,
+                selected_object_features,
+                selected_indices,
+                selected_mask,
+                route_physics_features,
+                batch,
+                num_branches=num_branches,
+            )
         selected_delta = self._bounded_object_delta(
-            self.object_delta_head(gathered),
+            raw_selected_delta,
             gathered=gathered,
             selected_object_features=selected_object_features,
             route_physics_features=route_physics_features,
@@ -488,9 +529,9 @@ class CausalWorkingSetProcessor(nn.Module):
             expert_input = torch.cat([branch_context, branch_queries], dim=-1)
             expert_logits = self.mechanism_branch_expert_head(expert_input).squeeze(-1)
             branch_logits = branch_logits + expert_logits[:, :num_branches]
-        if self.adaptive_hybrid and self.adaptive_route == "mechanism_relation":
+        if self.adaptive_hybrid and self.adaptive_route in {"mechanism_relation", "mechanism_target"}:
             if route_physics_features is None:
-                raise RuntimeError("mechanism_relation route requires physics context features")
+                raise RuntimeError(f"{self.adaptive_route} route requires physics context features")
             branch_context = torch.cat(
                 [pooled, delta_branch_hidden, route_physics_features.to(pooled.dtype)],
                 dim=-1,
@@ -557,6 +598,44 @@ class CausalWorkingSetProcessor(nn.Module):
         max_delta = max(self.bounded_delta_max, 1e-8)
         bounded[..., 1:7] = torch.tanh(delta[..., 1:7] / max_delta) * max_delta
         return bounded
+
+    def _target_branch_delta_residual(
+        self,
+        gathered: torch.Tensor,
+        selected_object_features: torch.Tensor,
+        selected_indices: torch.Tensor,
+        selected_mask: torch.Tensor,
+        route_physics_features: torch.Tensor,
+        batch: StateGraphBatch,
+        *,
+        num_branches: int,
+    ) -> torch.Tensor:
+        pooled = self._pool_working_set(gathered, selected_mask, self._last_relevance_logits, selected_indices)
+        branch_context = torch.cat(
+            [pooled, pooled, route_physics_features.to(gathered.dtype)],
+            dim=-1,
+        )
+        branch_weights = F.softmax(self.mechanism_branch_head(branch_context)[:, :num_branches], dim=-1)
+        route_context = route_physics_features.to(gathered.dtype).unsqueeze(1).expand(-1, gathered.size(1), -1)
+        target_mask = selected_indices.eq(batch.target_indices.unsqueeze(1)) & selected_mask
+        residual_input = torch.cat(
+            [
+                gathered,
+                selected_object_features.to(gathered.dtype),
+                route_context,
+                target_mask.unsqueeze(-1).to(gathered.dtype),
+            ],
+            dim=-1,
+        )
+        expert_delta = self.mechanism_target_delta_head(residual_input).view(
+            gathered.size(0),
+            gathered.size(1),
+            -1,
+            batch.object_features.size(-1),
+        )
+        branch_weights = branch_weights.unsqueeze(1).unsqueeze(-1)
+        residual = (expert_delta[:, :, :num_branches] * branch_weights).sum(dim=2)
+        return residual * target_mask.unsqueeze(-1).to(residual.dtype)
 
     def route_compute_loss(self) -> torch.Tensor:
         """Differentiable proxy for dense routing cost.

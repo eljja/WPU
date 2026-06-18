@@ -269,6 +269,22 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "Validity losses therefore need rollback/correction and uncertainty",
             "escalation rather than acting as a standalone fix.",
         ]
+    mechanism_target_note = []
+    bounded005_h25 = _find_summary_row(rows, "relation_bounded_delta005", 25)
+    mechanism_target_h25 = _find_summary_row(rows, "relation_mechanism_target_bounded_delta005", 25)
+    if bounded005_h25 is not None and mechanism_target_h25 is not None:
+        mechanism_target_note = [
+            "",
+            "The branch-weighted target-local transition head is the first",
+            "positive follow-up on the target-object bottleneck. At H=25 it",
+            f"changes branch accuracy from {float(bounded005_h25['rollout_branch_accuracy']):.6f} to "
+            f"{float(mechanism_target_h25['rollout_branch_accuracy']):.6f}, trajectory MSE from "
+            f"{float(bounded005_h25['trajectory_mse']):.6f} to {float(mechanism_target_h25['trajectory_mse']):.6f},",
+            f"and target-object MSE from {float(bounded005_h25['target_object_trajectory_mse']):.6f} to "
+            f"{float(mechanism_target_h25['target_object_trajectory_mse']):.6f}. This is a small architectural",
+            "improvement, not solved high-fidelity dynamics; target-object position",
+            f"MSE remains {float(mechanism_target_h25['target_object_position_mse']):.6f}.",
+        ]
     lines = [
         "# PyBullet State-Integrity Audit",
         "",
@@ -340,6 +356,7 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             *escalation_note,
             *consistency_note,
             *validity_note,
+            *mechanism_target_note,
             "",
             "This makes state integrity a first-class WPU metric:",
             "",
@@ -352,6 +369,17 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _find_summary_row(rows: list[dict[str, object]], label: str, horizon: int) -> dict[str, object] | None:
+    return next(
+        (
+            row
+            for row in rows
+            if str(row.get("run_label")) == label and int(row.get("horizon", -1)) == horizon
+        ),
+        None,
+    )
 
 
 if __name__ == "__main__":

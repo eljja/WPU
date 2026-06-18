@@ -14,6 +14,7 @@ Source CSVs:
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_lr3e4_clip1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_unrolled_h2_4_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_bounded_delta005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_adaptive_delta025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_split_delta_p010_v005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_targetloss1_3seed.csv`
@@ -54,6 +55,9 @@ Derived CSV:
 | relation_finite_projection | wpu-cws-indexed-mechanism-relation | 5 | 0.000000 | 1.749332 | 0.114583 | 0.541667 | 0.033942 | 11.609245 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.915857 | 0.915857 |
 | relation_finite_projection | wpu-cws-indexed-mechanism-relation | 10 | 0.000000 | 2.008994 | 0.074074 | 0.458333 | 0.193246 | 66.185466 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.914870 | 0.914870 |
 | relation_finite_projection | wpu-cws-indexed-mechanism-relation | 25 | 0.034167 | 2.686625 | 0.052083 | 0.250000 | 1.695024 | 538.635690 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.876760 | 0.876760 |
+| relation_mechanism_target_bounded_delta005 | wpu-cws-indexed-mechanism-target | 5 | 0.000000 | 0.237980 | 0.010417 | 0.854167 | 0.011951 | 5.992753 | 9.019743 | 2.965763 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989587 | 0.989587 |
+| relation_mechanism_target_bounded_delta005 | wpu-cws-indexed-mechanism-target | 10 | 0.000000 | 0.237494 | 0.018518 | 0.770833 | 0.080643 | 40.940546 | 78.283679 | 3.597411 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.987984 | 0.987984 |
+| relation_mechanism_target_bounded_delta005 | wpu-cws-indexed-mechanism-target | 25 | 0.230833 | 0.235406 | 0.011285 | 0.750000 | 0.699230 | 357.220733 | 709.683800 | 4.757665 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.862545 | 0.862545 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 5 | 0.416667 | 1.783713 | 0.119792 | 0.562500 | 0.035057 | 12.370823 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.684445 | 0.684445 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 10 | 0.441667 | 2.062501 | 0.081018 | 0.479167 | 0.201422 | 71.182410 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.668692 | 0.668692 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 25 | 1.184167 | 5.401195 | 0.052951 | 0.208333 | 6.975125 | 922.699696 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.250368 | 0.250368 |
@@ -77,6 +81,13 @@ generated from the same initial condition at `horizon * sim_steps`.
 These metrics prevent a bounded transition from being overclaimed:
 high integrity is only useful if trajectory error and final branch
 accuracy remain competitive.
+
+The branch-weighted target-local transition head is the first
+positive follow-up on the target-object bottleneck. At H=25 it
+changes branch accuracy from 0.729167 to 0.750000, trajectory MSE from 0.707117 to 0.699230,
+and target-object MSE from 361.358309 to 357.220733. This is a small architectural
+improvement, not solved high-fidelity dynamics; target-object position
+MSE remains 709.683800.
 
 This makes state integrity a first-class WPU metric:
 

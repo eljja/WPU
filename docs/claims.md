@@ -170,10 +170,12 @@ manual position/velocity split bounds, and target-object delta loss do not
 reduce that bottleneck: they either leave target-object MSE near `361-363` or
 reduce branch accuracy. Full recurrent unrolled loss was non-finite in the
 initial probe, and stabilized truncated H=2/4 unroll is neutral relative to the
-same-lr bounded-only baseline. The next transition step is therefore
-branch-conditioned local dynamics and a stronger target-object transition head,
-not another scalar bound, one-step target-loss tweak, or unrolled-loss-only
-change.
+same-lr bounded-only baseline. A branch-weighted target-local transition head is
+the first positive follow-up: at H=25 it improves branch accuracy from
+`0.729167` to `0.750000`, trajectory MSE from `0.707117` to `0.699230`, and
+target-object MSE from `361.358309` to `357.220733`. This supports the
+transition-head direction, but target-object position MSE remains high
+(`709.683800`), so high-fidelity dynamics are not solved.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

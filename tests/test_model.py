@@ -628,6 +628,32 @@ def test_mechanism_relation_route_uses_relation_messages_without_dense_compute()
     assert model.mechanism_branch_head[-1].weight.grad.norm().item() > 0.0
 
 
+def test_mechanism_target_route_uses_target_delta_expert_without_dense_compute() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
+    batch, target_delta, labels, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = create_model(
+        "wpu-cws-indexed-mechanism-target",
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+        bounded_delta_max=0.05,
+    )
+
+    prediction = model(batch, num_branches=3)
+    loss = torch.nn.functional.mse_loss(prediction.object_delta, target_delta)
+    loss = loss + torch.nn.functional.cross_entropy(prediction.branch_logits, labels)
+    loss.backward()
+
+    assert model.last_working_set_stats is not None
+    assert model.last_working_set_stats.dense_compute_ratio == 0.0
+    assert prediction.object_delta[..., 1:7].abs().max().item() <= 0.050001
+    assert model.mechanism_relation_message[-1].weight.grad is not None
+    assert model.mechanism_relation_message[-1].weight.grad.norm().item() > 0.0
+    assert model.mechanism_target_delta_head[-1].weight.grad is not None
+    assert model.mechanism_target_delta_head[-1].weight.grad.norm().item() > 0.0
+
+
 def test_cws_bounded_delta_parameterization_limits_position_and_velocity_delta() -> None:
     dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=8, causal_obstacles=4, interaction_mode="pairwise")
     batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])

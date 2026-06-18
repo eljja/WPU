@@ -285,9 +285,11 @@ Use these reports for paper-level claims:
   remaining weakness is target-object trajectory MSE `361.358309`. Learned
   adaptive bounds, split position/velocity bounds, target-object delta loss,
   and stabilized truncated unroll do not reduce that bottleneck. Full recurrent
-  unroll was non-finite in the initial probe. The next step is
-  branch-conditioned local transition dynamics and stronger target-object
-  transition heads.
+  unroll was non-finite in the initial probe. A branch-weighted target-local
+  transition head is the first small positive follow-up: H=25 branch accuracy
+  reaches `0.750000`, trajectory MSE `0.699230`, and target-object MSE
+  `357.220733`. This supports stronger target-head dynamics, but does not yet
+  solve high-fidelity rollout.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

@@ -10,6 +10,9 @@ to claim persistent state as more than a one-step execution primitive.
 Source CSVs:
 
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w1_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w5_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w1_clip1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride8_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_delta1_3seed.csv`
@@ -44,6 +47,15 @@ Derived CSV:
 | relation_finite_projection | wpu-cws-indexed-mechanism-relation | 5 | 0.000000 | 1.643664 | 0.078125 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.926847 | 0.926847 |
 | relation_finite_projection | wpu-cws-indexed-mechanism-relation | 10 | 0.000000 | 2.483041 | 0.113426 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.890408 | 0.890408 |
 | relation_finite_projection | wpu-cws-indexed-mechanism-relation | 25 | 0.200833 | 4.051999 | 0.043403 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.739041 | 0.739041 |
+| relation_multihorizon_w1 | wpu-cws-indexed-mechanism-relation | 5 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
+| relation_multihorizon_w1 | wpu-cws-indexed-mechanism-relation | 10 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
+| relation_multihorizon_w1 | wpu-cws-indexed-mechanism-relation | 25 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
+| relation_multihorizon_w1_clip1 | wpu-cws-indexed-mechanism-relation | 5 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
+| relation_multihorizon_w1_clip1 | wpu-cws-indexed-mechanism-relation | 10 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
+| relation_multihorizon_w1_clip1 | wpu-cws-indexed-mechanism-relation | 25 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
+| relation_multihorizon_w5 | wpu-cws-indexed-mechanism-relation | 5 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
+| relation_multihorizon_w5 | wpu-cws-indexed-mechanism-relation | 10 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
+| relation_multihorizon_w5 | wpu-cws-indexed-mechanism-relation | 25 | 4.458333 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
 | relation_raw | graph-transformer | 5 | 0.170833 | 23.833869 | 0.255208 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.505000 | 0.505000 |
 | relation_raw | graph-transformer | 10 | 0.300000 | 26.306219 | 0.300926 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.424815 | 0.424815 |
 | relation_raw | graph-transformer | 25 | 6.304167 | 30.461124 | 0.112847 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.077431 | 0.077431 |
@@ -85,14 +97,20 @@ fix: scale `0.25` reaches H=25 integrity `0.089410`, and scale `0.10` reaches
 `0.089583`. Scaling reduces average delta magnitude but does not convert a
 one-step target into a stable multi-step transition operator.
 
-Short-stride simulator targets are also negative in this first implementation.
+Short-stride simulator targets are also negative in this implementation.
 Training the relation WPU on shorter supervised simulator transitions
 (`train_sim_steps=4` or `8`, evaluated against `sim_steps=80`) gives H=25
 integrity `0.089410` and `0.086806`, respectively. Making the short-stride run
 delta-focused does not help: stride-4 delta-only training reaches `0.085243`,
-and branch `0.1` plus delta `1.0` reaches `0.086979`. This means the issue is
-not only target duration or loss weighting; the transition model still needs an
-explicit multi-step or simulator-resynchronized rollout objective.
+and branch `0.1` plus delta `1.0` reaches `0.086979`.
+
+The first explicit multi-horizon simulator-resynchronized target is also
+negative with the current transition head. Supervising simulator horizons
+`4/8/12` with weight `1.0` or `5.0` produces non-finite long-horizon deltas
+penalized as H=25 integrity `0.100000`; gradient clipping at `1.0` does not
+change that outcome. This narrows the next step: WPU needs a transition
+architecture or training objective that is stable under repeated application,
+not just more one-step targets attached to the same head.
 
 Finite projection lifts applied-state H=25 integrity to `0.739041` and keeps
 delta norm bounded at `4.051999`. This is useful as a state-store safety guard,
@@ -106,7 +124,7 @@ state-integrity = constraint validity + bounded delta drift + branch stability
 ```
 
 Future WPU rollout claims should report this score or its components next to
-accuracy and latency. The next architecture/training step is true multi-step
-or simulator-resynchronized transition learning, not post-hoc scalar
-regularization, fixed delta scaling, short-stride one-step targets, or loss
-weight retuning alone.
+accuracy and latency. The next architecture/training step is a genuinely stable
+recurrent/local transition operator, likely with bounded delta parameterization
+or simulator-resynchronized rollout training that constrains every unrolled
+step.

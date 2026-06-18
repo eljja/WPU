@@ -14,6 +14,15 @@ relation_delta_scale025,wpu-cws-indexed-mechanism-relation,25,3,2.849167,610325.
 relation_finite_projection,wpu-cws-indexed-mechanism-relation,5,3,0.0,1.643664,0.927942,0.078125,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.926847,0.926847
 relation_finite_projection,wpu-cws-indexed-mechanism-relation,10,3,0.0,2.483041,0.865231,0.113426,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.890408,0.890408
 relation_finite_projection,wpu-cws-indexed-mechanism-relation,25,3,0.200833,4.051999,0.348089,0.043403,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.739041,0.739041
+relation_multihorizon_w1,wpu-cws-indexed-mechanism-relation,5,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
+relation_multihorizon_w1,wpu-cws-indexed-mechanism-relation,10,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
+relation_multihorizon_w1,wpu-cws-indexed-mechanism-relation,25,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
+relation_multihorizon_w1_clip1,wpu-cws-indexed-mechanism-relation,5,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
+relation_multihorizon_w1_clip1,wpu-cws-indexed-mechanism-relation,10,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
+relation_multihorizon_w1_clip1,wpu-cws-indexed-mechanism-relation,25,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
+relation_multihorizon_w5,wpu-cws-indexed-mechanism-relation,5,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
+relation_multihorizon_w5,wpu-cws-indexed-mechanism-relation,10,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
+relation_multihorizon_w5,wpu-cws-indexed-mechanism-relation,25,3,4.458333,1000000000.0,1000000000.0,0.0,4.458333,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
 relation_raw,graph-transformer,5,3,0.170833,23.833869,0.843783,0.255208,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.505,0.505
 relation_raw,graph-transformer,10,3,0.3,26.306219,0.90635,0.300926,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.424815,0.424815
 relation_raw,graph-transformer,25,3,6.304167,30.461124,0.970048,0.112847,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.077431,0.077431

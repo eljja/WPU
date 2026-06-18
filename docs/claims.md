@@ -160,7 +160,11 @@ multi-step or simulator-resynchronized transition learning rather than
 post-hoc delta scaling. Short-stride simulator targets and delta-focused loss
 retuning are also negative: stride-4 `0.089410`, stride-8 `0.086806`,
 stride-4 delta-only `0.085243`, and stride-4 branch `0.1` plus delta `1.0`
-`0.086979`.
+`0.086979`. Explicit multi-horizon simulator targets over horizons `4/8/12`
+are also negative: weight `1.0`, weight `5.0`, and weight `1.0` with gradient
+clipping all produce H=25 integrity `0.100000` under the non-finite delta
+penalty. The next transition step must change the recurrent/local transition
+operator, not only its supervised target set.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

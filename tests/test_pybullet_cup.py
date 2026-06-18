@@ -34,6 +34,7 @@ def test_pybullet_cup_dataset_produces_state_batch() -> None:
     assert causal_k.min().item() >= 4
     assert batch.object_ids is not None
     assert "cup_001" in batch.object_ids[0]
+    assert dataset[0].source_index == 0
 
 
 def test_pybullet_cup_batch_backward_smoke() -> None:
@@ -165,6 +166,13 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
             "0.5",
             "--delta-loss-weight",
             "0.2",
+            "--multihorizon-train-steps",
+            "4",
+            "8",
+            "--multihorizon-loss-weight",
+            "0.1",
+            "--grad-clip-norm",
+            "1.0",
             "--integrity-projection",
             "--out",
             str(output),
@@ -183,6 +191,9 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
     assert "train_sim_steps" in text
     assert "branch_loss_weight" in text
     assert "delta_loss_weight" in text
+    assert "multihorizon_train_steps" in text
+    assert "multihorizon_loss_weight" in text
+    assert "grad_clip_norm" in text
 
 
 def test_pybullet_local_law_revision_help_runs() -> None:

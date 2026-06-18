@@ -56,8 +56,11 @@ def main() -> None:
     parser.add_argument("--num-heads", type=int, default=4)
     parser.add_argument("--working-set-size", type=int, default=12)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--grad-clip-norm", type=float, default=0.0)
     parser.add_argument("--branch-loss-weight", type=float, default=1.0)
     parser.add_argument("--delta-loss-weight", type=float, default=0.1)
+    parser.add_argument("--multihorizon-train-steps", type=int, nargs="*", default=[])
+    parser.add_argument("--multihorizon-loss-weight", type=float, default=0.0)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=True)
@@ -146,10 +149,11 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
         steps=_train_sim_steps(args),
         balanced_labels=args.balanced_labels,
     )
-    loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_fn(args, model_name))
+    loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_with_samples_fn(args, model_name))
     class_weights = _class_weights(dataset).to(device) if args.class_weights else None
+    multihorizon_datasets = _multihorizon_datasets(seed, args)
     model.train()
-    for step, (batch, target_delta, labels, _) in enumerate(loader, start=1):
+    for step, (batch, target_delta, labels, _, samples) in enumerate(loader, start=1):
         batch = _move_batch(batch, device)
         target_delta = target_delta.to(device)
         labels = labels.to(device)
@@ -187,8 +191,19 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
                 max_velocity_norm=args.max_velocity_norm,
                 min_cup_z=args.min_cup_z,
             )
+        multihorizon_weight = float(getattr(args, "multihorizon_loss_weight", 0.0))
+        if multihorizon_weight > 0.0 and multihorizon_datasets:
+            loss = loss + multihorizon_weight * _multihorizon_rollout_loss(
+                model,
+                batch,
+                prediction.object_delta,
+                samples,
+                multihorizon_datasets,
+            )
         optimizer.zero_grad()
         loss.backward()
+        if float(getattr(args, "grad_clip_norm", 0.0)) > 0.0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), float(args.grad_clip_norm))
         optimizer.step()
         if step >= args.steps:
             break
@@ -370,6 +385,9 @@ def _rollout_condition(
         "delta_target_norm_slack": args.delta_target_norm_slack,
         "branch_loss_weight": float(getattr(args, "branch_loss_weight", 1.0)),
         "delta_loss_weight": float(getattr(args, "delta_loss_weight", 0.1)),
+        "grad_clip_norm": float(getattr(args, "grad_clip_norm", 0.0)),
+        "multihorizon_train_steps": "|".join(str(step) for step in _multihorizon_steps(args)),
+        "multihorizon_loss_weight": float(getattr(args, "multihorizon_loss_weight", 0.0)),
         "state_validity_penalty": args.state_validity_penalty,
         "unsafe_delta_reject_norm": args.unsafe_delta_reject_norm,
         "correct_on_violation": bool(args.correct_on_violation),
@@ -453,6 +471,78 @@ def _state_validity_loss(
     target_z = next_features[batch_index, target_index, 3]
     cup_floor = F.relu(min_cup_z - target_z).pow(2)
     return position_excess.mean() + velocity_excess.mean() + cup_floor.mean()
+
+
+def _multihorizon_rollout_loss(
+    model: torch.nn.Module,
+    batch: StateGraphBatch,
+    first_delta: torch.Tensor,
+    samples: list[PyBulletCupSample],
+    target_datasets: dict[int, PyBulletCupDataset],
+) -> torch.Tensor:
+    if not target_datasets:
+        return first_delta.new_tensor(0.0)
+    initial_features = batch.object_features.detach()
+    rolled_features = batch.object_features.clone()
+    total_loss = first_delta.new_tensor(0.0)
+    for index, horizon_step in enumerate(sorted(target_datasets)):
+        if index == 0:
+            step_delta = first_delta
+        else:
+            rolled_batch = _replace_object_features(batch, rolled_features)
+            step_delta = model(rolled_batch, num_branches=3, route_branches=3).object_delta
+        rolled_features = rolled_features.clone()
+        rolled_features[..., 1:7] = rolled_features[..., 1:7] + step_delta[..., 1:7]
+        target_delta = _multihorizon_target_delta(
+            samples,
+            target_datasets[horizon_step],
+            batch,
+            device=rolled_features.device,
+        )
+        target_features = initial_features + target_delta
+        object_mask = batch.object_mask.unsqueeze(-1).float()
+        total_loss = total_loss + F.mse_loss(
+            rolled_features[..., 1:7] * object_mask,
+            target_features[..., 1:7] * object_mask,
+        )
+    return total_loss / max(len(target_datasets), 1)
+
+
+def _replace_object_features(batch: StateGraphBatch, object_features: torch.Tensor) -> StateGraphBatch:
+    return StateGraphBatch(
+        object_features=object_features,
+        relation_indices=batch.relation_indices,
+        relation_features=batch.relation_features,
+        event_features=batch.event_features,
+        object_mask=batch.object_mask,
+        relation_mask=batch.relation_mask,
+        target_indices=batch.target_indices,
+        time_features=batch.time_features,
+        scheduler_metrics=batch.scheduler_metrics,
+        object_ids=batch.object_ids,
+    )
+
+
+def _multihorizon_target_delta(
+    samples: list[PyBulletCupSample],
+    target_dataset: PyBulletCupDataset,
+    batch: StateGraphBatch,
+    *,
+    device: torch.device,
+) -> torch.Tensor:
+    target = torch.zeros_like(batch.object_features, device=device)
+    if batch.object_ids is None:
+        return target
+    for batch_index, sample in enumerate(samples):
+        target_sample = target_dataset[sample.source_index]
+        target_ids = list(target_sample.state.objects)
+        target_index = {object_id: index for index, object_id in enumerate(target_ids)}
+        for object_index, object_id in enumerate(batch.object_ids[batch_index]):
+            source_index = target_index.get(object_id)
+            if source_index is None or object_index >= target.size(1):
+                continue
+            target[batch_index, object_index] = target_sample.target_object_delta[source_index].to(device)
+    return target
 
 
 def _apply_predicted_delta(
@@ -608,9 +698,43 @@ def _collate_fn(args: argparse.Namespace, model_name: str):
     return collate
 
 
+def _collate_with_samples_fn(args: argparse.Namespace, model_name: str):
+    base_collate = _collate_fn(args, model_name)
+
+    def collate(samples: list[PyBulletCupSample]):
+        batch, target_delta, labels, causal_k = base_collate(samples)
+        return batch, target_delta, labels, causal_k, samples
+
+    return collate
+
+
 def _train_sim_steps(args: argparse.Namespace) -> int:
     train_steps = int(getattr(args, "train_sim_steps", 0) or 0)
     return train_steps if train_steps > 0 else int(args.sim_steps)
+
+
+def _multihorizon_steps(args: argparse.Namespace) -> list[int]:
+    steps = [int(step) for step in getattr(args, "multihorizon_train_steps", []) if int(step) > 0]
+    return sorted(set(steps))
+
+
+def _multihorizon_datasets(seed: int, args: argparse.Namespace) -> dict[int, PyBulletCupDataset]:
+    if float(getattr(args, "multihorizon_loss_weight", 0.0)) <= 0.0:
+        return {}
+    steps = _multihorizon_steps(args)
+    if not steps:
+        return {}
+    size = max(args.steps * args.batch_size, args.batch_size)
+    return {
+        step: PyBulletCupDataset(
+            size=size,
+            seed=seed,
+            background_objects=args.background_objects,
+            steps=step,
+            balanced_labels=False,
+        )
+        for step in steps
+    }
 
 
 def _uses_pre_tensor_index(args: argparse.Namespace, model_name: str) -> bool:

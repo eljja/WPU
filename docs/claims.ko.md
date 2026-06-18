@@ -143,6 +143,10 @@ multi-step 또는 simulator-resynchronized transition learning이 필요하다�
 짧은 simulator stride target과 delta-focused loss retuning도 negative다. stride-4는
 `0.089410`, stride-8은 `0.086806`, stride-4 delta-only는 `0.085243`,
 stride-4 branch `0.1` + delta `1.0`은 `0.086979`에 그친다.
+Horizon `4/8/12`에 대한 explicit multi-horizon simulator target도 negative다. weight
+`1.0`, weight `5.0`, gradient clipping을 넣은 weight `1.0` 모두 H=25 integrity
+`0.100000`으로 non-finite delta penalty를 받는다. 다음 transition 단계는 supervised
+target set만 바꾸는 것이 아니라 recurrent/local transition operator 자체를 바꿔야 한다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

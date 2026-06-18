@@ -12,6 +12,9 @@ Source CSVs:
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride8_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_delta1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_train_stride4_branch01_delta1_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w1_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w5_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w1_clip1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_scale025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_scale010_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_delta_norm_strong_3seed.csv`
@@ -38,6 +41,9 @@ Derived CSV:
 | `relation_raw` | `wpu-cws-indexed-mechanism-relation` | 5 | 0.715574 | 0.379167 | 1.662182 | 4.354167 |
 | `relation_raw` | `wpu-cws-indexed-mechanism-relation` | 10 | 0.552601 | 0.483333 | 4.552682 | 4.354167 |
 | `relation_raw` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.091319 | 3.180833 | 2379159.471470 | 4.354167 |
+| `relation_multihorizon_w1` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.100000 | 4.458333 | 1000000000.000000 | 4.458333 |
+| `relation_multihorizon_w5` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.100000 | 4.458333 | 1000000000.000000 | 4.458333 |
+| `relation_multihorizon_w1_clip1` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.100000 | 4.458333 | 1000000000.000000 | 4.458333 |
 | `relation_delta_scale010` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.089583 | 2.646667 | 245997.938780 | 4.354167 |
 | `relation_delta_scale025` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.089410 | 2.849167 | 610325.001919 | 4.354167 |
 | `relation_train_stride4` | `wpu-cws-indexed-mechanism-relation` | 25 | 0.089410 | 3.236667 | 2425517.613951 | 4.458333 |
@@ -78,9 +84,17 @@ integrity `0.089410`, `rollout_delta_scale=0.10`은 `0.089583`에 그친다. Del
 단순히 target duration이나 loss weight가 아니라, 반복 적용을 직접 학습하는 multi-step 또는
 simulator-resynchronized rollout objective가 필요하다는 쪽으로 좁혀진다.
 
+첫 explicit multi-horizon simulator-resynchronized target도 현재 transition head에서는
+negative다. 같은 초기조건에 대해 simulator horizon `4/8/12`를 target으로 두고
+multi-horizon loss weight `1.0` 또는 `5.0`을 주면 H=25에서 non-finite delta가 발생해
+integrity `0.100000`으로 penalty 처리된다. Gradient clipping `1.0`도 결과를 바꾸지 못한다.
+따라서 다음 단계는 같은 transition head에 target을 더 붙이는 것이 아니라, 반복 적용에서
+bounded delta를 보장하는 transition architecture 또는 unrolled step마다 안정성을 강제하는
+training objective다.
+
 따라서 다음 WPU 개선 방향은 명확하다.
 
 - one-step branch accuracy와 distractor scaling만으로 rollout claim을 하지 않는다.
-- transition head를 multi-step 또는 simulator-resynchronized rollout objective로 학습한다.
+- 반복 적용 가능한 recurrent/local transition operator와 bounded delta parameterization을 설계한다.
 - delta norm, constraint violation, branch stability를 accuracy와 같은 1급 metric으로 보고한다.
 - safety projection은 필요하지만, 논문에서는 learned long-horizon dynamics와 분리해 기술한다.

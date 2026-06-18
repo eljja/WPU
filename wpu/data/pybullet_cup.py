@@ -23,6 +23,7 @@ class PyBulletCupSample:
     branch_label: int
     causal_working_set_size: int
     simulator_metadata: dict[str, Any]
+    source_index: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -159,6 +160,7 @@ class PyBulletCupDataset(Dataset):
                 "catch_action": catch_action,
                 "label": BRANCH_LABELS[label],
             },
+            source_index=index,
         )
 
     def _reset_world(self) -> None:
@@ -367,6 +369,7 @@ def corrupt_pybullet_cup_sample(
         branch_label=sample.branch_label,
         causal_working_set_size=causal_k,
         simulator_metadata=metadata,
+        source_index=sample.source_index,
     )
 
 

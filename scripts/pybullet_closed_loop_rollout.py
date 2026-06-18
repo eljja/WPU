@@ -69,6 +69,11 @@ def main() -> None:
     parser.add_argument("--target-delta-loss-weight", type=float, default=0.0)
     parser.add_argument("--multihorizon-train-steps", type=int, nargs="*", default=[])
     parser.add_argument("--multihorizon-loss-weight", type=float, default=0.0)
+    parser.add_argument("--unrolled-train-horizons", type=int, nargs="*", default=[])
+    parser.add_argument("--unrolled-trajectory-loss-weight", type=float, default=0.0)
+    parser.add_argument("--unrolled-branch-loss-weight", type=float, default=0.0)
+    parser.add_argument("--unrolled-detach-between-steps", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--skip-nonfinite-loss", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--balanced-labels", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--class-weights", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--pre-tensor-indexed", action=argparse.BooleanOptionalAction, default=True)
@@ -166,6 +171,10 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
     loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=_collate_with_samples_fn(args, model_name))
     class_weights = _class_weights(dataset).to(device) if args.class_weights else None
     multihorizon_datasets = _multihorizon_datasets(seed, args)
+    unrolled_datasets = _unrolled_datasets(seed, args)
+    completed_training_steps = 0
+    nonfinite_training_steps = 0
+    nonfinite_gradient_steps = 0
     model.train()
     for step, (batch, target_delta, labels, _, samples) in enumerate(loader, start=1):
         batch = _move_batch(batch, device)
@@ -217,13 +226,39 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
                 samples,
                 multihorizon_datasets,
             )
+        unrolled_trajectory_weight = float(getattr(args, "unrolled_trajectory_loss_weight", 0.0))
+        unrolled_branch_weight = float(getattr(args, "unrolled_branch_loss_weight", 0.0))
+        if (unrolled_trajectory_weight > 0.0 or unrolled_branch_weight > 0.0) and unrolled_datasets:
+            trajectory_loss, branch_loss = _unrolled_rollout_losses(
+                model,
+                batch,
+                prediction,
+                samples,
+                unrolled_datasets,
+                class_weights=class_weights,
+                detach_between_steps=bool(getattr(args, "unrolled_detach_between_steps", True)),
+            )
+            loss = loss + unrolled_trajectory_weight * trajectory_loss
+            loss = loss + unrolled_branch_weight * branch_loss
+        if bool(getattr(args, "skip_nonfinite_loss", True)) and not torch.isfinite(loss):
+            optimizer.zero_grad()
+            nonfinite_training_steps += 1
+            continue
         optimizer.zero_grad()
         loss.backward()
         if float(getattr(args, "grad_clip_norm", 0.0)) > 0.0:
             torch.nn.utils.clip_grad_norm_(model.parameters(), float(args.grad_clip_norm))
+        if bool(getattr(args, "skip_nonfinite_loss", True)) and not _gradients_are_finite(model):
+            optimizer.zero_grad()
+            nonfinite_gradient_steps += 1
+            continue
         optimizer.step()
+        completed_training_steps += 1
         if step >= args.steps:
             break
+    model._wpu_completed_training_steps = completed_training_steps  # type: ignore[attr-defined]
+    model._wpu_nonfinite_training_steps = nonfinite_training_steps  # type: ignore[attr-defined]
+    model._wpu_nonfinite_gradient_steps = nonfinite_gradient_steps  # type: ignore[attr-defined]
     return model
 
 
@@ -266,6 +301,8 @@ def _rollout_condition(
     trajectory_position_mse_values: list[float] = []
     trajectory_velocity_mse_values: list[float] = []
     target_object_trajectory_mse_values: list[float] = []
+    target_object_position_mse_values: list[float] = []
+    target_object_velocity_mse_values: list[float] = []
     final_branch_counts: Counter[int] = Counter()
     branch_correct_count = 0
     target_dataset = PyBulletCupDataset(
@@ -391,6 +428,8 @@ def _rollout_condition(
             trajectory_position_mse_values.append(trajectory_errors["trajectory_position_mse"])
             trajectory_velocity_mse_values.append(trajectory_errors["trajectory_velocity_mse"])
             target_object_trajectory_mse_values.append(trajectory_errors["target_object_trajectory_mse"])
+            target_object_position_mse_values.append(trajectory_errors["target_object_position_mse"])
+            target_object_velocity_mse_values.append(trajectory_errors["target_object_velocity_mse"])
             if previous_branch is not None:
                 branch_correct_count += int(previous_branch == target_sample.branch_label)
     model.train()
@@ -412,6 +451,8 @@ def _rollout_condition(
         "trajectory_position_mse": round(_mean(trajectory_position_mse_values), 6),
         "trajectory_velocity_mse": round(_mean(trajectory_velocity_mse_values), 6),
         "target_object_trajectory_mse": round(_mean(target_object_trajectory_mse_values), 6),
+        "target_object_position_mse": round(_mean(target_object_position_mse_values), 6),
+        "target_object_velocity_mse": round(_mean(target_object_velocity_mse_values), 6),
         "unsafe_delta_rejection_rate": round(rejected_delta_count / max(total_delta_count, 1), 6),
         "correction_rate": round(correction_count / max(total_delta_count, 1), 6),
         "corrected_object_fraction": round(corrected_object_count / max(correction_object_denominator, 1), 6),
@@ -438,6 +479,14 @@ def _rollout_condition(
         "adaptive_delta_max": float(getattr(args, "adaptive_delta_max", 0.5)),
         "multihorizon_train_steps": "|".join(str(step) for step in _multihorizon_steps(args)),
         "multihorizon_loss_weight": float(getattr(args, "multihorizon_loss_weight", 0.0)),
+        "unrolled_train_horizons": "|".join(str(horizon) for horizon in _unrolled_horizons(args)),
+        "unrolled_trajectory_loss_weight": float(getattr(args, "unrolled_trajectory_loss_weight", 0.0)),
+        "unrolled_branch_loss_weight": float(getattr(args, "unrolled_branch_loss_weight", 0.0)),
+        "unrolled_detach_between_steps": bool(getattr(args, "unrolled_detach_between_steps", True)),
+        "skip_nonfinite_loss": bool(getattr(args, "skip_nonfinite_loss", True)),
+        "completed_training_steps": int(getattr(model, "_wpu_completed_training_steps", 0)),
+        "nonfinite_training_steps": int(getattr(model, "_wpu_nonfinite_training_steps", 0)),
+        "nonfinite_gradient_steps": int(getattr(model, "_wpu_nonfinite_gradient_steps", 0)),
         "state_validity_penalty": args.state_validity_penalty,
         "unsafe_delta_reject_norm": args.unsafe_delta_reject_norm,
         "correct_on_violation": bool(args.correct_on_violation),
@@ -484,6 +533,13 @@ def _target_object_delta_loss(
     predicted_target = prediction_delta[batch_indices, target_indices]
     target = target_delta[batch_indices, target_indices]
     return F.mse_loss(predicted_target, target)
+
+
+def _gradients_are_finite(model: torch.nn.Module) -> bool:
+    for parameter in model.parameters():
+        if parameter.grad is not None and not torch.isfinite(parameter.grad).all():
+            return False
+    return True
 
 
 def _rollout_consistency_loss(
@@ -570,6 +626,72 @@ def _multihorizon_rollout_loss(
     return total_loss / max(len(target_datasets), 1)
 
 
+def _unrolled_rollout_losses(
+    model: torch.nn.Module,
+    batch: StateGraphBatch,
+    first_prediction: object,
+    samples: list[PyBulletCupSample],
+    target_datasets: dict[int, PyBulletCupDataset],
+    *,
+    class_weights: torch.Tensor | None,
+    detach_between_steps: bool,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    if not target_datasets:
+        zero = batch.object_features.new_tensor(0.0)
+        return zero, zero
+    initial_features = batch.object_features.detach()
+    rolled_features = batch.object_features.clone()
+    trajectory_loss = rolled_features.new_tensor(0.0)
+    branch_loss = rolled_features.new_tensor(0.0)
+    target_horizons = set(target_datasets)
+    max_horizon = max(target_horizons)
+    for horizon_step in range(1, max_horizon + 1):
+        if horizon_step == 1:
+            prediction = first_prediction
+        else:
+            prediction = model(_replace_object_features(batch, rolled_features), num_branches=3, route_branches=3)
+        rolled_features = rolled_features.clone()
+        rolled_features[..., 1:7] = rolled_features[..., 1:7] + prediction.object_delta[..., 1:7]
+        if horizon_step in target_horizons:
+            target_dataset = target_datasets[horizon_step]
+            target_delta = _multihorizon_target_delta(
+                samples,
+                target_dataset,
+                batch,
+                device=rolled_features.device,
+            )
+            target_features = initial_features + target_delta
+            trajectory_loss = trajectory_loss + _target_object_feature_loss(rolled_features, target_features, batch)
+            labels = _multihorizon_labels(samples, target_dataset, device=rolled_features.device)
+            branch_loss = branch_loss + F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
+        if detach_between_steps and horizon_step < max_horizon:
+            rolled_features = rolled_features.detach()
+    denominator = max(len(target_datasets), 1)
+    return trajectory_loss / denominator, branch_loss / denominator
+
+
+def _target_object_feature_loss(
+    predicted_features: torch.Tensor,
+    target_features: torch.Tensor,
+    batch: StateGraphBatch,
+) -> torch.Tensor:
+    target_indices = batch.target_indices.clamp(min=0, max=predicted_features.size(1) - 1)
+    batch_indices = torch.arange(predicted_features.size(0), device=predicted_features.device)
+    predicted_target = predicted_features[batch_indices, target_indices, 1:7]
+    target = target_features[batch_indices, target_indices, 1:7]
+    return F.mse_loss(predicted_target, target)
+
+
+def _multihorizon_labels(
+    samples: list[PyBulletCupSample],
+    target_dataset: PyBulletCupDataset,
+    *,
+    device: torch.device,
+) -> torch.Tensor:
+    labels = [int(_aligned_target_sample(sample, target_dataset).branch_label) for sample in samples]
+    return torch.tensor(labels, dtype=torch.long, device=device)
+
+
 def _replace_object_features(batch: StateGraphBatch, object_features: torch.Tensor) -> StateGraphBatch:
     return StateGraphBatch(
         object_features=object_features,
@@ -596,7 +718,7 @@ def _multihorizon_target_delta(
     if batch.object_ids is None:
         return target
     for batch_index, sample in enumerate(samples):
-        target_sample = target_dataset[sample.source_index]
+        target_sample = _aligned_target_sample(sample, target_dataset)
         target_ids = list(target_sample.state.objects)
         target_index = {object_id: index for index, object_id in enumerate(target_ids)}
         for object_index, object_id in enumerate(batch.object_ids[batch_index]):
@@ -605,6 +727,10 @@ def _multihorizon_target_delta(
                 continue
             target[batch_index, object_index] = target_sample.target_object_delta[source_index].to(device)
     return target
+
+
+def _aligned_target_sample(sample: PyBulletCupSample, target_dataset: PyBulletCupDataset) -> PyBulletCupSample:
+    return target_dataset._make_sample(sample.source_index)
 
 
 def _apply_predicted_delta(
@@ -732,6 +858,10 @@ def _trajectory_errors(
     velocity_count = 0
     target_object_error = 0.0
     target_object_count = 0
+    target_object_position_error = 0.0
+    target_object_velocity_error = 0.0
+    target_object_position_count = 0
+    target_object_velocity_count = 0
     for object_id, base_obj in base_objects.items():
         rolled_obj = rolled_objects.get(object_id)
         target_row = target_index.get(object_id)
@@ -755,6 +885,12 @@ def _trajectory_errors(
                 if object_id == target_sample.event.target:
                     target_object_error += squared_error
                     target_object_count += 1
+                    if attribute == "position":
+                        target_object_position_error += squared_error
+                        target_object_position_count += 1
+                    else:
+                        target_object_velocity_error += squared_error
+                        target_object_velocity_count += 1
     total_error = position_error + velocity_error
     total_count = position_count + velocity_count
     return {
@@ -762,6 +898,8 @@ def _trajectory_errors(
         "trajectory_position_mse": position_error / max(position_count, 1),
         "trajectory_velocity_mse": velocity_error / max(velocity_count, 1),
         "target_object_trajectory_mse": target_object_error / max(target_object_count, 1),
+        "target_object_position_mse": target_object_position_error / max(target_object_position_count, 1),
+        "target_object_velocity_mse": target_object_velocity_error / max(target_object_velocity_count, 1),
     }
 
 
@@ -844,6 +982,34 @@ def _multihorizon_datasets(seed: int, args: argparse.Namespace) -> dict[int, PyB
             balanced_labels=False,
         )
         for step in steps
+    }
+
+
+def _unrolled_horizons(args: argparse.Namespace) -> list[int]:
+    horizons = [int(horizon) for horizon in getattr(args, "unrolled_train_horizons", []) if int(horizon) > 0]
+    return sorted(set(horizons))
+
+
+def _unrolled_datasets(seed: int, args: argparse.Namespace) -> dict[int, PyBulletCupDataset]:
+    if (
+        float(getattr(args, "unrolled_trajectory_loss_weight", 0.0)) <= 0.0
+        and float(getattr(args, "unrolled_branch_loss_weight", 0.0)) <= 0.0
+    ):
+        return {}
+    horizons = _unrolled_horizons(args)
+    if not horizons:
+        return {}
+    size = max(args.steps * args.batch_size, args.batch_size)
+    stride = _train_sim_steps(args)
+    return {
+        horizon: PyBulletCupDataset(
+            size=size,
+            seed=seed,
+            background_objects=args.background_objects,
+            steps=stride * horizon,
+            balanced_labels=False,
+        )
+        for horizon in horizons
     }
 
 

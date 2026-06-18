@@ -13,6 +13,8 @@ Source CSVs:
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta01_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_lr3e4_clip1_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_unrolled_h2_4_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_adaptive_delta025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_split_delta_p010_v005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_targetloss1_3seed.csv`
@@ -29,6 +31,8 @@ Derived CSV:
 | `relation_raw` | 0.250368 | 6.975125 | 922.699696 | 0.208333 |
 | `relation_finite_projection` | 0.876760 | 1.695024 | 538.635690 | 0.250000 |
 | `relation_bounded_delta005` | 0.870264 | 0.707117 | 361.358309 | 0.729167 |
+| `relation_bounded_delta005_lr3e4_clip1` | 0.895263 | 0.711506 | 363.187130 | 0.500000 |
+| `relation_bounded_delta005_unrolled_h2_4` | 0.886627 | 0.710751 | 362.829388 | 0.500000 |
 | `relation_bounded_delta01` | 0.793182 | 0.720660 | 360.705327 | 0.708333 |
 | `relation_adaptive_delta025` | 0.808068 | 0.739266 | 361.306078 | 0.333333 |
 | `relation_split_delta_p010_v005` | 0.879871 | 0.715922 | 361.626218 | 0.541667 |
@@ -49,14 +53,21 @@ integrity `0.808068`, trajectory MSE `0.739266`이지만 branch accuracy가 `0.3
 `0.687500`으로 낮아진다.
 
 따라서 target-object bottleneck은 learned bound head, 수동 position/velocity split, scalar
-target-object loss reweighting으로 해결되지 않았다. 다음 문제는 transition objective mismatch로
-보는 것이 타당하다. One-step target-object MSE는 multi-step cup-centric trajectory fidelity를
-보장하지 않는다. 다음 P2 실험은 target-object position/velocity error를 분리하고, bound shape나
-single-step loss weight가 아니라 unrolled branch/trajectory-consistent loss를 학습해야 한다.
+target-object loss reweighting으로 해결되지 않았다. 이번에 추가한 unrolled probe도 같은 결론을
+강화한다. Full recurrent unrolled gradient는 non-finite gradient를 만들어 무효였고, 안정화된
+truncated H=2/4 unroll은 같은 learning-rate/gradient-clip bounded baseline과 거의 동일했다.
+H=25에서 bounded-only `lr=3e-4, clip=1`은 branch accuracy `0.500000`, target-object MSE
+`363.187130`이고, truncated unroll은 branch accuracy `0.500000`, target-object MSE
+`362.829388`이다.
+
+따라서 다음 문제는 단순 transition objective mismatch보다 더 좁다. One-step target-object MSE나
+truncated trajectory loss만으로는 multi-step cup-centric dynamics를 회복하지 못한다. 다음 P2는
+branch-conditioned local transition dynamics, relation-conditioned message, target-object
+transition head 표현력을 직접 개선해야 한다.
 
 ## 다음 조치
 
-- target-object trajectory MSE를 position과 velocity로 분리한다.
-- H-step unrolled trajectory loss를 직접 학습한다.
-- branch label consistency와 trajectory loss를 동시에 최적화한다.
+- target-object trajectory MSE를 position과 velocity로 계속 분리해 보고한다.
+- branch-conditioned local transition head와 target-object transition head를 강화한다.
+- relation-conditioned sparse message가 장기 rollout의 target-object dynamics를 직접 설명하도록 학습한다.
 - fixed global bound `0.05`를 현재 sparse rollout baseline으로 유지한다.

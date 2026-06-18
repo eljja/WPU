@@ -283,9 +283,11 @@ Use these reports for paper-level claims:
   H=25 trajectory MSE `0.707117` and branch accuracy `0.729167`, versus finite
   projection trajectory MSE `1.695024` and branch accuracy `0.250000`. The
   remaining weakness is target-object trajectory MSE `361.358309`. Learned
-  adaptive bounds, split position/velocity bounds, and target-object delta loss
-  do not reduce that bottleneck, so the next step is unrolled
-  branch/trajectory-consistent training.
+  adaptive bounds, split position/velocity bounds, target-object delta loss,
+  and stabilized truncated unroll do not reduce that bottleneck. Full recurrent
+  unroll was non-finite in the initial probe. The next step is
+  branch-conditioned local transition dynamics and stronger target-object
+  transition heads.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

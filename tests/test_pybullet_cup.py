@@ -173,6 +173,12 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
             "8",
             "--multihorizon-loss-weight",
             "0.1",
+            "--unrolled-train-horizons",
+            "2",
+            "--unrolled-trajectory-loss-weight",
+            "0.1",
+            "--unrolled-branch-loss-weight",
+            "0.1",
             "--grad-clip-norm",
             "1.0",
             "--bounded-delta-max",
@@ -207,6 +213,14 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
     assert "target_delta_loss_weight" in text
     assert "multihorizon_train_steps" in text
     assert "multihorizon_loss_weight" in text
+    assert "unrolled_train_horizons" in text
+    assert "unrolled_trajectory_loss_weight" in text
+    assert "unrolled_branch_loss_weight" in text
+    assert "unrolled_detach_between_steps" in text
+    assert "skip_nonfinite_loss" in text
+    assert "completed_training_steps" in text
+    assert "nonfinite_training_steps" in text
+    assert "nonfinite_gradient_steps" in text
     assert "grad_clip_norm" in text
     assert "bounded_delta_max" in text
     assert "bounded_delta_position_max" in text
@@ -217,6 +231,8 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
     assert "rollout_branch_accuracy" in text
     assert "trajectory_mse" in text
     assert "target_object_trajectory_mse" in text
+    assert "target_object_position_mse" in text
+    assert "target_object_velocity_mse" in text
 
 
 def test_pybullet_local_law_revision_help_runs() -> None:

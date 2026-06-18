@@ -168,9 +168,12 @@ and branch accuracy `0.250000`. The remaining gap is high target-object
 trajectory MSE (`361.358309`). Follow-up attempts with learned adaptive bounds,
 manual position/velocity split bounds, and target-object delta loss do not
 reduce that bottleneck: they either leave target-object MSE near `361-363` or
-reduce branch accuracy. The next transition step is therefore an unrolled
-branch/trajectory-consistent objective, not another scalar bound or one-step
-target-loss tweak.
+reduce branch accuracy. Full recurrent unrolled loss was non-finite in the
+initial probe, and stabilized truncated H=2/4 unroll is neutral relative to the
+same-lr bounded-only baseline. The next transition step is therefore
+branch-conditioned local dynamics and a stronger target-object transition head,
+not another scalar bound, one-step target-loss tweak, or unrolled-loss-only
+change.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

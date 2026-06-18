@@ -62,6 +62,11 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
         trajectory_position_mse = _mean_optional(group, "trajectory_position_mse")
         trajectory_velocity_mse = _mean_optional(group, "trajectory_velocity_mse")
         target_object_trajectory_mse = _mean_optional(group, "target_object_trajectory_mse")
+        target_object_position_mse = _mean_optional(group, "target_object_position_mse")
+        target_object_velocity_mse = _mean_optional(group, "target_object_velocity_mse")
+        completed_training_steps = _mean_optional(group, "completed_training_steps")
+        nonfinite_training_steps = _mean_optional(group, "nonfinite_training_steps")
+        nonfinite_gradient_steps = _mean_optional(group, "nonfinite_gradient_steps")
         integrity_score = _integrity_score(violations, delta_norm, flip_rate)
         low_disruption_score = _low_disruption_integrity_score(
             integrity_score,
@@ -93,6 +98,11 @@ def _summarize(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "trajectory_position_mse": round(trajectory_position_mse, 6),
                 "trajectory_velocity_mse": round(trajectory_velocity_mse, 6),
                 "target_object_trajectory_mse": round(target_object_trajectory_mse, 6),
+                "target_object_position_mse": round(target_object_position_mse, 6),
+                "target_object_velocity_mse": round(target_object_velocity_mse, 6),
+                "completed_training_steps": round(completed_training_steps, 6),
+                "nonfinite_training_steps": round(nonfinite_training_steps, 6),
+                "nonfinite_gradient_steps": round(nonfinite_gradient_steps, 6),
                 "state_integrity_score": round(integrity_score, 6),
                 "low_disruption_integrity_score": round(low_disruption_score, 6),
             }
@@ -280,8 +290,8 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "",
             "## Summary",
             "",
-            "| run | model | H | violations/step | delta norm | flip rate | branch acc | trajectory MSE | target-object MSE | reject rate | correction rate | rollback rate | escalation rate | integrity score | low-disruption score |",
-            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+            "| run | model | H | violations/step | delta norm | flip rate | branch acc | trajectory MSE | target-object MSE | target pos MSE | target vel MSE | nonfinite grad | reject rate | correction rate | rollback rate | escalation rate | integrity score | low-disruption score |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in rows:
@@ -292,6 +302,9 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             f"{float(row['rollout_branch_accuracy']):.6f} | "
             f"{float(row['trajectory_mse']):.6f} | "
             f"{float(row['target_object_trajectory_mse']):.6f} | "
+            f"{float(row['target_object_position_mse']):.6f} | "
+            f"{float(row['target_object_velocity_mse']):.6f} | "
+            f"{float(row['nonfinite_gradient_steps']):.6f} | "
             f"{float(row['unsafe_delta_rejection_rate']):.6f} | "
             f"{float(row['correction_rate']):.6f} | "
             f"{float(row['rollback_rate']):.6f} | "

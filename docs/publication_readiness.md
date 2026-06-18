@@ -162,6 +162,10 @@ compute `0.000000`, and win/tie/loss `7/0/0`. This substantially improves public
 connects the WPU claim to relation-conditioned state propagation, not merely a
 new classifier head. It is not yet final evidence: it is synthetic single-step
 PyBullet evidence and needs calibration, rollout, and harder causal large-N tests.
+The new relation closed-loop rollout diagnostic prevents overclaiming: raw
+relation WPU H=25 integrity is only `0.091319`, while finite projection raises it
+to `0.739041`. This means relation propagation solves neither long-horizon state
+stability nor simulator-grounded dynamics by itself.
 
 ## Immediate Improvement Priorities
 

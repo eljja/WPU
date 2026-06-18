@@ -897,6 +897,7 @@ def _priority_state_integrity() -> dict[str, object]:
                 f"with integrity {float(best_corrected['state_integrity_score']):.6f} and correction rate "
                 f"{float(best_corrected['correction_rate']):.6f}. Joint target rows remain {len(joint_rows)}."
             )
+    relation_rollout_note = _relation_closed_loop_rollout_note()
     return _row(
         2,
         "Long-horizon state integrity",
@@ -905,8 +906,48 @@ def _priority_state_integrity() -> dict[str, object]:
         0.8,
         "best_wpu_h25_integrity",
         path,
-        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, regularized raw sparse is {sparse_regularized:.6f}, rollout-consistency sparse is {sparse_consistency:.6f}, validity sparse is {sparse_validity:.6f}, strong-validity sparse is {sparse_validity_strong:.6f}, unsafe-delta rejected sparse is {sparse_rejected:.6f} with rejection rate {sparse_rejection_rate:.6f}, and rollback sparse is {sparse_rollback:.6f} with rollback rate {sparse_rollback_rate:.6f}.{correction_note}{escalation_note}{finite_note}{selective_note}{trigger_frontier_note}{learned_trigger_note}{stable_transition_note}",
-        "Stable-transition loss sweeps reduce correction frequency and improve low-disruption integrity but still miss the low-correction joint target; next step is multi-step/simulator-resynchronized transition training or architecture changes, not another trigger threshold.",
+        f"Best WPU H=25 integrity is {best:.6f}; guarded sparse is {sparse_guarded:.6f}, clipped sparse is {sparse_clipped:.6f}, regularized raw sparse is {sparse_regularized:.6f}, rollout-consistency sparse is {sparse_consistency:.6f}, validity sparse is {sparse_validity:.6f}, strong-validity sparse is {sparse_validity_strong:.6f}, unsafe-delta rejected sparse is {sparse_rejected:.6f} with rejection rate {sparse_rejection_rate:.6f}, and rollback sparse is {sparse_rollback:.6f} with rollback rate {sparse_rollback_rate:.6f}.{correction_note}{escalation_note}{finite_note}{selective_note}{trigger_frontier_note}{learned_trigger_note}{stable_transition_note}{relation_rollout_note}",
+        "Relation-conditioned propagation is accurate in one-step and short-horizon screens, but raw H=25 deltas can still collapse; next step is multi-step/simulator-resynchronized transition training or architecture changes, not another trigger threshold.",
+    )
+
+
+def _relation_closed_loop_rollout_note() -> str:
+    path = ROOT / "pybullet_relation_closed_loop_rollout_n512_integrity_summary.csv"
+    if not path.exists():
+        return ""
+    rows = _read_rows(path)
+
+    def find(label: str, model: str, horizon: int) -> dict[str, str] | None:
+        return next(
+            (
+                row
+                for row in rows
+                if row["run_label"] == label and row["model"] == model and int(row["horizon"]) == horizon
+            ),
+            None,
+        )
+
+    raw = find("relation_raw", "wpu-cws-indexed-mechanism-relation", 25)
+    finite = find("relation_finite_projection", "wpu-cws-indexed-mechanism-relation", 25)
+    token = find("relation_raw", "serialized-token", 25)
+    graph = find("relation_raw", "graph-transformer", 25)
+    if raw is None or finite is None:
+        return ""
+    baseline_note = ""
+    if token is not None and graph is not None:
+        baseline_note = (
+            f" Raw H=25 baselines are serialized-token {float(token['state_integrity_score']):.6f} "
+            f"and graph-transformer {float(graph['state_integrity_score']):.6f}."
+        )
+    return (
+        " Relation-conditioned rollout diagnostic adds a sharper boundary: raw relation WPU H=25 "
+        f"integrity is {float(raw['state_integrity_score']):.6f} with delta norm "
+        f"{float(raw['delta_norm_mean']):.6f}, despite selected K "
+        f"{float(raw['selected_k_mean']):.6f}; finite projection lifts H=25 integrity to "
+        f"{float(finite['state_integrity_score']):.6f} with delta norm "
+        f"{float(finite['delta_norm_mean']):.6f}."
+        + baseline_note
+        + " This is a safety-guard result, not learned long-horizon stability."
     )
 
 

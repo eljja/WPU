@@ -148,6 +148,10 @@ This is the
 strongest current WPU v2 evidence, but it is still PyBullet synthetic,
 single-step, and non-causal-distractor-bounded; calibration-aware, rollout, and
 harder causal large-N expansion remain required.
+The relation-conditioned closed-loop rollout diagnostic sharpens that boundary:
+raw relation WPU has H=25 integrity `0.091319` despite small selected K, while
+finite projection lifts H=25 integrity to `0.739041`. This is a safety-guard
+result, not learned long-horizon dynamics.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

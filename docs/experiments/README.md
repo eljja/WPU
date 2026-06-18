@@ -265,6 +265,13 @@ Use these reports for paper-level claims:
   `0.000000`, and win/tie/loss `7/0/0`. This is the strongest current
   distractor-scaling evidence, but it still needs harder causal large-N and
   long-horizon validation.
+- `pybullet_relation_closed_loop_rollout_n512_integrity_results.md`
+  and `pybullet_relation_closed_loop_rollout_n512_integrity_results.ko.md`:
+  relation-conditioned closed-loop rollout diagnostic. Raw relation WPU is strong
+  at H=5/H=10 but collapses at H=25 with integrity `0.091319` and delta norm
+  `2379159.471470`; finite projection lifts H=25 integrity to `0.739041`. This
+  separates one-step sparse propagation success from learned long-horizon state
+  stability.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

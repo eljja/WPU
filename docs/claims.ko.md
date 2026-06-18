@@ -131,6 +131,10 @@ screen은 scaling trend를 더 강화한다. WPU는 `0.644048`, graph-transforme
 `0.516667`이고 dense compute는 `0.000000`, win/tie/loss는 `7/0/0`이다. 이는 현재 WPU v2의 가장 강한 증거지만, 아직
 PyBullet synthetic, single-step, non-causal-distractor-bounded evidence다. 따라서
 calibration-aware evaluation, rollout, 더 어려운 causal large-N 확장이 필요하다.
+Relation-conditioned closed-loop rollout diagnostic은 이 경계를 더 선명하게 만든다.
+Raw relation WPU는 작은 selected K에도 H=25 integrity가 `0.091319`에 그치고,
+finite projection을 적용하면 H=25 integrity가 `0.739041`까지 오른다. 이는 safety guard
+결과이지 learned long-horizon dynamics가 아니다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

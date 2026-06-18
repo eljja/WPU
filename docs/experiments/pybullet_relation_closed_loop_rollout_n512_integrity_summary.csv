@@ -1,0 +1,13 @@
+run_label,model,horizon,seed_count,constraint_violations_per_step,delta_norm_mean,branch_entropy_mean,branch_flip_rate,selected_k_mean,unsafe_delta_rejection_rate,correction_rate,corrected_object_fraction,rollback_rate,escalation_rate,escalation_success_rate,state_integrity_score,low_disruption_integrity_score
+relation_finite_projection,wpu-cws-indexed-mechanism-relation,5,3,0.0,1.643664,0.927942,0.078125,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.926847,0.926847
+relation_finite_projection,wpu-cws-indexed-mechanism-relation,10,3,0.0,2.483041,0.865231,0.113426,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.890408,0.890408
+relation_finite_projection,wpu-cws-indexed-mechanism-relation,25,3,0.200833,4.051999,0.348089,0.043403,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.739041,0.739041
+relation_raw,graph-transformer,5,3,0.170833,23.833869,0.843783,0.255208,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.505,0.505
+relation_raw,graph-transformer,10,3,0.3,26.306219,0.90635,0.300926,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.424815,0.424815
+relation_raw,graph-transformer,25,3,6.304167,30.461124,0.970048,0.112847,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.077431,0.077431
+relation_raw,serialized-token,5,3,0.1875,21.977465,1.039519,0.067708,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.533333,0.533333
+relation_raw,serialized-token,10,3,0.427083,28.337312,1.023432,0.150463,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.385012,0.385012
+relation_raw,serialized-token,25,3,0.554167,27.408027,1.002424,0.056424,516.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.333924,0.333924
+relation_raw,wpu-cws-indexed-mechanism-relation,5,3,0.379167,1.662182,0.929289,0.088542,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.715574,0.715574
+relation_raw,wpu-cws-indexed-mechanism-relation,10,3,0.483333,4.552682,0.867255,0.111111,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.552601,0.552601
+relation_raw,wpu-cws-indexed-mechanism-relation,25,3,3.180833,2379159.47147,0.350841,0.043403,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.091319,0.091319

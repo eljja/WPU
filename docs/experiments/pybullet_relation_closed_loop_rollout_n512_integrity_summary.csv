@@ -1,4 +1,16 @@
 run_label,model,horizon,seed_count,constraint_violations_per_step,delta_norm_mean,branch_entropy_mean,branch_flip_rate,selected_k_mean,unsafe_delta_rejection_rate,correction_rate,corrected_object_fraction,rollback_rate,escalation_rate,escalation_success_rate,state_integrity_score,low_disruption_integrity_score
+relation_bounded_delta005,wpu-cws-indexed-mechanism-relation,5,3,0.0,0.235727,0.859086,0.010417,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.989666,0.989666
+relation_bounded_delta005,wpu-cws-indexed-mechanism-relation,10,3,0.0,0.241253,0.818311,0.083333,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.97489,0.97489
+relation_bounded_delta005,wpu-cws-indexed-mechanism-relation,25,3,0.216667,0.24959,0.328146,0.03125,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.865848,0.865848
+relation_bounded_delta01,wpu-cws-indexed-mechanism-relation,5,3,0.0,0.427202,0.868698,0.020833,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.980881,0.980881
+relation_bounded_delta01,wpu-cws-indexed-mechanism-relation,10,3,0.102083,0.452078,0.825488,0.090278,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.909976,0.909976
+relation_bounded_delta01,wpu-cws-indexed-mechanism-relation,25,3,0.356667,0.486962,0.330895,0.033854,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.780019,0.780019
+relation_bounded_delta025,wpu-cws-indexed-mechanism-relation,5,3,0.283333,0.857477,0.89482,0.052083,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.803738,0.803738
+relation_bounded_delta025,wpu-cws-indexed-mechanism-relation,10,3,0.40625,0.960415,0.844072,0.106482,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.721652,0.721652
+relation_bounded_delta025,wpu-cws-indexed-mechanism-relation,25,3,0.5475,1.149149,0.338299,0.03993,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.650669,0.650669
+relation_bounded_delta05,wpu-cws-indexed-mechanism-relation,5,3,0.3375,1.230218,0.914619,0.0625,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.758817,0.758817
+relation_bounded_delta05,wpu-cws-indexed-mechanism-relation,10,3,0.470833,1.542715,0.856083,0.118055,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.663436,0.663436
+relation_bounded_delta05,wpu-cws-indexed-mechanism-relation,25,3,0.586667,2.146434,0.343483,0.044271,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.593354,0.593354
 relation_consistency,wpu-cws-indexed-mechanism-relation,5,3,4.354167,1000000000.0,1000000000.0,0.0,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
 relation_consistency,wpu-cws-indexed-mechanism-relation,10,3,4.354167,1000000000.0,1000000000.0,0.0,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1
 relation_consistency,wpu-cws-indexed-mechanism-relation,25,3,4.354167,1000000000.0,1000000000.0,0.0,4.354167,0.0,0.0,0.0,0.0,0.0,0.0,0.1,0.1

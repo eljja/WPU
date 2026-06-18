@@ -10,6 +10,10 @@ to claim persistent state as more than a one-step execution primitive.
 Source CSVs:
 
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta05_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta025_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta01_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w5_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_multihorizon_4_8_12_w1_clip1_3seed.csv`
@@ -32,6 +36,18 @@ Derived CSV:
 
 | run | model | H | violations/step | delta norm | flip rate | reject rate | correction rate | corrected objects | rollback rate | escalation rate | escalation success | integrity score | low-disruption score |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| relation_bounded_delta005 | wpu-cws-indexed-mechanism-relation | 5 | 0.000000 | 0.235727 | 0.010417 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989666 | 0.989666 |
+| relation_bounded_delta005 | wpu-cws-indexed-mechanism-relation | 10 | 0.000000 | 0.241253 | 0.083333 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.974890 | 0.974890 |
+| relation_bounded_delta005 | wpu-cws-indexed-mechanism-relation | 25 | 0.216667 | 0.249590 | 0.031250 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.865848 | 0.865848 |
+| relation_bounded_delta01 | wpu-cws-indexed-mechanism-relation | 5 | 0.000000 | 0.427202 | 0.020833 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.980881 | 0.980881 |
+| relation_bounded_delta01 | wpu-cws-indexed-mechanism-relation | 10 | 0.102083 | 0.452078 | 0.090278 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.909976 | 0.909976 |
+| relation_bounded_delta01 | wpu-cws-indexed-mechanism-relation | 25 | 0.356667 | 0.486962 | 0.033854 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.780019 | 0.780019 |
+| relation_bounded_delta025 | wpu-cws-indexed-mechanism-relation | 5 | 0.283333 | 0.857477 | 0.052083 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.803738 | 0.803738 |
+| relation_bounded_delta025 | wpu-cws-indexed-mechanism-relation | 10 | 0.406250 | 0.960415 | 0.106482 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.721652 | 0.721652 |
+| relation_bounded_delta025 | wpu-cws-indexed-mechanism-relation | 25 | 0.547500 | 1.149149 | 0.039930 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.650669 | 0.650669 |
+| relation_bounded_delta05 | wpu-cws-indexed-mechanism-relation | 5 | 0.337500 | 1.230218 | 0.062500 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.758817 | 0.758817 |
+| relation_bounded_delta05 | wpu-cws-indexed-mechanism-relation | 10 | 0.470833 | 1.542715 | 0.118055 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.663436 | 0.663436 |
+| relation_bounded_delta05 | wpu-cws-indexed-mechanism-relation | 25 | 0.586667 | 2.146434 | 0.044271 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.593354 | 0.593354 |
 | relation_consistency | wpu-cws-indexed-mechanism-relation | 5 | 4.354167 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
 | relation_consistency | wpu-cws-indexed-mechanism-relation | 10 | 4.354167 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
 | relation_consistency | wpu-cws-indexed-mechanism-relation | 25 | 4.354167 | 1000000000.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.100000 | 0.100000 |
@@ -89,33 +105,26 @@ and distractor-scaling screens, but raw H=25 rollout integrity is only
 `0.091319` despite selected `K = 4.354167`. The failure is not caused by full
 graph recomputation cost; it is a learned-transition stability failure.
 
-Simple scalar fixes do not solve it. Strong delta-norm regularization reaches
-H=25 integrity `0.087153`, state-validity training remains at `0.091319`, and
-rollout-consistency training produces non-finite deltas that are penalized as
-delta norm `1000000000.000000`. Temporal delta scaling also fails as a standalone
-fix: scale `0.25` reaches H=25 integrity `0.089410`, and scale `0.10` reaches
-`0.089583`. Scaling reduces average delta magnitude but does not convert a
-one-step target into a stable multi-step transition operator.
+The first positive raw-model stability result comes from bounded delta
+parameterization. Applying a `tanh` bound inside the transition head, rather
+than clipping deltas after prediction, raises H=25 integrity to `0.593354` at
+bound `0.5`, `0.650669` at bound `0.25`, `0.780019` at bound `0.1`, and
+`0.865848` at bound `0.05`. The best bounded model exceeds the finite-projection
+safety guard (`0.739041`) while keeping selected `K = 4.354167` and using no
+correction, rollback, rejection, or dense fallback.
 
-Short-stride simulator targets are also negative in this implementation.
-Training the relation WPU on shorter supervised simulator transitions
-(`train_sim_steps=4` or `8`, evaluated against `sim_steps=80`) gives H=25
-integrity `0.089410` and `0.086806`, respectively. Making the short-stride run
-delta-focused does not help: stride-4 delta-only training reaches `0.085243`,
-and branch `0.1` plus delta `1.0` reaches `0.086979`.
+This is not yet a full physics claim. A very small bound may preserve validity
+by under-updating the world, so future reports must pair integrity with
+simulator-resynchronized trajectory error and branch accuracy. Still, the result
+changes the P2 conclusion: the transition architecture, not post-hoc clipping or
+scalar losses, is the first lever that materially improves raw long-horizon
+state integrity.
 
-The first explicit multi-horizon simulator-resynchronized target is also
-negative with the current transition head. Supervising simulator horizons
-`4/8/12` with weight `1.0` or `5.0` produces non-finite long-horizon deltas
-penalized as H=25 integrity `0.100000`; gradient clipping at `1.0` does not
-change that outcome. This narrows the next step: WPU needs a transition
-architecture or training objective that is stable under repeated application,
-not just more one-step targets attached to the same head.
-
-Finite projection lifts applied-state H=25 integrity to `0.739041` and keeps
-delta norm bounded at `4.051999`. This is useful as a state-store safety guard,
-but it is not evidence of learned long-horizon dynamics. Future WPU claims must
-separate raw model deltas from guarded state-store deltas.
+Other attempted fixes remain negative. Strong delta-norm regularization reaches
+H=25 integrity `0.087153`, state-validity training remains at `0.091319`,
+temporal delta scaling remains near `0.089`, short-stride simulator targets
+remain below `0.090`, and explicit multi-horizon simulator targets produce the
+non-finite penalty score `0.100000`.
 
 This makes state integrity a first-class WPU metric:
 
@@ -124,7 +133,6 @@ state-integrity = constraint validity + bounded delta drift + branch stability
 ```
 
 Future WPU rollout claims should report this score or its components next to
-accuracy and latency. The next architecture/training step is a genuinely stable
-recurrent/local transition operator, likely with bounded delta parameterization
-or simulator-resynchronized rollout training that constrains every unrolled
-step.
+accuracy and latency. The next architecture/training step is to retain bounded
+delta parameterization while adding simulator-resynchronized trajectory error,
+branch accuracy, and adaptive per-feature/per-relation bounds.

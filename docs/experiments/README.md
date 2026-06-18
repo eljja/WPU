@@ -281,7 +281,13 @@ Use these reports for paper-level claims:
   branch `0.1` plus delta `1.0` reaches `0.086979`. Explicit multi-horizon
   simulator targets at horizons `4/8/12` are also negative: weights `1.0`,
   `5.0`, and weight `1.0` with gradient clipping all receive the H=25
-  non-finite penalty integrity `0.100000`.
+  non-finite penalty integrity `0.100000`. The first raw-model positive result
+  is bounded delta parameterization inside the transition head: H=25 integrity
+  reaches `0.593354` at bound `0.5`, `0.650669` at `0.25`, `0.780019` at
+  `0.1`, and `0.865848` at `0.05`, while selected `K` remains `4.354167` and
+  no correction, rollback, rejection, or dense fallback is used. This improves
+  raw state integrity but still needs simulator-resynchronized trajectory error
+  and branch-accuracy checks to rule out under-updating.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

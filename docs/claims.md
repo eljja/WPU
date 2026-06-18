@@ -163,8 +163,16 @@ stride-4 delta-only `0.085243`, and stride-4 branch `0.1` plus delta `1.0`
 `0.086979`. Explicit multi-horizon simulator targets over horizons `4/8/12`
 are also negative: weight `1.0`, weight `5.0`, and weight `1.0` with gradient
 clipping all produce H=25 integrity `0.100000` under the non-finite delta
-penalty. The next transition step must change the recurrent/local transition
-operator, not only its supervised target set.
+penalty. The first raw-model positive result is bounded delta parameterization
+inside the transition head. H=25 integrity rises to `0.593354` at bound `0.5`,
+`0.650669` at `0.25`, `0.780019` at `0.1`, and `0.865848` at `0.05`, while
+selected `K` stays `4.354167` and no correction, rollback, rejection, or dense
+fallback is used. This changes P2 from a pure failure boundary into a partial
+raw-stability result, but it does not yet prove simulator-accurate dynamics
+because small bounds may preserve validity by under-updating. The next
+transition step must pair bounded deltas with simulator-resynchronized
+trajectory error, branch accuracy, and adaptive per-feature/per-relation
+bounds.
 
 P1 candidate-generation evidence is now explicitly negative as a standalone fix.
 The joint candidate-generator probe shows that learned generated candidates can

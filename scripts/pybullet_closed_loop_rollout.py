@@ -57,6 +57,7 @@ def main() -> None:
     parser.add_argument("--working-set-size", type=int, default=12)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--grad-clip-norm", type=float, default=0.0)
+    parser.add_argument("--bounded-delta-max", type=float, default=0.0)
     parser.add_argument("--branch-loss-weight", type=float, default=1.0)
     parser.add_argument("--delta-loss-weight", type=float, default=0.1)
     parser.add_argument("--multihorizon-train-steps", type=int, nargs="*", default=[])
@@ -140,6 +141,7 @@ def _train_model(model_name: str, seed: int, args: argparse.Namespace) -> torch.
         layers=args.layers,
         num_heads=args.num_heads,
         working_set_size=args.working_set_size,
+        bounded_delta_max=args.bounded_delta_max,
     ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     dataset = PyBulletCupDataset(
@@ -386,6 +388,7 @@ def _rollout_condition(
         "branch_loss_weight": float(getattr(args, "branch_loss_weight", 1.0)),
         "delta_loss_weight": float(getattr(args, "delta_loss_weight", 0.1)),
         "grad_clip_norm": float(getattr(args, "grad_clip_norm", 0.0)),
+        "bounded_delta_max": float(getattr(args, "bounded_delta_max", 0.0)),
         "multihorizon_train_steps": "|".join(str(step) for step in _multihorizon_steps(args)),
         "multihorizon_loss_weight": float(getattr(args, "multihorizon_loss_weight", 0.0)),
         "state_validity_penalty": args.state_validity_penalty,

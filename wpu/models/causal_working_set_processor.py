@@ -50,6 +50,7 @@ class CausalWorkingSetProcessor(nn.Module):
         adaptive_k_threshold: int | None = None,
         interaction_dense_threshold: float = 0.15,
         route_regret_threshold: float = 0.0,
+        bounded_delta_max: float = 0.0,
     ) -> None:
         super().__init__()
         if selector not in {"learned", "target", "frontier", "indexed", "oracle"}:
@@ -81,6 +82,7 @@ class CausalWorkingSetProcessor(nn.Module):
         self.adaptive_k_threshold = adaptive_k_threshold or max(4, int(working_set_size * 0.75))
         self.interaction_dense_threshold = interaction_dense_threshold
         self.route_regret_threshold = route_regret_threshold
+        self.bounded_delta_max = float(bounded_delta_max)
         self.object_encoder = nn.Linear(object_feature_dim, hidden_dim)
         self.relation_encoder = nn.Linear(relation_feature_dim, hidden_dim)
         self.event_encoder = nn.Linear(event_feature_dim, hidden_dim)
@@ -433,7 +435,8 @@ class CausalWorkingSetProcessor(nn.Module):
         gathered = gathered.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
 
         object_delta = torch.zeros_like(batch.object_features)
-        selected_delta = self.object_delta_head(gathered).masked_fill(~selected_mask.unsqueeze(-1), 0.0)
+        selected_delta = self._bounded_object_delta(self.object_delta_head(gathered))
+        selected_delta = selected_delta.masked_fill(~selected_mask.unsqueeze(-1), 0.0)
         object_delta.scatter_add_(1, selected_indices.unsqueeze(-1).expand(-1, -1, selected_delta.size(-1)), selected_delta)
 
         uncertainty = torch.zeros((*batch.object_features.shape[:2], 1), device=batch.object_features.device)
@@ -492,6 +495,14 @@ class CausalWorkingSetProcessor(nn.Module):
                 for use_dense in dense_mask.detach().cpu().tolist()
             ],
         )
+
+    def _bounded_object_delta(self, delta: torch.Tensor) -> torch.Tensor:
+        if self.bounded_delta_max <= 0.0:
+            return delta
+        bounded = delta.clone()
+        max_delta = max(self.bounded_delta_max, 1e-8)
+        bounded[..., 1:7] = torch.tanh(delta[..., 1:7] / max_delta) * max_delta
+        return bounded
 
     def route_compute_loss(self) -> torch.Tensor:
         """Differentiable proxy for dense routing cost.

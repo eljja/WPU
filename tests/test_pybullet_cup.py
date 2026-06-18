@@ -173,6 +173,8 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
             "0.1",
             "--grad-clip-norm",
             "1.0",
+            "--bounded-delta-max",
+            "0.25",
             "--integrity-projection",
             "--out",
             str(output),
@@ -194,6 +196,7 @@ def test_pybullet_closed_loop_rollout_guarded_projection_runs(tmp_path: Path) ->
     assert "multihorizon_train_steps" in text
     assert "multihorizon_loss_weight" in text
     assert "grad_clip_norm" in text
+    assert "bounded_delta_max" in text
 
 
 def test_pybullet_local_law_revision_help_runs() -> None:

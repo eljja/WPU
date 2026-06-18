@@ -628,6 +628,25 @@ def test_mechanism_relation_route_uses_relation_messages_without_dense_compute()
     assert model.mechanism_branch_head[-1].weight.grad.norm().item() > 0.0
 
 
+def test_cws_bounded_delta_parameterization_limits_position_and_velocity_delta() -> None:
+    dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=8, causal_obstacles=4, interaction_mode="pairwise")
+    batch, _, _, _ = collate_working_set_samples([dataset[0], dataset[1]])
+    model = CausalWorkingSetProcessor(
+        hidden_dim=32,
+        num_heads=4,
+        layers=1,
+        working_set_size=12,
+        selector="indexed",
+        adaptive_hybrid=True,
+        adaptive_route="mechanism_relation",
+        bounded_delta_max=0.05,
+    )
+
+    prediction = model(batch, num_branches=3)
+
+    assert prediction.object_delta[..., 1:7].abs().max().item() <= 0.050001
+
+
 def test_route_physics_features_preserve_action_and_physical_scalars() -> None:
     state = create_robot_cup_state()
     cup = state.objects["cup_001"]

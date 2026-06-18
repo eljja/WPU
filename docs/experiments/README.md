@@ -258,6 +258,13 @@ Use these reports for paper-level claims:
   graph-transformer `0.577143`, dense compute `0.000000`, and win/tie/loss
   `6/0/1`. This supports the small-causal-working-set claim under larger
   non-causal background state, not broad large-N superiority.
+- `pybullet_shift_generalization_n2048_mechanism_relation_results.md`
+  and `pybullet_shift_generalization_n2048_mechanism_relation_results.ko.md`:
+  larger N=2053 distractor-world extension. The 3-seed screen reaches WPU macro
+  accuracy `0.644048` versus graph-transformer `0.516667`, dense compute
+  `0.000000`, and win/tie/loss `7/0/0`. This is the strongest current
+  distractor-scaling evidence, but it still needs harder causal large-N and
+  long-horizon validation.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

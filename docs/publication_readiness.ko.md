@@ -138,7 +138,9 @@ graph-transformer보다 낮다. 이는 missing mechanism이 branch-logit capacit
 `0.000000`이다. Best baseline 대비 win/tie/loss는 `5/0/2`다. 3-seed h64 capacity
 check도 WPU `0.678571`, serialized-token `0.622619`로 positive다. 더 큰 5-seed
 N=1029 distractor screen도 WPU `0.639286`, graph-transformer `0.577143`, dense
-compute `0.000000`, win/tie/loss `6/0/1`로 positive다. 이는 WPU 주장을
+compute `0.000000`, win/tie/loss `6/0/1`로 positive다. N=2053 3-seed distractor
+screen은 WPU `0.644048`, graph-transformer `0.516667`, dense compute `0.000000`,
+win/tie/loss `7/0/0`으로 scaling evidence를 더 강화한다. 이는 WPU 주장을
 새 classifier head가 아니라 relation-conditioned state propagation과 연결한다는 점에서
 publication readiness를 크게 개선한다. 하지만 아직 최종 증거는 아니다. Synthetic
 single-step PyBullet evidence이므로 calibration, rollout, 더 어려운 causal large-N test가

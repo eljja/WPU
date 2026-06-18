@@ -156,7 +156,9 @@ accuracy `0.639286` versus `0.597143` for graph-transformer with dense compute
 capacity check remains positive at `0.678571` versus `0.622619` for
 serialized-token. A larger 5-seed N=1029 distractor screen is also positive:
 `0.639286` versus `0.577143` for graph-transformer, dense compute `0.000000`,
-and win/tie/loss `6/0/1`. This substantially improves publication readiness because it
+and win/tie/loss `6/0/1`. The N=2053 3-seed distractor screen further improves
+the scaling evidence: `0.644048` versus `0.516667` for graph-transformer, dense
+compute `0.000000`, and win/tie/loss `7/0/0`. This substantially improves publication readiness because it
 connects the WPU claim to relation-conditioned state propagation, not merely a
 new classifier head. It is not yet final evidence: it is synthetic single-step
 PyBullet evidence and needs calibration, rollout, and harder causal large-N tests.

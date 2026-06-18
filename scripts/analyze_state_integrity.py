@@ -270,13 +270,18 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
             "escalation rather than acting as a standalone fix.",
         ]
     mechanism_target_note = []
-    bounded005_h25 = _find_summary_row(rows, "relation_bounded_delta005", 25)
-    mechanism_target_h25 = _find_summary_row(rows, "relation_mechanism_target_bounded_delta005", 25)
+    bounded005_h25 = _find_summary_row(rows, "relation_bounded_delta005_5seed", 25) or _find_summary_row(
+        rows, "relation_bounded_delta005", 25
+    )
+    mechanism_target_h25 = _find_summary_row(
+        rows, "relation_mechanism_target_bounded_delta005_5seed", 25
+    ) or _find_summary_row(rows, "relation_mechanism_target_bounded_delta005", 25)
     if bounded005_h25 is not None and mechanism_target_h25 is not None:
         mechanism_target_note = [
             "",
             "The branch-weighted target-local transition head is the first",
-            "positive follow-up on the target-object bottleneck. At H=25 it",
+            "positive follow-up on the target-object bottleneck. In the preferred",
+            "matched-seed comparison at H=25 it",
             f"changes branch accuracy from {float(bounded005_h25['rollout_branch_accuracy']):.6f} to "
             f"{float(mechanism_target_h25['rollout_branch_accuracy']):.6f}, trajectory MSE from "
             f"{float(bounded005_h25['trajectory_mse']):.6f} to {float(mechanism_target_h25['trajectory_mse']):.6f},",

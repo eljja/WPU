@@ -151,11 +151,12 @@ finite projection의 trajectory MSE `1.695024`, branch accuracy `0.250000`보다
 loss는 이 병목을 줄이지 못했다. target-object MSE는 `361-363` 근처에 남거나 branch
 accuracy가 악화됐다. Full recurrent unrolled loss는 초기 probe에서 non-finite gradient를
 만들었고, 안정화한 truncated H=2/4 unroll은 같은 lr/clip bounded-only baseline과 거의
-같았다. 새 branch-weighted target-local transition head는 첫 positive follow-up이다. H=25에서
-branch accuracy는 `0.729167`에서 `0.750000`으로, trajectory MSE는 `0.707117`에서
-`0.699230`으로, target-object MSE는 `361.358309`에서 `357.220733`으로 개선된다. 이는
-transition-head 방향을 지지하지만 target-object position MSE는 여전히 `709.683800`으로 커서
-high-fidelity dynamics는 해결되지 않았다.
+같았다. 새 branch-weighted target-local transition head는 첫 positive follow-up이다. 선호하는
+5-seed matched comparison에서 H=25 branch accuracy는 `0.612500`에서 `0.675000`으로,
+trajectory MSE는 `1.063341`에서 `1.061493`으로, target-object MSE는 `544.710934`에서
+`543.834596`으로 개선된다. 이는 transition-head 방향을 지지하지만 개선폭은 작고 state-integrity는
+`0.868758`에서 `0.850574`로 낮아진다. 따라서 high-fidelity dynamics와 validity-preserving
+target dynamics는 아직 해결되지 않았다.
 
 P1 candidate generation 증거는 단독 해결책으로는 명시적으로 negative result다.
 Joint candidate-generator probe는 learned generated candidate가 oracle headroom을 만들 수

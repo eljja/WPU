@@ -12,9 +12,11 @@ Source CSVs:
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta01_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_5seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_lr3e4_clip1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_unrolled_h2_4_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_bounded_delta005_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_bounded_delta005_5seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_adaptive_delta025_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_split_delta_p010_v005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_targetloss1_3seed.csv`
@@ -34,6 +36,9 @@ Derived CSV:
 | relation_bounded_delta005 | wpu-cws-indexed-mechanism-relation | 5 | 0.000000 | 0.235083 | 0.020833 | 0.833333 | 0.012121 | 6.089423 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.987605 | 0.987605 |
 | relation_bounded_delta005 | wpu-cws-indexed-mechanism-relation | 10 | 0.000000 | 0.235170 | 0.009259 | 0.833333 | 0.081619 | 41.490147 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989917 | 0.989917 |
 | relation_bounded_delta005 | wpu-cws-indexed-mechanism-relation | 25 | 0.217500 | 0.234325 | 0.009549 | 0.729167 | 0.707117 | 361.358309 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.870264 | 0.870264 |
+| relation_bounded_delta005_5seed | wpu-cws-indexed-mechanism-relation | 5 | 0.000000 | 0.240177 | 0.009375 | 0.837500 | 0.019249 | 9.753090 | 15.139451 | 4.366730 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989719 | 0.989719 |
+| relation_bounded_delta005_5seed | wpu-cws-indexed-mechanism-relation | 10 | 0.000000 | 0.239859 | 0.009722 | 0.787500 | 0.124872 | 63.742224 | 122.370617 | 5.113830 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989661 | 0.989661 |
+| relation_bounded_delta005_5seed | wpu-cws-indexed-mechanism-relation | 25 | 0.217500 | 0.239659 | 0.016146 | 0.612500 | 1.063341 | 544.710934 | 1083.211841 | 6.210027 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.868758 | 0.868758 |
 | relation_bounded_delta005_lr3e4_clip1 | wpu-cws-indexed-mechanism-relation | 5 | 0.000000 | 0.238561 | 0.041667 | 0.687500 | 0.012133 | 6.082024 | 9.192385 | 2.971664 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.983317 | 0.983317 |
 | relation_bounded_delta005_lr3e4_clip1 | wpu-cws-indexed-mechanism-relation | 10 | 0.000000 | 0.238644 | 0.037037 | 0.645833 | 0.081700 | 41.463994 | 79.305106 | 3.622881 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.984240 | 0.984240 |
 | relation_bounded_delta005_lr3e4_clip1 | wpu-cws-indexed-mechanism-relation | 25 | 0.163333 | 0.237314 | 0.032986 | 0.500000 | 0.711506 | 363.187130 | 721.641456 | 4.732804 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.895263 | 0.895263 |
@@ -58,6 +63,9 @@ Derived CSV:
 | relation_mechanism_target_bounded_delta005 | wpu-cws-indexed-mechanism-target | 5 | 0.000000 | 0.237980 | 0.010417 | 0.854167 | 0.011951 | 5.992753 | 9.019743 | 2.965763 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989587 | 0.989587 |
 | relation_mechanism_target_bounded_delta005 | wpu-cws-indexed-mechanism-target | 10 | 0.000000 | 0.237494 | 0.018518 | 0.770833 | 0.080643 | 40.940546 | 78.283679 | 3.597411 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.987984 | 0.987984 |
 | relation_mechanism_target_bounded_delta005 | wpu-cws-indexed-mechanism-target | 25 | 0.230833 | 0.235406 | 0.011285 | 0.750000 | 0.699230 | 357.220733 | 709.683800 | 4.757665 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.862545 | 0.862545 |
+| relation_mechanism_target_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target | 5 | 0.000000 | 0.240662 | 0.009375 | 0.837500 | 0.019251 | 9.753684 | 15.095012 | 4.412355 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989702 | 0.989702 |
+| relation_mechanism_target_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target | 10 | 0.000000 | 0.240189 | 0.012500 | 0.787500 | 0.124790 | 63.697114 | 122.224980 | 5.169247 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989093 | 0.989093 |
+| relation_mechanism_target_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target | 25 | 0.251500 | 0.239785 | 0.013542 | 0.675000 | 1.061493 | 543.834596 | 1081.436881 | 6.232311 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.850574 | 0.850574 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 5 | 0.416667 | 1.783713 | 0.119792 | 0.562500 | 0.035057 | 12.370823 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.684445 | 0.684445 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 10 | 0.441667 | 2.062501 | 0.081018 | 0.479167 | 0.201422 | 71.182410 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.668692 | 0.668692 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 25 | 1.184167 | 5.401195 | 0.052951 | 0.208333 | 6.975125 | 922.699696 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.250368 | 0.250368 |
@@ -83,11 +91,12 @@ high integrity is only useful if trajectory error and final branch
 accuracy remain competitive.
 
 The branch-weighted target-local transition head is the first
-positive follow-up on the target-object bottleneck. At H=25 it
-changes branch accuracy from 0.729167 to 0.750000, trajectory MSE from 0.707117 to 0.699230,
-and target-object MSE from 361.358309 to 357.220733. This is a small architectural
+positive follow-up on the target-object bottleneck. In the preferred
+matched-seed comparison at H=25 it
+changes branch accuracy from 0.612500 to 0.675000, trajectory MSE from 1.063341 to 1.061493,
+and target-object MSE from 544.710934 to 543.834596. This is a small architectural
 improvement, not solved high-fidelity dynamics; target-object position
-MSE remains 709.683800.
+MSE remains 1081.436881.
 
 This makes state integrity a first-class WPU metric:
 

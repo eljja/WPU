@@ -693,6 +693,15 @@ Use these reports for paper-level claims:
   signatures, uncertainty, and no-harm safety, but remains weaker than direct
   candidate-regret gating: best/safe closure is `0.097845`, and train-selected
   closure is `0.077781`.
+- `wpu_v2_joint_selector_propagator_results.md` and
+  `wpu_v2_joint_selector_propagator_results.ko.md`: minimal joint
+  selector-propagator objective. It optimizes candidate working-set selector
+  scores and WPU sparse propagation branch losses in the same graph. This is
+  the first P1-positive sub-regime: at `N=2048`, 5 held-out seeds, and `K=8`,
+  safe closure is `0.877854` with harmful accept `0.075555`. The result is
+  conditional: `K=16` and `K=32` remain weak, so differentiable retrieval,
+  candidate generation, and relation-conditioned transition learning remain
+  required.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

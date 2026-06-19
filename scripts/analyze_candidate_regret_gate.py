@@ -130,6 +130,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     is_joint_selector_budget = "joint_selector_propagator_budget" in source.name
     is_joint_selector_relation = "joint_selector_propagator_relation" in source.name
     is_joint_selector_pairwise_noharm = "joint_selector_propagator_pairwise_noharm" in source.name
+    is_joint_selector_structured_candidates = "joint_selector_propagator_structured_candidates" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
@@ -150,6 +151,8 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_invariant_gate
             else "# Joint Utility Verifier 결과"
             if is_joint_utility_verifier
+            else "# Structured-Candidate Joint Selector-Propagator 결과"
+            if is_joint_selector_structured_candidates
             else "# Pairwise No-Harm Joint Selector-Propagator 결과"
             if is_joint_selector_pairwise_noharm
             else "# Joint Selector-Propagator 결과"
@@ -166,7 +169,13 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate 결과"
         )
-        if is_joint_selector_pairwise_noharm:
+        if is_joint_selector_structured_candidates:
+            intro = (
+                "이 문서는 joint selector-propagator에 deterministic structured candidate를 "
+                "추가한 P1 ablation을 요약한다. 목적은 K=16/32 병목이 나쁜 후보를 "
+                "거부하는 문제가 아니라 안전하고 좋은 후보 자체가 부족한 문제인지 검사하는 것이다."
+            )
+        elif is_joint_selector_pairwise_noharm:
             intro = (
                 "이 문서는 joint selector-propagator에 pairwise no-harm score margin을 "
                 "추가한 P1 ablation을 요약한다. 목적은 K=16/32에서 높은 harmful accept가 "
@@ -315,12 +324,18 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             notes.append(
                 "Pairwise no-harm margin이 harmful accept를 낮추지만 closure도 크게 낮추면, P1 병목은 안전 제약 부재만이 아니라 안전한 후보 생성과 relation-aware propagation 품질의 결합 문제다."
             )
+        if is_joint_selector_structured_candidates:
+            notes.append(
+                "Structured candidate 추가가 oracle 또는 deployed closure를 올리지 못하면, 손으로 만든 다양성보다 학습된 candidate generation과 propagation-aware verification이 필요하다고 해석한다."
+            )
     else:
         title = (
             "# Candidate Invariant Gate Results"
             if is_invariant_gate
             else "# Joint Utility Verifier Results"
             if is_joint_utility_verifier
+            else "# Structured-Candidate Joint Selector-Propagator Results"
+            if is_joint_selector_structured_candidates
             else "# Pairwise No-Harm Joint Selector-Propagator Results"
             if is_joint_selector_pairwise_noharm
             else "# Joint Selector-Propagator Results"
@@ -337,7 +352,15 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate Results"
         )
-        if is_joint_selector_pairwise_noharm:
+        if is_joint_selector_structured_candidates:
+            intro = (
+                "This report summarizes a P1 ablation that adds deterministic "
+                "structured candidates to the joint selector-propagator probe. "
+                "It tests whether K=16/32 fails because the system lacks safe "
+                "high-quality candidates, rather than only because it fails to "
+                "reject unsafe ones."
+            )
+        elif is_joint_selector_pairwise_noharm:
             intro = (
                 "This report summarizes a P1 ablation that adds a pairwise "
                 "no-harm score margin to the joint selector-propagator objective. "
@@ -501,6 +524,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         if is_joint_selector_pairwise_noharm:
             notes.append(
                 "If the pairwise no-harm margin lowers harmful accept but also collapses closure, P1 is not solved by safety regularization alone; safe candidate generation and relation-aware propagation quality must improve together."
+            )
+        if is_joint_selector_structured_candidates:
+            notes.append(
+                "If structured candidates do not improve oracle or deployed closure, hand-built diversity is not enough; candidate generation needs learned propagation-aware verification."
             )
 
     lines = [

@@ -13,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.learned_retriever_probe import (  # noqa: E402
     FEATURE_DIM as OBJECT_FEATURE_DIM,
+    _candidate_features,
+    _candidate_ids,
     _selected_ids,
     _selected_pair_density,
     _train_model as _train_interaction_retriever,
@@ -51,6 +53,7 @@ def main() -> None:
     parser.add_argument("--seeds", type=int, nargs="+", default=[11, 13, 17, 19, 23])
     parser.add_argument("--budget", type=int, default=4)
     parser.add_argument("--generated-candidates", type=int, default=4)
+    parser.add_argument("--structured-candidates", type=int, default=0)
     parser.add_argument("--hidden-dim", type=int, default=128)
     parser.add_argument("--selector-hidden-dim", type=int, default=64)
     parser.add_argument("--layers", type=int, default=1)
@@ -100,7 +103,11 @@ def main() -> None:
 def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Namespace) -> list[dict[str, object]]:
     total_n = background_objects + 4 + causal_obstacles
     causal_k = 4 + causal_obstacles
-    candidate_names = [*BASE_MODES, *[f"generated_{index}" for index in range(args.generated_candidates)]]
+    candidate_names = [
+        *BASE_MODES,
+        *[f"generated_{index}" for index in range(args.generated_candidates)],
+        *[f"structured_{index}" for index in range(args.structured_candidates)],
+    ]
     contexts = {
         seed: _make_context(background_objects, causal_obstacles, seed, args, candidate_names)
         for seed in args.seeds
@@ -155,6 +162,7 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
                     "causal_k": causal_k,
                     "budget": args.budget,
                     "generated_candidates": args.generated_candidates,
+                    "structured_candidates": args.structured_candidates,
                     "interaction_mode": args.interaction_mode,
                     "joint_steps": args.joint_steps,
                     "retriever_steps": args.retriever_steps,
@@ -324,7 +332,72 @@ def _candidate_sets_for_samples(
         generated = _generated_candidates(sample, args.budget, args.generated_candidates, seed=seed_offset + sample_index)
         for index, ids in enumerate(generated):
             selected[f"generated_{index}"].append(ids)
+        structured = _structured_candidates(sample, args.budget, args.structured_candidates)
+        for index, ids in enumerate(structured):
+            selected[f"structured_{index}"].append(ids)
     return selected
+
+
+def _structured_candidates(sample, budget: int, count: int) -> list[list[str]]:
+    if count <= 0:
+        return []
+    target = sample.event.target
+    candidate_ids = [object_id for object_id in _candidate_ids(sample.state, sample.event) if object_id != target]
+    if not candidate_ids:
+        return [[target] for _ in range(count)]
+    hand_ids = [object_id for object_id in candidate_ids if sample.state.objects[object_id].type == "robot_hand"]
+    anchor_ids = [
+        object_id
+        for object_id in candidate_ids
+        if sample.state.objects[object_id].type in {"table", "table_edge"}
+    ]
+    obstacle_ids = [object_id for object_id in candidate_ids if sample.state.objects[object_id].type == "obstacle"]
+    feature_cache = {
+        object_id: _candidate_features(sample.state, sample.event, object_id)
+        for object_id in candidate_ids
+    }
+    rankers = [
+        lambda object_id: (
+            -float(feature_cache[object_id][7]),
+            float(feature_cache[object_id][6]),
+            object_id,
+        ),
+        lambda object_id: (
+            -float(feature_cache[object_id][8]),
+            -float(feature_cache[object_id][7]),
+            float(feature_cache[object_id][6]),
+            object_id,
+        ),
+        lambda object_id: (
+            float(feature_cache[object_id][6]),
+            -float(feature_cache[object_id][7]),
+            object_id,
+        ),
+        lambda object_id: (
+            -(1.5 * float(feature_cache[object_id][7]) + float(feature_cache[object_id][8])),
+            float(abs(feature_cache[object_id][5])),
+            object_id,
+        ),
+    ]
+    generated: list[list[str]] = []
+    for index in range(count):
+        ranker = rankers[index % len(rankers)]
+        selected = [target]
+        if hand_ids and index % 3 != 2:
+            selected.append(hand_ids[0])
+        obstacle_ranked = sorted(obstacle_ids, key=ranker)
+        for object_id in obstacle_ranked:
+            if object_id not in selected:
+                selected.append(object_id)
+            if len(selected) >= budget:
+                break
+        for object_id in [*anchor_ids, *candidate_ids]:
+            if len(selected) >= budget:
+                break
+            if object_id not in selected:
+                selected.append(object_id)
+        generated.append(selected[:budget])
+    return generated
 
 
 def _collect_examples(
@@ -436,7 +509,7 @@ def _context_features(
         causal_k / 64.0,
         budget / 64.0,
         min(total_n / 4096.0, 4.0),
-        float(name.startswith("generated_")),
+        float(name.startswith("generated_") or name.startswith("structured_")),
     ]
     if use_geometry_context:
         geometry = _selected_geometry_features(sample, selected_ids)

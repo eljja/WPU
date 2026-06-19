@@ -737,6 +737,22 @@ Use these reports for paper-level claims:
   pairwise no-harm margin setting at weight `0.1`. It recovers higher
   unconstrained `K=32` closure `0.239301`, but harmful accept rises to
   `0.417778`, so it fails the no-harm boundary.
+- `wpu_v2_joint_selector_propagator_structured_candidates_no_margin_results.md`
+  and
+  `wpu_v2_joint_selector_propagator_structured_candidates_no_margin_results.ko.md`:
+  deterministic structured-candidate ablation without pairwise no-harm margin.
+  It creates useful K=16 headroom: deployed confidence-selected closure reaches
+  `0.241624` with harmful accept `0.200000`, and unconstrained closure reaches
+  `0.327084` but with harmful accept `0.355555`. K=32 remains weak at
+  confidence-selected closure `0.124512`. This shows hand-built candidate
+  diversity can help one larger-K case but does not solve safe deployment.
+- `wpu_v2_joint_selector_propagator_structured_candidates_results.md` and
+  `wpu_v2_joint_selector_propagator_structured_candidates_results.ko.md`:
+  deterministic structured candidates combined with pairwise no-harm margin
+  weight `0.3`. It is safer but worse than the no-margin structured run:
+  best safe closure falls to `0.066958`, so rejecting unsafe structured
+  candidates is not enough when candidate scoring cannot identify the useful
+  new headroom.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

@@ -132,6 +132,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     is_joint_selector_pairwise_noharm = "joint_selector_propagator_pairwise_noharm" in source.name
     is_joint_selector_structured_candidates = "joint_selector_propagator_structured_candidates" in source.name
     is_joint_selector_score_regression = "joint_selector_propagator_score_regression" in source.name
+    is_joint_selector_verification_context = "joint_selector_propagator_verification_context" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
@@ -154,6 +155,8 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_joint_utility_verifier
             else "# Score-Regression Joint Selector-Propagator 결과"
             if is_joint_selector_score_regression
+            else "# Verification-Context Joint Selector-Propagator 결과"
+            if is_joint_selector_verification_context
             else "# Structured-Candidate Joint Selector-Propagator 결과"
             if is_joint_selector_structured_candidates
             else "# Pairwise No-Harm Joint Selector-Propagator 결과"
@@ -177,6 +180,14 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
                 "이 문서는 joint selector-propagator selector score를 후보별 propagation loss의 "
                 "상대 utility에 직접 맞추는 P1 ablation을 요약한다. 목적은 structured candidate가 "
                 "만든 headroom을 argmax/ranking objective가 충분히 활용하지 못하는지 검사하는 것이다."
+            )
+        elif is_joint_selector_verification_context:
+            intro = (
+                "이 문서는 joint selector-propagator selector 입력에 label-free propagation "
+                "verification signature를 추가한 P1 ablation을 요약한다. Signature는 후보별 "
+                "branch confidence, entropy, logit margin, delta norm처럼 정답 label 없이 계산되는 "
+                "전파 결과 신호다. 목적은 selector가 정적 candidate description만이 아니라 실제 "
+                "propagator behavior를 보고 harmful candidate를 거부할 수 있는지 검사하는 것이다."
             )
         elif is_joint_selector_structured_candidates:
             intro = (
@@ -341,6 +352,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             notes.append(
                 "Score regression이 closure를 올리지 못하거나 harmful accept를 키우면, 후보 loss magnitude를 맞추는 것만으로는 부족하며 검증 가능한 safe generation이 필요하다고 해석한다."
             )
+        if is_joint_selector_verification_context:
+            notes.append(
+                "Verification context가 closure와 harmful accept를 동시에 개선하지 못하면, label-free 전파 signature는 유용한 관측 신호일 수 있지만 selector 입력 추가만으로는 충분하지 않고 verification objective 자체를 no-harm candidate generation과 함께 학습해야 한다."
+            )
     else:
         title = (
             "# Candidate Invariant Gate Results"
@@ -349,6 +364,8 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_joint_utility_verifier
             else "# Score-Regression Joint Selector-Propagator Results"
             if is_joint_selector_score_regression
+            else "# Verification-Context Joint Selector-Propagator Results"
+            if is_joint_selector_verification_context
             else "# Structured-Candidate Joint Selector-Propagator Results"
             if is_joint_selector_structured_candidates
             else "# Pairwise No-Harm Joint Selector-Propagator Results"
@@ -374,6 +391,16 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
                 "propagation utility. It tests whether structured-candidate "
                 "headroom is missed because argmax/ranking objectives do not "
                 "learn candidate loss magnitudes well enough."
+            )
+        elif is_joint_selector_verification_context:
+            intro = (
+                "This report summarizes a P1 ablation that appends label-free "
+                "propagation verification signatures to the joint selector-propagator "
+                "selector input. The signatures include candidate branch confidence, "
+                "entropy, logit margin, and delta-norm signals computed without "
+                "ground-truth labels. It tests whether the selector can reject "
+                "harmful candidates by observing propagator behavior rather than "
+                "only static candidate descriptions."
             )
         elif is_joint_selector_structured_candidates:
             intro = (
@@ -555,6 +582,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         if is_joint_selector_score_regression:
             notes.append(
                 "If score regression does not improve closure or raises harmful accepts, matching candidate loss magnitudes is not enough; safe generation needs verification-aware supervision."
+            )
+        if is_joint_selector_verification_context:
+            notes.append(
+                "If verification context does not improve closure and harmful accept together, label-free propagation signatures may be useful observations, but appending them to selector input is still insufficient; the verification objective must be trained with no-harm candidate generation."
             )
 
     lines = [

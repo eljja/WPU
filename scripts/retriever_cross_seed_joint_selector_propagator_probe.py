@@ -37,6 +37,7 @@ from wpu.models.factory import create_model  # noqa: E402
 
 
 CONTEXT_EXTRA_DIM = 19
+VERIFICATION_CONTEXT_DIM = 6
 
 
 def main() -> None:
@@ -71,6 +72,18 @@ def main() -> None:
     parser.add_argument("--pairwise-no-harm-margin", type=float, default=0.25)
     parser.add_argument("--score-regression-weight", type=float, default=0.0)
     parser.add_argument("--target-delta-weight", type=float, default=0.05)
+    parser.add_argument(
+        "--verification-context",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Append label-free propagation signatures to candidate selector context.",
+    )
+    parser.add_argument(
+        "--verification-context-detach",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Detach propagation signatures before selector scoring to keep verification observational.",
+    )
     parser.add_argument(
         "--use-geometry-context",
         action=argparse.BooleanOptionalAction,
@@ -173,6 +186,8 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
                     "pairwise_no_harm_weight": args.pairwise_no_harm_weight,
                     "pairwise_no_harm_margin": args.pairwise_no_harm_margin,
                     "score_regression_weight": args.score_regression_weight,
+                    "verification_context": int(bool(args.verification_context)),
+                    "verification_context_detach": int(bool(args.verification_context_detach)),
                 }
             )
         rows.extend(condition_rows)
@@ -245,10 +260,9 @@ def _train_joint_model(
         objects = objects.to(device)
         masks = masks.to(device)
         context = context.to(device)
-        scores = selector(objects, masks, context)
-        weights = F.softmax(scores / max(float(args.selector_temperature), 1e-4), dim=1)
         candidate_losses = []
         candidate_delta_losses = []
+        candidate_signatures = []
         learned_index = candidate_names.index("learned")
         for name in candidate_names:
             batch, target_delta, labels, _ = collate_selected_working_set_samples(batch_samples, selected[name])
@@ -260,8 +274,16 @@ def _train_joint_model(
             delta_loss = F.mse_loss(prediction.object_delta, target_delta, reduction="none").flatten(1).mean(dim=1)
             candidate_losses.append(ce)
             candidate_delta_losses.append(delta_loss)
+            candidate_signatures.append(_prediction_signature(prediction))
         losses = torch.stack(candidate_losses, dim=1)
         delta_losses = torch.stack(candidate_delta_losses, dim=1)
+        if args.verification_context:
+            signatures = torch.stack(candidate_signatures, dim=1)
+            if args.verification_context_detach:
+                signatures = signatures.detach()
+            context = torch.cat([context, signatures], dim=-1)
+        scores = selector(objects, masks, context)
+        weights = F.softmax(scores / max(float(args.selector_temperature), 1e-4), dim=1)
         detached_losses = losses.detach()
         best_indices = detached_losses.argmin(dim=1)
         learned_losses = detached_losses[:, learned_index].unsqueeze(1)
@@ -327,6 +349,29 @@ def _score_regression_loss(scores: torch.Tensor, losses: torch.Tensor) -> torch.
     score_scale = centered_scores.detach().std(dim=1, keepdim=True).clamp_min(1.0)
     utility_scale = utility.std(dim=1, keepdim=True).clamp_min(1e-3)
     return F.mse_loss(centered_scores / score_scale, utility / utility_scale)
+
+
+def _prediction_signature(prediction) -> torch.Tensor:
+    """Return label-free propagation features for candidate verification.
+
+    These signatures intentionally exclude the ground-truth branch label and
+    target delta. They expose how the current propagator behaves on each
+    candidate set so the selector can learn when a candidate is overconfident,
+    unstable, or weakly separated before deployment.
+    """
+
+    probs = F.softmax(prediction.branch_logits, dim=-1)
+    top2 = probs.topk(k=2, dim=-1).values
+    confidence = top2[:, 0]
+    margin = top2[:, 0] - top2[:, 1]
+    entropy = -(probs * probs.clamp_min(1e-8).log()).sum(dim=-1) / torch.log(
+        torch.tensor(float(probs.shape[-1]), device=probs.device)
+    )
+    delta = prediction.object_delta.flatten(1)
+    delta_norm = delta.norm(dim=1).clamp_max(10.0) / 10.0
+    delta_abs_mean = delta.abs().mean(dim=1).clamp_max(5.0) / 5.0
+    logit_scale = prediction.branch_logits.norm(dim=1).clamp_max(10.0) / 10.0
+    return torch.stack([confidence, margin, entropy, delta_norm, delta_abs_mean, logit_scale], dim=1)
 
 
 def _class_weights_from_samples(samples) -> torch.Tensor:
@@ -438,7 +483,20 @@ def _collect_examples(
         name: _evaluate_selected(model, samples, selected[name], args.batch_size, device)
         for name in candidate_names
     }
-    objects, masks, context = _candidate_selector_tensors(samples, selected, candidate_names, args, total_n, causal_k)
+    verification_context = (
+        _candidate_verification_context(model, samples, selected, candidate_names, args, device)
+        if args.verification_context
+        else None
+    )
+    objects, masks, context = _candidate_selector_tensors(
+        samples,
+        selected,
+        candidate_names,
+        args,
+        total_n,
+        causal_k,
+        verification_context=verification_context,
+    )
     with torch.no_grad():
         scores = selector(objects.to(device), masks.to(device), context.to(device)).detach().cpu()
     examples = []
@@ -469,6 +527,7 @@ def _candidate_selector_tensors(
     args: argparse.Namespace,
     total_n: int,
     causal_k: int,
+    verification_context: dict[str, list[list[float]]] | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     object_rows = []
     mask_rows = []
@@ -482,8 +541,7 @@ def _candidate_selector_tensors(
             object_tensor, mask_tensor = _selected_object_tensor(sample, ids, args.budget)
             object_features.append(object_tensor)
             object_masks.append(mask_tensor)
-            context_features.append(
-                _context_features(
+            candidate_context = _context_features(
                     sample,
                     ids,
                     name,
@@ -494,7 +552,9 @@ def _candidate_selector_tensors(
                     args.budget,
                     use_geometry_context=bool(args.use_geometry_context),
                 )
-            )
+            if verification_context is not None:
+                candidate_context.extend(verification_context[name][sample_index])
+            context_features.append(candidate_context)
         object_rows.append(torch.stack(object_features))
         mask_rows.append(torch.stack(object_masks))
         context_rows.append(torch.tensor(context_features, dtype=torch.float32))
@@ -551,7 +611,36 @@ def _context_features(
 
 
 def _context_extra_dim(args: argparse.Namespace) -> int:
-    return CONTEXT_EXTRA_DIM if bool(args.use_geometry_context) else 9
+    base_dim = CONTEXT_EXTRA_DIM if bool(args.use_geometry_context) else 9
+    if bool(getattr(args, "verification_context", False)):
+        base_dim += VERIFICATION_CONTEXT_DIM
+    return base_dim
+
+
+def _candidate_verification_context(
+    model: torch.nn.Module,
+    samples,
+    selected: dict[str, list[list[str]]],
+    candidate_names: list[str],
+    args: argparse.Namespace,
+    device: torch.device,
+) -> dict[str, list[list[float]]]:
+    output: dict[str, list[list[float]]] = {}
+    model_was_training = model.training
+    model.eval()
+    with torch.no_grad():
+        for name in candidate_names:
+            rows: list[list[float]] = []
+            for start in range(0, len(samples), args.batch_size):
+                batch_samples = samples[start : start + args.batch_size]
+                batch_ids = selected[name][start : start + args.batch_size]
+                batch, _, _, _ = collate_selected_working_set_samples(batch_samples, batch_ids)
+                prediction = model(_move_batch(batch, device), num_branches=3, force_route="sparse")
+                rows.extend(_prediction_signature(prediction).detach().cpu().tolist())
+            output[name] = rows
+    if model_was_training:
+        model.train()
+    return output
 
 
 def _summarize(

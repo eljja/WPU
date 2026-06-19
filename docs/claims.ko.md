@@ -34,6 +34,15 @@ mixed/negative라는 것이다. 따라서 주장은 더 좁아진다. WPU의 lar
 작은 identifiable `K`, 충실한 object/action state tensorization, 그리고
 mechanism-aware propagation 또는 adaptation이 필요하다.
 
+최신 C7 P1 verification-context 업데이트:
+`docs/experiments/wpu_v2_joint_selector_propagator_verification_context_results.ko.md`는
+joint selector-propagator selector 입력에 label-free propagation signature를 추가한다.
+이는 유용하지만 충분하지 않은 larger-K 개선이다. `K=16`에서 unconstrained closure는
+`0.409420`까지 오르지만 harmful accept가 `0.342222`로 남고, confidence-selected
+closure는 harmful accept `0.115555`에서 `0.269216`이다. `K=32`의 confidence-selected
+closure는 `0.153386`이다. 따라서 propagation-aware verification은 방향으로 지지되지만,
+safe candidate generation을 아직 해결하지 못한다.
+
 최신 route-state contract 보정:
 `docs/experiments/wpu_v2_route_physics_contract_smoke_results.ko.md`는 더 작은 구현
 수정을 기록한다. Adaptive route-regret context는 이제 pair geometry, target physical

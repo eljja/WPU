@@ -760,6 +760,16 @@ Use these reports for paper-level claims:
   best closure is `0.186333` at `K=16` with harmful accept `0.435556`, while
   the conservative best is only `0.095543` at `K=32`. This rules out simple
   score-to-loss regression as the missing selector fix.
+- `wpu_v2_joint_selector_propagator_verification_context_results.md` and
+  `wpu_v2_joint_selector_propagator_verification_context_results.ko.md`:
+  label-free propagation verification context for the joint selector-propagator.
+  It appends candidate confidence, entropy, logit margin, and delta-norm
+  signatures to selector input. This is a useful but insufficient improvement:
+  unconstrained K=16 closure rises to `0.409420` but harmful accept is
+  `0.342222`; confidence-selected K=16 closure reaches `0.269216` with harmful
+  accept `0.115555`, and K=32 reaches `0.153386`. The result supports
+  propagation-aware verification as a direction but shows that input signatures
+  alone do not solve safe candidate generation.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

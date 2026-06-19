@@ -36,6 +36,16 @@ multi-mechanism training remains mixed/negative at `2/2/3` with mean margin
 small identifiable `K`, faithful object/action state tensorization, and
 mechanism-aware propagation or adaptation.
 
+Latest C7 P1 verification-context update:
+`docs/experiments/wpu_v2_joint_selector_propagator_verification_context_results.md`
+adds label-free propagation signatures to the joint selector-propagator
+selector. It is a useful but insufficient larger-K improvement. At `K=16`,
+unconstrained closure rises to `0.409420` but harmful accept remains
+`0.342222`; confidence-selected closure is `0.269216` with harmful accept
+`0.115555`. At `K=32`, confidence-selected closure is `0.153386`. This supports
+propagation-aware verification as a direction, but it does not yet solve safe
+candidate generation.
+
 Latest route-state contract correction: `docs/experiments/wpu_v2_route_physics_contract_smoke_results.md`
 records a smaller implementation fix. The adaptive route-regret context now
 receives pair geometry, target physical scalars, selected-set physical scalars,

@@ -129,6 +129,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     is_joint_selector_geometry = "joint_selector_propagator_geometry" in source.name
     is_joint_selector_budget = "joint_selector_propagator_budget" in source.name
     is_joint_selector_relation = "joint_selector_propagator_relation" in source.name
+    is_joint_selector_pairwise_noharm = "joint_selector_propagator_pairwise_noharm" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
@@ -149,6 +150,8 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_invariant_gate
             else "# Joint Utility Verifier 결과"
             if is_joint_utility_verifier
+            else "# Pairwise No-Harm Joint Selector-Propagator 결과"
+            if is_joint_selector_pairwise_noharm
             else "# Joint Selector-Propagator 결과"
             if is_joint_selector_propagator
             else "# Joint Propagation Adapter 결과"
@@ -163,7 +166,14 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate 결과"
         )
-        if is_joint_selector_relation:
+        if is_joint_selector_pairwise_noharm:
+            intro = (
+                "이 문서는 joint selector-propagator에 pairwise no-harm score margin을 "
+                "추가한 P1 ablation을 요약한다. 목적은 K=16/32에서 높은 harmful accept가 "
+                "단순 confidence threshold 문제가 아니라 selector score 자체의 baseline-safe "
+                "ordering 문제인지 검사하는 것이다."
+            )
+        elif is_joint_selector_relation:
             intro = (
                 "이 문서는 joint selector-propagator의 propagation model을 relation-conditioned "
                 "WPU로 바꾼 P1 ablation을 요약한다. 목적은 K=16/32 병목이 transition dynamics "
@@ -301,12 +311,18 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             notes.append(
                 "Relation-conditioned propagation이 closure를 올리지만 harmful accept를 낮추지 못하면, 다음 단계는 relation-aware transition과 no-harm candidate selection의 공동학습이다."
             )
+        if is_joint_selector_pairwise_noharm:
+            notes.append(
+                "Pairwise no-harm margin이 harmful accept를 낮추지만 closure도 크게 낮추면, P1 병목은 안전 제약 부재만이 아니라 안전한 후보 생성과 relation-aware propagation 품질의 결합 문제다."
+            )
     else:
         title = (
             "# Candidate Invariant Gate Results"
             if is_invariant_gate
             else "# Joint Utility Verifier Results"
             if is_joint_utility_verifier
+            else "# Pairwise No-Harm Joint Selector-Propagator Results"
+            if is_joint_selector_pairwise_noharm
             else "# Joint Selector-Propagator Results"
             if is_joint_selector_propagator
             else "# Joint Propagation Adapter Results"
@@ -321,7 +337,15 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate Results"
         )
-        if is_joint_selector_relation:
+        if is_joint_selector_pairwise_noharm:
+            intro = (
+                "This report summarizes a P1 ablation that adds a pairwise "
+                "no-harm score margin to the joint selector-propagator objective. "
+                "It tests whether high harmful accept at K=16/32 is not merely "
+                "a confidence-threshold problem, but a baseline-safe ordering "
+                "problem in the selector scores themselves."
+            )
+        elif is_joint_selector_relation:
             intro = (
                 "This report summarizes a P1 ablation that swaps the joint "
                 "selector-propagator propagation model to a relation-conditioned "
@@ -473,6 +497,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         if is_joint_selector_relation:
             notes.append(
                 "If relation-conditioned propagation raises closure but not harmful-accept safety, the next step is joint relation-aware transition learning with no-harm candidate selection."
+            )
+        if is_joint_selector_pairwise_noharm:
+            notes.append(
+                "If the pairwise no-harm margin lowers harmful accept but also collapses closure, P1 is not solved by safety regularization alone; safe candidate generation and relation-aware propagation quality must improve together."
             )
 
     lines = [

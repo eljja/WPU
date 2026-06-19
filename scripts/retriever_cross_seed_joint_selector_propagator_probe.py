@@ -64,6 +64,8 @@ def main() -> None:
     parser.add_argument("--selector-temperature", type=float, default=0.75)
     parser.add_argument("--ranking-weight", type=float, default=0.35)
     parser.add_argument("--no-harm-weight", type=float, default=0.4)
+    parser.add_argument("--pairwise-no-harm-weight", type=float, default=0.0)
+    parser.add_argument("--pairwise-no-harm-margin", type=float, default=0.25)
     parser.add_argument("--target-delta-weight", type=float, default=0.05)
     parser.add_argument(
         "--use-geometry-context",
@@ -159,6 +161,8 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
                     "validation_samples_per_seed": args.validation_samples,
                     "test_samples": args.samples,
                     "use_geometry_context": int(bool(args.use_geometry_context)),
+                    "pairwise_no_harm_weight": args.pairwise_no_harm_weight,
+                    "pairwise_no_harm_margin": args.pairwise_no_harm_margin,
                 }
             )
         rows.extend(condition_rows)
@@ -252,16 +256,49 @@ def _train_joint_model(
         best_indices = detached_losses.argmin(dim=1)
         learned_losses = detached_losses[:, learned_index].unsqueeze(1)
         harmful_mass = (weights * (detached_losses - learned_losses).clamp_min(0.0)).sum(dim=1).mean()
+        pairwise_no_harm = _pairwise_no_harm_loss(
+            scores,
+            detached_losses,
+            learned_index,
+            safe_margin=args.safe_margin,
+            score_margin=args.pairwise_no_harm_margin,
+        )
         loss = (
             (weights * losses).sum(dim=1).mean()
             + args.target_delta_weight * (weights * delta_losses).sum(dim=1).mean()
             + args.ranking_weight * F.cross_entropy(scores, best_indices)
             + args.no_harm_weight * harmful_mass
+            + args.pairwise_no_harm_weight * pairwise_no_harm
         )
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     return model.eval(), selector.eval()
+
+
+def _pairwise_no_harm_loss(
+    scores: torch.Tensor,
+    losses: torch.Tensor,
+    learned_index: int,
+    *,
+    safe_margin: float,
+    score_margin: float,
+) -> torch.Tensor:
+    """Push harmful candidate scores below the learned baseline score.
+
+    Expected-loss weighting can still assign probability to harmful candidates
+    when their absolute loss is close to the best candidate. This auxiliary
+    margin makes the no-harm constraint local to each candidate: if a candidate
+    has higher loss than the learned baseline, its score should sit below the
+    learned score by at least ``score_margin``.
+    """
+
+    learned_losses = losses[:, learned_index].unsqueeze(1)
+    learned_scores = scores[:, learned_index].unsqueeze(1)
+    harmful = (losses > learned_losses + safe_margin).float()
+    candidate_penalty = F.softplus(scores - learned_scores + score_margin) * harmful
+    normalizer = harmful.sum(dim=1).clamp_min(1.0)
+    return (candidate_penalty.sum(dim=1) / normalizer).mean()
 
 
 def _class_weights_from_samples(samples) -> torch.Tensor:

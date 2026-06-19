@@ -717,6 +717,26 @@ Use these reports for paper-level claims:
   propagation ablation. It improves `K=32` closure to `0.266805`, but harmful
   accept remains `0.333333`, so relation-aware dynamics help but do not solve
   safe candidate selection.
+- `wpu_v2_joint_selector_propagator_pairwise_noharm_w03_results.md` and
+  `wpu_v2_joint_selector_propagator_pairwise_noharm_w03_results.ko.md`:
+  pairwise no-harm margin ablation on top of relation-conditioned propagation.
+  It lowers harmful accept under the `0.25` safety boundary while preserving
+  only partial closure: at weight `0.3`, `K=16` reaches closure `0.175125`
+  with harmful accept `0.195555`, and `K=32` reaches closure `0.200230` with
+  harmful accept `0.053333`. Stronger weight `0.8` is safer but weaker; weaker
+  weight `0.1` recovers some unconstrained closure but fails no-harm at `K=32`.
+  The result narrows P1: safety regularization is useful but not enough without
+  better safe candidate generation and relation-aware propagation quality.
+- `wpu_v2_joint_selector_propagator_pairwise_noharm_results.md` and
+  `wpu_v2_joint_selector_propagator_pairwise_noharm_results.ko.md`: stronger
+  pairwise no-harm margin setting at weight `0.8`. It drives harmful accept to
+  `0.000000` at `K=32`, but closure falls to `0.181070` and `K=16` closure is
+  only `0.009922`, making it a safety-heavy negative/partial point.
+- `wpu_v2_joint_selector_propagator_pairwise_noharm_w01_results.md` and
+  `wpu_v2_joint_selector_propagator_pairwise_noharm_w01_results.ko.md`: weaker
+  pairwise no-harm margin setting at weight `0.1`. It recovers higher
+  unconstrained `K=32` closure `0.239301`, but harmful accept rises to
+  `0.417778`, so it fails the no-harm boundary.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

@@ -702,6 +702,21 @@ Use these reports for paper-level claims:
   conditional: `K=16` and `K=32` remain weak, so differentiable retrieval,
   candidate generation, and relation-conditioned transition learning remain
   required.
+- `wpu_v2_joint_selector_propagator_geometry_results.md` and
+  `wpu_v2_joint_selector_propagator_geometry_results.ko.md`: geometry-context
+  ablation for the joint selector-propagator. Candidate force/distance/axis
+  descriptors do not rescue larger K: best safe closure is `0.040810` at
+  `K=16` and `0.010550` at `K=32`.
+- `wpu_v2_joint_selector_propagator_budget8_results.md` and
+  `wpu_v2_joint_selector_propagator_budget8_results.ko.md`: budget expansion
+  ablation for the joint selector-propagator. Increasing the working-set budget
+  from `4` to `8` gives only small larger-K gains: safe closure is `0.060864`
+  at `K=16` and `0.092290` at `K=32`.
+- `wpu_v2_joint_selector_propagator_relation_results.md` and
+  `wpu_v2_joint_selector_propagator_relation_results.ko.md`: relation-conditioned
+  propagation ablation. It improves `K=32` closure to `0.266805`, but harmful
+  accept remains `0.333333`, so relation-aware dynamics help but do not solve
+  safe candidate selection.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

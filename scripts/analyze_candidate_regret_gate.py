@@ -126,6 +126,9 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     is_joint_adapter = "joint_propagation_adapter" in source.name
     is_joint_utility_verifier = "joint_utility_verifier" in source.name
     is_joint_selector_propagator = "joint_selector_propagator" in source.name
+    is_joint_selector_geometry = "joint_selector_propagator_geometry" in source.name
+    is_joint_selector_budget = "joint_selector_propagator_budget" in source.name
+    is_joint_selector_relation = "joint_selector_propagator_relation" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
@@ -160,7 +163,27 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate 결과"
         )
-        if is_joint_selector_propagator:
+        if is_joint_selector_relation:
+            intro = (
+                "이 문서는 joint selector-propagator의 propagation model을 relation-conditioned "
+                "WPU로 바꾼 P1 ablation을 요약한다. 목적은 K=16/32 병목이 transition dynamics "
+                "부족인지 검사하는 것이다. Closure가 오르지만 harmful accept가 남으면 relation-aware "
+                "dynamics는 방향이지만 no-harm candidate selection이 아직 부족하다고 해석한다."
+            )
+        elif is_joint_selector_budget:
+            intro = (
+                "이 문서는 joint selector-propagator의 working-set budget을 확대한 P1 ablation을 "
+                "요약한다. 목적은 K=16/32 실패가 budget=4의 과도한 causal-state 절단 때문인지 "
+                "검사하는 것이다."
+            )
+        elif is_joint_selector_geometry:
+            intro = (
+                "이 문서는 joint selector-propagator에 후보별 geometry/force context를 추가한 "
+                "P1 ablation을 요약한다. 목적은 K=16/32 실패가 단순 descriptor 부족인지 "
+                "검사하는 것이다. 결과가 약하면 larger-K 병목은 feature concatenation이 아니라 "
+                "retrieval, generation, propagation dynamics의 더 깊은 공동학습 문제로 해석한다."
+            )
+        elif is_joint_selector_propagator:
             intro = (
                 "이 문서는 후보 working set selector와 WPU sparse propagation branch loss를 "
                 "같은 학습 그래프에서 최적화한 P1 probe를 요약한다. 기존 post-hoc selector, "
@@ -266,6 +289,18 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             notes.append(
                 "이 실험이 direct candidate-regret gate보다 약하면, selector와 propagation branch loss를 같은 루프로 묶는 것만으로는 부족하며 object retrieval, candidate generation, transition dynamics까지 더 깊게 공동학습해야 한다고 해석한다."
             )
+        if is_joint_selector_geometry:
+            notes.append(
+                "Geometry/force descriptor 추가가 K=16/32를 개선하지 못하면, 단순 feature 추가가 아니라 candidate 생성 및 relation-conditioned transition learning이 다음 병목이다."
+            )
+        if is_joint_selector_budget:
+            notes.append(
+                "Budget 확장만으로 closure가 크게 오르지 않으면, larger-K 실패는 working-set 크기만의 문제가 아니라 후보 품질과 transition dynamics의 문제다."
+            )
+        if is_joint_selector_relation:
+            notes.append(
+                "Relation-conditioned propagation이 closure를 올리지만 harmful accept를 낮추지 못하면, 다음 단계는 relation-aware transition과 no-harm candidate selection의 공동학습이다."
+            )
     else:
         title = (
             "# Candidate Invariant Gate Results"
@@ -286,7 +321,31 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate Results"
         )
-        if is_joint_selector_propagator:
+        if is_joint_selector_relation:
+            intro = (
+                "This report summarizes a P1 ablation that swaps the joint "
+                "selector-propagator propagation model to a relation-conditioned "
+                "WPU. It tests whether the K=16/32 bottleneck is partly caused by "
+                "insufficient transition dynamics. If closure improves but harmful "
+                "accept remains high, relation-aware dynamics are useful but "
+                "no-harm candidate selection is still insufficient."
+            )
+        elif is_joint_selector_budget:
+            intro = (
+                "This report summarizes a P1 ablation that increases the joint "
+                "selector-propagator working-set budget. It tests whether K=16/32 "
+                "fails mainly because budget=4 cuts too much causal state."
+            )
+        elif is_joint_selector_geometry:
+            intro = (
+                "This report summarizes a geometry-context ablation of the joint "
+                "selector-propagator probe. It appends candidate-level geometry "
+                "and force descriptors to test whether the K=16/32 failure is "
+                "just a descriptor bottleneck. Weak results imply that larger-K "
+                "P1 needs deeper joint retrieval, generation, and propagation "
+                "dynamics rather than feature concatenation."
+            )
+        elif is_joint_selector_propagator:
             intro = (
                 "This report summarizes a P1 probe that optimizes candidate "
                 "working-set selector scores and WPU sparse propagation branch "
@@ -402,6 +461,18 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         if is_joint_selector_propagator:
             notes.append(
                 "If this probe underperforms the direct candidate-regret gate, simply coupling selector scores to propagation branch loss is not enough; object retrieval, candidate generation, and transition dynamics need deeper joint training."
+            )
+        if is_joint_selector_geometry:
+            notes.append(
+                "If geometry/force descriptors do not improve K=16/32, the next bottleneck is candidate generation and relation-conditioned transition learning, not more post-hoc descriptor concatenation."
+            )
+        if is_joint_selector_budget:
+            notes.append(
+                "If increasing the budget gives only small gains, larger-K failure is not just working-set size; candidate quality and transition dynamics remain bottlenecks."
+            )
+        if is_joint_selector_relation:
+            notes.append(
+                "If relation-conditioned propagation raises closure but not harmful-accept safety, the next step is joint relation-aware transition learning with no-harm candidate selection."
             )
 
     lines = [

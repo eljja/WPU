@@ -9,6 +9,7 @@ import torch
 import torch.nn.functional as F
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.learned_retriever_probe import (  # noqa: E402
     FEATURE_DIM as OBJECT_FEATURE_DIM,
@@ -24,12 +25,16 @@ from scripts.retriever_generated_candidate_probe import (  # noqa: E402
     _write_csv,
 )
 from scripts.retriever_regret_oracle_probe import _evaluate_selected  # noqa: E402
+from scripts.retriever_cross_seed_set_evaluator_probe import _selected_geometry_features  # noqa: E402
 from scripts.staged_regret_hybrid import _class_weights, _move_batch  # noqa: E402
 from wpu.data.working_set_physics import (  # noqa: E402
     WorkingSetPhysicsDataset,
     collate_selected_working_set_samples,
 )
 from wpu.models.factory import create_model  # noqa: E402
+
+
+CONTEXT_EXTRA_DIM = 19
 
 
 def main() -> None:
@@ -60,6 +65,12 @@ def main() -> None:
     parser.add_argument("--ranking-weight", type=float, default=0.35)
     parser.add_argument("--no-harm-weight", type=float, default=0.4)
     parser.add_argument("--target-delta-weight", type=float, default=0.05)
+    parser.add_argument(
+        "--use-geometry-context",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Append candidate geometry/force descriptors to selector context.",
+    )
     parser.add_argument("--safe-margin", type=float, default=0.005)
     parser.add_argument("--selection-harmful-limit", type=float, default=0.25)
     parser.add_argument("--samples", type=int, default=90)
@@ -147,6 +158,7 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
                     "retriever_steps": args.retriever_steps,
                     "validation_samples_per_seed": args.validation_samples,
                     "test_samples": args.samples,
+                    "use_geometry_context": int(bool(args.use_geometry_context)),
                 }
             )
         rows.extend(condition_rows)
@@ -198,7 +210,11 @@ def _train_joint_model(
         num_heads=args.num_heads,
         working_set_size=args.budget,
     ).to(device)
-    selector = GeneratedSetReranker(OBJECT_FEATURE_DIM, len(candidate_names) + 9, args.selector_hidden_dim).to(device)
+    selector = GeneratedSetReranker(
+        OBJECT_FEATURE_DIM,
+        len(candidate_names) + _context_extra_dim(args),
+        args.selector_hidden_dim,
+    ).to(device)
     class_weights = _class_weights_from_samples(samples).to(device) if args.class_weights else None
     optimizer = torch.optim.AdamW(
         [
@@ -336,7 +352,19 @@ def _candidate_selector_tensors(
             object_tensor, mask_tensor = _selected_object_tensor(sample, ids, args.budget)
             object_features.append(object_tensor)
             object_masks.append(mask_tensor)
-            context_features.append(_context_features(sample, ids, name, candidate_index, len(candidate_names), total_n, causal_k, args.budget))
+            context_features.append(
+                _context_features(
+                    sample,
+                    ids,
+                    name,
+                    candidate_index,
+                    len(candidate_names),
+                    total_n,
+                    causal_k,
+                    args.budget,
+                    use_geometry_context=bool(args.use_geometry_context),
+                )
+            )
         object_rows.append(torch.stack(object_features))
         mask_rows.append(torch.stack(object_masks))
         context_rows.append(torch.tensor(context_features, dtype=torch.float32))
@@ -352,6 +380,8 @@ def _context_features(
     total_n: int,
     causal_k: int,
     budget: int,
+    *,
+    use_geometry_context: bool,
 ) -> list[float]:
     one_hot = [0.0 for _ in range(candidate_count)]
     one_hot[candidate_index] = 1.0
@@ -359,7 +389,7 @@ def _context_features(
     selected_hand = float("hand_001" in selected_ids)
     obstacle_ratio = len(obstacle_ids) / max(float(budget), 1.0)
     pair_density = _selected_pair_density(sample.state, obstacle_ids)
-    return [
+    features = [
         *one_hot,
         selected_hand,
         obstacle_ratio,
@@ -371,6 +401,27 @@ def _context_features(
         min(total_n / 4096.0, 4.0),
         float(name.startswith("generated_")),
     ]
+    if use_geometry_context:
+        geometry = _selected_geometry_features(sample, selected_ids)
+        features.extend(
+            [
+                float(geometry["event_force"]),
+                float(geometry["obstacle_distance_min"]),
+                float(geometry["obstacle_distance_mean"]),
+                float(geometry["obstacle_distance_max"]),
+                float(geometry["obstacle_distance_span"]),
+                float(geometry["obstacle_abs_y_mean"]),
+                float(geometry["obstacle_abs_y_max"]),
+                float(geometry["obstacle_axis_ratio"]),
+                float(geometry["hand_distance"]),
+                float(geometry["edge_distance"]),
+            ]
+        )
+    return features
+
+
+def _context_extra_dim(args: argparse.Namespace) -> int:
+    return CONTEXT_EXTRA_DIM if bool(args.use_geometry_context) else 9
 
 
 def _summarize(

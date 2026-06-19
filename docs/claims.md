@@ -56,6 +56,16 @@ confidence-selected closure is only `0.060597`. This narrows the next P1 target
 away from stronger rejection heads and toward learned safe candidate generation
 with propagation-aware supervision.
 
+Latest C7 P1 learned-safe-candidate update:
+`docs/experiments/wpu_v2_joint_selector_propagator_learned_safe_candidates_results.md`
+adds train-fold object-level generators that imitate interaction, proximity,
+density, and axis teachers. It is not the missing larger-K fix. At `K=16`,
+confidence-selected closure is `0.246071` with harmful accept `0.222222`; at
+`K=32`, confidence-selected closure is `0.143398`. This is weaker than the
+verification-context result, so the next candidate-generation target must learn
+from propagation loss and no-harm transfer directly rather than only imitating
+hand-built teachers.
+
 Latest route-state contract correction: `docs/experiments/wpu_v2_route_physics_contract_smoke_results.md`
 records a smaller implementation fix. The adaptive route-regret context now
 receives pair geometry, target physical scalars, selected-set physical scalars,

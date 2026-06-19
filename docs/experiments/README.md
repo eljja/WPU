@@ -779,6 +779,16 @@ Use these reports for paper-level claims:
   confidence-selected closure is only `0.060597`. The result rules out a
   standalone no-harm head as the missing larger-K fix and pushes P1 toward
   learned safe candidate generation.
+- `wpu_v2_joint_selector_propagator_learned_safe_candidates_results.md` and
+  `wpu_v2_joint_selector_propagator_learned_safe_candidates_results.ko.md`:
+  teacher-supervised learned safe-candidate generation diagnostic. It adds
+  object-level generators trained on interaction, proximity, density, and axis
+  teachers before selector deployment. This is mixed/negative: K=16
+  confidence-selected closure is `0.246071` with harmful accept `0.222222`, and
+  K=32 confidence-selected closure is `0.143398`. It does not beat the
+  verification-context result, so teacher imitation alone is not enough; future
+  candidate generation must be trained against propagation loss and no-harm
+  transfer directly.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

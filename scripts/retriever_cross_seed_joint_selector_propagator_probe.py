@@ -37,7 +37,7 @@ from wpu.data.working_set_physics import (  # noqa: E402
 from wpu.models.factory import create_model  # noqa: E402
 
 
-CONTEXT_EXTRA_DIM = 19
+CONTEXT_EXTRA_DIM = 20
 VERIFICATION_CONTEXT_DIM = 6
 
 
@@ -87,6 +87,10 @@ def main() -> None:
     parser.add_argument("--budget", type=int, default=4)
     parser.add_argument("--generated-candidates", type=int, default=4)
     parser.add_argument("--structured-candidates", type=int, default=0)
+    parser.add_argument("--learned-safe-candidates", type=int, default=0)
+    parser.add_argument("--safe-generator-steps", type=int, default=160)
+    parser.add_argument("--safe-generator-hidden-dim", type=int, default=32)
+    parser.add_argument("--safe-generator-lr", type=float, default=3e-3)
     parser.add_argument("--hidden-dim", type=int, default=128)
     parser.add_argument("--selector-hidden-dim", type=int, default=64)
     parser.add_argument("--layers", type=int, default=1)
@@ -161,6 +165,7 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
         *BASE_MODES,
         *[f"generated_{index}" for index in range(args.generated_candidates)],
         *[f"structured_{index}" for index in range(args.structured_candidates)],
+        *[f"learned_safe_{index}" for index in range(args.learned_safe_candidates)],
     ]
     contexts = {
         seed: _make_context(background_objects, causal_obstacles, seed, args, candidate_names)
@@ -182,12 +187,14 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
             args.retriever_hidden_dim,
             args.retriever_lr,
         )
-        model, selector = _train_joint_model(train_samples, retriever, candidate_names, args)
+        safe_generators = _train_safe_candidate_generators(train_samples, retriever, args)
+        model, selector = _train_joint_model(train_samples, retriever, safe_generators, candidate_names, args)
         validation_examples = _collect_examples(
             model,
             selector,
             heldout["validation_samples"],
             retriever,
+            safe_generators,
             candidate_names,
             args,
             total_n,
@@ -199,6 +206,7 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
             selector,
             heldout["test_samples"],
             retriever,
+            safe_generators,
             candidate_names,
             args,
             total_n,
@@ -217,6 +225,7 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
                     "budget": args.budget,
                     "generated_candidates": args.generated_candidates,
                     "structured_candidates": args.structured_candidates,
+                    "learned_safe_candidates": args.learned_safe_candidates,
                     "interaction_mode": args.interaction_mode,
                     "joint_steps": args.joint_steps,
                     "retriever_steps": args.retriever_steps,
@@ -270,6 +279,7 @@ def _make_context(
 def _train_joint_model(
     samples,
     retriever: torch.nn.Module,
+    safe_generators: list[torch.nn.Module],
     candidate_names: list[str],
     args: argparse.Namespace,
 ) -> tuple[torch.nn.Module, GeneratedSetReranker]:
@@ -299,7 +309,14 @@ def _train_joint_model(
     selector.train()
     for step in range(args.joint_steps):
         batch_samples = [samples[(step * args.batch_size + offset) % len(samples)] for offset in range(args.batch_size)]
-        selected = _candidate_sets_for_samples(batch_samples, retriever, candidate_names, args, seed_offset=step * 97)
+        selected = _candidate_sets_for_samples(
+            batch_samples,
+            retriever,
+            safe_generators,
+            candidate_names,
+            args,
+            seed_offset=step * 97,
+        )
         objects, masks, context = _candidate_selector_tensors(batch_samples, selected, candidate_names, args, 0, 0)
         objects = objects.to(device)
         masks = masks.to(device)
@@ -471,6 +488,7 @@ def _class_weights_from_samples(samples) -> torch.Tensor:
 def _candidate_sets_for_samples(
     samples,
     retriever: torch.nn.Module,
+    safe_generators: list[torch.nn.Module],
     candidate_names: list[str],
     args: argparse.Namespace,
     *,
@@ -486,7 +504,137 @@ def _candidate_sets_for_samples(
         structured = _structured_candidates(sample, args.budget, args.structured_candidates)
         for index, ids in enumerate(structured):
             selected[f"structured_{index}"].append(ids)
+        learned_safe = _learned_safe_candidates(sample, args.budget, safe_generators)
+        for index, ids in enumerate(learned_safe):
+            selected[f"learned_safe_{index}"].append(ids)
     return selected
+
+
+def _train_safe_candidate_generators(
+    samples,
+    retriever: torch.nn.Module,
+    args: argparse.Namespace,
+) -> list[torch.nn.Module]:
+    """Train diverse object-level candidate generators on the train fold.
+
+    These generators are intentionally teacher-supervised rather than
+    ground-truth-loss-supervised. They test whether learned candidate generation
+    can improve the pool before any rejector or verification head is applied.
+    """
+
+    generators: list[torch.nn.Module] = []
+    for index in range(args.learned_safe_candidates):
+        teacher = _safe_generator_teacher(index)
+        generators.append(
+            _train_safe_generator(
+                samples,
+                retriever,
+                args.budget,
+                teacher,
+                args.safe_generator_steps,
+                args.safe_generator_hidden_dim,
+                args.safe_generator_lr,
+            )
+        )
+    return generators
+
+
+def _safe_generator_teacher(index: int) -> str:
+    teachers = ("interaction", "proximity", "density", "axis")
+    return teachers[index % len(teachers)]
+
+
+def _train_safe_generator(
+    samples,
+    retriever: torch.nn.Module,
+    budget: int,
+    teacher: str,
+    steps: int,
+    hidden_dim: int,
+    lr: float,
+) -> torch.nn.Module:
+    features: list[torch.Tensor] = []
+    labels: list[float] = []
+    for sample in samples:
+        teacher_ids = set(_teacher_selected_ids(sample, teacher, budget, retriever))
+        target = sample.event.target
+        for object_id in _candidate_ids(sample.state, sample.event):
+            if object_id == target:
+                continue
+            features.append(_candidate_features(sample.state, sample.event, object_id))
+            labels.append(float(object_id in teacher_ids))
+    if not features:
+        return nn.Identity()
+    feature_tensor = torch.stack(features)
+    label_tensor = torch.tensor(labels, dtype=torch.float32)
+    model = nn.Sequential(
+        nn.LayerNorm(OBJECT_FEATURE_DIM),
+        nn.Linear(OBJECT_FEATURE_DIM, hidden_dim),
+        nn.GELU(),
+        nn.Linear(hidden_dim, 1),
+    )
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+    positive = label_tensor.sum().clamp_min(1.0)
+    negative = (1.0 - label_tensor).sum().clamp_min(1.0)
+    pos_weight = (negative / positive).clamp(1.0, 20.0)
+    for _ in range(steps):
+        logits = model(feature_tensor).squeeze(-1)
+        loss = F.binary_cross_entropy_with_logits(logits, label_tensor, pos_weight=pos_weight)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    return model.eval()
+
+
+def _teacher_selected_ids(sample, teacher: str, budget: int, retriever: torch.nn.Module) -> list[str]:
+    if teacher in BASE_MODES:
+        return _selected_ids(sample, teacher, budget, retriever if teacher == "learned" else None)
+    target = sample.event.target
+    candidate_ids = [object_id for object_id in _candidate_ids(sample.state, sample.event) if object_id != target]
+    if not candidate_ids:
+        return [target]
+    if teacher == "density":
+        key = lambda object_id: (
+            float(_candidate_features(sample.state, sample.event, object_id)[7]),
+            -float(_candidate_features(sample.state, sample.event, object_id)[6]),
+            object_id,
+        )
+    elif teacher == "axis":
+        key = lambda object_id: (
+            float(_candidate_features(sample.state, sample.event, object_id)[8]),
+            float(_candidate_features(sample.state, sample.event, object_id)[0]),
+            -float(_candidate_features(sample.state, sample.event, object_id)[6]),
+            object_id,
+        )
+    else:
+        raise ValueError(f"unknown safe generator teacher: {teacher}")
+    selected = [target]
+    for object_id in sorted(candidate_ids, key=key, reverse=True):
+        selected.append(object_id)
+        if len(selected) >= budget:
+            break
+    return selected
+
+
+def _learned_safe_candidates(sample, budget: int, generators: list[torch.nn.Module]) -> list[list[str]]:
+    output: list[list[str]] = []
+    target = sample.event.target
+    candidate_ids = [object_id for object_id in _candidate_ids(sample.state, sample.event) if object_id != target]
+    if not candidate_ids:
+        return [[target] for _ in generators]
+    features = torch.stack([_candidate_features(sample.state, sample.event, object_id) for object_id in candidate_ids])
+    for generator in generators:
+        with torch.no_grad():
+            scores = generator(features).squeeze(-1)
+        ranked = [object_id for _, object_id in sorted(zip(scores.tolist(), candidate_ids, strict=True), reverse=True)]
+        selected = [target]
+        for object_id in ranked:
+            if object_id not in selected:
+                selected.append(object_id)
+            if len(selected) >= budget:
+                break
+        output.append(selected)
+    return output
 
 
 def _structured_candidates(sample, budget: int, count: int) -> list[list[str]]:
@@ -556,6 +704,7 @@ def _collect_examples(
     selector: GeneratedSetReranker,
     samples,
     retriever: torch.nn.Module,
+    safe_generators: list[torch.nn.Module],
     candidate_names: list[str],
     args: argparse.Namespace,
     total_n: int,
@@ -564,7 +713,14 @@ def _collect_examples(
     seed_offset: int,
 ) -> list[dict[str, object]]:
     device = torch.device(args.device)
-    selected = _candidate_sets_for_samples(samples, retriever, candidate_names, args, seed_offset=seed_offset)
+    selected = _candidate_sets_for_samples(
+        samples,
+        retriever,
+        safe_generators,
+        candidate_names,
+        args,
+        seed_offset=seed_offset,
+    )
     losses = {
         name: _evaluate_selected(model, samples, selected[name], args.batch_size, device)
         for name in candidate_names
@@ -677,6 +833,7 @@ def _context_features(
         budget / 64.0,
         min(total_n / 4096.0, 4.0),
         float(name.startswith("generated_") or name.startswith("structured_")),
+        float(name.startswith("learned_safe_")),
     ]
     if use_geometry_context:
         geometry = _selected_geometry_features(sample, selected_ids)
@@ -698,7 +855,7 @@ def _context_features(
 
 
 def _context_extra_dim(args: argparse.Namespace) -> int:
-    base_dim = CONTEXT_EXTRA_DIM if bool(args.use_geometry_context) else 9
+    base_dim = CONTEXT_EXTRA_DIM if bool(args.use_geometry_context) else 10
     if bool(getattr(args, "verification_context", False)):
         base_dim += VERIFICATION_CONTEXT_DIM
     return base_dim

@@ -134,6 +134,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     is_joint_selector_score_regression = "joint_selector_propagator_score_regression" in source.name
     is_joint_selector_verification_context = "joint_selector_propagator_verification_context" in source.name
     is_joint_selector_verification_head = "joint_selector_propagator_verification_head" in source.name
+    is_joint_selector_learned_safe_candidates = "joint_selector_propagator_learned_safe_candidates" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
@@ -160,6 +161,8 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_joint_selector_verification_context
             else "# Verification-Head Joint Selector-Propagator 결과"
             if is_joint_selector_verification_head
+            else "# Learned-Safe-Candidate Joint Selector-Propagator 결과"
+            if is_joint_selector_learned_safe_candidates
             else "# Structured-Candidate Joint Selector-Propagator 결과"
             if is_joint_selector_structured_candidates
             else "# Pairwise No-Harm Joint Selector-Propagator 결과"
@@ -199,6 +202,14 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
                 "나쁜 후보를 auxiliary target으로 학습하고 deployment score에서 unsafe probability를 "
                 "감점한다. 목적은 verification을 단순 입력 feature가 아니라 no-harm objective로 "
                 "분리했을 때 larger-K safe deployment가 개선되는지 검사하는 것이다."
+            )
+        elif is_joint_selector_learned_safe_candidates:
+            intro = (
+                "이 문서는 train fold에서 학습한 object-level safe candidate generator를 "
+                "joint selector-propagator 후보 pool에 추가한 P1 ablation을 요약한다. Generator는 "
+                "interaction, proximity, density, axis teacher를 다양하게 모방해 rejection 이전에 "
+                "후보 pool 자체가 개선되는지 검사한다. 이는 아직 full differentiable generator가 "
+                "아니라 teacher-supervised candidate-generation diagnostic이다."
             )
         elif is_joint_selector_structured_candidates:
             intro = (
@@ -371,6 +382,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             notes.append(
                 "Verification head가 harmful accept를 낮추면서 closure를 유지하지 못하면, explicit no-harm 판정도 후보 생성과 propagation dynamics 품질이 부족한 상태에서는 충분하지 않다고 해석한다."
             )
+        if is_joint_selector_learned_safe_candidates:
+            notes.append(
+                "Learned-safe candidate가 closure를 올리지 못하면, teacher-supervised object scorer만으로는 충분하지 않고 candidate generation을 propagation loss 및 no-harm objective와 직접 연결해야 한다."
+            )
     else:
         title = (
             "# Candidate Invariant Gate Results"
@@ -383,6 +398,8 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_joint_selector_verification_context
             else "# Verification-Head Joint Selector-Propagator Results"
             if is_joint_selector_verification_head
+            else "# Learned-Safe-Candidate Joint Selector-Propagator Results"
+            if is_joint_selector_learned_safe_candidates
             else "# Structured-Candidate Joint Selector-Propagator Results"
             if is_joint_selector_structured_candidates
             else "# Pairwise No-Harm Joint Selector-Propagator Results"
@@ -428,6 +445,15 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
                 "scores. It tests whether verification helps larger-K deployment when "
                 "trained as a no-harm objective rather than merely concatenated as an "
                 "input feature."
+            )
+        elif is_joint_selector_learned_safe_candidates:
+            intro = (
+                "This report summarizes a P1 ablation that adds train-fold learned "
+                "object-level safe candidate generators to the joint selector-propagator "
+                "candidate pool. The generators imitate diverse interaction, proximity, "
+                "density, and axis teachers to test whether candidate generation itself "
+                "improves before any stronger rejection head is applied. This is still a "
+                "teacher-supervised diagnostic, not a fully differentiable generator."
             )
         elif is_joint_selector_structured_candidates:
             intro = (
@@ -617,6 +643,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         if is_joint_selector_verification_head:
             notes.append(
                 "If the verification head lowers harmful accept only by collapsing closure, explicit no-harm prediction is still insufficient without better candidate generation and propagation dynamics."
+            )
+        if is_joint_selector_learned_safe_candidates:
+            notes.append(
+                "If learned-safe candidates do not raise closure, teacher-supervised object scoring is insufficient; candidate generation must be trained directly against propagation loss and no-harm objectives."
             )
 
     lines = [

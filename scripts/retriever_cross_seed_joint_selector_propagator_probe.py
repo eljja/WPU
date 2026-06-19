@@ -69,6 +69,7 @@ def main() -> None:
     parser.add_argument("--no-harm-weight", type=float, default=0.4)
     parser.add_argument("--pairwise-no-harm-weight", type=float, default=0.0)
     parser.add_argument("--pairwise-no-harm-margin", type=float, default=0.25)
+    parser.add_argument("--score-regression-weight", type=float, default=0.0)
     parser.add_argument("--target-delta-weight", type=float, default=0.05)
     parser.add_argument(
         "--use-geometry-context",
@@ -171,6 +172,7 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
                     "use_geometry_context": int(bool(args.use_geometry_context)),
                     "pairwise_no_harm_weight": args.pairwise_no_harm_weight,
                     "pairwise_no_harm_margin": args.pairwise_no_harm_margin,
+                    "score_regression_weight": args.score_regression_weight,
                 }
             )
         rows.extend(condition_rows)
@@ -271,12 +273,14 @@ def _train_joint_model(
             safe_margin=args.safe_margin,
             score_margin=args.pairwise_no_harm_margin,
         )
+        score_regression = _score_regression_loss(scores, detached_losses)
         loss = (
             (weights * losses).sum(dim=1).mean()
             + args.target_delta_weight * (weights * delta_losses).sum(dim=1).mean()
             + args.ranking_weight * F.cross_entropy(scores, best_indices)
             + args.no_harm_weight * harmful_mass
             + args.pairwise_no_harm_weight * pairwise_no_harm
+            + args.score_regression_weight * score_regression
         )
         optimizer.zero_grad()
         loss.backward()
@@ -307,6 +311,22 @@ def _pairwise_no_harm_loss(
     candidate_penalty = F.softplus(scores - learned_scores + score_margin) * harmful
     normalizer = harmful.sum(dim=1).clamp_min(1.0)
     return (candidate_penalty.sum(dim=1) / normalizer).mean()
+
+
+def _score_regression_loss(scores: torch.Tensor, losses: torch.Tensor) -> torch.Tensor:
+    """Align candidate scores with relative propagation utility.
+
+    Ranking loss only identifies the best candidate, and expected-loss training
+    can underuse near-best structured candidates. This normalized regression
+    teaches score differences to approximate per-sample candidate loss
+    differences without depending on absolute cross-entropy scale.
+    """
+
+    centered_scores = scores - scores.mean(dim=1, keepdim=True)
+    utility = -(losses - losses.mean(dim=1, keepdim=True))
+    score_scale = centered_scores.detach().std(dim=1, keepdim=True).clamp_min(1.0)
+    utility_scale = utility.std(dim=1, keepdim=True).clamp_min(1e-3)
+    return F.mse_loss(centered_scores / score_scale, utility / utility_scale)
 
 
 def _class_weights_from_samples(samples) -> torch.Tensor:

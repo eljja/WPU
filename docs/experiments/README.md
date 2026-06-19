@@ -753,6 +753,13 @@ Use these reports for paper-level claims:
   best safe closure falls to `0.066958`, so rejecting unsafe structured
   candidates is not enough when candidate scoring cannot identify the useful
   new headroom.
+- `wpu_v2_joint_selector_propagator_score_regression_results.md` and
+  `wpu_v2_joint_selector_propagator_score_regression_results.ko.md`: score
+  regression ablation for structured candidates. It directly aligns selector
+  scores with relative candidate propagation utility, but does not improve P1:
+  best closure is `0.186333` at `K=16` with harmful accept `0.435556`, while
+  the conservative best is only `0.095543` at `K=32`. This rules out simple
+  score-to-loss regression as the missing selector fix.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

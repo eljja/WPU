@@ -131,6 +131,7 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
     is_joint_selector_relation = "joint_selector_propagator_relation" in source.name
     is_joint_selector_pairwise_noharm = "joint_selector_propagator_pairwise_noharm" in source.name
     is_joint_selector_structured_candidates = "joint_selector_propagator_structured_candidates" in source.name
+    is_joint_selector_score_regression = "joint_selector_propagator_score_regression" in source.name
     best = max(rows, key=lambda row: float(row["gap_closure_fraction"]))
     safe_rows = [row for row in rows if float(row["mean_harmful_accept_rate"]) <= 0.25]
     safe_best = max(safe_rows, key=lambda row: float(row["gap_closure_fraction"])) if safe_rows else None
@@ -151,6 +152,8 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_invariant_gate
             else "# Joint Utility Verifier 결과"
             if is_joint_utility_verifier
+            else "# Score-Regression Joint Selector-Propagator 결과"
+            if is_joint_selector_score_regression
             else "# Structured-Candidate Joint Selector-Propagator 결과"
             if is_joint_selector_structured_candidates
             else "# Pairwise No-Harm Joint Selector-Propagator 결과"
@@ -169,7 +172,13 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate 결과"
         )
-        if is_joint_selector_structured_candidates:
+        if is_joint_selector_score_regression:
+            intro = (
+                "이 문서는 joint selector-propagator selector score를 후보별 propagation loss의 "
+                "상대 utility에 직접 맞추는 P1 ablation을 요약한다. 목적은 structured candidate가 "
+                "만든 headroom을 argmax/ranking objective가 충분히 활용하지 못하는지 검사하는 것이다."
+            )
+        elif is_joint_selector_structured_candidates:
             intro = (
                 "이 문서는 joint selector-propagator에 deterministic structured candidate를 "
                 "추가한 P1 ablation을 요약한다. 목적은 K=16/32 병목이 나쁜 후보를 "
@@ -328,12 +337,18 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             notes.append(
                 "Structured candidate 추가가 oracle 또는 deployed closure를 올리지 못하면, 손으로 만든 다양성보다 학습된 candidate generation과 propagation-aware verification이 필요하다고 해석한다."
             )
+        if is_joint_selector_score_regression:
+            notes.append(
+                "Score regression이 closure를 올리지 못하거나 harmful accept를 키우면, 후보 loss magnitude를 맞추는 것만으로는 부족하며 검증 가능한 safe generation이 필요하다고 해석한다."
+            )
     else:
         title = (
             "# Candidate Invariant Gate Results"
             if is_invariant_gate
             else "# Joint Utility Verifier Results"
             if is_joint_utility_verifier
+            else "# Score-Regression Joint Selector-Propagator Results"
+            if is_joint_selector_score_regression
             else "# Structured-Candidate Joint Selector-Propagator Results"
             if is_joint_selector_structured_candidates
             else "# Pairwise No-Harm Joint Selector-Propagator Results"
@@ -352,7 +367,15 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
             if is_safety_gate
             else "# Candidate Regret Gate Results"
         )
-        if is_joint_selector_structured_candidates:
+        if is_joint_selector_score_regression:
+            intro = (
+                "This report summarizes a P1 ablation that directly aligns "
+                "joint selector-propagator scores with each candidate's relative "
+                "propagation utility. It tests whether structured-candidate "
+                "headroom is missed because argmax/ranking objectives do not "
+                "learn candidate loss magnitudes well enough."
+            )
+        elif is_joint_selector_structured_candidates:
             intro = (
                 "This report summarizes a P1 ablation that adds deterministic "
                 "structured candidates to the joint selector-propagator probe. "
@@ -528,6 +551,10 @@ def _render_markdown(rows: list[dict[str, object]], source: Path, *, korean: boo
         if is_joint_selector_structured_candidates:
             notes.append(
                 "If structured candidates do not improve oracle or deployed closure, hand-built diversity is not enough; candidate generation needs learned propagation-aware verification."
+            )
+        if is_joint_selector_score_regression:
+            notes.append(
+                "If score regression does not improve closure or raises harmful accepts, matching candidate loss magnitudes is not enough; safe generation needs verification-aware supervision."
             )
 
     lines = [

@@ -770,6 +770,15 @@ Use these reports for paper-level claims:
   accept `0.115555`, and K=32 reaches `0.153386`. The result supports
   propagation-aware verification as a direction but shows that input signatures
   alone do not solve safe candidate generation.
+- `wpu_v2_joint_selector_propagator_verification_head_results.md` and
+  `wpu_v2_joint_selector_propagator_verification_head_results.ko.md`: explicit
+  harmful-candidate verification head on top of label-free propagation
+  signatures. This is a negative diagnostic: K=16 unconstrained closure drops
+  to `0.345395` with harmful accept `0.391111`, while confidence-selected K=16
+  closure drops to `0.193197` with harmful accept `0.102222`; K=32
+  confidence-selected closure is only `0.060597`. The result rules out a
+  standalone no-harm head as the missing larger-K fix and pushes P1 toward
+  learned safe candidate generation.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

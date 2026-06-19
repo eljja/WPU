@@ -46,6 +46,16 @@ unconstrained closure rises to `0.409420` but harmful accept remains
 propagation-aware verification as a direction, but it does not yet solve safe
 candidate generation.
 
+Latest C7 P1 verification-head update:
+`docs/experiments/wpu_v2_joint_selector_propagator_verification_head_results.md`
+adds an explicit harmful-candidate head on top of the label-free verification
+signatures. It is negative as a standalone fix. At `K=16`, unconstrained closure
+falls to `0.345395` with harmful accept `0.391111`; confidence-selected closure
+falls to `0.193197` with harmful accept `0.102222`. At `K=32`,
+confidence-selected closure is only `0.060597`. This narrows the next P1 target
+away from stronger rejection heads and toward learned safe candidate generation
+with propagation-aware supervision.
+
 Latest route-state contract correction: `docs/experiments/wpu_v2_route_physics_contract_smoke_results.md`
 records a smaller implementation fix. The adaptive route-regret context now
 receives pair geometry, target physical scalars, selected-set physical scalars,

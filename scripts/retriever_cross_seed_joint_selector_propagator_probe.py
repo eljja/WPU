@@ -6,6 +6,7 @@ import sys
 from statistics import mean
 
 import torch
+from torch import nn
 import torch.nn.functional as F
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -38,6 +39,37 @@ from wpu.models.factory import create_model  # noqa: E402
 
 CONTEXT_EXTRA_DIM = 19
 VERIFICATION_CONTEXT_DIM = 6
+
+
+class VerificationAwareGeneratedSetReranker(nn.Module):
+    """Candidate scorer with an explicit no-harm verification head."""
+
+    def __init__(self, object_dim: int, context_dim: int, hidden_dim: int) -> None:
+        super().__init__()
+        self.object_encoder = nn.Sequential(
+            nn.LayerNorm(object_dim),
+            nn.Linear(object_dim, hidden_dim),
+            nn.GELU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.GELU(),
+        )
+        self.shared = nn.Sequential(
+            nn.LayerNorm(hidden_dim * 2 + context_dim),
+            nn.Linear(hidden_dim * 2 + context_dim, hidden_dim),
+            nn.GELU(),
+        )
+        self.score_head = nn.Linear(hidden_dim, 1)
+        self.harm_head = nn.Linear(hidden_dim, 1)
+
+    def forward(self, objects: torch.Tensor, mask: torch.Tensor, context: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        batch_size, candidate_count, budget, object_dim = objects.shape
+        encoded = self.object_encoder(objects.view(batch_size * candidate_count * budget, object_dim))
+        encoded = encoded.view(batch_size, candidate_count, budget, -1)
+        float_mask = mask.unsqueeze(-1).float()
+        pooled_mean = (encoded * float_mask).sum(dim=2) / float_mask.sum(dim=2).clamp_min(1.0)
+        pooled_max = encoded.masked_fill(~mask.unsqueeze(-1), -1e4).amax(dim=2)
+        hidden = self.shared(torch.cat([pooled_mean, pooled_max, context], dim=-1))
+        return self.score_head(hidden).squeeze(-1), self.harm_head(hidden).squeeze(-1)
 
 
 def main() -> None:
@@ -84,6 +116,14 @@ def main() -> None:
         default=True,
         help="Detach propagation signatures before selector scoring to keep verification observational.",
     )
+    parser.add_argument(
+        "--verification-head",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Train an explicit candidate harmfulness head and penalize unsafe deployment scores.",
+    )
+    parser.add_argument("--verification-head-weight", type=float, default=0.4)
+    parser.add_argument("--verification-score-penalty", type=float, default=1.0)
     parser.add_argument(
         "--use-geometry-context",
         action=argparse.BooleanOptionalAction,
@@ -188,6 +228,9 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
                     "score_regression_weight": args.score_regression_weight,
                     "verification_context": int(bool(args.verification_context)),
                     "verification_context_detach": int(bool(args.verification_context_detach)),
+                    "verification_head": int(bool(args.verification_head)),
+                    "verification_head_weight": args.verification_head_weight,
+                    "verification_score_penalty": args.verification_score_penalty,
                 }
             )
         rows.extend(condition_rows)
@@ -239,7 +282,8 @@ def _train_joint_model(
         num_heads=args.num_heads,
         working_set_size=args.budget,
     ).to(device)
-    selector = GeneratedSetReranker(
+    selector_cls = VerificationAwareGeneratedSetReranker if args.verification_head else GeneratedSetReranker
+    selector = selector_cls(
         OBJECT_FEATURE_DIM,
         len(candidate_names) + _context_extra_dim(args),
         args.selector_hidden_dim,
@@ -282,12 +326,14 @@ def _train_joint_model(
             if args.verification_context_detach:
                 signatures = signatures.detach()
             context = torch.cat([context, signatures], dim=-1)
-        scores = selector(objects, masks, context)
-        weights = F.softmax(scores / max(float(args.selector_temperature), 1e-4), dim=1)
+        raw_scores, harm_logits = _selector_outputs(selector, objects, masks, context)
         detached_losses = losses.detach()
-        best_indices = detached_losses.argmin(dim=1)
         learned_losses = detached_losses[:, learned_index].unsqueeze(1)
+        scores = _deployment_scores(raw_scores, harm_logits, args)
+        weights = F.softmax(scores / max(float(args.selector_temperature), 1e-4), dim=1)
+        best_indices = detached_losses.argmin(dim=1)
         harmful_mass = (weights * (detached_losses - learned_losses).clamp_min(0.0)).sum(dim=1).mean()
+        verification_loss = _verification_head_loss(harm_logits, detached_losses, learned_index, args.safe_margin)
         pairwise_no_harm = _pairwise_no_harm_loss(
             scores,
             detached_losses,
@@ -303,11 +349,51 @@ def _train_joint_model(
             + args.no_harm_weight * harmful_mass
             + args.pairwise_no_harm_weight * pairwise_no_harm
             + args.score_regression_weight * score_regression
+            + args.verification_head_weight * verification_loss
         )
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     return model.eval(), selector.eval()
+
+
+def _selector_outputs(
+    selector: torch.nn.Module,
+    objects: torch.Tensor,
+    masks: torch.Tensor,
+    context: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor | None]:
+    output = selector(objects, masks, context)
+    if isinstance(output, tuple):
+        return output
+    return output, None
+
+
+def _deployment_scores(
+    raw_scores: torch.Tensor,
+    harm_logits: torch.Tensor | None,
+    args: argparse.Namespace,
+) -> torch.Tensor:
+    if harm_logits is None:
+        return raw_scores
+    unsafe_probability = torch.sigmoid(harm_logits)
+    return raw_scores - float(args.verification_score_penalty) * unsafe_probability
+
+
+def _verification_head_loss(
+    harm_logits: torch.Tensor | None,
+    losses: torch.Tensor,
+    learned_index: int,
+    safe_margin: float,
+) -> torch.Tensor:
+    if harm_logits is None:
+        return losses.new_tensor(0.0)
+    learned_losses = losses[:, learned_index].unsqueeze(1)
+    harmful = (losses > learned_losses + safe_margin).float()
+    positive = harmful.sum().clamp_min(1.0)
+    negative = (1.0 - harmful).sum().clamp_min(1.0)
+    positive_weight = (negative / positive).clamp(1.0, 20.0)
+    return F.binary_cross_entropy_with_logits(harm_logits, harmful, pos_weight=positive_weight.detach())
 
 
 def _pairwise_no_harm_loss(
@@ -498,7 +584,8 @@ def _collect_examples(
         verification_context=verification_context,
     )
     with torch.no_grad():
-        scores = selector(objects.to(device), masks.to(device), context.to(device)).detach().cpu()
+        raw_scores, harm_logits = _selector_outputs(selector, objects.to(device), masks.to(device), context.to(device))
+        scores = _deployment_scores(raw_scores, harm_logits, args).detach().cpu()
     examples = []
     for sample_index, sample in enumerate(samples):
         row: dict[str, object] = {

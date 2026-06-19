@@ -43,6 +43,16 @@ closure는 harmful accept `0.115555`에서 `0.269216`이다. `K=32`의 confidenc
 closure는 `0.153386`이다. 따라서 propagation-aware verification은 방향으로 지지되지만,
 safe candidate generation을 아직 해결하지 못한다.
 
+최신 C7 P1 verification-head 업데이트:
+`docs/experiments/wpu_v2_joint_selector_propagator_verification_head_results.ko.md`는
+label-free verification signature 위에 explicit harmful-candidate head를 추가한다.
+이는 standalone fix로는 negative다. `K=16`에서 unconstrained closure는 `0.345395`,
+harmful accept는 `0.391111`로 verification-context보다 나쁘고, confidence-selected
+closure는 harmful accept `0.102222`에서 `0.193197`로 떨어진다. `K=32`의
+confidence-selected closure는 `0.060597`에 그친다. 따라서 다음 P1 목표는 더 강한
+rejection head가 아니라 propagation-aware supervision을 가진 learned safe candidate
+generation이다.
+
 최신 route-state contract 보정:
 `docs/experiments/wpu_v2_route_physics_contract_smoke_results.ko.md`는 더 작은 구현
 수정을 기록한다. Adaptive route-regret context는 이제 pair geometry, target physical

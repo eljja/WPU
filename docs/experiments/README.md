@@ -291,9 +291,12 @@ Use these reports for paper-level claims:
   `0.675000` and target-object MSE from `544.710934` to `543.834596`, but
   integrity falls from `0.868758` to `0.850574`. A channel-masked constrained
   target-head follow-up is negative (`0.650000` branch accuracy, `544.588713`
-  target-object MSE, `0.846955` integrity at H=25), so the next step is
-  state-validity-aware transition learning rather than masking residual
-  channels by hand.
+  target-object MSE, `0.846955` integrity at H=25). A direct state-validity
+  penalty on the mechanism-target model is also negative as a standalone
+  dynamics fix: it raises H=25 branch accuracy to `0.745000`, but trajectory
+  MSE jumps to `6.682835` and target-object MSE to `3444.169006`. The next
+  step is therefore a structured transition constraint or correction objective,
+  not residual channel masking or another scalar validity loss.
 - `pybullet_route_regret_training_smoke_results.md` and
   `pybullet_route_regret_training_smoke_results.ko.md`: PyBullet route-regret
   training smoke. It wires explicit sparse/dense counterfactual route-regret

@@ -23,6 +23,8 @@ Source CSVs:
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_split_delta_p010_v005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_targetloss1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_finite_projection_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_validity001_5seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_validity01_5seed.csv`
 
 Derived CSV:
 
@@ -41,6 +43,8 @@ Derived CSV:
 | `relation_mechanism_target_bounded_delta005` | 0.862545 | 0.699230 | 357.220733 | 0.750000 |
 | `relation_mechanism_target_bounded_delta005_5seed` | 0.850574 | 1.061493 | 543.834596 | 0.675000 |
 | `relation_mechanism_target_constrained_bounded_delta005_5seed` | 0.846955 | 1.063031 | 544.588713 | 0.650000 |
+| `relation_mechanism_target_validity001_5seed` | 0.862779 | 6.682835 | 3444.169006 | 0.745000 |
+| `relation_mechanism_target_validity01_5seed` | 0.862779 | 6.682835 | 3444.169006 | 0.745000 |
 | `relation_bounded_delta01` | 0.793182 | 0.720660 | 360.705327 | 0.708333 |
 | `relation_adaptive_delta025` | 0.808068 | 0.739266 | 361.306078 | 0.333333 |
 | `relation_split_delta_p010_v005` | 0.879871 | 0.715922 | 361.626218 | 0.541667 |
@@ -90,10 +94,17 @@ target-head는 유망하지만 state-validity tradeoff가 있다.
 target-object MSE `544.588713`, integrity `0.846955`에 그친다. 이는 channel masking만으로는
 target-head의 작은 이득과 state integrity를 동시에 보존하지 못한다는 negative result다.
 
+직접 state-validity penalty를 mechanism-target 모델에 추가한 follow-up도 standalone dynamics
+해결책이 아니다. `0.01`과 `0.1` penalty 모두 H=25 branch accuracy를 `0.745000`까지 올리지만,
+trajectory MSE가 `6.682835`, target-object MSE가 `3444.169006`으로 크게 악화된다. 즉 local
+validity scoring은 branch classifier에는 도움이 될 수 있지만 faithful trajectory dynamics를
+보장하지 않는다. P2의 다음 단계는 scalar validity loss가 아니라 structured transition constraint
+또는 correction objective여야 한다.
+
 ## 다음 조치
 
 - target-object trajectory MSE를 position과 velocity로 계속 분리해 보고한다.
-- 단순 channel mask가 아니라 state-validity-aware transition learning을 설계한다.
+- scalar validity loss가 아니라 structured transition constraint 또는 correction objective를 설계한다.
 - branch-weighted target-local transition head를 더 어려운 mechanism에서 검증한다.
 - relation-conditioned sparse message가 장기 rollout의 target-object dynamics를 직접 설명하도록 학습한다.
 - fixed global bound `0.05`를 현재 sparse rollout baseline으로 유지한다.

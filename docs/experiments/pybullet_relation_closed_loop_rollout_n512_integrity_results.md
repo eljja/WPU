@@ -22,6 +22,8 @@ Source CSVs:
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_split_delta_p010_v005_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_bounded_delta005_targetloss1_3seed.csv`
 - `docs/experiments/pybullet_relation_closed_loop_rollout_n512_finite_projection_3seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_validity001_5seed.csv`
+- `docs/experiments/pybullet_relation_closed_loop_rollout_n512_mechanism_target_validity01_5seed.csv`
 
 Derived CSV:
 
@@ -70,6 +72,12 @@ Derived CSV:
 | relation_mechanism_target_constrained_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target-constrained | 5 | 0.000000 | 0.240025 | 0.009375 | 0.837500 | 0.019263 | 9.761936 | 15.125553 | 4.398318 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989724 | 0.989724 |
 | relation_mechanism_target_constrained_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target-constrained | 10 | 0.000000 | 0.240335 | 0.011111 | 0.800000 | 0.125105 | 63.863048 | 122.558828 | 5.167267 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.989366 | 0.989366 |
 | relation_mechanism_target_constrained_bounded_delta005_5seed | wpu-cws-indexed-mechanism-target-constrained | 25 | 0.257500 | 0.239979 | 0.015104 | 0.650000 | 1.063031 | 544.588713 | 1083.028140 | 6.149287 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.846955 | 0.846955 |
+| relation_mechanism_target_validity001_5seed | wpu-cws-indexed-mechanism-target | 5 | 0.000000 | 0.244972 | 0.018750 | 0.790000 | 0.173601 | 89.390182 | 166.668720 | 12.111644 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.987676 | 0.987676 |
+| relation_mechanism_target_validity001_5seed | wpu-cws-indexed-mechanism-target | 10 | 0.000000 | 0.244613 | 0.020556 | 0.740000 | 0.908583 | 468.099981 | 923.894314 | 12.305648 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.987327 | 0.987327 |
+| relation_mechanism_target_validity001_5seed | wpu-cws-indexed-mechanism-target | 25 | 0.229600 | 0.243540 | 0.012083 | 0.745000 | 6.682835 | 3444.169006 | 6875.166202 | 13.171809 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.862779 | 0.862779 |
+| relation_mechanism_target_validity01_5seed | wpu-cws-indexed-mechanism-target | 5 | 0.000000 | 0.244972 | 0.018750 | 0.790000 | 0.173601 | 89.390182 | 166.668720 | 12.111644 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.987676 | 0.987676 |
+| relation_mechanism_target_validity01_5seed | wpu-cws-indexed-mechanism-target | 10 | 0.000000 | 0.244613 | 0.020556 | 0.740000 | 0.908583 | 468.099981 | 923.894314 | 12.305648 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.987327 | 0.987327 |
+| relation_mechanism_target_validity01_5seed | wpu-cws-indexed-mechanism-target | 25 | 0.229600 | 0.243540 | 0.012083 | 0.745000 | 6.682835 | 3444.169006 | 6875.166202 | 13.171809 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.862779 | 0.862779 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 5 | 0.416667 | 1.783713 | 0.119792 | 0.562500 | 0.035057 | 12.370823 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.684445 | 0.684445 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 10 | 0.441667 | 2.062501 | 0.081018 | 0.479167 | 0.201422 | 71.182410 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.668692 | 0.668692 |
 | relation_raw | wpu-cws-indexed-mechanism-relation | 25 | 1.184167 | 5.401195 | 0.052951 | 0.208333 | 6.975125 | 922.699696 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.250368 | 0.250368 |
@@ -108,6 +116,15 @@ target-object MSE is 544.588713,
 and integrity is 0.846955.
 Thus the next dynamics improvement needs state-validity-aware
 transition learning, not only channel masking.
+A direct state-validity penalty on the mechanism-target model is also
+negative as a standalone dynamics fix. It improves H=25 branch accuracy
+to 0.745000,
+but long-horizon prediction quality collapses:
+trajectory MSE rises to 6.682835
+and target-object MSE rises to 3444.169006.
+This separates local validity scoring from faithful trajectory dynamics;
+P2 needs a structured transition constraint or correction objective, not
+only an added scalar validity loss.
 
 This makes state integrity a first-class WPU metric:
 

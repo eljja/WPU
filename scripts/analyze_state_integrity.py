@@ -305,6 +305,23 @@ def _render_markdown(input_paths: list[Path], output_csv: Path, rows: list[dict[
                     "transition learning, not only channel masking.",
                 ]
             )
+        mechanism_target_validity_h25 = _find_summary_row(
+            rows, "relation_mechanism_target_validity001_5seed", 25
+        ) or _find_summary_row(rows, "relation_mechanism_target_validity01_5seed", 25)
+        if mechanism_target_validity_h25 is not None:
+            mechanism_target_note.extend(
+                [
+                    "A direct state-validity penalty on the mechanism-target model is also",
+                    "negative as a standalone dynamics fix. It improves H=25 branch accuracy",
+                    f"to {float(mechanism_target_validity_h25['rollout_branch_accuracy']):.6f},",
+                    "but long-horizon prediction quality collapses:",
+                    f"trajectory MSE rises to {float(mechanism_target_validity_h25['trajectory_mse']):.6f}",
+                    f"and target-object MSE rises to {float(mechanism_target_validity_h25['target_object_trajectory_mse']):.6f}.",
+                    "This separates local validity scoring from faithful trajectory dynamics;",
+                    "P2 needs a structured transition constraint or correction objective, not",
+                    "only an added scalar validity loss.",
+                ]
+            )
     lines = [
         "# PyBullet State-Integrity Audit",
         "",

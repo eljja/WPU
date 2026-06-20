@@ -70,6 +70,8 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
     verified_controller_path = ROOT / "wpu_v2_verified_candidate_controller_summary.csv"
     joint_adapter_path = ROOT / "wpu_v2_joint_propagation_adapter_summary.csv"
     joint_utility_path = ROOT / "wpu_v2_joint_utility_verifier_summary.csv"
+    minimal_joint_path = ROOT / "wpu_v2_joint_selector_propagator_summary.csv"
+    loss_safe_path = ROOT / "wpu_v2_joint_selector_propagator_loss_safe_candidates.csv"
     regret_best = None
     regret_safe_best = None
     regret_unconstrained_best = None
@@ -480,6 +482,72 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
                 else "."
             )
         )
+    minimal_joint_best = None
+    minimal_joint_note = ""
+    if minimal_joint_path.exists():
+        minimal_rows = _read_rows(minimal_joint_path)
+        minimal_safe_rows = [
+            row
+            for row in minimal_rows
+            if row["policy"] in {"train_selected_joint_selector_propagator", "confidence_selected_joint_selector_propagator"}
+            and float(row.get("mean_harmful_accept_rate", 1.0)) <= 0.25
+            and float(row["gap_closure_fraction"]) > 0.0
+        ]
+        if minimal_safe_rows:
+            minimal_best_row = max(minimal_safe_rows, key=lambda row: float(row["gap_closure_fraction"]))
+            minimal_joint_best = float(minimal_best_row["gap_closure_fraction"])
+            minimal_joint_note = (
+                " A minimal joint selector-propagator objective is the first P1-positive sub-regime: "
+                f"N={minimal_best_row['total_objects_n']}, K={minimal_best_row['causal_k']} reaches safe closure "
+                f"{minimal_joint_best:.6f} with harmful accept "
+                f"{float(minimal_best_row.get('mean_harmful_accept_rate', 0.0)):.6f}. "
+                "The result is conditional because larger K remains below the target."
+            )
+    loss_safe_best = None
+    loss_safe_note = ""
+    if loss_safe_path.exists():
+        loss_stats = _joint_selector_policy_stats(loss_safe_path)
+        if loss_stats:
+            train_selected = [
+                row for row in loss_stats if row["policy"] == "train_selected_joint_selector_propagator"
+            ]
+            safe_rows = [
+                row
+                for row in loss_stats
+                if row["policy"]
+                not in {"static_learned_interaction", "generated_plus_composition_oracle"}
+                and row["harmful_accept_rate"] <= 0.25
+                and row["gap_closure_fraction"] > 0.0
+            ]
+            best_safe = max(safe_rows, key=lambda row: row["gap_closure_fraction"]) if safe_rows else None
+            best_train = max(train_selected, key=lambda row: row["gap_closure_fraction"]) if train_selected else None
+            loss_safe_best = best_safe["gap_closure_fraction"] if best_safe is not None else None
+            k16 = next(
+                (
+                    row
+                    for row in train_selected
+                    if row["causal_k"] == 16
+                ),
+                None,
+            )
+            k32 = next(
+                (
+                    row
+                    for row in train_selected
+                    if row["causal_k"] == 32
+                ),
+                None,
+            )
+            if k16 is not None and k32 is not None and best_train is not None:
+                loss_safe_note = (
+                    " Loss-supervised safe candidate generation is the first larger-K follow-up that improves "
+                    "the K=32 safe deployment boundary: train-selected K=16 closure "
+                    f"{k16['gap_closure_fraction']:.6f} with harmful accept {k16['harmful_accept_rate']:.6f}, "
+                    f"train-selected K=32 closure {k32['gap_closure_fraction']:.6f} with harmful accept "
+                    f"{k32['harmful_accept_rate']:.6f}. This supports propagation-loss-supervised candidate "
+                    "generation, but it still falls below the 0.5 P1 target and should be treated as a "
+                    "larger-K improvement rather than a solved candidate-oracle gap."
+                )
     best = max(
         value
         for value in [
@@ -495,6 +563,8 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
             verified_best,
             joint_adapter_best,
             joint_utility_best,
+            minimal_joint_best,
+            loss_safe_best,
         ]
         if value is not None
     )
@@ -513,6 +583,10 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         if joint_adapter_best == best
         else joint_utility_path
         if joint_utility_best == best
+        else minimal_joint_path
+        if minimal_joint_best == best
+        else loss_safe_path
+        if loss_safe_best == best
         else joint_generator_path
         if joint_generator_best == best
         else path
@@ -525,7 +599,7 @@ def _priority_candidate_oracle_gap() -> dict[str, object]:
         0.5,
         "gap_closure_fraction",
         source,
-        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}{crossfit_note}{invariant_note}{joint_note}{joint_regression_note}{end_to_end_note}{joint_generator_note}{verified_note}{joint_adapter_note}{joint_utility_note}",
+        f"Best deployed closure is {best:.6f}; previous aggregate-policy best is {aggregate_best:.6f} and mean aggregate closure is {mean:.6f}.{noharm_note}{regret_note}{penalty_note}{perturb_note}{safety_note}{crossfit_note}{invariant_note}{joint_note}{joint_regression_note}{end_to_end_note}{joint_generator_note}{verified_note}{joint_adapter_note}{joint_utility_note}{minimal_joint_note}{loss_safe_note}",
         "Move beyond post-hoc, object-set-only, selector-loss-only, generator-only, verification-feature-only, shallow branch-logit-adapter, and fixed-propagator utility/safety verifier probes: train candidate generation, retrieval, propagation dynamics, propagation verification, and calibrated no-harm objectives as one held-out-seed objective.",
     )
 
@@ -1961,6 +2035,48 @@ def _read_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def _joint_selector_policy_stats(path: Path) -> list[dict[str, float | int | str]]:
+    rows = _read_rows(path)
+    if not rows:
+        return []
+    output: list[dict[str, float | int | str]] = []
+    for causal_k in sorted({int(row["causal_k"]) for row in rows}):
+        k_rows = [row for row in rows if int(row["causal_k"]) == causal_k]
+        policies = sorted({row["policy"] for row in k_rows})
+        by_policy = {policy: [row for row in k_rows if row["policy"] == policy] for policy in policies}
+        if "static_learned_interaction" not in by_policy:
+            continue
+        static_loss = statistics.fmean(float(row["loss"]) for row in by_policy["static_learned_interaction"])
+        oracle_policy = (
+            "generated_plus_composition_oracle"
+            if "generated_plus_composition_oracle" in by_policy
+            else min(
+                policies,
+                key=lambda policy: statistics.fmean(float(row["loss"]) for row in by_policy[policy]),
+            )
+        )
+        oracle_loss = statistics.fmean(float(row["loss"]) for row in by_policy[oracle_policy])
+        oracle_gap = max(static_loss - oracle_loss, 1e-8)
+        for policy, policy_rows in by_policy.items():
+            loss = statistics.fmean(float(row["loss"]) for row in policy_rows)
+            output.append(
+                {
+                    "causal_k": causal_k,
+                    "policy": policy,
+                    "loss": loss,
+                    "accuracy": statistics.fmean(float(row["accuracy"]) for row in policy_rows),
+                    "gap_closure_fraction": (static_loss - loss) / oracle_gap,
+                    "harmful_accept_rate": statistics.fmean(
+                        float(row["harmful_accept_rate"]) for row in policy_rows
+                    ),
+                    "accept_rate": statistics.fmean(float(row["accept_rate"]) for row in policy_rows),
+                    "static_loss": static_loss,
+                    "oracle_loss": oracle_loss,
+                }
+            )
+    return output
+
+
 def _rows_of_type(rows: list[dict[str, str]], row_type: str) -> list[dict[str, str]]:
     if not rows or "row_type" not in rows[0]:
         return rows
@@ -2601,7 +2717,12 @@ def _render_markdown(rows: list[dict[str, object]], *, korean: bool) -> str:
     lines.extend(["", interp, "", boundary, ""])
     for row in rows:
         if korean:
-            lines.append(f"- P{row['priority']} {_ko_name(int(row['priority']))}: {_ko_interpretation(int(row['priority']))}")
+            interpretation = (
+                _ko_p1_interpretation()
+                if int(row["priority"]) == 1
+                else _ko_interpretation(int(row["priority"]))
+            )
+            lines.append(f"- P{row['priority']} {_ko_name(int(row['priority']))}: {interpretation}")
         else:
             lines.append(f"- P{row['priority']} {row['name']}: {row['interpretation']}")
     lines.extend(["", next_title, ""])
@@ -2631,6 +2752,21 @@ def _ko_status(status: str) -> str:
         "partial": "partial",
         "fail": "fail",
     }[status]
+
+
+def _ko_p1_interpretation() -> str:
+    return (
+        "P1 candidate-oracle gap은 더 이상 전면 실패가 아니다. Minimal joint selector-propagator는 "
+        "N=2048, K=8에서 safe closure 0.877854와 harmful accept 0.075555를 달성해 현재 P1 threshold "
+        "0.5를 넘는다. 그러나 이 결과는 작은 K sub-regime에 제한된다. K=16/32에서는 deterministic "
+        "structured candidate, verification signature, no-harm head, score regression, teacher-supervised "
+        "safe generator가 모두 standalone 해결책이 아니었다. 최신 loss-supervised safe candidate "
+        "generation은 propagation-loss/no-harm label로 후보 생성기를 학습해 K=16 train-selected "
+        "closure 0.302097, harmful accept 0.146667과 K=32 train-selected closure 0.357010, harmful "
+        "accept 0.055555를 만든다. 이는 larger-K boundary를 실제로 개선한 첫 강한 신호지만, "
+        "여전히 P1 목표 0.5에는 못 미친다. 따라서 다음 단계는 후보 생성, retrieval, propagation "
+        "verification, propagation dynamics를 하나의 held-out-seed objective로 더 직접적으로 묶는 것이다."
+    )
 
 
 def _ko_interpretation(priority: int) -> str:

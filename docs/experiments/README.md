@@ -789,6 +789,13 @@ Use these reports for paper-level claims:
   verification-context result, so teacher imitation alone is not enough; future
   candidate generation must be trained against propagation loss and no-harm
   transfer directly.
+- `wpu_v2_joint_selector_propagator_loss_safe_candidates_results.md` and
+  `wpu_v2_joint_selector_propagator_loss_safe_candidates_results.ko.md`:
+  propagation-loss/no-harm supervised safe-candidate generation follow-up. At
+  `N=2048`, train-selected K=16 closure is `0.302097` with harmful accept
+  `0.146667`, and train-selected K=32 closure improves to `0.357010` with
+  harmful accept `0.055555`. This is the strongest larger-K safe candidate
+  generation signal so far, but it remains below the P1 target `0.5`.
 - `wpu_v2_route_physics_contract_smoke_results.md` and
   `wpu_v2_route_physics_contract_smoke_results.ko.md`: route-state contract
   smoke. It verifies that adaptive route-regret heads receive action and

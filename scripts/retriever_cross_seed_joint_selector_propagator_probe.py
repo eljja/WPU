@@ -88,9 +88,22 @@ def main() -> None:
     parser.add_argument("--generated-candidates", type=int, default=4)
     parser.add_argument("--structured-candidates", type=int, default=0)
     parser.add_argument("--learned-safe-candidates", type=int, default=0)
+    parser.add_argument(
+        "--safe-generator-mode",
+        choices=["teacher", "loss"],
+        default="teacher",
+        help=(
+            "How learned_safe_* candidates are trained. 'teacher' imitates "
+            "hand-built object selectors; 'loss' trains against train-fold "
+            "propagation loss/no-harm labels from a reference sparse model."
+        ),
+    )
     parser.add_argument("--safe-generator-steps", type=int, default=160)
     parser.add_argument("--safe-generator-hidden-dim", type=int, default=32)
     parser.add_argument("--safe-generator-lr", type=float, default=3e-3)
+    parser.add_argument("--loss-generator-propagation-steps", type=int, default=80)
+    parser.add_argument("--loss-generator-random-candidates", type=int, default=4)
+    parser.add_argument("--loss-generator-structured-candidates", type=int, default=4)
     parser.add_argument("--hidden-dim", type=int, default=128)
     parser.add_argument("--selector-hidden-dim", type=int, default=64)
     parser.add_argument("--layers", type=int, default=1)
@@ -226,6 +239,10 @@ def _run_group(background_objects: int, causal_obstacles: int, args: argparse.Na
                     "generated_candidates": args.generated_candidates,
                     "structured_candidates": args.structured_candidates,
                     "learned_safe_candidates": args.learned_safe_candidates,
+                    "safe_generator_mode": args.safe_generator_mode,
+                    "loss_generator_propagation_steps": args.loss_generator_propagation_steps,
+                    "loss_generator_random_candidates": args.loss_generator_random_candidates,
+                    "loss_generator_structured_candidates": args.loss_generator_structured_candidates,
                     "interaction_mode": args.interaction_mode,
                     "joint_steps": args.joint_steps,
                     "retriever_steps": args.retriever_steps,
@@ -517,12 +534,27 @@ def _train_safe_candidate_generators(
 ) -> list[torch.nn.Module]:
     """Train diverse object-level candidate generators on the train fold.
 
-    These generators are intentionally teacher-supervised rather than
-    ground-truth-loss-supervised. They test whether learned candidate generation
-    can improve the pool before any rejector or verification head is applied.
+    Teacher mode reproduces the earlier diagnostic. Loss mode is the stronger P1
+    test: candidate membership is supervised by train-fold propagation loss and
+    no-harm transfer relative to the learned interaction baseline.
     """
 
     generators: list[torch.nn.Module] = []
+    if args.safe_generator_mode == "loss":
+        reference_model = _train_reference_propagator(samples, retriever, args)
+        loss_labels = _loss_supervised_generator_labels(samples, reference_model, retriever, args)
+        for index in range(args.learned_safe_candidates):
+            generators.append(
+                _train_loss_safe_generator(
+                    loss_labels,
+                    index,
+                    args.safe_generator_steps,
+                    args.safe_generator_hidden_dim,
+                    args.safe_generator_lr,
+                )
+            )
+        return generators
+
     for index in range(args.learned_safe_candidates):
         teacher = _safe_generator_teacher(index)
         generators.append(
@@ -537,6 +569,155 @@ def _train_safe_candidate_generators(
             )
         )
     return generators
+
+
+def _train_reference_propagator(
+    samples,
+    retriever: torch.nn.Module,
+    args: argparse.Namespace,
+) -> torch.nn.Module:
+    device = torch.device(args.device)
+    torch.manual_seed(9031 + len(samples) + args.budget)
+    model = create_model(
+        args.model_name,
+        hidden_dim=args.hidden_dim,
+        layers=args.layers,
+        num_heads=args.num_heads,
+        working_set_size=args.budget,
+    ).to(device)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    class_weights = _class_weights_from_samples(samples).to(device) if args.class_weights else None
+    model.train()
+    for step in range(max(int(args.loss_generator_propagation_steps), 0)):
+        batch_samples = [samples[(step * args.batch_size + offset) % len(samples)] for offset in range(args.batch_size)]
+        selected = [_selected_ids(sample, "learned", args.budget, retriever) for sample in batch_samples]
+        batch, target_delta, labels, _ = collate_selected_working_set_samples(batch_samples, selected)
+        batch = _move_batch(batch, device)
+        target_delta = target_delta.to(device)
+        labels = labels.to(device)
+        prediction = model(batch, num_branches=3, force_route="sparse")
+        branch_loss = F.cross_entropy(prediction.branch_logits, labels, weight=class_weights)
+        delta_loss = F.mse_loss(prediction.object_delta, target_delta)
+        loss = branch_loss + args.target_delta_weight * delta_loss
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    return model.eval()
+
+
+def _loss_supervised_generator_labels(
+    samples,
+    reference_model: torch.nn.Module,
+    retriever: torch.nn.Module,
+    args: argparse.Namespace,
+) -> list[dict[str, object]]:
+    device = torch.device(args.device)
+    candidate_sets, candidate_names = _candidate_pool_for_loss_labels(samples, retriever, args)
+    losses = {
+        name: _evaluate_selected(reference_model, samples, candidate_sets[name], args.batch_size, device)[0]
+        for name in candidate_names
+    }
+    rows: list[dict[str, object]] = []
+    for sample_index, sample in enumerate(samples):
+        learned_loss = float(losses["learned"][sample_index])
+        ranked_names = sorted(candidate_names, key=lambda name: (float(losses[name][sample_index]), name))
+        safe_ranked = [
+            name
+            for name in ranked_names
+            if float(losses[name][sample_index]) + args.safe_margin < learned_loss
+        ]
+        if not safe_ranked:
+            safe_ranked = ["learned"]
+        target = sample.event.target
+        candidate_ids = [
+            object_id for object_id in _candidate_ids(sample.state, sample.event) if object_id != target
+        ]
+        rows.append(
+            {
+                "sample": sample,
+                "candidate_ids": candidate_ids,
+                "safe_ranked_names": safe_ranked,
+                "candidate_sets": candidate_sets,
+                "sample_index": sample_index,
+                "learned_loss": learned_loss,
+                "best_loss": float(losses[safe_ranked[0]][sample_index]),
+            }
+        )
+    return rows
+
+
+def _candidate_pool_for_loss_labels(
+    samples,
+    retriever: torch.nn.Module,
+    args: argparse.Namespace,
+) -> tuple[dict[str, list[list[str]]], list[str]]:
+    candidate_names = [
+        *BASE_MODES,
+        *[f"loss_generated_{index}" for index in range(args.loss_generator_random_candidates)],
+        *[f"loss_structured_{index}" for index in range(args.loss_generator_structured_candidates)],
+    ]
+    selected: dict[str, list[list[str]]] = {name: [] for name in candidate_names}
+    for sample_index, sample in enumerate(samples):
+        for mode in BASE_MODES:
+            selected[mode].append(_selected_ids(sample, mode, args.budget, retriever if mode == "learned" else None))
+        generated = _generated_candidates(
+            sample,
+            args.budget,
+            args.loss_generator_random_candidates,
+            seed=71_000 + sample_index,
+        )
+        for index, ids in enumerate(generated):
+            selected[f"loss_generated_{index}"].append(ids)
+        structured = _structured_candidates(sample, args.budget, args.loss_generator_structured_candidates)
+        for index, ids in enumerate(structured):
+            selected[f"loss_structured_{index}"].append(ids)
+    return selected, candidate_names
+
+
+def _train_loss_safe_generator(
+    label_rows: list[dict[str, object]],
+    generator_index: int,
+    steps: int,
+    hidden_dim: int,
+    lr: float,
+) -> torch.nn.Module:
+    features: list[torch.Tensor] = []
+    labels: list[float] = []
+    weights: list[float] = []
+    for row in label_rows:
+        sample = row["sample"]
+        sample_index = int(row["sample_index"])
+        safe_ranked_names = row["safe_ranked_names"]
+        selected_name = safe_ranked_names[generator_index % len(safe_ranked_names)]
+        selected_ids = set(row["candidate_sets"][selected_name][sample_index])
+        gain = max(0.0, float(row["learned_loss"]) - float(row["best_loss"]))
+        for object_id in row["candidate_ids"]:
+            features.append(_candidate_features(sample.state, sample.event, object_id))
+            labels.append(float(object_id in selected_ids))
+            weights.append(1.0 + 10.0 * gain)
+    if not features:
+        return nn.Identity()
+    feature_tensor = torch.stack(features)
+    label_tensor = torch.tensor(labels, dtype=torch.float32)
+    weight_tensor = torch.tensor(weights, dtype=torch.float32)
+    model = nn.Sequential(
+        nn.LayerNorm(OBJECT_FEATURE_DIM),
+        nn.Linear(OBJECT_FEATURE_DIM, hidden_dim),
+        nn.GELU(),
+        nn.Linear(hidden_dim, 1),
+    )
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+    positive = (label_tensor * weight_tensor).sum().clamp_min(1.0)
+    negative = ((1.0 - label_tensor) * weight_tensor).sum().clamp_min(1.0)
+    pos_weight = (negative / positive).clamp(1.0, 20.0)
+    for _ in range(steps):
+        logits = model(feature_tensor).squeeze(-1)
+        loss = F.binary_cross_entropy_with_logits(logits, label_tensor, pos_weight=pos_weight, reduction="none")
+        loss = (loss * weight_tensor).mean()
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    return model.eval()
 
 
 def _safe_generator_teacher(index: int) -> str:

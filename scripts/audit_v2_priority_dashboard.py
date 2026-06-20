@@ -1316,6 +1316,21 @@ def _priority_simulator_grounding() -> dict[str, object]:
                 )
         mechanism_count = max(int(float(row["mechanism_count"])) for row in coverage_rows)
         n512_shift_note = _n512_shift_screen_note()
+        n4096_feasibility_note = ""
+        n4096_path = ROOT / "pybullet_shift_generalization_n4096_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
+        if n4096_path.exists():
+            n4096_rows = [
+                row
+                for row in _rows_of_type(_read_rows(n4096_path), "summary")
+                if row["model"] == "wpu-cws-indexed-mechanism-relation"
+            ]
+            if n4096_rows:
+                n4096_feasibility_note = (
+                    f" A baseline-incomplete N=4101 sparse-feasibility run reaches WPU-only macro accuracy "
+                    f"{statistics.fmean(float(row['branch_accuracy']) for row in n4096_rows):.6f}, selected K "
+                    f"{statistics.fmean(float(row['selected_k_mean']) for row in n4096_rows):.6f}, and dense compute "
+                    f"{statistics.fmean(float(row['dense_compute_ratio']) for row in n4096_rows):.6f}; it is a systems-boundary result, not a baseline-complete accuracy claim."
+                )
         incomplete_axes = [
             row["axis"]
             for row in coverage_rows
@@ -1337,6 +1352,7 @@ def _priority_simulator_grounding() -> dict[str, object]:
             f"{n512_medium_note}"
             f"{n512_high_note}"
             f"{n512_shift_note}"
+            f"{n4096_feasibility_note}"
             f"{incomplete_note}"
         )
     status = "partial" if seed_count >= 2 and max_background >= 128 else "fail"
@@ -2579,6 +2595,7 @@ def _n512_mechanism_relation_note() -> str:
             h64_note = f" The h64 fair-capacity check is also positive: WPU {h64_wpu:.6f} vs best baseline {h64_best:.6f}."
     n1024_note = _n1024_mechanism_relation_note()
     n2048_note = _n2048_mechanism_relation_note()
+    n4096_note = _n4096_mechanism_relation_note()
     return (
         "Relation-conditioned sparse propagation is the strongest current P4 follow-up: under the "
         f"{evidence_label} h32 "
@@ -2590,6 +2607,7 @@ def _n512_mechanism_relation_note() -> str:
         + h64_note
         + n1024_note
         + n2048_note
+        + n4096_note
         + " This is still PyBullet synthetic single-step evidence and needs larger-N, calibration, and rollout expansion."
     )
 
@@ -2674,6 +2692,38 @@ def _n2048_mechanism_relation_note() -> str:
         f" The N=2053 distractor screen further strengthens scaling: WPU {macro_wpu:.6f} vs best baseline "
         f"{best_macro_baseline:.6f}, dense compute {macro_dense:.6f}, win/tie/loss {wins}/{ties}/{losses}, "
         f"and mean margin {statistics.fmean(margins):+.6f}."
+    )
+
+
+def _n4096_mechanism_relation_note() -> str:
+    path = ROOT / "pybullet_shift_generalization_n4096_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
+    smoke_path = ROOT / "pybullet_shift_generalization_n4096_baseline_feasibility_smoke.csv"
+    if not path.exists():
+        return ""
+    rows = _rows_of_type(_read_rows(path), "summary")
+    target_rows = [row for row in rows if row["model"] == "wpu-cws-indexed-mechanism-relation"]
+    if not target_rows:
+        return ""
+    macro_wpu = statistics.fmean(float(row["branch_accuracy"]) for row in target_rows)
+    macro_ece = statistics.fmean(float(row["ece"]) for row in target_rows)
+    macro_dense = statistics.fmean(float(row["dense_compute_ratio"]) for row in target_rows)
+    selected_k = statistics.fmean(float(row["selected_k_mean"]) for row in target_rows)
+    smoke_note = ""
+    if smoke_path.exists():
+        smoke_rows = _rows_of_type(_read_rows(smoke_path), "summary")
+        smoke_models = sorted({row["model"] for row in smoke_rows if not row["model"].startswith("wpu-")})
+        if smoke_models:
+            smoke_note = (
+                " A minimal CPU baseline smoke at N=4101 succeeds, but it uses only one seed, one training step, "
+                "one mechanism, eight eval samples, h16/l1 capacity, and batch size 2; it is a feasibility check, "
+                "not a comparable accuracy baseline."
+            )
+    return (
+        f" The N=4101 run extends sparse feasibility but is baseline-incomplete: WPU-only macro accuracy "
+        f"{macro_wpu:.6f}, ECE {macro_ece:.6f}, selected K {selected_k:.6f}, and dense compute "
+        f"{macro_dense:.6f}. The matched dense/token sweep did not complete under the full stress protocol, "
+        "so this must be treated as a systems boundary and sparse feasibility result, not as a baseline victory."
+        + smoke_note
     )
 
 
@@ -2795,6 +2845,22 @@ def _ko_interpretation(priority: int) -> str:
         7: "Clean score는 0.957711, combined-corruption score는 0.821712, frontier recall은 0.742361이다. 새 loss-coupling audit은 worst mean accuracy drop이 wpu-cws-indexed-local-dense/combined에서 0.027778, worst mean MSE increase가 wpu-cws-indexed-sparse/drop_relations_heavy에서 0.087356임을 보인다. MSE degradation과 가장 강하게 연결된 component deficit은 selected_k_mean(|r|=0.481851)이고 accuracy degradation과 가장 강하게 연결된 component deficit은 relation_confidence(|r|=0.352431)이다. 따라서 objectification metric과 downstream loss의 연결은 시작됐지만 branch accuracy 변화가 작아 closed-loop/multi-horizon 검증이 필요하다.",
     }
     text = interpretations[priority]
+    n4096_path = ROOT / "pybullet_shift_generalization_n4096_mechanism_relation_trainpool40_steps16_samples40_3seed.csv"
+    if priority in {3, 4} and n4096_path.exists():
+        n4096_rows = [
+            row
+            for row in _rows_of_type(_read_rows(n4096_path), "summary")
+            if row["model"] == "wpu-cws-indexed-mechanism-relation"
+        ]
+        if n4096_rows:
+            text += (
+                f" 새 N=4101 relation-conditioned sparse feasibility run은 WPU-only macro accuracy "
+                f"{statistics.fmean(float(row['branch_accuracy']) for row in n4096_rows):.6f}, selected K "
+                f"{statistics.fmean(float(row['selected_k_mean']) for row in n4096_rows):.6f}, dense compute "
+                f"{statistics.fmean(float(row['dense_compute_ratio']) for row in n4096_rows):.6f}을 보인다. "
+                "하지만 full stress 조건의 dense/token baseline은 완료되지 않았으므로 baseline victory가 아니라 "
+                "large-N sparse feasibility와 systems-boundary evidence로만 해석한다."
+            )
     if priority in {3, 4} and (ROOT / "pybullet_shift_generalization_n512_route_regret_selected.csv").exists():
         text += (
             " 새 N_bg=512 selected route-regret nominal-train screen도 mixed/negative다. "

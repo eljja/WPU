@@ -265,6 +265,15 @@ Use these reports for paper-level claims:
   `0.000000`, and win/tie/loss `7/0/0`. This is the strongest current
   distractor-scaling evidence, but it still needs harder causal large-N and
   long-horizon validation.
+- `pybullet_shift_generalization_n4096_mechanism_relation_results.md`
+  and `pybullet_shift_generalization_n4096_mechanism_relation_results.ko.md`:
+  N=4101 sparse-feasibility boundary. The WPU-only 3-seed relation-conditioned
+  run reaches macro accuracy `0.638095`, ECE `0.187201`, selected `K=4.446429`,
+  and dense compute `0.000000`. The matched dense/token stress run did not
+  complete after the WPU rows were written, while a minimal CPU baseline smoke
+  succeeds only under a non-comparable one-step, one-seed, h16/l1 protocol.
+  Therefore this is not a baseline victory; it is a large-N sparse feasibility
+  and systems-boundary result.
 - `pybullet_relation_closed_loop_rollout_n512_integrity_results.md`
   and `pybullet_relation_closed_loop_rollout_n512_integrity_results.ko.md`:
   relation-conditioned closed-loop rollout diagnostic. Raw relation WPU keeps

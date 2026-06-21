@@ -4,6 +4,8 @@
 - `state_is_all_you_need_en.pdf`: generated English PDF.
 - `state_is_all_you_need_ko.md`: Korean companion manuscript with the same
   thesis, narrowed claim boundary, and current experiment interpretation.
+- `../research_thesis.md` and `../research_thesis.ko.md`: repository-level
+  thesis, novelty statement, evidence posture, and publication boundary.
 - `../objectification.md`: formal WPU objectification definition used by the
   manuscript and claim ledger.
 
@@ -23,6 +25,9 @@ The main paper keeps the argument compact:
 - token versus state primitives;
 - objectification as the construction of persistent, addressable state objects;
 - objectification quality as a measurable pre-propagation contract;
+- claimed contributions as a state-native execution hypothesis: objectification
+  contract, event frontier, delta overlays, sparse/hybrid/dense regime surface,
+  and negative-result discipline;
 - relation repair as auditable hypothesis generation for missed local edges;
 - relation to object-centric, graph, world-model, and accelerator literature;
 - WPU architecture and sparse/hybrid/dense routing;
@@ -31,6 +36,9 @@ The main paper keeps the argument compact:
 - reviewer-driven regime evidence and robust baseline comparison;
 - v2 retrieval evidence: generated candidates, regret-distilled retrieval,
   invariant candidate descriptors, and risk-adjusted mechanism selection;
+- current large-state boundary: baseline-complete positive but small-margin
+  cup-family evidence through total `N=517`, and WPU-only sparse-feasibility
+  evidence at total `N=4101`;
 - discussion that explicitly rejects universal superiority claims.
 
 Detailed sweep tables, extra stress figures, and branch-memory schematics are

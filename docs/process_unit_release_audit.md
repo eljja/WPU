@@ -3,6 +3,7 @@
 This audit checks whether the current repository matches the original WPU plan,
 where it diverges, and what must not be claimed in an external release. It is a
 publication guardrail, not a marketing page.
+For the compact thesis and novelty boundary, see `docs/research_thesis.md`.
 
 ## Release Classification
 
@@ -17,6 +18,10 @@ publication guardrail, not a marketing page.
 The repository is suitable for a constrained public research preview and arXiv
 preprint. It is not yet evidence that WPU is a finished processor, a universal
 Transformer replacement, or a generally superior accelerator.
+Its current originality is the process-unit abstraction: a proposed execution
+interface for objectified state, causal working sets, delta overlays, and
+branch-aware propagation. That abstraction can motivate future hardware, but
+the present artifact is a PyTorch reference model and evidence program.
 
 ## Original Plan Conformance
 

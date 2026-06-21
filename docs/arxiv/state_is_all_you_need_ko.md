@@ -111,6 +111,26 @@ rule candidate를 저장하고, `LawRevisionReport`는 base/revised error, revis
 optional relation-selection versus law-residual attribution을 기록한다.
 정식 정의는 `docs/objectification.ko.md`에 둔다.
 
+### 이 논문의 기여
+
+이 논문의 기여는 다섯 가지로 제한해 주장한다.
+
+1. Token-state 차이를 representational claim이 아니라 operational claim으로 정식화한다.
+   Token은 state를 직렬화할 수 있지만, 직렬화는 object identity, relation traversal,
+   delta update, branch overlay를 계산 불변량으로 보존하지 않는다.
+2. 객체화를 WPU 입력 계약으로 정의하고, objectification quality를 propagation 이전에
+   측정 가능한 항목으로 만든다.
+3. typed object relation 위의 propagation을 token attention에 대응되는 state-native
+   중심 연산으로 제시한다. 동시에 이것이 full physics 이해가 아니라 단순화된
+   local-causality prior임을 명확히 분리한다.
+4. Event frontier, delta-state memory, branch overlay, sparse/hybrid/dense routing을
+   하나의 WPU execution abstraction으로 묶는다.
+5. Reference implementation, 소규모 검증 task, claim ledger를 함께 제공해 positive
+   regime과 failure boundary를 모두 기록한다.
+
+따라서 이 논문의 신규성은 특정 message-passing 수식 하나가 아니라, objectified
+world state를 직접 갱신하기 위한 실행 기질을 반증 가능한 형태로 제시한다는 데 있다.
+
 ## 2. 선행연구와 차별성
 
 리뷰에서 지적된 것처럼 WPU는 object-centric learning, GNN, learned physics
@@ -541,7 +561,11 @@ retrieval, verification, propagation과 함께 더 깊게 학습되는 candidate
   encoding과 학습되거나 적응된 mechanism-aware propagation이 필요하다. 별도의
   higher-budget WPU-only N_bg=512 extension은 graph-transformer baseline이 같은
   protocol에서 완료되지 않았으므로 systems feasibility evidence와 benchmark-design
-  warning이지 matched-baseline accuracy evidence가 아니다.
+  warning이지 matched-baseline accuracy evidence가 아니다. 이후 N_bg=4096
+  relation-conditioned run은 total `N=4101`까지 이 경계를 확장하지만, 이것도
+  WPU-only sparse feasibility evidence다. 선택된 working set이 매우 작게 유지될 때
+  indexed state가 full recompute를 피할 수 있다는 systems hypothesis를 지지하지만,
+  baseline-complete accuracy claim은 아니다.
 
 `N=204`에서의 accuracy collapse는 숨기면 안 되는 결과다. 이 실패는 WPU 개념 자체의
 반증은 아니지만, v1 propagation capacity와 hard scheduler가 large graph에서 충분한

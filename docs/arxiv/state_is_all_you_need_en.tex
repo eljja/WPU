@@ -161,17 +161,21 @@ therefore make identity, locality, delta update, uncertainty, and branching
 operationally explicit.
 
 \paragraph{Contributions.}
-This paper makes four contributions. First, it formulates a token-state
+This paper makes five contributions. First, it formulates a token-state
 non-equivalence claim in operational rather than representational terms: tokens
 can serialize state, but serialization does not preserve state operations as
 invariants. Second, it defines objectification as the construction of persistent
-state objects, makes objectification quality measurable as a pre-propagation
-contract, and treats propagation as the central operation over object
-relations, relating this to simplified local physical causality.
-Third, it proposes a WPU architecture with sparse, hybrid, and dense execution
-paths selected by an affected-state crossover metric. Fourth, it provides a
-minimal reference implementation and small-scale validation task, intended as a
-starting point for stronger benchmarks rather than as final evidence.
+state objects and makes objectification quality measurable as a pre-propagation
+contract. Third, it treats propagation over typed object relations as the state
+analogue of attention and relates it to simplified local physical causality,
+while explicitly separating this prior from claims of full physical
+understanding. Fourth, it proposes a WPU architecture with event frontiers,
+delta-state memory, branch overlays, and sparse, hybrid, and dense execution
+paths selected by an affected-state crossover metric. Fifth, it provides a
+minimal reference implementation, small-scale validation tasks, and a claim
+ledger that records both positive regimes and failure boundaries. The goal is
+to make a new execution substrate testable, not to present final evidence for
+broad superiority.
 
 \begin{figure}[t]
 \centering
@@ -942,7 +946,12 @@ and small identifiable \(K\) are not enough; WPU also needs faithful
 action/physical state encoding and learned or adapted mechanism-aware
 propagation. The separate higher-budget WPU-only \(N_{\mathrm{bg}}=512\)
 extension remains systems feasibility evidence because the graph-transformer
-baseline did not complete under the attempted protocol.
+baseline did not complete under the attempted protocol. The later
+\(N_{\mathrm{bg}}=4096\) relation-conditioned run extends this boundary to
+total \(N=4101\), but only as WPU-only sparse feasibility evidence. It supports
+the systems hypothesis that indexed state can avoid full recompute when the
+selected working set remains tiny; it is not a baseline-complete accuracy
+claim.
 
 These limitations change the paper's scientific posture. The current claim is
 not that WPU already surpasses Transformers, GNN simulators, Dreamer-style

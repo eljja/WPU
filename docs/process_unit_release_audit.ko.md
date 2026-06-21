@@ -3,6 +3,7 @@
 이 문서는 현재 저장소가 원래 WPU 계획과 얼마나 일치하는지, 어디서 의도와
 달라졌는지, 외부 공개 시 어떤 주장을 하면 안 되는지를 점검한다. 목적은 홍보가
 아니라 논문/공개용 claim boundary를 고정하는 것이다.
+Compact thesis와 신규성 경계는 `docs/research_thesis.ko.md`를 함께 본다.
 
 ## 공개 분류
 
@@ -17,6 +18,10 @@
 현재 저장소는 제한된 public research preview와 arXiv preprint에는 적합하다.
 하지만 WPU가 완성된 processor, 보편 Transformer 대체재, 일반적으로 우월한
 accelerator라는 증거는 아니다.
+현재 독창성은 process-unit abstraction에 있다. 즉 objectified state, causal working
+set, delta overlay, branch-aware propagation을 위한 실행 인터페이스를 제안한다는
+점이다. 이 abstraction은 향후 hardware를 동기화할 수 있지만, 현재 산출물은
+PyTorch reference model과 evidence program이다.
 
 ## 원래 계획 대비 일치 여부
 

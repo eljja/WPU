@@ -19,6 +19,33 @@ branch overlays can be updated directly. Objectification is not merely assigning
 type labels; it requires relation-bearing state variables such as role,
 affordance, geometry, confidence, and history. See `docs/objectification.md`.
 
+For the compact research thesis that aligns the paper, claim ledger, and
+experiment reports, see `docs/research_thesis.md`.
+
+## Research Contribution
+
+WPU's contribution is a state-native execution model, not another dense
+sequence model with a different input format. The project makes five concrete
+research moves:
+
+- It defines **objectification** as a measurable precondition for world-state
+  processing rather than assuming that useful objects and relations already
+  exist.
+- It treats **event frontiers** and **causal working sets** as first-class
+  computational objects, so compute can be tied to changed state instead of
+  total serialized context.
+- It represents futures with **delta overlays** over persistent base state,
+  making branch sharing and copy-on-write rollout explicit.
+- It evaluates **sparse, hybrid, and dense execution** as a regime surface,
+  not as a fixed claim that sparse execution always wins.
+- It keeps a claim ledger and negative-result trail so that the thesis remains
+  falsifiable: WPU is useful only in regimes where objectified state exposes a
+  small, reliable causal working set before tensorization.
+
+The resulting novelty is architectural and operational: WPU asks whether the
+native unit of world processing should be a persistent state graph plus event
+propagation, rather than a token stream or a full dense tensor recomputation.
+
 ## Compute Context
 
 WPU is positioned as a proposed world-state processing workload and execution
@@ -51,6 +78,13 @@ The repository includes negative and mixed results where token/graph baselines
 remain stronger. The research goal is therefore not to show that WPU always wins,
 but to map the `rho`, `N`, `B`, noise, and affected-region regimes where
 state-native execution is useful.
+
+The strongest current evidence is not a universal accuracy win. It is a
+consistent regime picture: when non-causal world state grows while the causal
+working set remains small and identifiable, relation-conditioned sparse WPU can
+preserve low dense-compute use and competitive accuracy; when mechanism laws,
+calibration, objectification, or long-horizon dynamics fail, WPU loses or must
+fall back. That boundary is the scientific result.
 
 ## Hybrid Execution Architecture
 

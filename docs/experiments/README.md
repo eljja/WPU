@@ -16,6 +16,23 @@ repair precision/recall when ground truth is available, and downstream loss
 with and without repair. Repaired edges are hypotheses for frontier recovery,
 not ground-truth physical relations.
 
+## Research Narrative
+
+The experiment suite is organized around the WPU thesis in
+`../research_thesis.md`: objectified state is the input contract, the event
+frontier defines the causal working set, propagation updates only the selected
+state when safe, and dense recompute remains a fallback rather than the default.
+The positive evidence is intentionally regime-specific. WPU is strongest when
+irrelevant state grows while the causal working set remains small and
+identifiable; it weakens when candidate selection scans the full state, misses
+mechanism-defining variables, adds false repaired relations, or accumulates
+long-horizon delta error.
+
+This means negative results are part of the contribution. They identify where a
+state-native processor needs better objectification, safer candidate generation,
+mechanism-aware propagation, calibration-aware routing, or state-integrity
+correction before broader claims are justified.
+
 ## V2 Priority Dashboard
 
 Use `wpu_v2_priority_dashboard.md` as the conservative status summary for the

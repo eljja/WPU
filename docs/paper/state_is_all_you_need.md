@@ -3,6 +3,8 @@
 This Markdown note is the compact research brief for the WPU paper. The
 submission-oriented source is `docs/arxiv/state_is_all_you_need_en.tex`; the
 Korean companion is `docs/arxiv/state_is_all_you_need_ko.md`.
+The repository-level thesis, novelty boundary, and current evidence posture are
+summarized in `docs/research_thesis.md`.
 
 ## Central Claim
 
@@ -82,6 +84,34 @@ local causal change, uncertainty, and branchable futures dominate the workload.
 The experimental goal is to map that regime over `rho`, `N`, branch pressure,
 noise, and affected-region size, not to claim that WPU always beats token or
 graph models.
+
+## Claimed Contributions
+
+The intended contribution is a state-native execution hypothesis, not a claim
+that state cannot be serialized into tokens. The paper makes five narrower
+claims.
+
+1. **Objectification as an input contract.** WPU requires a measurable
+   conversion from observations or simulator state into persistent objects,
+   typed relations, role/affordance variables, uncertainty, admissible deltas,
+   and branch overlays. This makes state quality auditable before propagation.
+2. **Event-frontier execution.** The unit of computation is an affected causal
+   working set, not a whole token context or whole graph by default.
+3. **Delta-state memory.** Future branches are represented as `BaseState +
+   DeltaState`, making patch, rollback, correction, and branch comparison native
+   operations.
+4. **Sparse-first, dense-when-needed routing.** The scheduler exposes a
+   falsifiable regime surface over affected fraction, fanout, depth, and branch
+   count instead of asserting that sparse execution is always best.
+5. **Negative-result discipline.** The implementation records failure
+   boundaries such as large `N` without identifiable `K`, missing physical state
+   in tensorization, false relation repair, calibration shift, and long-horizon
+   delta drift.
+
+The novelty is therefore the execution interface for objectified world state:
+what should a model do when identity, causal locality, relation traversal,
+uncertainty, and branchable futures are first-class objects rather than
+descriptions inside a sequence?
 
 ## Relation To Existing Work
 
@@ -417,7 +447,10 @@ Not supported:
   action/physical state encoding and learned or adapted mechanism-aware
   propagation. The separate higher-budget WPU-only N_bg=512 extension remains
   systems feasibility evidence because the graph-transformer baseline did not
-  complete under the attempted protocol.
+  complete under the attempted protocol. The later N_bg=4096 sparse-feasibility
+  boundary extends this systems interpretation to total `N=4101`: WPU can keep
+  sparse execution feasible when the selected working set remains tiny, but the
+  result is WPU-only and must not be read as a baseline-complete accuracy win.
 
 ## Application Boundary
 

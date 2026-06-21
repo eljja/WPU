@@ -18,6 +18,31 @@ chip design도 아니다. 현재 목표는 world processing을 token sequence가
 Role, affordance, geometry, confidence, history처럼 relation을 지탱하는 state
 variable이 필요하다. 정의는 `docs/objectification.ko.md`에 둔다.
 
+논문, claim ledger, 실험 보고서를 하나의 논리로 정렬한 compact thesis는
+`docs/research_thesis.ko.md`에 둔다.
+
+## 연구 기여
+
+WPU의 기여는 입력 형식만 다른 dense sequence model이 아니라 state-native execution
+model을 제안한다는 점이다. 이 프로젝트는 다섯 가지를 구체적으로 구현하고 검증한다.
+
+- **객체화(objectification)** 를 world-state processing의 측정 가능한 전제 조건으로
+  정의한다. 유용한 객체와 relation이 이미 있다고 가정하지 않는다.
+- **Event frontier** 와 **causal working set** 을 first-class computational object로
+  다룬다. 따라서 compute를 전체 serialized context가 아니라 실제 바뀐 state에 묶을 수
+  있다.
+- Persistent base state 위의 **delta overlay** 로 미래를 표현해 branch sharing과
+  copy-on-write rollout을 명시한다.
+- **Sparse, hybrid, dense execution** 을 고정 이념이 아니라 regime surface로 평가한다.
+  Sparse가 항상 이긴다는 주장이 아니다.
+- Claim ledger와 negative-result trail을 유지해 thesis를 반증 가능하게 만든다. WPU는
+  objectified state가 tensorization 전에 작고 신뢰 가능한 causal working set을 드러낼 때만
+  유용하다는 조건부 주장이다.
+
+따라서 신규성은 architecture와 operation에 있다. WPU는 world processing의 native unit이
+token stream이나 full dense tensor recomputation이 아니라 persistent state graph와 event
+propagation이어야 하는지를 묻는다.
+
 ## 핵심 주장
 
 Token sequence는 세계를 설명할 수 있지만, world-state operation을 first-class로
@@ -42,6 +67,12 @@ State = persistent substrate for patch / propagate / branch
 참조하고 갱신해야 하는 causal working set `K`가 작고 식별 가능할 때다. 즉 WPU는
 large state, local causal change, persistent identity, branching이 지배적인 regime을
 목표로 한다.
+
+현재 가장 강한 증거는 보편 accuracy win이 아니다. 일관된 regime picture다. Non-causal
+world state가 커져도 causal working set이 작고 식별 가능하면 relation-conditioned sparse
+WPU는 낮은 dense-compute 사용과 경쟁력 있는 accuracy를 유지할 수 있다. 반대로 mechanism
+law, calibration, objectification, long-horizon dynamics가 실패하면 WPU는 지거나 fallback이
+필요하다. 이 경계 자체가 현재의 과학적 결과다.
 
 ## Compute Context
 

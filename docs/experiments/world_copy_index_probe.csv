@@ -1,0 +1,5 @@
+total_objects,background_objects,selected_k,affected_fraction,selected_objects,non_causal_selected
+104,100,4,0.03846154,cup table hand edge,0
+1004,1000,4,0.00398406,cup table hand edge,0
+5004,5000,4,0.00079936,cup table hand edge,0
+10004,10000,4,0.00039984,cup table hand edge,0

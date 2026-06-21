@@ -72,6 +72,11 @@ The current repository supports an early but meaningful prototype-level claim:
   with event target/frontier readout keeps `wpu-sparse-frontier` at mean
   accuracy `0.781250` through total `N=404`, narrowly above serialized-token
   `0.778646` while using work proxy `3` versus `166464`.
+- The v3 world-copy index substrate adds hierarchical regions and a
+  multi-signal causal index. In the controlled probe, selected `K` remains `4`
+  while total `N` grows from `104` to `10004`; no non-causal background objects
+  are selected, and the affected fraction at `N=10004` is `0.00039984`. This
+  validates scalable causal-slice retrieval, not trained world modeling.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.
@@ -94,6 +99,9 @@ The unresolved scientific problems are:
 - harder causal large-N settings where `K` changes or grows;
 - calibration-safe low-cost routing under shift;
 - perception-to-state objectification from raw sensor inputs;
+- hierarchical state persistence under streaming updates;
+- learned mechanism modules over causal slices rather than fixed local rules;
+- causal-index recall under noisy or missing relations;
 - real systems measurements for sparse kernels, memory traffic, and energy.
 
 ## Publication Posture

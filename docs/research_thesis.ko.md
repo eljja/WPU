@@ -68,6 +68,11 @@ accuracy/latency/memory regime이 생기는지 묻는다.
   readout으로 바꾸면 `wpu-sparse-frontier`는 total `N=404`까지 mean accuracy
   `0.781250`을 유지하고, serialized-token `0.778646`을 근소하게 넘으며 work proxy는
   `3` 대 `166464`다.
+- v3 world-copy index substrate는 hierarchical region과 multi-signal causal index를
+  추가한다. Controlled probe에서 total `N`이 `104`에서 `10004`까지 커져도 selected
+  `K`는 `4`로 유지되고, non-causal background object는 선택되지 않는다. `N=10004`의
+  affected fraction은 `0.00039984`다. 이는 scalable causal-slice retrieval 증거이지
+  trained world modeling 증거는 아니다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.
@@ -88,6 +93,9 @@ accuracy/latency/memory regime이 생기는지 묻는다.
 - `K`가 변하거나 커지는 harder causal large-N setting;
 - shift에서 calibration-safe low-cost routing;
 - raw sensor input에서 perception-to-state objectification;
+- streaming update 아래의 hierarchical state persistence;
+- 고정 local rule이 아니라 causal slice 위에서 학습되는 mechanism module;
+- noisy 또는 missing relation 아래의 causal-index recall;
 - sparse kernel, memory traffic, energy에 대한 실제 systems measurement.
 
 ## 공표 태도

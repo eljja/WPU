@@ -62,6 +62,9 @@ validation planning are tracked here instead.
 - Replace fixed `rho` routing with learned accuracy-latency-aware routing.
 - Improve large-`N` sparse stability with stronger propagation and regional
   dense correction.
+- Add hierarchical world-copy indexing with causal-slice recall/precision
+  metrics under object creation, deletion, region movement, noisy relations,
+  and stale state.
 - Add perception-to-state front ends using slot/object discovery or supervised
   segmentation.
 - Treat perception as an object-state adapter layer rather than as solved WPU

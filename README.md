@@ -86,6 +86,25 @@ preserve low dense-compute use and competitive accuracy; when mechanism laws,
 calibration, objectification, or long-horizon dynamics fail, WPU loses or must
 fall back. That boundary is the scientific result.
 
+## WPU v3 Direction: World-Copy Substrate
+
+The next version raises the target from a small object-physics graph to a
+hierarchical **world copy**: a persistent state substrate containing regions,
+objects, relations, uncertainty, recency, and branch deltas. The new primitive is
+`WorldCausalIndex`, which retrieves an event-local causal slice before tensor
+projection. It combines event targets, typed relation frontier expansion,
+spatial proximity, hierarchical region membership, uncertainty, and recent
+change signals.
+
+This does not prove that WPU already models the real world. It establishes the
+substrate needed for that claim: if a large world can keep non-causal background
+state out of the working set, WPU can update `K` rather than reprocess `N`. The
+controlled world-copy index probe keeps selected `K = 4` as total state grows
+from `N = 104` to `N = 10004`, with no non-causal background objects selected.
+At `N = 10004`, the affected fraction is `0.00039984`. This is index evidence,
+not trained accuracy evidence; the next required step is learned local
+mechanism propagation and streaming state maintenance on top of the index.
+
 ## Hybrid Execution Architecture
 
 The v1 reference model implements WPU as event-driven sparse propagation with a

@@ -81,6 +81,13 @@ Use these reports for paper-level claims:
   `serialized-token` at `0.778646` using work proxy `3` versus `166464`. This
   supports event target/frontier readout as a WPU-native large-N fix, not a
   general solution when causal `K` grows or the frontier is wrong.
+- `world_copy_index_probe_results.md` and
+  `world_copy_index_probe_results.ko.md`: v3 substrate probe for hierarchical
+  world-copy indexing. It shows that `WorldCausalIndex` can keep selected
+  `K = 4` while total `N` grows from `104` to `10004`, with zero non-causal
+  background selections in the controlled setup. This supports scalable
+  causal-slice retrieval before tensorization, not trained accuracy or real
+  physical-world understanding.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

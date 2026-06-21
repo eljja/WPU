@@ -10,6 +10,7 @@ from wpu.core.objectification import (
     infer_missing_relations,
     repair_objectification_relations,
 )
+from wpu.core.hierarchy import HierarchicalWorldState, Region, WorldCausalIndex, WorldCausalQuery, WorldCausalSlice
 from wpu.core.state import Branch, DeltaState, Event, Relation, WorldObject, WorldState
 from wpu.engines import DenseRecomputeEngine, ExecutionPath, Scheduler, SchedulerMetrics, SparsePropagationEngine, rollout
 from wpu.memory import DeltaStore, MemoryEstimate, StateStore, estimate_memory
@@ -23,6 +24,7 @@ __all__ = [
     "DeltaState",
     "Event",
     "ExecutionPath",
+    "HierarchicalWorldState",
     "MODEL_NAMES",
     "MemoryEstimate",
     "LawRevisionReport",
@@ -30,6 +32,7 @@ __all__ = [
     "ObjectificationRepairReport",
     "ObjectificationReport",
     "Relation",
+    "Region",
     "Scheduler",
     "SchedulerMetrics",
     "SparsePropagationEngine",
@@ -37,6 +40,9 @@ __all__ = [
     "StatePrediction",
     "StateStore",
     "WorldObject",
+    "WorldCausalIndex",
+    "WorldCausalQuery",
+    "WorldCausalSlice",
     "WorldState",
     "WorldStateProcessor",
     "create_model",

@@ -74,6 +74,24 @@ WPU는 낮은 dense-compute 사용과 경쟁력 있는 accuracy를 유지할 수
 law, calibration, objectification, long-horizon dynamics가 실패하면 WPU는 지거나 fallback이
 필요하다. 이 경계 자체가 현재의 과학적 결과다.
 
+## WPU v3 방향: World-Copy Substrate
+
+다음 버전은 작은 object-physics graph를 넘어 계층적 **world copy**를 목표로 한다.
+World copy는 region, object, relation, uncertainty, recency, branch delta를 가진
+persistent state substrate다. 새 primitive는 `WorldCausalIndex`이며, tensor projection
+전에 event-local causal slice를 검색한다. 이 index는 event target, typed relation
+frontier, spatial proximity, hierarchical region membership, uncertainty, recent
+change signal을 함께 사용한다.
+
+이것은 WPU가 이미 실제 세계를 모델링한다는 증명이 아니다. 그러나 그 주장을 위해 필요한
+substrate를 만든다. 큰 세계에서 non-causal background state를 working set 밖에 둘 수
+있다면 WPU는 전체 `N`이 아니라 원인 후보 `K`를 갱신할 수 있다. Controlled world-copy
+index probe에서 total state가 `N = 104`에서 `N = 10004`까지 커져도 selected `K = 4`를
+유지했고, non-causal background object는 선택되지 않았다. `N = 10004`에서 affected
+fraction은 `0.00039984`다. 이는 index evidence이지 trained accuracy evidence가 아니다.
+다음 필수 단계는 이 index 위에서 learned local mechanism propagation과 streaming state
+maintenance를 구현하는 것이다.
+
 ## Compute Context
 
 ![WPU in the AI compute architecture landscape](docs/figures/wpu_compute_context.svg)

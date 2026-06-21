@@ -72,6 +72,15 @@ Use these reports for paper-level claims:
   is explicitly marked baseline-incomplete because only WPU models completed
   under the attempted protocol; it is systems feasibility evidence, not matched
   accuracy evidence.
+- `large_n_target_frontier_pooling_probe_results.md` and
+  `large_n_target_frontier_pooling_probe_results.ko.md`: targeted fix for the
+  v1 N>=204 branch-collapse failure. The probe shows that global mean branch
+  readout dilutes causal state with non-causal objects: original `wpu-sparse`
+  drops to mean accuracy `0.359375` at total `N=404`, while
+  `wpu-sparse-frontier` keeps `0.781250` and narrowly exceeds
+  `serialized-token` at `0.778646` using work proxy `3` versus `166464`. This
+  supports event target/frontier readout as a WPU-native large-N fix, not a
+  general solution when causal `K` grows or the frontier is wrong.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

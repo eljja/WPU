@@ -10,8 +10,13 @@ from wpu.models.world_state_processor import WorldStateProcessor
 
 MODEL_NAMES = [
     "wpu-routed",
+    "wpu-routed-target",
+    "wpu-routed-frontier",
     "wpu-sparse",
+    "wpu-sparse-target",
+    "wpu-sparse-frontier",
     "wpu-hybrid",
+    "wpu-hybrid-frontier",
     "wpu-dense",
     "wpu-cws-learned",
     "wpu-cws-target",
@@ -47,10 +52,35 @@ def create_model(name: str, hidden_dim: int = 64, **kwargs: object) -> nn.Module
     num_heads = _num_heads_for(hidden_dim, kwargs.get("num_heads"))
     if name == "wpu-routed":
         return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads)
+    if name == "wpu-routed-target":
+        return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads, branch_pooling="target")
+    if name == "wpu-routed-frontier":
+        return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads, branch_pooling="frontier")
     if name == "wpu-sparse":
         return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads, forced_path=ExecutionPath.SPARSE)
+    if name == "wpu-sparse-target":
+        return WorldStateProcessor(
+            hidden_dim=hidden_dim,
+            num_heads=num_heads,
+            forced_path=ExecutionPath.SPARSE,
+            branch_pooling="target",
+        )
+    if name == "wpu-sparse-frontier":
+        return WorldStateProcessor(
+            hidden_dim=hidden_dim,
+            num_heads=num_heads,
+            forced_path=ExecutionPath.SPARSE,
+            branch_pooling="frontier",
+        )
     if name == "wpu-hybrid":
         return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads, forced_path=ExecutionPath.HYBRID)
+    if name == "wpu-hybrid-frontier":
+        return WorldStateProcessor(
+            hidden_dim=hidden_dim,
+            num_heads=num_heads,
+            forced_path=ExecutionPath.HYBRID,
+            branch_pooling="frontier",
+        )
     if name == "wpu-dense":
         return WorldStateProcessor(hidden_dim=hidden_dim, num_heads=num_heads, forced_path=ExecutionPath.DENSE)
     if name in {

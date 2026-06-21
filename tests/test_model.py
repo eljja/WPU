@@ -30,6 +30,25 @@ def test_world_state_processor_forward_shapes() -> None:
     assert torch.allclose(prediction.branch_probabilities.sum(dim=-1), torch.ones(1))
 
 
+def test_frontier_branch_pooling_is_background_invariant_without_background_relations() -> None:
+    event = create_touch_event(force=0.7)
+    small = StateGraphBatch.from_world_states(
+        [create_robot_cup_state(background_objects=0)],
+        [event],
+    )
+    large = StateGraphBatch.from_world_states(
+        [create_robot_cup_state(background_objects=200)],
+        [event],
+    )
+    model = create_model("wpu-sparse-frontier", hidden_dim=32, num_heads=4)
+    model.eval()
+
+    small_prediction = model(small, num_branches=3)
+    large_prediction = model(large, num_branches=3)
+
+    assert torch.allclose(small_prediction.branch_logits, large_prediction.branch_logits, atol=1e-6)
+
+
 def test_event_encoder_preserves_action_condition() -> None:
     state = create_robot_cup_state()
     base_delta = {"position": [0.1, 0.0, 0.0], "force": 1.0}

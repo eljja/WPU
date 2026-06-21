@@ -29,9 +29,13 @@ class WorldStateProcessor(nn.Module):
         hidden_dim: int = 64,
         num_heads: int = 4,
         forced_path: ExecutionPath | None = None,
+        branch_pooling: str = "mean",
     ) -> None:
         super().__init__()
+        if branch_pooling not in {"mean", "target", "frontier"}:
+            raise ValueError(f"unknown branch_pooling: {branch_pooling}")
         self.forced_path = forced_path
+        self.branch_pooling = branch_pooling
         self.scheduler = Scheduler()
         self.object_encoder = nn.Linear(object_feature_dim, hidden_dim)
         self.relation_encoder = nn.Linear(relation_feature_dim, hidden_dim)
@@ -95,7 +99,7 @@ class WorldStateProcessor(nn.Module):
         object_delta = self.object_delta_head(routed_hidden)
         relation_logits = self._relation_logits(routed_hidden, batch)
         uncertainty = torch.sigmoid(self.uncertainty_head(routed_hidden))
-        pooled = _masked_mean(routed_hidden, batch.object_mask)
+        pooled = self._branch_summary(routed_hidden, batch)
         branch_logits = self.branch_head(pooled)[:, :num_branches]
         branch_probabilities = F.softmax(branch_logits, dim=-1)
         return StatePrediction(
@@ -167,6 +171,18 @@ class WorldStateProcessor(nn.Module):
                 )
         return logits
 
+    def _branch_summary(self, hidden: torch.Tensor, batch: StateGraphBatch) -> torch.Tensor:
+        if self.branch_pooling == "mean":
+            return _masked_mean(hidden, batch.object_mask)
+        if self.branch_pooling == "target":
+            return torch.gather(
+                hidden,
+                1,
+                batch.target_indices.view(-1, 1, 1).expand(-1, 1, hidden.size(-1)),
+            ).squeeze(1)
+        frontier_mask = _target_frontier_mask(batch)
+        return _masked_mean(hidden, frontier_mask)
+
     def _selected_paths(self, batch: StateGraphBatch, num_branches: int) -> list[ExecutionPath]:
         if self.forced_path is not None:
             return [self.forced_path for _ in range(batch.object_features.size(0))]
@@ -208,3 +224,23 @@ def _masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     masked = values.masked_fill(~mask.unsqueeze(-1), 0.0)
     denom = mask.sum(dim=1, keepdim=True).clamp_min(1).to(values.dtype)
     return masked.sum(dim=1) / denom
+
+
+def _target_frontier_mask(batch: StateGraphBatch) -> torch.Tensor:
+    mask = torch.zeros_like(batch.object_mask)
+    mask.scatter_(1, batch.target_indices.view(-1, 1), True)
+    relation_indices = batch.relation_indices.detach().cpu()
+    relation_mask = batch.relation_mask.detach().cpu()
+    targets = batch.target_indices.detach().cpu()
+    for batch_index in range(batch.object_features.size(0)):
+        target = int(targets[batch_index].item())
+        for edge_index, valid in enumerate(relation_mask[batch_index].tolist()):
+            if not valid:
+                continue
+            src = int(relation_indices[batch_index, edge_index, 0].item())
+            dst = int(relation_indices[batch_index, edge_index, 1].item())
+            if src == target and batch.object_mask[batch_index, dst]:
+                mask[batch_index, dst] = True
+            elif dst == target and batch.object_mask[batch_index, src]:
+                mask[batch_index, src] = True
+    return mask & batch.object_mask

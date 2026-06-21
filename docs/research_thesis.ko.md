@@ -63,6 +63,11 @@ accuracy/latency/memory regime이 생기는지 묻는다.
 - v2 candidate-control experiment는 explicit state가 propagation 이전 working-set
   control surface를 드러냄을 보인다. `N=2048`, `K=8`에서는 강한 positive sub-regime이
   있지만 larger-`K` gap은 남아 있다.
+- Targeted large-N readout probe는 v1 `N>=204` branch collapse의 일부 원인이
+  non-causal object까지 포함한 global mean readout임을 보인다. Event target/frontier
+  readout으로 바꾸면 `wpu-sparse-frontier`는 total `N=404`까지 mean accuracy
+  `0.781250`을 유지하고, serialized-token `0.778646`을 근소하게 넘으며 work proxy는
+  `3` 대 `166464`다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

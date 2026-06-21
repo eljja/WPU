@@ -67,6 +67,11 @@ The current repository supports an early but meaningful prototype-level claim:
 - v2 candidate-control experiments show that explicit state exposes a useful
   pre-propagation working-set surface, with a strong positive sub-regime at
   `N=2048`, `K=8`, and remaining larger-`K` gaps.
+- A targeted large-N readout probe shows that the v1 `N>=204` branch collapse
+  is partly caused by global mean readout over non-causal objects. Replacing it
+  with event target/frontier readout keeps `wpu-sparse-frontier` at mean
+  accuracy `0.781250` through total `N=404`, narrowly above serialized-token
+  `0.778646` while using work proxy `3` versus `166464`.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

@@ -77,6 +77,12 @@ benchmark requirement, success/failure criteria를 정의한다.
   `K`는 `4`로 유지되고, non-causal background object는 선택되지 않는다. `N=10004`의
   affected fraction은 `0.00039984`다. 이는 scalable causal-slice retrieval 증거이지
   trained world modeling 증거는 아니다.
+- 첫 v3 noisy-index stress benchmark는 이 substrate evidence를 `N=8192`,
+  `K_ref=4/8/16`, missing relation, false-positive relation으로 확장한다.
+  Controlled setup에서 region-scoped retrieval은 recall `1.000000`을 유지하고,
+  `N=8192` touch ratio를 `0.004385` 이하로 유지한다. 그러나 false-positive relation은
+  mean precision을 `0.800000`까지 낮추므로, spurious relation 억제가 다음 index failure
+  boundary다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

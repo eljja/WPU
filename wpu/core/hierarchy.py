@@ -24,6 +24,7 @@ class WorldCausalQuery:
     spatial_radius: float = 0.5
     include_uncertain: bool = True
     include_recent: bool = True
+    scope_to_region: bool = True
 
 
 @dataclass(slots=True)
@@ -31,6 +32,8 @@ class WorldCausalSlice:
     object_ids: list[str]
     reason_by_object: dict[str, set[str]]
     total_objects: int
+    relation_path_by_object: dict[str, list[str]] = field(default_factory=dict)
+    retrieval_metrics: dict[str, int | float] = field(default_factory=dict)
 
     @property
     def causal_working_set_size(self) -> int:
@@ -96,11 +99,21 @@ class WorldCausalIndex:
     def __init__(self, state: WorldState, hierarchy: HierarchicalWorldState | None = None) -> None:
         self.state = state
         self.hierarchy = hierarchy
+        self._adjacency: dict[str, list[Relation]] = {}
+        for relation in state.relations:
+            self._adjacency.setdefault(relation.src, []).append(relation)
+            self._adjacency.setdefault(relation.dst, []).append(relation)
 
     def query(self, query: WorldCausalQuery) -> WorldCausalSlice:
         target = query.event.target if query.event.target in self.state.objects else _first_object_id(self.state)
         reasons: dict[str, set[str]] = {}
+        relation_paths: dict[str, list[str]] = {target: [target]}
         ordered: list[str] = []
+        metrics: dict[str, int | float] = {
+            "objects_examined": 1,
+            "relations_examined": 0,
+            "candidate_scope_size": len(self._candidate_scope(target, scope_to_region=query.scope_to_region)),
+        }
 
         def add(object_id: str, reason: str) -> None:
             if object_id not in self.state.objects:
@@ -111,22 +124,40 @@ class WorldCausalIndex:
             reasons[object_id].add(reason)
 
         add(target, "event_target")
-        for object_id in self._relation_frontier(target, max_depth=query.relation_depth):
+        relation_frontier, frontier_paths, relations_examined = self._relation_frontier(
+            target, max_depth=query.relation_depth
+        )
+        metrics["relations_examined"] = relations_examined
+        for object_id in relation_frontier:
+            relation_paths[object_id] = frontier_paths.get(object_id, [target, object_id])
             add(object_id, "relation_frontier")
-        for object_id in self._spatial_neighbors(target, radius=query.spatial_radius):
+        spatial_neighbors, spatial_examined = self._spatial_neighbors(
+            target,
+            radius=query.spatial_radius,
+            scope_to_region=query.scope_to_region,
+        )
+        metrics["objects_examined"] = int(metrics["objects_examined"]) + spatial_examined
+        for object_id in spatial_neighbors:
             add(object_id, "spatial_neighbor")
         if self.hierarchy is not None:
             region_id = self.hierarchy.object_to_region.get(target)
             if region_id is not None:
                 for object_id in self.hierarchy.region_objects(region_id):
                     add(object_id, "same_region")
+                    relation_paths.setdefault(object_id, [target, object_id] if object_id != target else [target])
         if query.include_uncertain:
-            for object_id, obj in self.state.objects.items():
+            scope = self._candidate_scope(target, scope_to_region=query.scope_to_region)
+            metrics["objects_examined"] = int(metrics["objects_examined"]) + len(scope)
+            for object_id in scope:
+                obj = self.state.objects[object_id]
                 if obj.confidence < 0.55:
                     add(object_id, "uncertainty_hotspot")
         if query.include_recent:
             event_time = float(query.event.time)
-            for object_id, obj in self.state.objects.items():
+            scope = self._candidate_scope(target, scope_to_region=query.scope_to_region)
+            metrics["objects_examined"] = int(metrics["objects_examined"]) + len(scope)
+            for object_id in scope:
+                obj = self.state.objects[object_id]
                 if obj.last_updated > 0.0 and event_time >= obj.last_updated and event_time - obj.last_updated <= 1.0:
                     add(object_id, "recent_change")
 
@@ -134,43 +165,65 @@ class WorldCausalIndex:
             ordered,
             key=lambda object_id: self._rank_key(object_id, target, reasons[object_id]),
         )
+        selected = ranked[: query.max_objects]
+        metrics["selected_k"] = len(selected)
+        metrics["affected_fraction"] = len(selected) / max(len(self.state.objects), 1)
         return WorldCausalSlice(
-            object_ids=ranked[: query.max_objects],
-            reason_by_object={object_id: reasons[object_id] for object_id in ranked[: query.max_objects]},
+            object_ids=selected,
+            reason_by_object={object_id: reasons[object_id] for object_id in selected},
             total_objects=len(self.state.objects),
+            relation_path_by_object={object_id: relation_paths.get(object_id, [target, object_id]) for object_id in selected},
+            retrieval_metrics=metrics,
         )
 
-    def _relation_frontier(self, target: str, *, max_depth: int) -> list[str]:
+    def _relation_frontier(self, target: str, *, max_depth: int) -> tuple[list[str], dict[str, list[str]], int]:
         visited = {target}
-        frontier = [(target, 0)]
+        frontier = [(target, 0, [target])]
         result: list[str] = []
+        paths: dict[str, list[str]] = {}
+        relations_examined = 0
         while frontier:
-            current, depth = frontier.pop(0)
+            current, depth, path = frontier.pop(0)
             if depth >= max_depth:
                 continue
-            for relation in self.state.relations_for(current):
+            local_relations = self._adjacency.get(current, [])
+            relations_examined += len(local_relations)
+            for relation in local_relations:
                 other = relation.other(current)
                 if other is None or other in visited:
                     continue
                 visited.add(other)
                 result.append(other)
-                frontier.append((other, depth + 1))
-        return result
+                next_path = [*path, other]
+                paths[other] = next_path
+                frontier.append((other, depth + 1, next_path))
+        return result, paths, relations_examined
 
-    def _spatial_neighbors(self, target: str, *, radius: float) -> list[str]:
+    def _spatial_neighbors(self, target: str, *, radius: float, scope_to_region: bool) -> tuple[list[str], int]:
         target_position = _position(self.state.objects[target])
         if target_position is None:
-            return []
+            return [], 0
         neighbors = []
-        for object_id, obj in self.state.objects.items():
+        scope = self._candidate_scope(target, scope_to_region=scope_to_region)
+        for object_id in scope:
             if object_id == target:
                 continue
+            obj = self.state.objects[object_id]
             position = _position(obj)
             if position is None:
                 continue
             if _distance(target_position, position) <= radius:
                 neighbors.append(object_id)
-        return neighbors
+        return neighbors, len(scope)
+
+    def _candidate_scope(self, target: str, *, scope_to_region: bool) -> list[str]:
+        if not scope_to_region or self.hierarchy is None:
+            return list(self.state.objects)
+        region_id = self.hierarchy.object_to_region.get(target)
+        if region_id is None:
+            return list(self.state.objects)
+        scoped = self.hierarchy.region_objects(region_id)
+        return scoped if scoped else list(self.state.objects)
 
     def _rank_key(self, object_id: str, target: str, reasons: set[str]) -> tuple[int, float, str]:
         priority = min(_REASON_PRIORITY.get(reason, 99) for reason in reasons)

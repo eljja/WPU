@@ -36,3 +36,30 @@ def test_world_causal_index_keeps_large_background_out_of_event_slice() -> None:
     assert causal_slice.object_ids[:3] == ["cup", "table", "hand"]
     assert not any(object_id.startswith("bg_") for object_id in causal_slice.object_ids)
     assert causal_slice.reason_by_object["cup"] == {"event_target", "recent_change"}
+
+
+def test_world_causal_index_reports_paths_and_scoped_retrieval_cost() -> None:
+    state = WorldState()
+    state.add_object(WorldObject("cup", "cup", {"position": [0.0, 0.0, 0.0]}, last_updated=0.5))
+    state.add_object(WorldObject("table", "table", {"position": [0.1, 0.0, 0.0]}))
+    state.add_object(WorldObject("hand", "hand", {"position": [0.2, 0.0, 0.0]}))
+    state.add_relation(Relation("cup", "table", "on"))
+    state.add_relation(Relation("hand", "cup", "near"))
+    hierarchy = HierarchicalWorldState(state)
+    hierarchy.add_region("active", parent_id="world")
+    for object_id in ["cup", "table", "hand"]:
+        hierarchy.assign_object(object_id, "active")
+    for index in range(200):
+        object_id = f"bg_{index}"
+        state.add_object(WorldObject(object_id, "background", {"position": [float(index), 99.0, 0.0]}))
+        hierarchy.add_region("background", parent_id="world")
+        hierarchy.assign_object(object_id, "background")
+
+    causal_slice = WorldCausalIndex(state, hierarchy).query(
+        WorldCausalQuery(event=Event("touch", "cup", time=1.0), max_objects=8, spatial_radius=0.5)
+    )
+
+    assert causal_slice.relation_path_by_object["hand"] == ["cup", "hand"]
+    assert causal_slice.retrieval_metrics["candidate_scope_size"] == 3
+    assert causal_slice.retrieval_metrics["objects_examined"] < len(state.objects)
+    assert causal_slice.retrieval_metrics["relations_examined"] == 2

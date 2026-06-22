@@ -82,6 +82,12 @@ The current repository supports an early but meaningful prototype-level claim:
   while total `N` grows from `104` to `10004`; no non-causal background objects
   are selected, and the affected fraction at `N=10004` is `0.00039984`. This
   validates scalable causal-slice retrieval, not trained world modeling.
+- The first v3 noisy-index stress benchmark extends this substrate evidence to
+  `N=8192`, `K_ref=4/8/16`, missing relations, and false-positive relations.
+  Region-scoped retrieval keeps recall at `1.000000` in the controlled setup
+  and keeps `N=8192` touch ratio below `0.004385`; false-positive relations
+  reduce mean precision to `0.800000`, marking spurious relation suppression as
+  the next index failure boundary.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

@@ -18,6 +18,26 @@ WPU v3 should test the following claim:
 This is still a conditional claim. v3 must not claim that WPU always beats LPU,
 GPU, NPU, TPU, graph transformers, or token models.
 
+## Alignment Audit
+
+The fixed v3 plan is aligned with the ultimate WPU goal only if each work cycle
+preserves these constraints:
+
+- The primary representation remains persistent objectified state.
+- Token baselines are used for comparison, not as the hidden implementation
+  path for WPU.
+- Every large-`N` improvement reports whether selected `K` stays bounded,
+  sublinear, or grows with `N`.
+- Every accuracy claim is paired with latency, memory traffic, dense fallback,
+  or correction-cost evidence.
+- Every world-copy claim includes horizon or streaming evidence, not only
+  one-step prediction.
+- Every failure is assigned to objectification, retrieval, propagation,
+  uncertainty, correction, or systems overhead.
+
+If a proposed improvement violates these constraints, it should be treated as a
+baseline or ablation, not as WPU v3 progress.
+
 ## What Changes From V2
 
 | Area | v2 | v3 target |
@@ -266,6 +286,62 @@ of the following are true:
 6. Add token/graph matched baselines for the same world-copy stream.
 7. Update paper/claim docs only after the benchmark evidence exists.
 
+## Iteration Protocol
+
+Each repeated improvement cycle should follow the same loop:
+
+1. Select the highest-priority failing criterion from this document.
+2. Inspect the current code, tests, reports, and claim docs before editing.
+3. Implement the smallest WPU-native change that attacks the failure.
+4. Add or update a benchmark that can falsify the change.
+5. Run the benchmark and record both positive and negative results.
+6. Compare against token/graph baselines when the claim involves superiority.
+7. Update claim boundaries before strengthening any public claim.
+8. Run tests, commit, and push only the relevant files.
+
+Per-cycle deliverables:
+
+- code or benchmark change;
+- reproducible command;
+- CSV or markdown report;
+- English and Korean documentation update when claims change;
+- explicit statement of what improved, what failed, and what remains next.
+
+The next cycle should start from the remaining failure with the highest impact
+on the world-copy goal, not from the easiest figure to improve.
+
+## Reusable Continuation Prompt
+
+Use this prompt to continue WPU v3 work in a new session:
+
+```text
+Continue WPU v3 toward the ultimate goal: an object-oriented world-state
+processing unit that maintains an executable world copy through persistent
+objectified state, causal indexing, learned relation-conditioned propagation,
+delta/branch overlays, uncertainty, and correction.
+
+Do not turn WPU back into a token processor. Token/graph/LPU-style models are
+baselines only. WPU progress must preserve object identity, relation traversal,
+event-local causal working sets, state patching, and long-horizon world-copy
+integrity as native operations.
+
+First inspect docs/world_copy_model.md and docs/versions/wpu_v3_plan.md, then
+inspect the current code, tests, and latest experiment reports. Pick the
+highest-impact unresolved v3 criterion, implement the smallest WPU-native
+improvement, add a falsifiable benchmark or test, run it, record positive and
+negative results, update English/Korean docs if claims change, run the relevant
+tests, and commit/push the work.
+
+Always report:
+- what WPU failure was targeted;
+- what changed in code or benchmark;
+- whether selected K remains bounded or sublinear as N grows;
+- whether accuracy, latency, memory traffic, correction cost, or state integrity
+  improved;
+- whether token/graph baselines still win in any regime;
+- what remains the next highest-priority failure.
+```
+
 ## Claim Boundary
 
 The publishable v3 claim should be:
@@ -280,4 +356,3 @@ The non-publishable claim is:
 
 > WPU has solved real-world physical understanding or universally replaces
 > token/LPU-style processing.
-

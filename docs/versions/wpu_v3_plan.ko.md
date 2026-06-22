@@ -17,6 +17,24 @@ WPU v3는 다음 주장을 검증해야 한다.
 이는 여전히 조건부 주장이다. v3도 WPU가 LPU, GPU, NPU, TPU, graph transformer, token
 model을 항상 이긴다고 주장하면 안 된다.
 
+## Alignment Audit
+
+고정된 v3 계획은 매 작업 cycle이 다음 제약을 지킬 때만 WPU의 궁극 목표와 정렬된다.
+
+- Primary representation은 persistent objectified state로 유지된다.
+- Token baseline은 비교 대상이지 WPU의 숨은 구현 경로가 아니다.
+- 모든 large-`N` 개선은 selected `K`가 bounded인지, sublinear인지, `N`과 함께 커지는지
+  보고한다.
+- 모든 accuracy claim은 latency, memory traffic, dense fallback, correction cost 중
+  하나 이상의 증거와 함께 제시된다.
+- 모든 world-copy claim은 one-step prediction뿐 아니라 horizon 또는 streaming evidence를
+  포함한다.
+- 모든 failure는 objectification, retrieval, propagation, uncertainty, correction,
+  systems overhead 중 어디서 발생했는지 분류된다.
+
+제안된 개선이 이 제약을 위반하면 WPU v3 progress가 아니라 baseline 또는 ablation으로
+취급해야 한다.
+
 ## V2에서 달라지는 점
 
 | 영역 | v2 | v3 목표 |
@@ -258,6 +276,62 @@ Success:
 6. 같은 world-copy stream에 대한 token/graph matched baseline 추가.
 7. Benchmark evidence가 생긴 뒤에만 paper/claim docs 업데이트.
 
+## Iteration Protocol
+
+반복 개선 cycle은 항상 같은 loop를 따라야 한다.
+
+1. 이 문서에서 가장 중요한 failing criterion을 선택한다.
+2. 수정 전에 현재 code, test, report, claim docs를 확인한다.
+3. 그 실패를 공격하는 가장 작은 WPU-native change를 구현한다.
+4. 해당 change를 반증할 수 있는 benchmark 또는 test를 추가/수정한다.
+5. Benchmark를 실행하고 positive/negative result를 모두 기록한다.
+6. Superiority claim이 포함되면 token/graph baseline과 비교한다.
+7. Public claim을 강화하기 전에 claim boundary를 먼저 업데이트한다.
+8. 관련 test를 실행하고 관련 파일만 commit/push한다.
+
+Cycle마다 산출물은 다음을 포함해야 한다.
+
+- code 또는 benchmark change;
+- 재현 가능한 command;
+- CSV 또는 markdown report;
+- claim이 바뀌면 영어/한글 문서 업데이트;
+- 무엇이 개선됐고, 무엇이 실패했고, 다음 남은 문제가 무엇인지 명시.
+
+다음 cycle은 개선하기 쉬운 figure가 아니라 world-copy 목표에 가장 큰 영향을 주는 남은
+failure에서 시작해야 한다.
+
+## Reusable Continuation Prompt
+
+새 session에서 WPU v3 작업을 계속할 때는 다음 prompt를 사용한다.
+
+```text
+Continue WPU v3 toward the ultimate goal: an object-oriented world-state
+processing unit that maintains an executable world copy through persistent
+objectified state, causal indexing, learned relation-conditioned propagation,
+delta/branch overlays, uncertainty, and correction.
+
+Do not turn WPU back into a token processor. Token/graph/LPU-style models are
+baselines only. WPU progress must preserve object identity, relation traversal,
+event-local causal working sets, state patching, and long-horizon world-copy
+integrity as native operations.
+
+First inspect docs/world_copy_model.md and docs/versions/wpu_v3_plan.md, then
+inspect the current code, tests, and latest experiment reports. Pick the
+highest-impact unresolved v3 criterion, implement the smallest WPU-native
+improvement, add a falsifiable benchmark or test, run it, record positive and
+negative results, update English/Korean docs if claims change, run the relevant
+tests, and commit/push the work.
+
+Always report:
+- what WPU failure was targeted;
+- what changed in code or benchmark;
+- whether selected K remains bounded or sublinear as N grows;
+- whether accuracy, latency, memory traffic, correction cost, or state integrity
+  improved;
+- whether token/graph baselines still win in any regime;
+- what remains the next highest-priority failure.
+```
+
 ## Claim Boundary
 
 공표 가능한 v3 주장은 다음이어야 한다.
@@ -271,4 +345,3 @@ Success:
 
 > WPU가 실제 물리 세계 이해를 해결했거나 token/LPU-style processing을 보편적으로
 > 대체한다.
-

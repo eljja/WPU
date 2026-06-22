@@ -72,6 +72,31 @@ instead of repeatedly processing:
 serialize(N) + attend/recompute(N)
 ```
 
+## Non-Negotiable Goal Alignment
+
+The ultimate WPU goal is not to build a better graph benchmark model. It is to
+build a processing model that can maintain an executable world copy. The
+following requirements are non-negotiable for that goal:
+
+- The persistent unit of computation is objectified state, not token order.
+- Propagation must occur through typed relations and causal mechanisms, not
+  through unrelated global averaging.
+- Large-`N` claims require evidence that non-causal background state stays out
+  of the event-local working set.
+- Accuracy improvements must not be purchased by silently returning to full
+  token serialization as the primary processing path.
+- Sparse execution is allowed only when causal retrieval is reliable; otherwise
+  the system must escalate and report why.
+- World-copy quality must be evaluated over time, because a state model that
+  wins one-step accuracy but drifts over long horizons is not a world copy.
+
+This keeps WPU distinct from an LPU-style token processor. An LPU may emulate
+state by processing long serialized contexts, but WPU should make identity,
+relation traversal, local mutation, branch overlays, and correction native
+operations. The comparison target is therefore not only token/sec, but
+event-local state update quality per unit of latency, memory traffic, and
+correction cost.
+
 ## Natural Propagation
 
 Natural propagation means that state changes should flow through object
@@ -201,4 +226,3 @@ This is necessary but not sufficient. It proves that the repository can express
 large-world causal indexing. It does not prove trained world modeling, real
 physical understanding, perception-to-state construction, or long-horizon
 world-copy stability.
-

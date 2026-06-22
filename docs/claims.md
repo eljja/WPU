@@ -69,14 +69,16 @@ Latest C6 v3 noisy-index update:
 `docs/experiments/world_copy_causal_index_stress_results.md` adds the first P1
 stress benchmark for noisy causal retrieval. It sweeps `N=128..8192`,
 `K_ref=4/8/16`, missing relation rates `0/0.25/0.5`, and false-positive
-relation rates `0/0.1/0.25`, now with relation confidence thresholds `0/0.3`.
-In this controlled region-scoped setup, recall stays `1.000000` and the
-`N=8192` touch ratio stays below `0.004385`. Without the confidence gate,
-false-positive relations reduce mean precision to `0.800000`; with
-`min_relation_confidence=0.3`, mean precision returns to `1.000000` while recall
-stays `1.000000`. This strengthens the index scalability claim and moves the
-next retrieval problem to low-confidence or miscalibrated true causal
-relations.
+relation rates `0/0.1/0.25`, relation confidence thresholds `0/0.3`, and true
+relation confidence `0.95/0.2`. In this controlled region-scoped setup, recall
+stays `1.000000` and the `N=8192` touch ratio stays below `0.004385`. Without
+the confidence gate, false-positive relations reduce mean precision to
+`0.800000`; with `min_relation_confidence=0.3`, mean precision returns to
+`1.000000` while recall stays `1.000000`. When true causal relation confidence
+is lowered to `0.2`, region scope recovers recall and precision, but mean
+escalation reaches `0.981481`. This strengthens the index scalability claim and
+moves the next problem to local dense/hybrid correction after uncertainty
+escalation.
 
 Latest C7 P1 verification-context update:
 `docs/experiments/wpu_v2_joint_selector_propagator_verification_context_results.md`

@@ -26,6 +26,7 @@ class WorldCausalQuery:
     include_recent: bool = True
     scope_to_region: bool = True
     min_relation_confidence: float = 0.0
+    escalate_on_low_confidence_rejection: bool = True
 
 
 @dataclass(slots=True)
@@ -132,6 +133,13 @@ class WorldCausalIndex:
         )
         metrics["relations_examined"] = relations_examined["examined"]
         metrics["relations_rejected_low_confidence"] = relations_examined["rejected_low_confidence"]
+        metrics["low_confidence_rejection_rate"] = relations_examined["rejected_low_confidence"] / max(
+            relations_examined["examined"],
+            1,
+        )
+        metrics["escalation_required"] = int(
+            query.escalate_on_low_confidence_rejection and relations_examined["rejected_low_confidence"] > 0
+        )
         for object_id in relation_frontier:
             relation_paths[object_id] = frontier_paths.get(object_id, [target, object_id])
             add(object_id, "relation_frontier")

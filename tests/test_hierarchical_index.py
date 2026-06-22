@@ -86,3 +86,30 @@ def test_world_causal_index_rejects_low_confidence_spurious_relations() -> None:
     assert "table" in causal_slice.object_ids
     assert "distractor" not in causal_slice.object_ids
     assert causal_slice.retrieval_metrics["relations_rejected_low_confidence"] == 1
+    assert causal_slice.retrieval_metrics["escalation_required"] == 1
+
+
+def test_world_causal_index_marks_escalation_when_true_relation_confidence_is_low() -> None:
+    state = WorldState()
+    state.add_object(WorldObject("cup", "cup", {"position": [0.0, 0.0, 0.0]}))
+    state.add_object(WorldObject("table", "table", {"position": [0.1, 0.0, 0.0]}))
+    state.add_relation(Relation("cup", "table", "on", confidence=0.2))
+    hierarchy = HierarchicalWorldState(state)
+    hierarchy.add_region("active")
+    hierarchy.assign_object("cup", "active")
+    hierarchy.assign_object("table", "active")
+
+    causal_slice = WorldCausalIndex(state, hierarchy).query(
+        WorldCausalQuery(
+            event=Event("touch", "cup", time=1.0),
+            include_recent=False,
+            include_uncertain=False,
+            spatial_radius=0.0,
+            min_relation_confidence=0.5,
+        )
+    )
+
+    assert "table" in causal_slice.object_ids
+    assert causal_slice.reason_by_object["table"] == {"same_region"}
+    assert causal_slice.retrieval_metrics["relations_rejected_low_confidence"] == 1
+    assert causal_slice.retrieval_metrics["escalation_required"] == 1

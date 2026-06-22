@@ -83,8 +83,10 @@ benchmark requirement, success/failure criteria를 정의한다.
   `N=8192` touch ratio를 `0.004385` 이하로 유지한다. Relation-confidence gate가 없으면
   false-positive relation은 mean precision을 `0.800000`까지 낮추지만,
   `min_relation_confidence=0.3`에서는 recall `1.000000`을 유지하면서 precision도
-  `1.000000`으로 회복된다. 다음 index boundary는 confidence가 낮거나 calibration이 틀린
-  true causal relation이다.
+  `1.000000`으로 회복된다. True causal relation confidence를 `0.2`로 낮추면 region
+  scope가 recall과 precision을 회복하지만 mean escalation signal은 `0.981481`로 켜진다.
+  다음 boundary는 escalation 이후 local dense/hybrid correction이 propagation accuracy를
+  개선하는지다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

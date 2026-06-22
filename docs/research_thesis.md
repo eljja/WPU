@@ -88,8 +88,10 @@ The current repository supports an early but meaningful prototype-level claim:
   and keeps `N=8192` touch ratio below `0.004385`. Without a relation-confidence
   gate, false-positive relations reduce mean precision to `0.800000`; with
   `min_relation_confidence=0.3`, precision returns to `1.000000` while recall
-  stays `1.000000`. The next index boundary is low-confidence or miscalibrated
-  true causal relations.
+  stays `1.000000`. When true causal relation confidence is lowered to `0.2`,
+  region scope recovers recall and precision, but the mean escalation signal is
+  `0.981481`. The next boundary is whether local dense/hybrid correction after
+  escalation improves propagation accuracy.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

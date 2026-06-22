@@ -21,6 +21,9 @@ variable이 필요하다. 정의는 `docs/objectification.ko.md`에 둔다.
 논문, claim ledger, 실험 보고서를 하나의 논리로 정렬한 compact thesis는
 `docs/research_thesis.ko.md`에 둔다.
 
+고정된 v3 world-copy 정의와 roadmap은 `docs/world_copy_model.ko.md`와
+`docs/versions/wpu_v3_plan.ko.md`에 둔다.
+
 ## 연구 기여
 
 WPU의 기여는 입력 형식만 다른 dense sequence model이 아니라 state-native execution

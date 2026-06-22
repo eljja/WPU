@@ -52,6 +52,10 @@ object identity, relation traversal, branch overlay, partial state update를 nat
 operation으로 만들지는 않는다. WPU는 이 operation들을 native하게 만들면 별도의
 accuracy/latency/memory regime이 생기는지 묻는다.
 
+v3 목표의 정의는 `world_copy_model.ko.md`와 `versions/wpu_v3_plan.ko.md`에 고정한다.
+두 문서는 추가 구현 전에 world copy, 객체지향적 processing, natural propagation,
+benchmark requirement, success/failure criteria를 정의한다.
+
 ## 현재 증거
 
 현재 저장소는 early prototype 수준의 의미 있는 주장을 지지한다.

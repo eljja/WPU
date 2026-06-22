@@ -22,6 +22,9 @@ affordance, geometry, confidence, and history. See `docs/objectification.md`.
 For the compact research thesis that aligns the paper, claim ledger, and
 experiment reports, see `docs/research_thesis.md`.
 
+For the fixed v3 world-copy definition and roadmap, see
+`docs/world_copy_model.md` and `docs/versions/wpu_v3_plan.md`.
+
 ## Research Contribution
 
 WPU's contribution is a state-native execution model, not another dense

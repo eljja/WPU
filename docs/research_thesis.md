@@ -55,6 +55,11 @@ object identity, relation traversal, branch overlays, and partial state updates
 native operations. WPU asks whether making those operations native creates a
 distinct accuracy/latency/memory regime.
 
+The v3 definition of that target is fixed in `world_copy_model.md` and
+`versions/wpu_v3_plan.md`. Those documents define world copy, object-oriented
+processing, natural propagation, benchmark requirements, and success/failure
+criteria before further implementation.
+
 ## Current Evidence
 
 The current repository supports an early but meaningful prototype-level claim:

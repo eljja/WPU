@@ -21,6 +21,7 @@ def main() -> None:
     parser.add_argument("--k-values", type=int, nargs="+", default=[4, 8, 16])
     parser.add_argument("--missing-rates", type=float, nargs="+", default=[0.0, 0.25, 0.5])
     parser.add_argument("--false-positive-rates", type=float, nargs="+", default=[0.0, 0.1, 0.25])
+    parser.add_argument("--relation-confidence-thresholds", type=float, nargs="+", default=[0.0, 0.3])
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--out-csv", type=Path, default=Path("docs/experiments/world_copy_causal_index_stress.csv"))
     parser.add_argument(
@@ -50,48 +51,54 @@ def main() -> None:
                         false_positive_rate=false_positive_rate,
                         rng=rng,
                     )
-                    started = time.perf_counter()
-                    causal_slice = WorldCausalIndex(state, hierarchy).query(
-                        WorldCausalQuery(
-                            event=event,
-                            max_objects=max(64, k_ref * 4),
-                            relation_depth=1,
-                            spatial_radius=0.25,
-                            include_uncertain=False,
-                            include_recent=False,
+                    for min_relation_confidence in args.relation_confidence_thresholds:
+                        started = time.perf_counter()
+                        causal_slice = WorldCausalIndex(state, hierarchy).query(
+                            WorldCausalQuery(
+                                event=event,
+                                max_objects=max(64, k_ref * 4),
+                                relation_depth=1,
+                                spatial_radius=0.25,
+                                include_uncertain=False,
+                                include_recent=False,
+                                min_relation_confidence=min_relation_confidence,
+                            )
                         )
-                    )
-                    elapsed_ms = (time.perf_counter() - started) * 1000.0
-                    selected = set(causal_slice.object_ids)
-                    true_positive = len(selected & expected)
-                    false_positive = len(selected - expected)
-                    recall = true_positive / max(len(expected), 1)
-                    precision = true_positive / max(len(selected), 1)
-                    selected_k = causal_slice.causal_working_set_size
-                    full_scan_units = len(state.objects) + len(state.relations)
-                    touched_units = int(causal_slice.retrieval_metrics["objects_examined"]) + int(
-                        causal_slice.retrieval_metrics["relations_examined"]
-                    )
-                    rows.append(
-                        {
-                            "total_n": len(state.objects),
-                            "k_ref": len(expected),
-                            "missing_rate": missing_rate,
-                            "false_positive_rate": false_positive_rate,
-                            "selected_k": selected_k,
-                            "recall": round(recall, 6),
-                            "precision": round(precision, 6),
-                            "false_non_causal_selected": false_positive,
-                            "affected_fraction": round(causal_slice.affected_fraction, 8),
-                            "objects_examined": causal_slice.retrieval_metrics["objects_examined"],
-                            "relations_examined": causal_slice.retrieval_metrics["relations_examined"],
-                            "candidate_scope_size": causal_slice.retrieval_metrics["candidate_scope_size"],
-                            "touch_units": touched_units,
-                            "full_scan_units": full_scan_units,
-                            "touch_ratio": round(touched_units / max(full_scan_units, 1), 8),
-                            "latency_ms": round(elapsed_ms, 6),
-                        }
-                    )
+                        elapsed_ms = (time.perf_counter() - started) * 1000.0
+                        selected = set(causal_slice.object_ids)
+                        true_positive = len(selected & expected)
+                        false_positive = len(selected - expected)
+                        recall = true_positive / max(len(expected), 1)
+                        precision = true_positive / max(len(selected), 1)
+                        selected_k = causal_slice.causal_working_set_size
+                        full_scan_units = len(state.objects) + len(state.relations)
+                        touched_units = int(causal_slice.retrieval_metrics["objects_examined"]) + int(
+                            causal_slice.retrieval_metrics["relations_examined"]
+                        )
+                        rows.append(
+                            {
+                                "total_n": len(state.objects),
+                                "k_ref": len(expected),
+                                "missing_rate": missing_rate,
+                                "false_positive_rate": false_positive_rate,
+                                "min_relation_confidence": min_relation_confidence,
+                                "selected_k": selected_k,
+                                "recall": round(recall, 6),
+                                "precision": round(precision, 6),
+                                "false_non_causal_selected": false_positive,
+                                "affected_fraction": round(causal_slice.affected_fraction, 8),
+                                "objects_examined": causal_slice.retrieval_metrics["objects_examined"],
+                                "relations_examined": causal_slice.retrieval_metrics["relations_examined"],
+                                "relations_rejected_low_confidence": causal_slice.retrieval_metrics[
+                                    "relations_rejected_low_confidence"
+                                ],
+                                "candidate_scope_size": causal_slice.retrieval_metrics["candidate_scope_size"],
+                                "touch_units": touched_units,
+                                "full_scan_units": full_scan_units,
+                                "touch_ratio": round(touched_units / max(full_scan_units, 1), 8),
+                                "latency_ms": round(elapsed_ms, 6),
+                            }
+                        )
 
     args.out_csv.parent.mkdir(parents=True, exist_ok=True)
     with args.out_csv.open("w", newline="", encoding="utf-8") as handle:
@@ -170,8 +177,8 @@ def _report(rows: list[dict[str, object]], source_csv: Path, *, korean: bool) ->
             "",
             "## Summary",
             "",
-            "| missing rate | false-positive rate | mean recall | mean precision | max selected K | max touch ratio |",
-            "|---:|---:|---:|---:|---:|---:|",
+            "| min relation confidence | missing rate | false-positive rate | mean recall | mean precision | max selected K | max touch ratio |",
+            "|---:|---:|---:|---:|---:|---:|---:|",
         ]
     else:
         intro = [
@@ -183,14 +190,14 @@ def _report(rows: list[dict[str, object]], source_csv: Path, *, korean: bool) ->
             "",
             "## Summary",
             "",
-            "| missing rate | false-positive rate | mean recall | mean precision | max selected K | max touch ratio |",
-            "|---:|---:|---:|---:|---:|---:|",
+            "| min relation confidence | missing rate | false-positive rate | mean recall | mean precision | max selected K | max touch ratio |",
+            "|---:|---:|---:|---:|---:|---:|---:|",
         ]
     table = []
     for key, values in grouped.items():
-        missing_rate, false_positive_rate = key
+        min_relation_confidence, missing_rate, false_positive_rate = key
         table.append(
-            f"| {missing_rate} | {false_positive_rate} | {values['mean_recall']:.6f} | "
+            f"| {min_relation_confidence} | {missing_rate} | {false_positive_rate} | {values['mean_recall']:.6f} | "
             f"{values['mean_precision']:.6f} | {values['max_selected_k']} | {values['max_touch_ratio']:.8f} |"
         )
     if korean:
@@ -200,7 +207,8 @@ def _report(rows: list[dict[str, object]], source_csv: Path, *, korean: bool) ->
             "",
             "- Region-scoped retrieval은 `N`이 커져도 touched units를 full-state scan보다 훨씬 낮게 유지한다.",
             "- 누락된 true relation은 active region이 causal scope로 작동하기 때문에 일부 복구된다. 단, 이는 objectification과 region assignment가 맞다는 가정에 의존한다.",
-            "- False-positive relation은 non-causal object를 추가해 precision을 낮춘다. 이것이 현재 index의 failure boundary다.",
+            "- Relation confidence gate는 low-confidence false-positive relation을 억제해 precision을 회복한다.",
+            "- 다음 failure boundary는 true causal relation의 confidence도 낮거나 calibration이 틀린 경우다.",
         ]
     else:
         notes = [
@@ -209,15 +217,23 @@ def _report(rows: list[dict[str, object]], source_csv: Path, *, korean: bool) ->
             "",
             "- Region-scoped retrieval keeps touched units far below full-state scan as `N` grows.",
             "- Missing true relations are partly recovered because the active region is a causal scope, but this assumes correct objectification/region assignment.",
-            "- False-positive relations add non-causal objects and reduce precision; this is the current failure boundary for the index.",
+            "- Relation confidence gating suppresses low-confidence false-positive relations and recovers precision.",
+            "- The next failure boundary is low-confidence or miscalibrated true causal relations.",
         ]
     return "\n".join([*intro, *table, *notes, ""])
 
 
-def _summarize(rows: list[dict[str, object]]) -> dict[tuple[float, float], dict[str, float]]:
-    grouped: dict[tuple[float, float], list[dict[str, object]]] = {}
+def _summarize(rows: list[dict[str, object]]) -> dict[tuple[float, float, float], dict[str, float]]:
+    grouped: dict[tuple[float, float, float], list[dict[str, object]]] = {}
     for row in rows:
-        grouped.setdefault((float(row["missing_rate"]), float(row["false_positive_rate"])), []).append(row)
+        grouped.setdefault(
+            (
+                float(row["min_relation_confidence"]),
+                float(row["missing_rate"]),
+                float(row["false_positive_rate"]),
+            ),
+            [],
+        ).append(row)
     summary = {}
     for key, items in grouped.items():
         summary[key] = {

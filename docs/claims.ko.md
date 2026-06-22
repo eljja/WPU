@@ -63,11 +63,13 @@ noisy objectification robustness, 실제 물리 세계 이해를 증명하지는
 최신 C6 v3 noisy-index 업데이트:
 `docs/experiments/world_copy_causal_index_stress_results.ko.md`는 noisy causal
 retrieval을 위한 첫 P1 stress benchmark다. `N=128..8192`, `K_ref=4/8/16`, missing
-relation rate `0/0.25/0.5`, false-positive relation rate `0/0.1/0.25`를 sweep한다.
-Controlled region-scoped setup에서 recall은 `1.000000`을 유지하고 `N=8192` touch
-ratio는 `0.004385` 이하로 유지된다. 그러나 false-positive relation은 mean precision을
-`0.800000`까지 낮춘다. 이는 index scalability claim을 강화하면서 다음 retrieval 문제는
-spurious relation 억제임을 보여준다.
+relation rate `0/0.25/0.5`, false-positive relation rate `0/0.1/0.25`, relation
+confidence threshold `0/0.3`을 sweep한다. Controlled region-scoped setup에서 recall은
+`1.000000`을 유지하고 `N=8192` touch ratio는 `0.004385` 이하로 유지된다.
+Confidence gate가 없으면 false-positive relation은 mean precision을 `0.800000`까지
+낮추지만, `min_relation_confidence=0.3`에서는 recall `1.000000`을 유지하면서 precision도
+`1.000000`으로 회복된다. 이는 index scalability claim을 강화하면서 다음 retrieval 문제는
+confidence가 낮거나 calibration이 틀린 true causal relation임을 보여준다.
 
 최신 C7 P1 verification-context 업데이트:
 `docs/experiments/wpu_v2_joint_selector_propagator_verification_context_results.ko.md`는

@@ -91,12 +91,14 @@ Use these reports for paper-level claims:
 - `world_copy_causal_index_stress_results.md` and
   `world_copy_causal_index_stress_results.ko.md`: first v3 P1 noisy-index
   stress report. It sweeps `N=128..8192`, `K_ref=4/8/16`, missing relation
-  rates `0/0.25/0.5`, and false-positive relation rates `0/0.1/0.25`. The
-  region-scoped causal index keeps recall at `1.000000` in this controlled
-  setup and keeps touch ratio below `0.004385` at `N=8192`, but false-positive
-  relations reduce mean precision to `0.800000`. This is causal-retrieval
-  substrate evidence and a spurious-relation failure boundary, not trained
-  world-model accuracy.
+  rates `0/0.25/0.5`, false-positive relation rates `0/0.1/0.25`, and relation
+  confidence thresholds `0/0.3`. The region-scoped causal index keeps recall at
+  `1.000000` in this controlled setup and keeps touch ratio below `0.004385` at
+  `N=8192`. Without a confidence gate, false-positive relations reduce mean
+  precision to `0.800000`; with `min_relation_confidence=0.3`, precision returns
+  to `1.000000` while selected `K` returns to `K_ref`. This is causal-retrieval
+  substrate evidence, not trained world-model accuracy. The next failure
+  boundary is low-confidence or miscalibrated true causal relations.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

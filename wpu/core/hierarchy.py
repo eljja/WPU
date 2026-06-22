@@ -25,6 +25,7 @@ class WorldCausalQuery:
     include_uncertain: bool = True
     include_recent: bool = True
     scope_to_region: bool = True
+    min_relation_confidence: float = 0.0
 
 
 @dataclass(slots=True)
@@ -125,9 +126,12 @@ class WorldCausalIndex:
 
         add(target, "event_target")
         relation_frontier, frontier_paths, relations_examined = self._relation_frontier(
-            target, max_depth=query.relation_depth
+            target,
+            max_depth=query.relation_depth,
+            min_confidence=query.min_relation_confidence,
         )
-        metrics["relations_examined"] = relations_examined
+        metrics["relations_examined"] = relations_examined["examined"]
+        metrics["relations_rejected_low_confidence"] = relations_examined["rejected_low_confidence"]
         for object_id in relation_frontier:
             relation_paths[object_id] = frontier_paths.get(object_id, [target, object_id])
             add(object_id, "relation_frontier")
@@ -176,19 +180,28 @@ class WorldCausalIndex:
             retrieval_metrics=metrics,
         )
 
-    def _relation_frontier(self, target: str, *, max_depth: int) -> tuple[list[str], dict[str, list[str]], int]:
+    def _relation_frontier(
+        self,
+        target: str,
+        *,
+        max_depth: int,
+        min_confidence: float,
+    ) -> tuple[list[str], dict[str, list[str]], dict[str, int]]:
         visited = {target}
         frontier = [(target, 0, [target])]
         result: list[str] = []
         paths: dict[str, list[str]] = {}
-        relations_examined = 0
+        metrics = {"examined": 0, "rejected_low_confidence": 0}
         while frontier:
             current, depth, path = frontier.pop(0)
             if depth >= max_depth:
                 continue
             local_relations = self._adjacency.get(current, [])
-            relations_examined += len(local_relations)
+            metrics["examined"] += len(local_relations)
             for relation in local_relations:
+                if relation.confidence < min_confidence:
+                    metrics["rejected_low_confidence"] += 1
+                    continue
                 other = relation.other(current)
                 if other is None or other in visited:
                     continue
@@ -197,7 +210,7 @@ class WorldCausalIndex:
                 next_path = [*path, other]
                 paths[other] = next_path
                 frontier.append((other, depth + 1, next_path))
-        return result, paths, relations_examined
+        return result, paths, metrics
 
     def _spatial_neighbors(self, target: str, *, radius: float, scope_to_region: bool) -> tuple[list[str], int]:
         target_position = _position(self.state.objects[target])

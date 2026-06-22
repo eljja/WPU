@@ -80,9 +80,11 @@ benchmark requirement, success/failure criteria를 정의한다.
 - 첫 v3 noisy-index stress benchmark는 이 substrate evidence를 `N=8192`,
   `K_ref=4/8/16`, missing relation, false-positive relation으로 확장한다.
   Controlled setup에서 region-scoped retrieval은 recall `1.000000`을 유지하고,
-  `N=8192` touch ratio를 `0.004385` 이하로 유지한다. 그러나 false-positive relation은
-  mean precision을 `0.800000`까지 낮추므로, spurious relation 억제가 다음 index failure
-  boundary다.
+  `N=8192` touch ratio를 `0.004385` 이하로 유지한다. Relation-confidence gate가 없으면
+  false-positive relation은 mean precision을 `0.800000`까지 낮추지만,
+  `min_relation_confidence=0.3`에서는 recall `1.000000`을 유지하면서 precision도
+  `1.000000`으로 회복된다. 다음 index boundary는 confidence가 낮거나 calibration이 틀린
+  true causal relation이다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

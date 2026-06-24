@@ -102,6 +102,16 @@ Use these reports for paper-level claims:
   mean escalation signal is `0.981481`. This is causal-retrieval substrate
   evidence, not trained world-model accuracy. The next failure boundary is
   whether local dense/hybrid correction after escalation improves propagation.
+- `world_copy_escalation_correction_probe_results.md` and
+  `world_copy_escalation_correction_probe_results.ko.md`: v3 substrate follow-up
+  for that escalation boundary. It compares confident-relation sparse updates
+  against local region correction candidates after escalation. With true
+  relation confidence `0.2`, sparse confident-relation updates reach mean recall
+  `0.145833`, precision `1.000000`, and F1 `0.246623`; the hybrid
+  escalation-region path reaches mean recall/precision/F1 `1.000000` while
+  keeping max selected `K=16`. This supports bounded local correction candidate
+  generation after escalation, not learned transition accuracy or token/graph
+  superiority.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

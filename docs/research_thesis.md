@@ -92,6 +92,12 @@ The current repository supports an early but meaningful prototype-level claim:
   region scope recovers recall and precision, but the mean escalation signal is
   `0.981481`. The next boundary is whether local dense/hybrid correction after
   escalation improves propagation accuracy.
+- The v3 escalation-correction probe tests that boundary at substrate level.
+  With true relation confidence `0.2`, sparse confident-relation updates fall to
+  mean recall `0.145833` and F1 `0.246623`; local hybrid escalation-region
+  candidates recover mean recall/precision/F1 to `1.000000` while keeping max
+  selected `K=16`. This validates bounded correction candidates after
+  escalation, not learned transition quality or baseline superiority.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

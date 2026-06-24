@@ -87,6 +87,12 @@ benchmark requirement, success/failure criteria를 정의한다.
   scope가 recall과 precision을 회복하지만 mean escalation signal은 `0.981481`로 켜진다.
   다음 boundary는 escalation 이후 local dense/hybrid correction이 propagation accuracy를
   개선하는지다.
+- v3 escalation-correction probe는 이 boundary를 substrate 수준에서 테스트한다. True
+  relation confidence가 `0.2`일 때 sparse confident-relation update는 mean recall
+  `0.145833`, F1 `0.246623`으로 떨어지지만, local hybrid escalation-region candidate는
+  max selected `K=16`을 유지하면서 mean recall/precision/F1을 `1.000000`으로 회복한다.
+  이는 escalation 이후 bounded correction candidate를 검증하는 증거이지, learned
+  transition quality나 baseline superiority 증거는 아니다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

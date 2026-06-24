@@ -230,9 +230,10 @@ The current repository has the first v3 world-copy substrate pieces:
   correction candidates can reduce learned delta MSE in a controlled synthetic
   local-law setting.
 - `world_copy_baseline_comparison_probe` providing the first same-task
-  WPU/token/graph/dense comparison screen. It shows bounded selected `K` and
-  much lower work/bytes proxy for WPU, but lower raw delta MSE for dense/token
-  baselines.
+  WPU/token/graph/dense comparison screen. The updated `wpu-region-guard` path
+  keeps bounded selected `K` and much lower work/bytes proxy while beating the
+  controlled dense/token baselines on raw delta MSE. The result depends on
+  bounded, reliable local regions.
 
 This is necessary but not sufficient. It proves that the repository can express
 large-world causal indexing and a first learned local correction diagnostic. It

@@ -284,10 +284,12 @@ candidate, 그리고 첫 learned local-delta correction probe에 대한 controll
 escalation 이후 bounded local region candidate는 max selected `K=16`에서 synthetic delta
 MSE를 `0.275312`에서 `0.006365`로 낮춘다.
 
-첫 same-task baseline-comparison screen은 mixed result다. WPU는 max selected `K=16`,
-mean work proxy `8.789551`, mean bytes proxy `316.423828`을 유지하지만, dense graph와
-serialized-token baseline의 raw delta MSE(`0.003778`, `0.004533`)가 WPU(`0.020818`)보다
-낮다. 이는 efficiency-regime claim을 지지하지만 raw accuracy dominance는 아니다.
+업데이트된 same-task baseline-comparison screen은 조건부 positive다. `wpu-region-guard`는
+max selected `K=16`, mean work proxy `9.333333`, mean bytes proxy `336.000000`을
+유지하면서 raw delta MSE `0.002646`을 달성한다. 이는 dense graph `0.003810`,
+serialized token `0.003223`보다 낮다. Negative ablation도 중요하다.
+`wpu-hybrid-context`는 MSE `0.020904`로 여전히 약하므로, 유효한 mechanism은 generic
+context concatenation이 아니라 bounded local-region guard다.
 
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon

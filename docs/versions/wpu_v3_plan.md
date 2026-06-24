@@ -295,11 +295,13 @@ P2 substrate positive: after low-confidence relation escalation, bounded local
 region candidates reduce synthetic delta MSE from `0.275312` to `0.006365` at
 max selected `K=16`.
 
-The first same-task baseline-comparison screen is mixed. WPU keeps max selected
-`K=16`, mean work proxy `8.789551`, and mean bytes proxy `316.423828`, but dense
-graph and serialized-token baselines still have lower raw delta MSE (`0.003778`
-and `0.004533`) than WPU (`0.020818`). This supports an efficiency-regime
-claim, not raw accuracy dominance.
+The updated same-task baseline-comparison screen is conditionally positive.
+`wpu-region-guard` keeps max selected `K=16`, mean work proxy `9.333333`, and
+mean bytes proxy `336.000000`, while reaching raw delta MSE `0.002646` versus
+dense graph `0.003810` and serialized token `0.003223`. The negative ablation
+is also important: `wpu-hybrid-context` remains weak at MSE `0.020904`, so the
+useful mechanism is bounded local-region guarding, not generic context
+concatenation.
 
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on

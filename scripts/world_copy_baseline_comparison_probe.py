@@ -45,6 +45,8 @@ class BaselineDeltaHead(nn.Module):
 @dataclass(slots=True)
 class TrainedModels:
     wpu: LocalDeltaHead
+    wpu_context: LocalDeltaHead
+    wpu_region_guard: LocalDeltaHead
     dense_graph: BaselineDeltaHead
     serialized_token: BaselineDeltaHead
 
@@ -118,7 +120,14 @@ def main() -> None:
                             )
                             for _ in range(args.eval_samples)
                         ]
-                        for model_name in ("wpu-hybrid", "dense-graph", "serialized-token", "graph-transformer-proxy"):
+                        for model_name in (
+                            "wpu-hybrid",
+                            "wpu-hybrid-context",
+                            "wpu-region-guard",
+                            "dense-graph",
+                            "serialized-token",
+                            "graph-transformer-proxy",
+                        ):
                             rows.append(
                                 {
                                     "model": model_name,
@@ -154,15 +163,27 @@ def _train_models(samples: list[Sample], *, train_steps: int, min_relation_confi
         mode="hybrid_escalation_region",
         min_relation_confidence=min_relation_confidence,
     )
+    wpu_context_features, wpu_context_targets = _wpu_context_tensors(samples, min_relation_confidence=min_relation_confidence)
+    wpu_region_features, wpu_region_targets = _wpu_region_guard_tensors(samples, min_relation_confidence=min_relation_confidence)
     dense_features, dense_targets = _baseline_tensors(samples, min_relation_confidence=min_relation_confidence, token=False)
     token_features, token_targets = _baseline_tensors(samples, min_relation_confidence=min_relation_confidence, token=True)
     wpu = LocalDeltaHead(input_dim=wpu_features.shape[1])
+    wpu_context = LocalDeltaHead(input_dim=wpu_context_features.shape[1])
+    wpu_region_guard = LocalDeltaHead(input_dim=wpu_region_features.shape[1])
     dense = BaselineDeltaHead(input_dim=dense_features.shape[1])
     token = BaselineDeltaHead(input_dim=token_features.shape[1])
     _fit(wpu, wpu_features, wpu_targets, train_steps=train_steps)
+    _fit(wpu_context, wpu_context_features, wpu_context_targets, train_steps=train_steps)
+    _fit(wpu_region_guard, wpu_region_features, wpu_region_targets, train_steps=train_steps)
     _fit(dense, dense_features, dense_targets, train_steps=train_steps)
     _fit(token, token_features, token_targets, train_steps=train_steps)
-    return TrainedModels(wpu=wpu, dense_graph=dense, serialized_token=token)
+    return TrainedModels(
+        wpu=wpu,
+        wpu_context=wpu_context,
+        wpu_region_guard=wpu_region_guard,
+        dense_graph=dense,
+        serialized_token=token,
+    )
 
 
 def _fit(model: nn.Module, features: torch.Tensor, targets: torch.Tensor, *, train_steps: int) -> None:
@@ -189,6 +210,28 @@ def _baseline_tensors(samples: list[Sample], *, min_relation_confidence: float, 
     return torch.tensor(features, dtype=torch.float32), torch.tensor(targets, dtype=torch.float32)
 
 
+def _wpu_context_tensors(samples: list[Sample], *, min_relation_confidence: float) -> tuple[torch.Tensor, torch.Tensor]:
+    features: list[list[float]] = []
+    targets: list[float] = []
+    for sample in samples:
+        causal_slice = _query(sample, min_relation_confidence=min_relation_confidence)
+        for object_id in _selected_objects(causal_slice, "hybrid_escalation_region"):
+            features.append(_wpu_context_features(sample, causal_slice, object_id))
+            targets.append(sample.expected_delta.get(object_id, 0.0))
+    return torch.tensor(features, dtype=torch.float32), torch.tensor(targets, dtype=torch.float32)
+
+
+def _wpu_region_guard_tensors(samples: list[Sample], *, min_relation_confidence: float) -> tuple[torch.Tensor, torch.Tensor]:
+    features: list[list[float]] = []
+    targets: list[float] = []
+    for sample in samples:
+        causal_slice = _query(sample, min_relation_confidence=min_relation_confidence)
+        for object_id in causal_slice.object_ids:
+            features.append(_features(sample, causal_slice, object_id))
+            targets.append(sample.expected_delta.get(object_id, 0.0))
+    return torch.tensor(features, dtype=torch.float32), torch.tensor(targets, dtype=torch.float32)
+
+
 def _evaluate_model(
     models: TrainedModels,
     samples: list[Sample],
@@ -209,6 +252,18 @@ def _evaluate_model(
             if model_name == "wpu-hybrid":
                 object_ids = _selected_objects(causal_slice, "hybrid_escalation_region")
                 model = models.wpu
+                features = [_features(sample, causal_slice, object_id) for object_id in object_ids]
+                work = len(object_ids)
+                bytes_moved = len(object_ids) * 9 * 4
+            elif model_name == "wpu-hybrid-context":
+                object_ids = _selected_objects(causal_slice, "hybrid_escalation_region")
+                model = models.wpu_context
+                features = [_wpu_context_features(sample, causal_slice, object_id) for object_id in object_ids]
+                work = len(object_ids) + 1
+                bytes_moved = len(object_ids) * 13 * 4
+            elif model_name == "wpu-region-guard":
+                object_ids = list(causal_slice.object_ids)
+                model = models.wpu_region_guard
                 features = [_features(sample, causal_slice, object_id) for object_id in object_ids]
                 work = len(object_ids)
                 bytes_moved = len(object_ids) * 9 * 4
@@ -265,6 +320,22 @@ def _token_features(sample: Sample, local_features: list[float]) -> list[float]:
     return [*local_features, math.log2(max(len(sample.state.objects), 1)), role_mean]
 
 
+def _wpu_context_features(sample: Sample, causal_slice, object_id: str) -> list[float]:
+    local_features = _features(sample, causal_slice, object_id)
+    selected = _selected_objects(causal_slice, "hybrid_escalation_region")
+    role_mean = sum(float(sample.state.objects[item].attributes.get("role_gain", 0.0)) for item in selected) / max(
+        len(selected),
+        1,
+    )
+    return [
+        *local_features,
+        math.log2(max(len(selected), 1)),
+        role_mean,
+        float(causal_slice.retrieval_metrics["escalation_required"]),
+        causal_slice.affected_fraction,
+    ]
+
+
 def _report(rows: list[dict[str, object]], source_csv: Path, *, korean: bool) -> str:
     summary = _summarize(rows)
     if korean:
@@ -304,9 +375,10 @@ def _report(rows: list[dict[str, object]], source_csv: Path, *, korean: bool) ->
             "",
             "## Interpretation",
             "",
-            "- 이 screen에서는 WPU가 bounded selected `K`를 유지하면서 full-state baseline보다 낮은 work/bytes proxy를 사용한다.",
-            "- Raw delta MSE는 dense/token baseline이 더 낮다. 따라서 이 결과는 WPU의 순수 accuracy victory가 아니다.",
-            "- WPU의 positive signal은 낮은 touched-state 비용과 높은 accuracy-per-work이며, 이는 energy/latency 방향의 substrate claim이다.",
+            "- `wpu-region-guard`는 bounded selected `K`를 유지하면서 raw delta MSE와 work/bytes proxy를 동시에 개선한다.",
+            "- 단순 context feature 추가(`wpu-hybrid-context`)는 negative다. Raw MSE가 기본 `wpu-hybrid`보다 좋아지지 않는다.",
+            "- Positive signal은 relation frontier만 신뢰하는 것이 아니라 bounded local region을 guard로 쓰면 missing-relation gap을 줄일 수 있다는 점이다.",
+            "- 이 결과는 bounded region이 작고 신뢰 가능할 때만 성립한다. Region이 커지거나 objectification이 틀리면 WPU claim은 다시 약해진다.",
             "- `graph-transformer-proxy`는 실제 attention training이 아니라 dense quadratic work proxy다.",
             "- 다음 단계는 streaming/H>=25 world-copy task에서 실제 token/graph model과 latency를 측정하는 것이다.",
         ]
@@ -315,9 +387,10 @@ def _report(rows: list[dict[str, object]], source_csv: Path, *, korean: bool) ->
             "",
             "## Interpretation",
             "",
-            "- In this screen, WPU keeps selected `K` bounded and uses lower work/bytes proxy than full-state baselines.",
-            "- Raw delta MSE is lower for dense/token baselines. This is therefore not a pure WPU accuracy victory.",
-            "- The positive WPU signal is lower touched-state cost and higher accuracy-per-work, which supports a systems-substrate direction.",
+            "- `wpu-region-guard` keeps selected `K` bounded while improving both raw delta MSE and work/bytes proxy.",
+            "- Adding shallow context features alone (`wpu-hybrid-context`) is negative; its raw MSE does not improve over base `wpu-hybrid`.",
+            "- The positive signal is that a bounded local region guard can close missing-relation gaps better than trusting only relation frontier evidence.",
+            "- This holds only when bounded regions are small and reliable. If regions grow or objectification is wrong, the WPU claim weakens again.",
             "- `graph-transformer-proxy` is a dense quadratic work proxy, not a trained attention model.",
             "- The next step is a streaming/H>=25 world-copy task with actual token/graph models and measured latency.",
         ]

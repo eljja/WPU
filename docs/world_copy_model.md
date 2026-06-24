@@ -215,14 +215,23 @@ The WPU v3 claim should be weakened if:
 
 ## Current Status
 
-The current repository has the first v3 substrate piece:
+The current repository has the first v3 world-copy substrate pieces:
 
 - `HierarchicalWorldState` for region/object membership.
 - `WorldCausalIndex` for multi-signal causal retrieval.
 - `world_copy_index_probe` showing selected `K = 4` as total `N` grows from
   `104` to `10004` in a controlled non-causal-background setting.
+- `world_copy_causal_index_stress` showing controlled noisy-index behavior
+  through `N=8192` with missing and false-positive relations.
+- `world_copy_escalation_correction_probe` showing that local region correction
+  candidates can recover causal update-set recall after low-confidence
+  relation escalation.
+- `world_copy_learned_correction_probe` showing that those bounded local
+  correction candidates can reduce learned delta MSE in a controlled synthetic
+  local-law setting.
 
 This is necessary but not sufficient. It proves that the repository can express
-large-world causal indexing. It does not prove trained world modeling, real
-physical understanding, perception-to-state construction, or long-horizon
+large-world causal indexing and a first learned local correction diagnostic. It
+does not prove full trained world modeling, real physical understanding,
+perception-to-state construction, token/graph superiority, or long-horizon
 world-copy stability.

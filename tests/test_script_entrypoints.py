@@ -318,6 +318,47 @@ def test_object_relation_law_revision_probe_runs(tmp_path: Path) -> None:
     assert "object_relation_law_revision_probe row_type=summary" in result.stdout
 
 
+def test_world_copy_learned_correction_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "learned_correction.csv"
+    report = tmp_path / "learned_correction.md"
+    report_ko = tmp_path / "learned_correction.ko.md"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/world_copy_learned_correction_probe.py",
+            "--world-sizes",
+            "64",
+            "--k-values",
+            "4",
+            "--train-samples",
+            "12",
+            "--eval-samples",
+            "4",
+            "--train-steps",
+            "2",
+            "--out-csv",
+            str(output),
+            "--out-md",
+            str(report),
+            "--out-ko-md",
+            str(report_ko),
+        ],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output.exists()
+    assert report.exists()
+    assert report_ko.exists()
+    text = output.read_text(encoding="utf-8")
+    assert "hybrid_escalation_region" in text
+    assert "relative_mse" in text
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

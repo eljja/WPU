@@ -93,6 +93,11 @@ benchmark requirement, success/failure criteria를 정의한다.
   max selected `K=16`을 유지하면서 mean recall/precision/F1을 `1.000000`으로 회복한다.
   이는 escalation 이후 bounded correction candidate를 검증하는 증거이지, learned
   transition quality나 baseline superiority 증거는 아니다.
+- v3 learned-correction probe는 회복된 candidate set을 작은 learned local-delta head와
+  연결한다. True relation confidence가 `0.2`일 때 sparse confident-relation update는
+  mean delta MSE `0.275312`를 남기지만, hybrid escalation-region candidate는 이를
+  `0.006365`까지 낮추고 max selected `K=16`을 유지한다. 이는 controlled P2 substrate
+  positive이지, baseline-complete world-model result는 아니다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

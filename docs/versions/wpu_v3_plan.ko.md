@@ -276,6 +276,18 @@ Success:
 6. 같은 world-copy stream에 대한 token/graph matched baseline 추가.
 7. Benchmark evidence가 생긴 뒤에만 paper/claim docs 업데이트.
 
+## 현재 V3 Evidence Boundary
+
+현재 v3 substrate는 causal indexing, noisy-index stress, escalation-region correction
+candidate, 그리고 첫 learned local-delta correction probe에 대한 controlled evidence를
+포함한다. 최신 learned-correction probe는 P2 substrate positive다. Low-confidence relation
+escalation 이후 bounded local region candidate는 max selected `K=16`에서 synthetic delta
+MSE를 `0.275312`에서 `0.006365`로 낮춘다.
+
+하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
+token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon
+integrity 기준으로 비교하는 baseline-complete learned propagation benchmark다.
+
 ## Iteration Protocol
 
 반복 개선 cycle은 항상 같은 loop를 따라야 한다.

@@ -286,6 +286,20 @@ of the following are true:
 6. Add token/graph matched baselines for the same world-copy stream.
 7. Update paper/claim docs only after the benchmark evidence exists.
 
+## Current V3 Evidence Boundary
+
+The v3 substrate now includes controlled evidence for causal indexing,
+noisy-index stress, escalation-region correction candidates, and a first
+learned local-delta correction probe. The latest learned-correction probe is a
+P2 substrate positive: after low-confidence relation escalation, bounded local
+region candidates reduce synthetic delta MSE from `0.275312` to `0.006365` at
+max selected `K=16`.
+
+This does not complete P2. The missing next step is a baseline-complete learned
+propagation benchmark that compares WPU against token/graph/dense baselines on
+state accuracy, latency, memory traffic, and long-horizon integrity under the
+same world-copy stream.
+
 ## Iteration Protocol
 
 Each repeated improvement cycle should follow the same loop:

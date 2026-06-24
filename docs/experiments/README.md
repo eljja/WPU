@@ -112,6 +112,15 @@ Use these reports for paper-level claims:
   keeping max selected `K=16`. This supports bounded local correction candidate
   generation after escalation, not learned transition accuracy or token/graph
   superiority.
+- `world_copy_learned_correction_probe_results.md` and
+  `world_copy_learned_correction_probe_results.ko.md`: v3 P2 substrate probe
+  connecting escalation candidates to learned local delta quality. A small
+  relation/state-conditioned MLP is trained over local candidates. With true
+  relation confidence `0.2`, sparse confident-relation updates leave mean delta
+  MSE `0.275312`, while hybrid escalation-region candidates reduce mean delta
+  MSE to `0.006365` with max selected `K=16`. This is a controlled synthetic
+  positive for learned local correction, not a token/graph baseline victory or
+  long-horizon world-copy result.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

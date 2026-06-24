@@ -130,6 +130,15 @@ Use these reports for paper-level claims:
   controlled screen. The negative boundary is also explicit: shallow context
   features alone are not enough (`wpu-hybrid-context` MSE `0.020904`), and the
   positive result depends on bounded, reliable local regions.
+- `world_copy_streaming_region_guard_probe_results.md` and
+  `world_copy_streaming_region_guard_probe_results.ko.md`: first v3 P3/P4
+  streaming world-copy probe for the region-guard path. Over H=25 streams with
+  object churn and region migration, `wpu-region-guard` keeps max selected
+  `K=8`, trajectory MSE `0.000000`, integrity `1.000000`, and correction cost
+  `0.000000` while using work proxy `8.000000` and bytes proxy `288.000000`.
+  Dense state copy matches the integrity but uses full-state work/bytes that
+  grow with `N`; relation-frontier-only WPU needs frequent correction. This is
+  still controlled oracle-law evidence, not real simulator dynamics.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

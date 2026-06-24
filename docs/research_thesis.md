@@ -112,6 +112,13 @@ The current repository supports an early but meaningful prototype-level claim:
   The shallow `wpu-hybrid-context` variant is negative at MSE `0.020904`, so
   the useful fix is bounded local-region guarding, not generic context
   concatenation.
+- The first v3 streaming region-guard probe extends that result from one-step
+  delta prediction to H=25 controlled world-copy streams with object churn and
+  region migration. `wpu-region-guard` keeps max selected `K=8`, trajectory MSE
+  `0.000000`, integrity `1.000000`, correction cost `0.000000`, work proxy
+  `8.000000`, and bytes proxy `288.000000`; dense state copy matches integrity
+  but uses full-state work/bytes that grow with `N`. This is controlled
+  oracle-law evidence, not real simulator dynamics.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

@@ -303,6 +303,13 @@ is also important: `wpu-hybrid-context` remains weak at MSE `0.020904`, so the
 useful mechanism is bounded local-region guarding, not generic context
 concatenation.
 
+The first streaming region-guard screen extends this into a controlled H=25
+world-copy setting with object churn and region migration. `wpu-region-guard`
+keeps max selected `K=8`, trajectory MSE `0.000000`, integrity `1.000000`, and
+correction cost `0.000000`, while dense state copy matches integrity only with
+full-state work/bytes that scale with `N`. This is still oracle-law evidence;
+real learned dynamics and mis-objectified regions remain unsolved.
+
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on
 state accuracy, latency, memory traffic, and long-horizon integrity under the

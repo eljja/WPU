@@ -104,6 +104,13 @@ benchmark requirement, success/failure criteria를 정의한다.
   `0.002646`을 달성한다. 이는 dense graph `0.003810`, serialized token `0.003223`보다
   낮다. 반면 shallow `wpu-hybrid-context`는 MSE `0.020904`로 negative이므로, 유효한
   수정은 generic context concatenation이 아니라 bounded local-region guard다.
+- 첫 v3 streaming region-guard probe는 이 결과를 one-step delta prediction에서 H=25
+  controlled world-copy stream으로 확장한다. Object churn과 region migration이 포함된
+  stream에서 `wpu-region-guard`는 max selected `K=8`, trajectory MSE `0.000000`,
+  integrity `1.000000`, correction cost `0.000000`, work proxy `8.000000`, bytes proxy
+  `288.000000`을 유지한다. Dense state copy도 integrity는 같지만 `N`에 따라 증가하는
+  full-state work/bytes를 사용한다. 이는 controlled oracle-law evidence이지 실제 simulator
+  dynamics는 아니다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

@@ -234,9 +234,13 @@ The current repository has the first v3 world-copy substrate pieces:
   keeps bounded selected `K` and much lower work/bytes proxy while beating the
   controlled dense/token baselines on raw delta MSE. The result depends on
   bounded, reliable local regions.
+- `world_copy_streaming_region_guard_probe` extending the region-guard path to
+  H=25 controlled streams with object churn and region migration. It preserves
+  state integrity and zero correction cost in the bounded-region setup while
+  avoiding full-state work/bytes.
 
 This is necessary but not sufficient. It proves that the repository can express
 large-world causal indexing and a first learned local correction diagnostic. It
 does not prove full trained world modeling, real physical understanding,
 perception-to-state construction, raw token/graph accuracy superiority, or
-long-horizon world-copy stability.
+real-simulator long-horizon world-copy stability.

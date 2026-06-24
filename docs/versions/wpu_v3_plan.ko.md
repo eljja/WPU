@@ -291,6 +291,13 @@ serialized token `0.003223`보다 낮다. Negative ablation도 중요하다.
 `wpu-hybrid-context`는 MSE `0.020904`로 여전히 약하므로, 유효한 mechanism은 generic
 context concatenation이 아니라 bounded local-region guard다.
 
+첫 streaming region-guard screen은 이 결과를 object churn과 region migration이 포함된
+controlled H=25 world-copy setting으로 확장한다. `wpu-region-guard`는 max selected `K=8`,
+trajectory MSE `0.000000`, integrity `1.000000`, correction cost `0.000000`을 유지한다.
+Dense state copy도 integrity는 같지만 `N`과 함께 증가하는 full-state work/bytes를
+사용한다. 이는 아직 oracle-law evidence이며, 실제 learned dynamics와 잘못 objectified된
+region 문제는 미해결이다.
+
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon
 integrity 기준으로 비교하는 baseline-complete learned propagation benchmark다.

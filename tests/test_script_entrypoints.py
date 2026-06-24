@@ -401,6 +401,46 @@ def test_world_copy_baseline_comparison_probe_runs(tmp_path: Path) -> None:
     assert "dense-graph" in text
 
 
+def test_world_copy_streaming_region_guard_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "streaming_region_guard.csv"
+    report = tmp_path / "streaming_region_guard.md"
+    report_ko = tmp_path / "streaming_region_guard.ko.md"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/world_copy_streaming_region_guard_probe.py",
+            "--world-sizes",
+            "64",
+            "--horizon",
+            "3",
+            "--streams",
+            "2",
+            "--k-ref",
+            "4",
+            "--out-csv",
+            str(output),
+            "--out-md",
+            str(report),
+            "--out-ko-md",
+            str(report_ko),
+        ],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output.exists()
+    assert report.exists()
+    assert report_ko.exists()
+    text = output.read_text(encoding="utf-8")
+    assert "wpu-region-guard" in text
+    assert "dense-state-copy" in text
+    assert "state_integrity" in text
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

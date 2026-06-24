@@ -98,6 +98,11 @@ benchmark requirement, success/failure criteria를 정의한다.
   mean delta MSE `0.275312`를 남기지만, hybrid escalation-region candidate는 이를
   `0.006365`까지 낮추고 max selected `K=16`을 유지한다. 이는 controlled P2 substrate
   positive이지, baseline-complete world-model result는 아니다.
+- 첫 v3 baseline-comparison screen은 mixed result다. WPU는 max selected `K=16`과 mean
+  work proxy `8.789551`을 유지해 dense/token full-state baseline보다 훨씬 낮은 비용을
+  보이지만, dense graph와 serialized-token baseline의 raw delta MSE(`0.003778`,
+  `0.004533`)가 WPU(`0.020818`)보다 낮다. 이는 systems-efficiency 방향을 지지하지만
+  raw accuracy dominance는 아니다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

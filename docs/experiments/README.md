@@ -121,6 +121,15 @@ Use these reports for paper-level claims:
   MSE to `0.006365` with max selected `K=16`. This is a controlled synthetic
   positive for learned local correction, not a token/graph baseline victory or
   long-horizon world-copy result.
+- `world_copy_baseline_comparison_probe_results.md` and
+  `world_copy_baseline_comparison_probe_results.ko.md`: first v3 P2
+  baseline-comparison screen on the same synthetic world-copy delta task. WPU
+  keeps max selected `K=16` and mean work proxy `8.789551`, versus
+  `2727.406250` for dense/token baselines and `17935805.573893` for the
+  quadratic graph-transformer proxy. The negative boundary is explicit:
+  full-state baselines have lower raw delta MSE (`0.003778` dense graph and
+  `0.004533` serialized token) than WPU (`0.020818`). The positive signal is
+  accuracy-per-work and memory/work reduction, not raw accuracy superiority.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

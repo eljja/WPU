@@ -104,6 +104,11 @@ The current repository supports an early but meaningful prototype-level claim:
   hybrid escalation-region candidates reduce it to `0.006365` and keep max
   selected `K=16`. This is a controlled P2 substrate positive for learned local
   correction, not a baseline-complete world-model result.
+- The first v3 baseline-comparison screen is mixed. WPU keeps max selected
+  `K=16` and mean work proxy `8.789551`, far below dense/token full-state
+  baselines, but dense graph and serialized-token baselines achieve lower raw
+  delta MSE (`0.003778` and `0.004533`) than WPU (`0.020818`). This supports a
+  systems-efficiency direction, not raw accuracy dominance.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

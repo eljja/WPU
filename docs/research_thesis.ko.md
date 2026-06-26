@@ -156,3 +156,8 @@ unit이 준비됐다는 것을 증명했다.
 이 framing이 WPU의 학문적 가치를 만든다. 새로운 computational primitive를 제안하고,
 구현하고, 작동하는 구간과 실패하는 구간을 함께 지도화하며, 남은 gap을 구체적 실험으로
 바꾸기 때문이다.
+
+v3 selective-region 결과는 region을 causal truth가 아닌 noisy index로 취급할
+것을 요구한다. candidate ranking과 hard local budget은 contamination에 따른 K
+증가를 막고, 측정된 recall 손실은 correction 또는 더 넓은 observation이 필수인
+시점을 결정한다.

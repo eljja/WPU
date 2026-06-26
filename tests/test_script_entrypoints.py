@@ -441,6 +441,22 @@ def test_world_copy_streaming_region_guard_probe_runs(tmp_path: Path) -> None:
     assert "state_integrity" in text
 
 
+def test_world_copy_selective_region_guard_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "selective_guard.csv"
+    result = subprocess.run(
+        [sys.executable, "scripts/world_copy_selective_region_guard_probe.py",
+         "--world-sizes", "64", "--contamination", "0", "8",
+         "--missing-membership", "0", "0.5", "--streams", "2", "--horizon", "3",
+         "--k-ref", "4", "--out-csv", str(output),
+         "--out-md", str(tmp_path / "report.md"), "--out-ko-md", str(tmp_path / "report.ko.md")],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    text = output.read_text(encoding="utf-8")
+    assert "wpu-selective-region-guard" in text
+    assert "false_updates" in text
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

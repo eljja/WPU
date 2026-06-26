@@ -398,3 +398,7 @@ local relation propagation, branchable uncertainty, event 간 state reuse다.
 - end-to-end perception-to-state 구성 완료;
 - hardware-level speed/energy advantage;
 - candidate-oracle gap 해결.
+
+region locality만으로는 충분하지 않다. selective-region stress probe는 심한
+오염에서도 N=8192까지 K를 16으로 제한하고 state corruption을 줄이지만, 두
+index에서 동시에 누락된 causal object의 recall 손실은 해결하지 못한다.

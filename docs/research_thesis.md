@@ -166,3 +166,8 @@ is ready to replace GPUs/TPUs/NPUs/LPUs.
 This framing gives the project its scientific value: it proposes a new
 computational primitive, implements it, maps where it works, records where it
 fails, and turns the remaining gaps into concrete experiments.
+
+The v3 selective-region result requires regions to be treated as noisy indexes,
+not causal truth. Candidate ranking plus a hard local budget prevents
+contamination-driven K growth; measured recall loss determines when correction
+or broader observation is mandatory.

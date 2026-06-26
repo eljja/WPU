@@ -244,3 +244,11 @@ large-world causal indexing and a first learned local correction diagnostic. It
 does not prove full trained world modeling, real physical understanding,
 perception-to-state construction, raw token/graph accuracy superiority, or
 real-simulator long-horizon world-copy stability.
+
+### Selective-region failure boundary
+
+At N=8192 with 128 contaminants, an ordinary region guard selects about
+134--136 objects and reaches MSE 0.361--0.477. A typed, confidence-ranked
+`2*K_ref` guard keeps K at 16 and lowers MSE to 0.034--0.115. Region membership
+is therefore a noisy index, not causal truth; objects absent from both region
+and relation evidence remain unrecoverable by local retrieval.

@@ -371,3 +371,7 @@ Always report:
 
 > WPU가 실제 물리 세계 이해를 해결했거나 token/LPU-style processing을 보편적으로
 > 대체한다.
+
+selective-region stress 결과는 구체적인 경계를 추가한다. 오염된 region 후보를
+순위화하고 제한하면 K 증가를 막지만, raw accuracy에서는 dense state copy가
+여전히 이기며 membership과 relation evidence의 동시 누락은 해결되지 않았다.

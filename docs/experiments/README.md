@@ -1228,3 +1228,9 @@ while preserving sparse routed work.
 
 For publication readiness, unresolved gaps, and the evidence required for
 stronger claims, see `docs/publication_readiness.md`.
+
+The v3 region-index failure boundary is reported in
+`world_copy_selective_region_guard_probe_results.md` and
+`world_copy_selective_region_guard_probe_results.ko.md`.
+It measures contamination, missing membership, bounded K, false updates, and
+the regimes where dense state copy still wins.

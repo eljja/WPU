@@ -433,3 +433,7 @@ The paper should not claim:
 - end-to-end perception-to-state construction;
 - hardware-level speed or energy advantage;
 - a closed candidate-oracle gap.
+
+Region locality alone is insufficient. The selective-region stress probe bounds
+K at 16 through N=8192 under heavy contamination and reduces state corruption,
+but it does not remove causal-recall loss under dual index omission.

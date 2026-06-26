@@ -385,3 +385,8 @@ The non-publishable claim is:
 
 > WPU has solved real-world physical understanding or universally replaces
 > token/LPU-style processing.
+
+The selective-region stress result adds a concrete boundary: ranking and
+bounding contaminated region candidates prevents K growth, but dense state copy
+still wins raw accuracy and dual omission from membership and relation evidence
+remains unresolved.

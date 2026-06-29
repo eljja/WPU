@@ -139,6 +139,16 @@ Use these reports for paper-level claims:
   Dense state copy matches the integrity but uses full-state work/bytes that
   grow with `N`; relation-frontier-only WPU needs frequent correction. This is
   still controlled oracle-law evidence, not real simulator dynamics.
+- `world_copy_dual_index_escalation_probe_results.md` and
+  `world_copy_dual_index_escalation_probe_results.ko.md`: v3 boundary probe for
+  causal objects omitted from both region membership and relation evidence. It
+  adds bounded adjacent correction only when uncertainty indicates missing
+  support. At `N=8192`, `dual_omission=0.75`, and `escape_rate=0.0`,
+  `wpu-escalating-neighbor-guard` improves trajectory MSE from `0.416213` to
+  `0.084905` while keeping selected `K=24`; with `escape_rate=0.25`, MSE
+  improves from `0.377478` to `0.163802`. Dense state copy remains the
+  raw-accuracy upper bound, so the result is a bounded-correction regime, not a
+  universal WPU win.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

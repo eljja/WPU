@@ -242,3 +242,18 @@ N=8192, contamination=128에서 일반 region guard는 약 134--136개 객체를
 `2*K_ref` guard는 K=16을 유지하고 MSE를 0.034--0.115로 낮춘다. 따라서 region
 membership은 causal truth가 아니라 noisy index이며, region과 relation evidence에서
 모두 누락된 객체는 local retrieval로 복구할 수 없다.
+
+### Dual-index omission correction 경계
+
+`world_copy_dual_index_escalation_probe`는 이 복구 불가능 경계를 직접 테스트한다.
+Causal object가 active region과 relation frontier에서 동시에 빠지면
+`wpu-selective-region-guard`는 recall을 잃는다. 하지만 누락된 object가 인접
+observation/correction pool에 남아 있으면 bounded `wpu-escalating-neighbor-guard`가
+상당 부분을 복구할 수 있다. `N=8192`, `dual_omission=0.75`,
+`escape_rate=0.0`에서 escalating guard는 selected `K`를 16에서 24로만 늘리면서
+trajectory MSE를 `0.416213`에서 `0.084905`로 낮춘다. `escape_rate=0.25`에서도
+MSE를 `0.377478`에서 `0.163802`로 낮추지만, dense state copy는 여전히 raw accuracy
+상한이다. 따라서 v3의 다음 경계는 명확하다. Bounded correction은 objectification이
+근처 correction candidate를 노출할 때만 누락 state를 복구할 수 있고, 완전히 관측되지
+않은 causal object에는 external observation, broader escalation, dense recompute가
+필요하다.

@@ -310,6 +310,19 @@ correction cost `0.000000`, while dense state copy matches integrity only with
 full-state work/bytes that scale with `N`. This is still oracle-law evidence;
 real learned dynamics and mis-objectified regions remain unsolved.
 
+The dual-index omission escalation probe attacks the next mis-objectification
+boundary. When causal objects are absent from both the active region and
+relation frontier, the bounded selective guard loses recall. If those objects
+remain in a bounded adjacent observation pool, `wpu-escalating-neighbor-guard`
+recovers much of the loss while keeping selected `K` bounded. At `N=8192`,
+`dual_omission=0.75`, and `escape_rate=0.0`, MSE improves from `0.416213` to
+`0.084905` with selected `K=24`; at `escape_rate=0.25`, MSE improves from
+`0.377478` to `0.163802`. Dense state copy still wins raw accuracy. The
+scientific boundary is therefore sharper: WPU can stay sublinear only if
+uncertainty escalation has access to bounded correction candidates; if causal
+objects are absent from all local indexes and observation pools, sparse WPU must
+ask for external observation or escalate beyond the local budget.
+
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on
 state accuracy, latency, memory traffic, and long-horizon integrity under the

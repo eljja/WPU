@@ -111,6 +111,13 @@ benchmark requirement, success/failure criteria를 정의한다.
   `288.000000`을 유지한다. Dense state copy도 integrity는 같지만 `N`에 따라 증가하는
   full-state work/bytes를 사용한다. 이는 controlled oracle-law evidence이지 실제 simulator
   dynamics는 아니다.
+- Dual-index omission escalation probe는 다음 objectification 경계를 노출하고 일부를
+  복구한다. `N=8192`, `dual_omission=0.75`에서 bounded adjacent correction은
+  `escape_rate=0.0`일 때 trajectory MSE를 `0.416213`에서 `0.084905`로 낮추고,
+  `escape_rate=0.25`일 때 `0.377478`에서 `0.163802`로 낮춘다. Selected `K`는 24로
+  유지된다. Dense state copy는 raw accuracy에서 여전히 이기므로, 주장은 조건부다.
+  누락 object가 bounded local observation 또는 correction을 통해 접근 가능할 때만 WPU는
+  dual-index omission을 복구할 수 있다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

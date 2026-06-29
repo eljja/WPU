@@ -457,6 +457,24 @@ def test_world_copy_selective_region_guard_probe_runs(tmp_path: Path) -> None:
     assert "false_updates" in text
 
 
+def test_world_copy_dual_index_escalation_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "dual_index_escalation.csv"
+    result = subprocess.run(
+        [sys.executable, "scripts/world_copy_dual_index_escalation_probe.py",
+         "--world-sizes", "64", "--dual-omission", "0", "0.5",
+         "--escape-rate", "0", "0.25", "--contamination", "8",
+         "--streams", "2", "--horizon", "3", "--k-ref", "4",
+         "--out-csv", str(output), "--out-md", str(tmp_path / "report.md"),
+         "--out-ko-md", str(tmp_path / "report.ko.md")],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    text = output.read_text(encoding="utf-8")
+    assert "wpu-escalating-neighbor-guard" in text
+    assert "correction_cost" in text
+    assert "escalation_rate" in text
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

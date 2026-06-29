@@ -298,6 +298,18 @@ Dense state copy도 integrity는 같지만 `N`과 함께 증가하는 full-state
 사용한다. 이는 아직 oracle-law evidence이며, 실제 learned dynamics와 잘못 objectified된
 region 문제는 미해결이다.
 
+Dual-index omission escalation probe는 그 다음 mis-objectification 경계를 공격한다.
+Causal object가 active region과 relation frontier에서 동시에 빠지면 bounded selective
+guard는 recall을 잃는다. 하지만 그 object가 bounded adjacent observation pool 안에 남아
+있으면 `wpu-escalating-neighbor-guard`가 selected `K`를 bounded로 유지하면서 상당 부분을
+복구한다. `N=8192`, `dual_omission=0.75`, `escape_rate=0.0`에서 MSE는 `0.416213`에서
+`0.084905`로 개선되고 selected `K=24`를 유지한다. `escape_rate=0.25`에서도 MSE는
+`0.377478`에서 `0.163802`로 개선된다. Dense state copy는 여전히 raw accuracy에서 이긴다.
+따라서 과학적 경계는 더 날카로워졌다. WPU가 sublinear로 남으려면 uncertainty escalation이
+bounded correction candidate에 접근할 수 있어야 한다. Causal object가 모든 local index와
+observation pool에서 빠지면 sparse WPU는 external observation을 요청하거나 local budget
+밖으로 escalate해야 한다.
+
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon
 integrity 기준으로 비교하는 baseline-complete learned propagation benchmark다.

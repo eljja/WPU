@@ -119,6 +119,14 @@ The current repository supports an early but meaningful prototype-level claim:
   `8.000000`, and bytes proxy `288.000000`; dense state copy matches integrity
   but uses full-state work/bytes that grow with `N`. This is controlled
   oracle-law evidence, not real simulator dynamics.
+- The dual-index omission escalation probe exposes and partially repairs the
+  next objectification boundary. At `N=8192` and `dual_omission=0.75`, bounded
+  adjacent correction improves trajectory MSE from `0.416213` to `0.084905`
+  when `escape_rate=0.0`, and from `0.377478` to `0.163802` when
+  `escape_rate=0.25`, while selected `K` stays at 24. Dense state copy still
+  wins raw accuracy, so the claim is conditional: WPU can recover dual-index
+  omissions only when missing objects remain available through bounded local
+  observation or correction.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

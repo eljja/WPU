@@ -252,3 +252,19 @@ At N=8192 with 128 contaminants, an ordinary region guard selects about
 `2*K_ref` guard keeps K at 16 and lowers MSE to 0.034--0.115. Region membership
 is therefore a noisy index, not causal truth; objects absent from both region
 and relation evidence remain unrecoverable by local retrieval.
+
+### Dual-index omission correction boundary
+
+The `world_copy_dual_index_escalation_probe` tests that unrecoverable boundary
+directly. When causal objects are omitted from both the active region and
+relation frontier, `wpu-selective-region-guard` loses recall. A bounded
+`wpu-escalating-neighbor-guard` can recover much of that loss if the missing
+objects remain in an adjacent observation/correction pool. At `N=8192`,
+`dual_omission=0.75`, and `escape_rate=0.0`, the escalating guard improves
+trajectory MSE from `0.416213` to `0.084905` while selected `K` rises only from
+16 to 24. With `escape_rate=0.25`, it still improves MSE from `0.377478` to
+`0.163802`, but dense state copy remains the raw-accuracy upper bound. This
+fixes the next v3 boundary: bounded correction can recover omitted state only
+when objectification exposes a nearby correction candidate; fully unobserved
+causal objects require external observation, broader escalation, or dense
+recompute.

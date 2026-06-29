@@ -356,6 +356,14 @@ over-spends budget; under weak anomaly signals, both hand and learned policies
 under-observe. The next unresolved criterion is therefore calibrated learned
 uncertainty under shifted observation signals.
 
+The calibrated observation-policy probe reduces that shift failure with a small
+calibration set and neighbor-support credit. At `N=8192`,
+`escape_rate=0.75`, `noisy_anomaly` improves from learned objective `0.258949`
+to calibrated objective `0.203604`; `weak_anomaly` improves from `0.327296` to
+`0.184247`. Selected `K` remains bounded by the local correction/observation
+budget. The remaining boundary is important: this uses labeled calibration
+samples and does not yet solve unlabeled or online calibration.
+
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on
 state accuracy, latency, memory traffic, and long-horizon integrity under the

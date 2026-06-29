@@ -176,6 +176,14 @@ Use these reports for paper-level claims:
   records the next failure: noisy anomaly shift causes over-observation and weak
   anomaly shift causes under-observation, so calibration under shifted
   observation signals remains unresolved.
+- `world_copy_calibrated_observation_policy_probe_results.md` and
+  `world_copy_calibrated_observation_policy_probe_results.ko.md`: v3
+  calibration follow-up for the learned observation-budget policy. It adds a
+  small labeled calibration set and neighbor-support credit. At `N=8192`,
+  `escape_rate=0.75`, `noisy_anomaly` improves from learned objective
+  `0.258949` to calibrated `0.203604`; `weak_anomaly` improves from `0.327296`
+  to `0.184247`. This reduces shifted-signal failures while preserving bounded
+  selected `K`, but it does not solve unlabeled or online calibration.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

@@ -338,6 +338,13 @@ boundary는 shift calibration이다. Noisy anomaly signal에서는 learned polic
 과하게 쓰고, weak anomaly signal에서는 hand/learned policy 모두 과소 관측한다. 따라서
 다음 unresolved criterion은 shifted observation signal 아래 calibrated learned uncertainty다.
 
+Calibrated observation-policy probe는 작은 calibration set과 neighbor-support credit으로
+이 shift 실패를 줄인다. `N=8192`, `escape_rate=0.75`에서 `noisy_anomaly`는 learned
+objective `0.258949`에서 calibrated objective `0.203604`로 개선되고, `weak_anomaly`는
+`0.327296`에서 `0.184247`로 개선된다. Selected `K`는 local correction/observation
+budget에 의해 bounded로 유지된다. 남은 경계도 중요하다. 이 결과는 labeled calibration
+sample을 사용하며, unlabeled 또는 online calibration을 아직 해결하지 못한다.
+
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon
 integrity 기준으로 비교하는 baseline-complete learned propagation benchmark다.

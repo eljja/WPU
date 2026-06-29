@@ -138,6 +138,11 @@ benchmark requirement, success/failure criteria를 정의한다.
   유지한다. Negative result도 중요하다. Noisy anomaly signal은 과대 관측을 만들고, weak
   anomaly signal은 과소 관측을 만든다. 따라서 learned correction에는 shifted observation
   signal 아래의 calibration이 필요하다.
+- Calibrated observation-policy probe는 작은 labeled calibration set과 neighbor-support
+  credit으로 이 shift 실패를 줄인다. `N=8192`, `escape_rate=0.75`에서 `noisy_anomaly`는
+  learned objective `0.258949`에서 `0.203604`로 개선되고, `weak_anomaly`는 `0.327296`에서
+  `0.184247`로 개선된다. Selected `K`는 local observation cap에 의해 bounded로 유지된다.
+  남은 한계는 unlabeled 또는 online calibration이다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

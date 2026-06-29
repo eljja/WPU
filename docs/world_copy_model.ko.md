@@ -297,3 +297,16 @@ mean budget `4.625`를 사용하고 hand adaptive `4.71875`와 비슷하게 boun
 budget을 과하게 쓰고 hand rule보다 objective가 나쁘며, `weak_anomaly`에서는 learned와
 hand adaptive 모두 과소 관측해 causal object를 놓친다. 따라서 다음 correction 문제는
 clean rule 학습 자체가 아니라 shifted observation signal 아래의 calibration이다.
+
+### Calibrated learned observation-policy 경계
+
+`world_copy_calibrated_observation_policy_probe`는 learned budget decision 앞에 작은
+calibration set과 neighbor-support credit을 추가한다. 이는 `noisy_anomaly`의 false high
+anomaly score와 `weak_anomaly`의 suppressed causal anomaly score라는 두 shift 실패를 직접
+공격한다. `N=8192`, `escape_rate=0.75`에서 `noisy_anomaly`는 learned objective
+`0.258949`에서 calibrated objective `0.203604`로 개선되고, mean budget은 `6.0`에서
+`4.625`로 줄며 recall은 `0.789062`에서 `0.871094`로 오른다. `weak_anomaly`에서는 같은
+조건에서 objective가 `0.327296`에서 `0.184247`로 개선되고 recall은 `0.414062`에서
+`0.863281`로 오른다. 아직 완벽하지는 않다. Dense state copy는 여전히 exact이며,
+low-escape calibration은 neighbor correction만으로 충분했던 경우를 약간 흔들 수 있다.
+다음 실패는 labeled shift calibration set에 의존하지 않는 robust calibration이다.

@@ -313,3 +313,18 @@ worse objective than the hand rule; under `weak_anomaly`, both learned and hand
 adaptive policies under-observe and miss causal objects. The next correction
 problem is therefore calibration under shifted observation signals, not simply
 learning the clean rule.
+
+### Calibrated learned observation-policy boundary
+
+The `world_copy_calibrated_observation_policy_probe` adds a small calibration
+set and neighbor-support credit before the learned budget decision. This attacks
+the two shift failures directly: false high anomaly scores under
+`noisy_anomaly`, and suppressed causal anomaly scores under `weak_anomaly`. At
+`N=8192`, `escape_rate=0.75`, `noisy_anomaly` improves from learned objective
+`0.258949` to calibrated objective `0.203604`, with mean budget reduced from
+`6.0` to `4.625` and recall increased from `0.789062` to `0.871094`. Under
+`weak_anomaly`, the same setting improves from `0.327296` to `0.184247`, with
+recall rising from `0.414062` to `0.863281`. This is still not perfect: dense
+state copy remains exact, and low-escape calibration can slightly perturb cases
+where neighbor correction was already sufficient. The next failure is robust
+calibration without relying on labeled shift calibration sets.

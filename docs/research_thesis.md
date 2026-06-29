@@ -150,6 +150,12 @@ The current repository supports an early but meaningful prototype-level claim:
   signals lead to over-observation, and weak anomaly signals lead to
   under-observation. Learned correction therefore needs calibration under
   shifted observation signals.
+- The calibrated observation-policy probe reduces those shift failures with a
+  small labeled calibration set and neighbor-support credit. At `N=8192`,
+  `escape_rate=0.75`, `noisy_anomaly` improves from learned objective
+  `0.258949` to `0.203604`, and `weak_anomaly` improves from `0.327296` to
+  `0.184247`, while selected `K` remains bounded by the local observation cap.
+  The remaining limitation is unlabeled or online calibration.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

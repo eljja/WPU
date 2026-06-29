@@ -310,3 +310,21 @@ anomaly score와 `weak_anomaly`의 suppressed causal anomaly score라는 두 shi
 `0.863281`로 오른다. 아직 완벽하지는 않다. Dense state copy는 여전히 exact이며,
 low-escape calibration은 neighbor correction만으로 충분했던 경우를 약간 흔들 수 있다.
 다음 실패는 labeled shift calibration set에 의존하지 않는 robust calibration이다.
+
+### Online observation-calibration 경계
+
+`world_copy_online_calibration_policy_probe`는 labeled calibration set 가정을 제거하고,
+bounded observation의 hit/miss feedback으로 anomaly calibration을 온라인 갱신한다. 이는
+의도한 world-copy correction loop에 더 가깝다. WPU는 작은 candidate set만 관측하고, 그
+관측이 누락된 causal state를 복구했는지 측정한 뒤, full-world serialization 없이 다음
+observation sensitivity를 조정한다. `N=8192`, `escape_rate=0.75`에서 `noisy_anomaly`는
+learned objective `0.260848`에서 online objective `0.176985`로 개선되고, recall은
+`0.8125`에서 `0.951172`로 오른다. `weak_anomaly`에서는 objective가 `0.336927`에서
+`0.188660`으로 개선되고, recall은 `0.373047`에서 `0.908203`으로 오른다. Selected work는
+약 `32`로 bounded를 유지하며 dense state copy는 `8192` state unit을 touch한다.
+
+부정적 결과도 중요하다. Clean stream에서는 online calibration이 여전히 observation
+budget을 과하게 쓰고 objective를 약간 악화시킬 수 있다. 같은 조건에서 online objective는
+`0.179142`, learned objective는 `0.153945`다. 따라서 새 경계는 no-harm online
+calibration이다. Shifted correction은 개선됐지만, labeled calibration의 robust 대체물로
+주장하려면 더 보수적인 stability detector가 필요하다.

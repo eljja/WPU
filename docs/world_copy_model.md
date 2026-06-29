@@ -328,3 +328,24 @@ recall rising from `0.414062` to `0.863281`. This is still not perfect: dense
 state copy remains exact, and low-escape calibration can slightly perturb cases
 where neighbor correction was already sufficient. The next failure is robust
 calibration without relying on labeled shift calibration sets.
+
+### Online observation-calibration boundary
+
+The `world_copy_online_calibration_policy_probe` removes the labeled
+calibration-set assumption and updates anomaly calibration from bounded
+observation hit/miss feedback. This is closer to the intended world-copy
+correction loop: WPU observes a small candidate set, measures whether the
+observation repaired missing causal state, and adjusts future observation
+sensitivity without serializing the full world. At `N=8192`,
+`escape_rate=0.75`, `noisy_anomaly` improves from learned objective `0.260848`
+to online objective `0.176985`, with recall rising from `0.8125` to
+`0.951172`. Under `weak_anomaly`, objective improves from `0.336927` to
+`0.188660`, with recall rising from `0.373047` to `0.908203`. Selected work
+stays bounded near `32` while dense state copy touches `8192` state units.
+
+The negative result is equally important. In clean streams, online calibration
+can still spend too much observation budget and slightly degrade objective
+(`0.179142` versus learned `0.153945` at the same setting). Therefore the new
+boundary is no-harm online calibration: shifted correction improves, but WPU
+still needs a more conservative stability detector before this can be claimed
+as a robust replacement for labeled calibration.

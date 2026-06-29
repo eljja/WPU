@@ -552,6 +552,27 @@ def test_world_copy_calibrated_observation_policy_probe_runs(tmp_path: Path) -> 
     assert "objective" in text
 
 
+def test_world_copy_online_calibration_policy_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "online_calibration_policy.csv"
+    result = subprocess.run(
+        [sys.executable, "scripts/world_copy_online_calibration_policy_probe.py",
+         "--world-sizes", "64", "--escape-rate", "0", "0.5",
+         "--eval-shifts", "clean", "weak_anomaly",
+         "--train-samples", "24", "--calibration-samples", "8",
+         "--streams", "4", "--train-steps", "8",
+         "--fixed-budget", "4", "--max-budget", "4", "--contamination", "8",
+         "--horizon", "3", "--k-ref", "4",
+         "--out-csv", str(output), "--out-md", str(tmp_path / "report.md"),
+         "--out-ko-md", str(tmp_path / "report.ko.md")],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    text = output.read_text(encoding="utf-8")
+    assert "wpu-online-calibrated-observation" in text
+    assert "final_offset" in text
+    assert "objective" in text
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

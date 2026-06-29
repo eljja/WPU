@@ -184,6 +184,15 @@ Use these reports for paper-level claims:
   `0.258949` to calibrated `0.203604`; `weak_anomaly` improves from `0.327296`
   to `0.184247`. This reduces shifted-signal failures while preserving bounded
   selected `K`, but it does not solve unlabeled or online calibration.
+- `world_copy_online_calibration_policy_probe_results.md` and
+  `world_copy_online_calibration_policy_probe_results.ko.md`: v3 follow-up that
+  removes the labeled calibration-set assumption and updates observation
+  calibration from hit/miss correction feedback. At `N=8192`,
+  `escape_rate=0.75`, online calibration improves `noisy_anomaly` objective
+  from learned `0.260848` to `0.176985` and `weak_anomaly` from `0.336927` to
+  `0.188660`, while keeping selected work near `32`. The negative result is
+  clean no-harm: online calibration can still over-spend observation budget in
+  stable streams, so conservative online stability gating remains unresolved.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

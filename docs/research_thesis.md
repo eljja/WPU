@@ -156,6 +156,13 @@ The current repository supports an early but meaningful prototype-level claim:
   `0.258949` to `0.203604`, and `weak_anomaly` improves from `0.327296` to
   `0.184247`, while selected `K` remains bounded by the local observation cap.
   The remaining limitation is unlabeled or online calibration.
+- The online observation-calibration probe partially closes that limitation by
+  updating anomaly sensitivity from observation hit/miss feedback rather than a
+  labeled calibration set. At `N=8192`, `escape_rate=0.75`, it improves
+  `noisy_anomaly` objective from `0.260848` to `0.176985` and `weak_anomaly`
+  from `0.336927` to `0.188660`, while keeping selected work near `32`. It is
+  not yet robust: clean streams still show no-harm degradation, so conservative
+  online stability gating remains unresolved.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

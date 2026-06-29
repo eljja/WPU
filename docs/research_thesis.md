@@ -159,11 +159,11 @@ The current repository supports an early but meaningful prototype-level claim:
 - The online observation-calibration probe partially closes that limitation by
   updating anomaly sensitivity from observation hit/miss feedback rather than a
   labeled calibration set. At `N=8192`, `escape_rate=0.75`, it improves
-  `noisy_anomaly` objective from `0.261673` to `0.192036` and `weak_anomaly`
-  from `0.337192` to `0.223587`, while keeping selected work near `32`. The
-  updated conservative gate substantially reduces clean no-harm degradation,
-  but the high-escape clean setting still has a small online objective gap, so
-  stricter online stability detection remains unresolved.
+  `noisy_anomaly` objective from `0.266602` to `0.193756` and `weak_anomaly`
+  from `0.334646` to `0.210113`, while keeping selected work near `32`. The
+  paired benchmark removes the earlier apparent clean no-harm gap against the
+  learned policy at the same setting, but online control still trails labeled
+  calibration under shift and hand adaptive control under clean streams.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

@@ -81,6 +81,7 @@ def main() -> None:
     for shift in args.eval_shifts:
         for n in args.world_sizes:
             for escape_rate in args.escape_rate:
+                stream_seeds = [rng.randrange(2**31) for _ in range(args.streams)]
                 for mode in (
                     "wpu-learned-observation",
                     "wpu-online-calibrated-observation",
@@ -96,7 +97,7 @@ def main() -> None:
                         escape_rate=escape_rate,
                         policy=policy,
                         labeled_calibration=labeled_calibrations[shift],
-                        rng=random.Random(rng.randrange(2**31)),
+                        stream_seeds=stream_seeds,
                     )
                     rows.append({
                         "mode": mode,
@@ -139,7 +140,7 @@ def evaluate_stream(
     escape_rate: float,
     policy: BudgetPolicy,
     labeled_calibration: Calibration,
-    rng: random.Random,
+    stream_seeds: list[int],
 ) -> dict[str, float]:
     if mode == "wpu-labeled-calibrated-observation":
         calibration = Calibration(labeled_calibration.scale, labeled_calibration.offset)
@@ -148,8 +149,8 @@ def evaluate_stream(
     initial_scale = calibration.scale
     initial_offset = calibration.offset
     rows: list[dict[str, float]] = []
-    for _ in range(args.streams):
-        scene = make_scene(args, n, escape_rate, shift, random.Random(rng.randrange(2**31)))
+    for seed in stream_seeds:
+        scene = make_scene(args, n, escape_rate, shift, random.Random(seed))
         result = evaluate_scene(
             scene,
             mode=mode,
@@ -492,6 +493,7 @@ def report(rows: list[dict[str, object]], source: Path, ko: bool) -> str:
             "",
             "## 해석",
             "",
+            "- 모든 mode는 같은 stream seed를 공유하므로 no-harm gap은 paired event stream에서 비교된다.",
             "- Online calibration은 정답 calibration set 대신 관측 후 correction feedback으로 anomaly sensitivity를 조정한다.",
             "- 이 방식은 WPU-native correction loop에 가깝지만, feedback이 지연되거나 noisy하면 labeled calibration보다 불안정할 수 있다.",
             "- 선택된 `K`는 관측 예산과 local candidate cap으로 제한되므로 `N` 증가에 대해 bounded/sublinear 조건을 유지하는지 확인해야 한다.",
@@ -502,6 +504,7 @@ def report(rows: list[dict[str, object]], source: Path, ko: bool) -> str:
             "",
             "## Interpretation",
             "",
+            "- All modes share the same stream seeds, so no-harm gaps are measured on paired event streams.",
             "- Online calibration adjusts anomaly sensitivity from post-observation correction feedback instead of a labeled calibration set.",
             "- This is closer to a WPU-native correction loop, but delayed or noisy feedback can remain less stable than labeled calibration.",
             "- Selected `K` is constrained by observation budget and the local candidate cap, so the key check is whether it stays bounded/sublinear as `N` grows.",

@@ -31,6 +31,8 @@ class Scene:
 class Calibration:
     scale: float = 1.0
     offset: float = 0.0
+    miss_streak: int = 0
+    false_streak: int = 0
 
 
 class BudgetPolicy(nn.Module):
@@ -189,15 +191,17 @@ def update_online_calibration(calibration: Calibration, result: dict[str, float]
     false_rate = false_observed / max(budget, 1.0)
     missed_rate = missed_hidden / hidden_count
     hit_rate = result["observation_hit_rate"]
+    calibration.miss_streak = calibration.miss_streak + 1 if missed_rate >= 0.45 else 0
+    calibration.false_streak = calibration.false_streak + 1 if false_rate >= 0.30 else 0
     if budget == 0 and missed_hidden == 0:
         pressure = 0.0
-    elif hit_rate >= 0.85 and missed_rate < 0.20:
+    elif hit_rate >= 0.85 and missed_rate < 0.25:
         pressure = 0.0
     else:
-        # Delayed correction feedback with a no-harm deadband: stable streams should
-        # not drift merely because a few stochastic hidden objects were present.
-        missed_excess = max(0.0, missed_rate - 0.12)
-        false_excess = max(0.0, false_rate - 0.20)
+        # Conservative delayed feedback: shift correction requires repeated
+        # evidence, while stable clean streams should not drift after one miss.
+        missed_excess = max(0.0, missed_rate - 0.30) if calibration.miss_streak >= 2 else 0.0
+        false_excess = max(0.0, false_rate - 0.20) if calibration.false_streak >= 2 else 0.0
         pressure = missed_excess - 0.7 * false_excess
     calibration.offset = clamp(calibration.offset + lr * pressure, -0.35, 0.35)
     calibration.scale = clamp(calibration.scale * (1.0 + 0.25 * lr * pressure), 0.5, 2.0)
@@ -322,7 +326,8 @@ def evaluate_scene(
     elif mode == "wpu-learned-observation":
         budget = predict_budget(scene, policy, max_budget, Calibration())
     elif mode == "wpu-online-calibrated-observation":
-        budget = max(0, predict_budget(scene, policy, max_budget, calibration) - neighbor_support_credit(scene))
+        credit = neighbor_support_credit(scene) if should_apply_neighbor_credit(calibration) else 0
+        budget = max(0, predict_budget(scene, policy, max_budget, calibration) - credit)
     elif mode == "wpu-labeled-calibrated-observation":
         credit = neighbor_support_credit(scene) if not is_identity_calibration(calibration) else 0
         budget = max(0, predict_budget(scene, policy, max_budget, calibration) - credit)
@@ -405,6 +410,10 @@ def neighbor_support_credit(scene: Scene) -> int:
         for oid in scene.neighbor_pool
         if scene.role.get(oid) == "affected" and scene.confidence.get(oid, 0.0) >= 0.85
     )
+
+
+def should_apply_neighbor_credit(calibration: Calibration) -> bool:
+    return calibration.offset < -0.03 or calibration.false_streak >= 2
 
 
 def rule_budget(scene: Scene, max_budget: int) -> int:

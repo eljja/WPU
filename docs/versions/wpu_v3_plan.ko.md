@@ -346,13 +346,15 @@ budget에 의해 bounded로 유지된다. 남은 경계도 중요하다. 이 결
 sample을 사용하며, unlabeled 또는 online calibration을 아직 해결하지 못한다.
 
 Online observation-calibration probe는 이 경계를 공격한다. Labeled shift calibration set
-대신 observation 이후 hit/miss feedback을 사용한다. `N=8192`, `escape_rate=0.75`에서
-`noisy_anomaly` objective는 learned `0.260848`에서 `0.176985`로 개선되고,
-`weak_anomaly`는 `0.336927`에서 `0.188660`으로 개선된다. Selected work는 dense
-`8192`가 아니라 약 `32` 근처로 유지된다. 이는 WPU-native correction evidence로
-긍정적이지만, 닫힌 해법은 아니다. Clean stream에서는 no-harm 실패가 남아 있으며
-online objective `0.179142`가 learned objective `0.153945`보다 나쁘다. 따라서 v3에는
-더 보수적인 online stability gate가 여전히 필요하다.
+대신 observation 이후 hit/miss feedback을 사용한다. 업데이트된 버전은 conservative
+stability gate를 추가하고 false-positive evidence가 있을 때만 neighbor-support credit을
+적용한다. `N=8192`, `escape_rate=0.75`에서 `noisy_anomaly` objective는 learned
+`0.261673`에서 `0.192036`으로 개선되고, `weak_anomaly`는 `0.337192`에서 `0.223587`로
+개선된다. Selected work는 dense `8192`가 아니라 약 `32` 근처로 유지된다. 이는
+WPU-native correction evidence로 긍정적이지만, 닫힌 해법은 아니다. Clean stream은
+no-harm에 훨씬 가까워졌지만 같은 high-escape 조건에서는 online objective `0.160458`가
+learned objective `0.154210`보다 아직 약간 나쁘다. 따라서 다음 기준은 observation
+budget을 더 늘리는 것이 아니라 더 엄격한 online stability detection이다.
 
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon

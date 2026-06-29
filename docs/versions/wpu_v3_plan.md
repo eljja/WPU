@@ -366,13 +366,16 @@ samples and does not yet solve unlabeled or online calibration.
 
 The online observation-calibration probe attacks that boundary by using
 post-observation hit/miss feedback instead of a labeled shift calibration set.
-At `N=8192`, `escape_rate=0.75`, it improves `noisy_anomaly` objective from
-learned `0.260848` to `0.176985`, and `weak_anomaly` from `0.336927` to
-`0.188660`, while keeping selected work near `32` rather than dense `8192`.
-This is positive WPU-native correction evidence, but not a closed solution:
-clean streams still show a no-harm failure (`0.179142` online objective versus
-`0.153945` learned objective), so v3 still needs conservative online stability
-gating.
+The updated version adds conservative stability gating and applies
+neighbor-support credit only after false-positive evidence. At `N=8192`,
+`escape_rate=0.75`, it improves `noisy_anomaly` objective from learned
+`0.261673` to `0.192036`, and `weak_anomaly` from `0.337192` to `0.223587`,
+while keeping selected work near `32` rather than dense `8192`. This is
+positive WPU-native correction evidence, but not a closed solution: clean
+streams are much closer to no-harm, yet the same high-escape setting still has
+a small objective gap (`0.160458` online versus `0.154210` learned). The next
+criterion is therefore stricter online stability detection rather than merely
+adding more observation budget.
 
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on

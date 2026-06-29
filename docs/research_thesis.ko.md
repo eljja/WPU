@@ -145,10 +145,11 @@ benchmark requirement, success/failure criteria를 정의한다.
   남은 한계는 unlabeled 또는 online calibration이다.
 - Online observation-calibration probe는 labeled calibration set 대신 observation hit/miss
   feedback으로 anomaly sensitivity를 갱신해 이 한계를 부분적으로 줄인다. `N=8192`,
-  `escape_rate=0.75`에서 `noisy_anomaly` objective는 `0.260848`에서 `0.176985`로,
-  `weak_anomaly`는 `0.336927`에서 `0.188660`으로 개선되며 selected work는 약 `32`를
-  유지한다. 아직 robust하지는 않다. Clean stream에서는 no-harm degradation이 남으므로,
-  보수적인 online stability gate가 계속 미해결이다.
+  `escape_rate=0.75`에서 `noisy_anomaly` objective는 `0.261673`에서 `0.192036`으로,
+  `weak_anomaly`는 `0.337192`에서 `0.223587`로 개선되며 selected work는 약 `32`를
+  유지한다. 업데이트된 conservative gate는 clean no-harm degradation을 크게 줄였지만,
+  high-escape clean 조건에서는 online objective gap이 아직 작게 남는다. 따라서 더 엄격한
+  online stability detection이 계속 미해결이다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

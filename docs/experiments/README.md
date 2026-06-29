@@ -187,12 +187,13 @@ Use these reports for paper-level claims:
 - `world_copy_online_calibration_policy_probe_results.md` and
   `world_copy_online_calibration_policy_probe_results.ko.md`: v3 follow-up that
   removes the labeled calibration-set assumption and updates observation
-  calibration from hit/miss correction feedback. At `N=8192`,
-  `escape_rate=0.75`, online calibration improves `noisy_anomaly` objective
-  from learned `0.260848` to `0.176985` and `weak_anomaly` from `0.336927` to
-  `0.188660`, while keeping selected work near `32`. The negative result is
-  clean no-harm: online calibration can still over-spend observation budget in
-  stable streams, so conservative online stability gating remains unresolved.
+  calibration from hit/miss correction feedback. The updated probe uses
+  conservative stability gating and only applies neighbor-support credit after
+  false-positive evidence. At `N=8192`, `escape_rate=0.75`, online calibration
+  improves `noisy_anomaly` objective from learned `0.261673` to `0.192036` and
+  `weak_anomaly` from `0.337192` to `0.223587`, while keeping selected work
+  near `32`. Clean no-harm is substantially improved but not fully closed: the
+  high-escape clean setting still has a small online objective gap.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

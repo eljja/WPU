@@ -333,19 +333,23 @@ calibration without relying on labeled shift calibration sets.
 
 The `world_copy_online_calibration_policy_probe` removes the labeled
 calibration-set assumption and updates anomaly calibration from bounded
-observation hit/miss feedback. This is closer to the intended world-copy
-correction loop: WPU observes a small candidate set, measures whether the
-observation repaired missing causal state, and adjusts future observation
-sensitivity without serializing the full world. At `N=8192`,
-`escape_rate=0.75`, `noisy_anomaly` improves from learned objective `0.260848`
-to online objective `0.176985`, with recall rising from `0.8125` to
-`0.951172`. Under `weak_anomaly`, objective improves from `0.336927` to
-`0.188660`, with recall rising from `0.373047` to `0.908203`. Selected work
-stays bounded near `32` while dense state copy touches `8192` state units.
+observation hit/miss feedback. The current version adds a conservative
+stability gate: calibration only changes after repeated miss or false-probe
+evidence, and neighbor-support credit is applied only when false-positive
+evidence appears. This is closer to the intended world-copy correction loop:
+WPU observes a small candidate set, measures whether the observation repaired
+missing causal state, and adjusts future observation sensitivity without
+serializing the full world. At `N=8192`, `escape_rate=0.75`, `noisy_anomaly`
+improves from learned objective `0.261673` to online objective `0.192036`, with
+recall rising from `0.8125` to `0.960938`. Under `weak_anomaly`, objective
+improves from `0.337192` to `0.223587`, with recall rising from `0.373047` to
+`0.763672`. Selected work stays bounded near `32` while dense state copy
+touches `8192` state units.
 
-The negative result is equally important. In clean streams, online calibration
-can still spend too much observation budget and slightly degrade objective
-(`0.179142` versus learned `0.153945` at the same setting). Therefore the new
-boundary is no-harm online calibration: shifted correction improves, but WPU
-still needs a more conservative stability detector before this can be claimed
-as a robust replacement for labeled calibration.
+The negative result is now narrower but still real. Across clean streams, the
+conservative gate brings online calibration back to roughly the learned-policy
+objective, but at `N=8192`, `escape_rate=0.75`, online still slightly worsens
+objective (`0.160458` versus learned `0.154210`). Therefore the remaining
+boundary is stricter no-harm online calibration: shifted correction improves,
+but WPU still needs a better stability detector before this can be claimed as a
+robust replacement for labeled calibration.

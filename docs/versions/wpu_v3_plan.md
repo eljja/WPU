@@ -346,6 +346,16 @@ objective from `0.199620` to `0.143985`. This is still hand-specified
 uncertainty logic, not a learned policy, but it makes observation budget a
 native WPU correction-loop variable.
 
+The learned observation-policy probe replaces that hand rule with a small
+budget classifier over WPU uncertainty summaries. In the clean `N=8192`
+setting, learned policy matches the hand adaptive rule closely: at
+`escape_rate=0.75`, objective is `0.163047` versus hand adaptive `0.163946`;
+at `escape_rate=0.50`, objective is `0.132664` versus `0.133466`. The negative
+boundary is shift calibration. Under noisy anomaly signals, the learned policy
+over-spends budget; under weak anomaly signals, both hand and learned policies
+under-observe. The next unresolved criterion is therefore calibrated learned
+uncertainty under shifted observation signals.
+
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on
 state accuracy, latency, memory traffic, and long-horizon integrity under the

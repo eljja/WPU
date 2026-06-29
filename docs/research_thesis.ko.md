@@ -131,6 +131,13 @@ benchmark requirement, success/failure criteria를 정의한다.
   objective를 `0.199620`에서 `0.143985`로 낮춘다. `escape_rate=0.0`에서는 observation
   budget을 쓰지 않아 낭비 correction을 피한다. 이는 hand-specified uncertainty logic이지
   learned policy 완료가 아니다.
+- Learned observation-policy probe는 hand budget rule을 WPU uncertainty summary 위의 작은
+  classifier로 대체한다. Clean `N=8192` screen에서 learned policy는 `escape_rate=0.50`
+  objective `0.132664` 대 hand adaptive `0.133466`, `escape_rate=0.75` objective
+  `0.163047` 대 `0.163946`으로 hand adaptive에 근접하며 selected `K`를 bounded로
+  유지한다. Negative result도 중요하다. Noisy anomaly signal은 과대 관측을 만들고, weak
+  anomaly signal은 과소 관측을 만든다. 따라서 learned correction에는 shifted observation
+  signal 아래의 calibration이 필요하다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

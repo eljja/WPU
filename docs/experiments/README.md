@@ -167,6 +167,15 @@ Use these reports for paper-level claims:
   `0.199620` to `0.143985`. At `escape_rate=0.0`, it spends zero observation
   budget, avoiding the fixed-budget penalty. This is still a hand-specified
   policy substrate, not learned observation control.
+- `world_copy_learned_observation_policy_probe_results.md` and
+  `world_copy_learned_observation_policy_probe_results.ko.md`: v3 learned
+  correction-policy probe. A small classifier over WPU uncertainty summaries
+  learns the clean adaptive budget rule. At `N=8192`, clean `escape_rate=0.50`
+  reaches objective `0.132664` versus hand adaptive `0.133466`; clean
+  `escape_rate=0.75` reaches `0.163047` versus `0.163946`. The same report
+  records the next failure: noisy anomaly shift causes over-observation and weak
+  anomaly shift causes under-observation, so calibration under shifted
+  observation signals remains unresolved.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

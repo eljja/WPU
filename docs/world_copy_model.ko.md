@@ -284,3 +284,16 @@ selected `K=24`를 유지하고 fixed-budget objective penalty를 피한다(`0.0
 조금 낮고, cost-aware objective는 `0.199620`에서 `0.143985`로 낮아진다. 아직 learned
 policy는 아니지만, 다음 runtime contract를 고정한다. Observation은 constant full-world
 fallback이 아니라 bounded budget을 가진 state-native correction decision이다.
+
+### Learned observation-policy 경계
+
+`world_copy_learned_observation_policy_probe`는 hand-specified budget rule을 WPU
+uncertainty summary 위의 작은 learned classifier로 대체한다. Clean setting에서는 hand
+adaptive policy를 근사할 수 있다. `N=8192`, `escape_rate=0.75`에서 learned observation은
+mean budget `4.625`를 사용하고 hand adaptive `4.71875`와 비슷하게 bounded `K`를
+유지하며 objective `0.163047`을 달성한다. Hand adaptive objective는 `0.163946`이다.
+`escape_rate=0.50`에서는 learned objective `0.132664`, hand adaptive objective
+`0.133466`이다. 실패 경계는 anomaly shift다. `noisy_anomaly`에서는 learned policy가
+budget을 과하게 쓰고 hand rule보다 objective가 나쁘며, `weak_anomaly`에서는 learned와
+hand adaptive 모두 과소 관측해 causal object를 놓친다. 따라서 다음 correction 문제는
+clean rule 학습 자체가 아니라 shifted observation signal 아래의 calibration이다.

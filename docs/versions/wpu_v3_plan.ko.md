@@ -330,6 +330,14 @@ cost-aware objective는 `0.199620`에서 `0.143985`로 개선된다. 아직 hand
 uncertainty logic이지 learned policy는 아니지만, observation budget을 WPU correction
 loop의 native variable로 만든다.
 
+Learned observation-policy probe는 이 hand rule을 WPU uncertainty summary 위의 작은
+budget classifier로 대체한다. Clean `N=8192` setting에서 learned policy는 hand adaptive
+rule을 가깝게 따라간다. `escape_rate=0.75`에서 objective는 `0.163047`이고 hand adaptive는
+`0.163946`이다. `escape_rate=0.50`에서는 `0.132664` 대 `0.133466`이다. Negative
+boundary는 shift calibration이다. Noisy anomaly signal에서는 learned policy가 budget을
+과하게 쓰고, weak anomaly signal에서는 hand/learned policy 모두 과소 관측한다. 따라서
+다음 unresolved criterion은 shifted observation signal 아래 calibrated learned uncertainty다.
+
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon
 integrity 기준으로 비교하는 baseline-complete learned propagation benchmark다.

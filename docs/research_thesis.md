@@ -142,6 +142,14 @@ The current repository supports an early but meaningful prototype-level claim:
   MSE. At `escape_rate=0.0`, it spends no observation budget, avoiding wasteful
   correction. This is hand-specified uncertainty logic, not learned policy
   completion.
+- The learned observation-policy probe replaces the hand budget rule with a
+  small classifier over WPU uncertainty summaries. In the clean `N=8192` screen,
+  it matches the hand adaptive objective at `escape_rate=0.50` (`0.132664`
+  versus `0.133466`) and `escape_rate=0.75` (`0.163047` versus `0.163946`) with
+  bounded selected `K`. The negative result is equally important: noisy anomaly
+  signals lead to over-observation, and weak anomaly signals lead to
+  under-observation. Learned correction therefore needs calibration under
+  shifted observation signals.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

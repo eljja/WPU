@@ -298,3 +298,18 @@ when missing support can be explained by harmless index noise. At `N=8192` and
 This is not yet a learned policy, but it fixes the next runtime contract:
 observation is a state-native correction decision with a bounded budget, not a
 constant full-world fallback.
+
+### Learned observation-policy boundary
+
+The `world_copy_learned_observation_policy_probe` replaces the hand-specified
+budget rule with a small learned classifier over WPU uncertainty summaries. In
+the clean setting it can approximate the hand adaptive policy: at `N=8192` and
+`escape_rate=0.75`, learned observation spends mean budget `4.625` versus hand
+adaptive `4.71875`, keeps selected `K` bounded, and reaches objective
+`0.163047` versus `0.163946`. At `escape_rate=0.50`, it reaches objective
+`0.132664` versus hand adaptive `0.133466`. The failure boundary is anomaly
+shift. Under `noisy_anomaly`, the learned policy over-spends budget and has
+worse objective than the hand rule; under `weak_anomaly`, both learned and hand
+adaptive policies under-observe and miss causal objects. The next correction
+problem is therefore calibration under shifted observation signals, not simply
+learning the clean rule.

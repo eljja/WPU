@@ -158,12 +158,13 @@ The current repository supports an early but meaningful prototype-level claim:
   The remaining limitation is unlabeled or online calibration.
 - The online observation-calibration probe partially closes that limitation by
   updating anomaly sensitivity from observation hit/miss feedback rather than a
-  labeled calibration set. At `N=8192`, `escape_rate=0.75`, it improves
-  `noisy_anomaly` objective from `0.266602` to `0.193756` and `weak_anomaly`
-  from `0.334646` to `0.210113`, while keeping selected work near `32`. The
-  paired benchmark removes the earlier apparent clean no-harm gap against the
-  learned policy at the same setting, but online control still trails labeled
-  calibration under shift and hand adaptive control under clean streams.
+  labeled calibration set. With a bounded verifier, at `N=8192`,
+  `escape_rate=0.75`, it improves `noisy_anomaly` objective from `0.266984` to
+  `0.193618` and `weak_anomaly` from `0.334646` to `0.202138`, while keeping
+  selected work near `32`. The same verifier improves clean learned objective
+  from `0.166851` to `0.159361`, approaching hand adaptive `0.154890`. It still
+  trails labeled calibration under noisy shift, so marginal correction-value
+  estimation remains unresolved.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

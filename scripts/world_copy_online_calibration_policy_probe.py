@@ -85,6 +85,7 @@ def main() -> None:
                 for mode in (
                     "wpu-learned-observation",
                     "wpu-online-calibrated-observation",
+                    "wpu-verified-online-observation",
                     "wpu-labeled-calibrated-observation",
                     "wpu-hand-adaptive",
                     "dense-state-copy",
@@ -111,6 +112,7 @@ def main() -> None:
                         "mean_selected_k": trials["mean_selected_k"],
                         "max_selected_k": trials["max_selected_k"],
                         "mean_observation_budget": trials["mean_observation_budget"],
+                        "mean_verifier_topup": trials["mean_verifier_topup"],
                         "causal_recall": trials["causal_recall"],
                         "trajectory_mse": trials["trajectory_mse"],
                         "state_integrity": trials["state_integrity"],
@@ -162,7 +164,7 @@ def evaluate_stream(
             horizon=args.horizon,
         )
         rows.append(result)
-        if mode == "wpu-online-calibrated-observation":
+        if mode in {"wpu-online-calibrated-observation", "wpu-verified-online-observation"}:
             update_online_calibration(calibration, result, args.online_lr)
 
     return {
@@ -173,6 +175,7 @@ def evaluate_stream(
         "mean_selected_k": mean(rows, "selected_k"),
         "max_selected_k": max(row["selected_k"] for row in rows),
         "mean_observation_budget": mean(rows, "observation_budget"),
+        "mean_verifier_topup": mean(rows, "verifier_topup"),
         "causal_recall": mean(rows, "recall"),
         "trajectory_mse": mean(rows, "mse"),
         "state_integrity": mean(rows, "integrity"),
@@ -326,7 +329,7 @@ def evaluate_scene(
         budget = rule_budget(scene, max_budget)
     elif mode == "wpu-learned-observation":
         budget = predict_budget(scene, policy, max_budget, Calibration())
-    elif mode == "wpu-online-calibrated-observation":
+    elif mode in {"wpu-online-calibrated-observation", "wpu-verified-online-observation"}:
         credit = neighbor_support_credit(scene) if should_apply_neighbor_credit(calibration) else 0
         budget = max(0, predict_budget(scene, policy, max_budget, calibration) - credit)
     elif mode == "wpu-labeled-calibrated-observation":
@@ -336,19 +339,26 @@ def evaluate_scene(
         budget = 0
     else:
         raise ValueError(mode)
-
     candidates = set(scene.active) | scene.relation_frontier | scene.neighbor_pool
     observed: set[str] = set()
+    verifier_topup = 0
     if budget > 0:
         observation_candidates = scene.hidden_unknown | set(scene.background[: min(128, len(scene.background))])
 
         def observation_score(oid: str) -> float:
             score = calibrated_anomaly(scene.anomaly.get(oid, 0.0), calibration)
-            if mode in {"wpu-online-calibrated-observation", "wpu-labeled-calibrated-observation"}:
+            if mode in {"wpu-online-calibrated-observation", "wpu-verified-online-observation", "wpu-labeled-calibrated-observation"}:
                 score *= 0.5 + 0.5 * scene.confidence.get(oid, 0.0)
             return score
 
-        observed = set(sorted(observation_candidates, key=observation_score, reverse=True)[:budget])
+        ranked_observations = sorted(observation_candidates, key=observation_score, reverse=True)
+        observed = set(ranked_observations[:budget])
+        if mode == "wpu-verified-online-observation":
+            verifier_topup = verifier_topup_budget(scene, observed, max_budget - budget)
+            if verifier_topup > 0:
+                extra = [oid for oid in ranked_observations if oid not in observed][:verifier_topup]
+                observed.update(extra)
+                budget += verifier_topup
         candidates.update(observed)
 
     if mode == "dense-state-copy":
@@ -385,6 +395,7 @@ def evaluate_scene(
     return {
         "selected_k": float(len(selected)),
         "observation_budget": float(budget),
+        "verifier_topup": float(verifier_topup),
         "recall": recall,
         "mse": mse,
         "integrity": 1.0 / (1.0 + mse),
@@ -415,6 +426,17 @@ def neighbor_support_credit(scene: Scene) -> int:
 
 def should_apply_neighbor_credit(calibration: Calibration) -> bool:
     return calibration.offset < -0.03 or calibration.false_streak >= 2
+
+
+def verifier_topup_budget(scene: Scene, observed: set[str], remaining_budget: int) -> int:
+    if remaining_budget <= 0 or not observed or not scene.hidden_unknown:
+        return 0
+    hits = len(observed & scene.hidden_unknown)
+    precision = hits / max(len(observed), 1)
+    missed_rate = len(scene.hidden_unknown - observed) / max(len(scene.hidden_unknown), 1)
+    if precision < 0.55 or missed_rate < 0.15:
+        return 0
+    return min(2, remaining_budget, max(1, round(missed_rate * len(scene.hidden_unknown))))
 
 
 def rule_budget(scene: Scene, max_budget: int) -> int:
@@ -476,14 +498,15 @@ def report(rows: list[dict[str, object]], source: Path, ko: bool) -> str:
         "",
         f"Source CSV: `{source.as_posix()}`.",
         "",
-        "| mode | shift | N | escape | final scale | final offset | mean K | budget | recall | missed | MSE | objective | work | bytes |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| mode | shift | N | escape | final scale | final offset | mean K | budget | top-up | recall | missed | MSE | objective | work | bytes |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         lines.append(
             f"| {row['mode']} | {row['shift']} | {row['total_n']} | {float(row['escape_rate']):.2f} | "
             f"{float(row['final_scale']):.3f} | {float(row['final_offset']):.3f} | "
             f"{float(row['mean_selected_k']):.3f} | {float(row['mean_observation_budget']):.3f} | "
+            f"{float(row['mean_verifier_topup']):.3f} | "
             f"{float(row['causal_recall']):.3f} | {float(row['missed_hidden_rate']):.3f} | "
             f"{float(row['trajectory_mse']):.4f} | {float(row['objective']):.4f} | "
             f"{float(row['work_proxy']):.1f} | {float(row['bytes_proxy']):.1f} |"

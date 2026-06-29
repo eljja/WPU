@@ -334,23 +334,27 @@ calibration without relying on labeled shift calibration sets.
 The `world_copy_online_calibration_policy_probe` removes the labeled
 calibration-set assumption and updates anomaly calibration from bounded
 observation hit/miss feedback. The current version evaluates all modes on
-paired event streams and adds a conservative stability gate: calibration only
-changes after repeated miss or false-probe evidence, and neighbor-support
-credit is applied only when false-positive evidence appears. This is closer to
-the intended world-copy correction loop: WPU observes a small candidate set,
-measures whether the observation repaired missing causal state, and adjusts
-future observation sensitivity without serializing the full world. At `N=8192`,
-`escape_rate=0.75`, `noisy_anomaly` improves from learned objective `0.266602`
-to online objective `0.193756`, with recall rising from `0.800781` to
-`0.957031`. Under `weak_anomaly`, objective improves from `0.334646` to
-`0.210113`, with recall rising from `0.390625` to `0.808594`. Selected work
-stays bounded near `32` while dense state copy touches `8192` state units.
+paired event streams, adds a conservative stability gate, and adds
+`wpu-verified-online-observation`: a bounded correction-policy verifier that
+requests at most two extra observations only when the first observation is
+high-precision but still leaves likely misses. This is closer to the intended
+world-copy correction loop: WPU observes a small candidate set, measures
+whether the observation repaired missing causal state, and adjusts future
+observation sensitivity without serializing the full world.
 
-The paired benchmark removes the earlier apparent clean no-harm gap against the
-learned policy: at `N=8192`, `escape_rate=0.75`, clean learned and online
-objectives are both `0.166575` on the same stream. The remaining boundary is
-now sharper. Online calibration still trails the labeled calibration set under
-shift and the hand adaptive rule under clean streams, while dense state copy
-remains exact at `O(N)` work. The next failure is therefore a WPU-native
-correction-policy verifier that can approach labeled/hand decisions without
-leaving bounded event-local execution.
+At `N=8192`, `escape_rate=0.75`, `noisy_anomaly` improves from learned
+objective `0.266984` to verified online `0.193618`, with recall rising from
+`0.800781` to `0.957031`. Under `weak_anomaly`, verified online improves
+learned objective `0.334646` to `0.202138`, improving on unverified online
+`0.211102` and approaching labeled calibration `0.197684`; recall rises from
+`0.390625` to `0.822266`. In the clean paired stream, verified online improves
+learned objective `0.166851` to `0.159361`, moving toward hand adaptive
+`0.154890`. The mean verifier top-up remains bounded: `0.171875` in clean,
+`0.0` in noisy anomaly, and `1.09375` in weak anomaly at this setting. Dense
+state copy remains exact but touches all `8192` state units.
+
+The remaining boundary is now sharper. Verified online still trails labeled
+calibration under noisy shift because it spends more observation budget, and it
+does not reach hand adaptive control in clean streams. The next failure is a
+better WPU-native correction-policy verifier that can estimate marginal
+correction value before spending top-up budget.

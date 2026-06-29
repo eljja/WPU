@@ -367,16 +367,17 @@ samples and does not yet solve unlabeled or online calibration.
 The online observation-calibration probe attacks that boundary by using
 post-observation hit/miss feedback instead of a labeled shift calibration set.
 The updated version evaluates modes on paired event streams, adds conservative
-stability gating, and applies neighbor-support credit only after false-positive
-evidence. At `N=8192`, `escape_rate=0.75`, it improves `noisy_anomaly`
-objective from learned `0.266602` to `0.193756`, and `weak_anomaly` from
-`0.334646` to `0.210113`, while keeping selected work near `32` rather than
-dense `8192`. On the paired clean stream, online no longer worsens the learned
-policy at this setting: both objectives are `0.166575`. This is positive
-WPU-native correction evidence, but not a closed solution. Online still trails
-labeled calibration under shift and hand adaptive control under clean streams.
-The next criterion is therefore a bounded correction-policy verifier rather
-than merely adding more observation budget.
+stability gating, and adds a bounded correction-policy verifier. At `N=8192`,
+`escape_rate=0.75`, verified online improves `noisy_anomaly` objective from
+learned `0.266984` to `0.193618`, and `weak_anomaly` from `0.334646` to
+`0.202138`, while keeping selected work near `32` rather than dense `8192`. On
+the paired clean stream, verified online improves learned objective `0.166851`
+to `0.159361`, approaching hand adaptive `0.154890`. The verifier spends mean
+top-up budget `0.171875` in clean, `0.0` in noisy anomaly, and `1.09375` in weak
+anomaly. This is positive WPU-native correction evidence, but not a closed
+solution: verified online still trails labeled calibration under noisy shift
+and hand adaptive control under clean streams. The next criterion is therefore
+estimating marginal correction value before spending top-up budget.
 
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on

@@ -127,6 +127,13 @@ The current repository supports an early but meaningful prototype-level claim:
   wins raw accuracy, so the claim is conditional: WPU can recover dual-index
   omissions only when missing objects remain available through bounded local
   observation or correction.
+- The uncertainty-observation policy probe adds the next correction-loop
+  primitive: bounded external observation after local evidence fails. At
+  `N=8192`, `escape_rate=0.75`, and observation budget `8`, it improves
+  trajectory MSE from the neighbor-only range around `0.323295` to `0.098747`
+  with selected `K=32`; at `escape_rate=0.50`, the same budget improves MSE
+  from `0.255797` to `0.083280`. This supports the need for uncertainty-gated
+  observation in an executable world copy, not a claim that sparse WPU is exact.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

@@ -475,6 +475,24 @@ def test_world_copy_dual_index_escalation_probe_runs(tmp_path: Path) -> None:
     assert "escalation_rate" in text
 
 
+def test_world_copy_uncertainty_observation_policy_probe_runs(tmp_path: Path) -> None:
+    output = tmp_path / "uncertainty_observation.csv"
+    result = subprocess.run(
+        [sys.executable, "scripts/world_copy_uncertainty_observation_policy_probe.py",
+         "--world-sizes", "64", "--escape-rate", "0", "0.5",
+         "--observation-budget", "0", "2", "--contamination", "8",
+         "--streams", "2", "--horizon", "3", "--k-ref", "4",
+         "--out-csv", str(output), "--out-md", str(tmp_path / "report.md"),
+         "--out-ko-md", str(tmp_path / "report.ko.md")],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    text = output.read_text(encoding="utf-8")
+    assert "wpu-uncertainty-observation" in text
+    assert "observation_hit_rate" in text
+    assert "observation_cost" in text
+
+
 def _assert_help_runs(script: str) -> None:
     _, returncode, stderr = _run_help(script)
 

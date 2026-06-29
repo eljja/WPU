@@ -310,6 +310,16 @@ bounded correction candidate에 접근할 수 있어야 한다. Causal object가
 observation pool에서 빠지면 sparse WPU는 external observation을 요청하거나 local budget
 밖으로 escalate해야 한다.
 
+Uncertainty-observation policy probe는 이 요청 경로를 bounded 형태로 구현한다. Local
+support evidence가 부족하면 WPU는 작은 external observation budget을 요청하고, 관측된
+object만 causal slice에 patch한다. `N=8192`, `escape_rate=0.75`, observation budget `8`
+에서 `wpu-uncertainty-observation`은 neighbor-only의 MSE 약 `0.323295`를 `0.098747`로
+낮추며 selected `K=32`를 유지한다. `escape_rate=0.50`에서도 같은 budget은 MSE를
+`0.255797`에서 `0.083280`으로 낮춘다. Dense state copy는 여전히 exact raw accuracy에서
+이기므로, 이는 보편 우월성 결과가 아니다. 이는 v3 correction-loop 결과다. Local-index
+failure 이후에도 uncertainty가 full-state serialization이 아니라 bounded observation을
+구매할 수 있으면 WPU는 sublinear로 남을 수 있다.
+
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon
 integrity 기준으로 비교하는 baseline-complete learned propagation benchmark다.

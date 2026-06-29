@@ -268,3 +268,18 @@ fixes the next v3 boundary: bounded correction can recover omitted state only
 when objectification exposes a nearby correction candidate; fully unobserved
 causal objects require external observation, broader escalation, or dense
 recompute.
+
+### Uncertainty-triggered observation boundary
+
+The `world_copy_uncertainty_observation_policy_probe` tests the next step:
+causal objects that are absent even from the adjacent correction pool. The WPU
+policy does not serialize the whole world. Instead, when local support evidence
+is insufficient, it requests a bounded external observation probe and patches
+only the returned objects into the causal slice. At `N=8192`, `escape_rate=0.75`,
+and observation budget `8`, this improves trajectory MSE from the neighbor-only
+range around `0.323295` to `0.098747`, while selected `K` remains `32` rather
+than growing with `N`. At `escape_rate=0.50`, budget `8` improves MSE from
+`0.255797` to `0.083280`. Dense state copy remains exact in this controlled
+setup, so the result does not prove raw-accuracy superiority. It shows the
+state-native correction pattern WPU needs for real world copies: uncertainty
+must be able to buy bounded observation when local indexes are insufficient.

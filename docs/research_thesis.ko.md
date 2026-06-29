@@ -118,6 +118,12 @@ benchmark requirement, success/failure criteria를 정의한다.
   유지된다. Dense state copy는 raw accuracy에서 여전히 이기므로, 주장은 조건부다.
   누락 object가 bounded local observation 또는 correction을 통해 접근 가능할 때만 WPU는
   dual-index omission을 복구할 수 있다.
+- Uncertainty-observation policy probe는 local evidence가 실패한 뒤의 다음 correction-loop
+  primitive를 추가한다. `N=8192`, `escape_rate=0.75`, observation budget `8`에서 이
+  방식은 neighbor-only의 trajectory MSE 약 `0.323295`를 `0.098747`로 낮추며 selected
+  `K=32`를 유지한다. `escape_rate=0.50`에서는 같은 budget이 MSE를 `0.255797`에서
+  `0.083280`으로 낮춘다. 이는 executable world copy에 uncertainty-gated observation이
+  필요하다는 증거이지, sparse WPU가 exact하다는 주장은 아니다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

@@ -230,6 +230,8 @@ class CausalWorkingSetProcessor(nn.Module):
         self._last_relevance_logits = relevance_logits
         self._last_batch = batch
         selected_indices, selected_mask = self._select_indices(batch, relevance_logits)
+        if self.adaptive_hybrid and self.adaptive_route in {"mechanism_target", "mechanism_target_constrained"}:
+            selected_indices, selected_mask = self._ensure_target_selected(batch, selected_indices, selected_mask)
 
         selected_counts = selected_mask.sum(dim=1)
         selector_confidence = self._selection_confidence(relevance_logits, selected_indices, selected_mask)
@@ -608,6 +610,27 @@ class CausalWorkingSetProcessor(nn.Module):
         max_delta = max(self.bounded_delta_max, 1e-8)
         bounded[..., 1:7] = torch.tanh(delta[..., 1:7] / max_delta) * max_delta
         return bounded
+
+    def _ensure_target_selected(
+        self,
+        batch: StateGraphBatch,
+        selected_indices: torch.Tensor,
+        selected_mask: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Keep target-specific residual routes connected to the event target."""
+
+        selected_indices = selected_indices.clone()
+        selected_mask = selected_mask.clone()
+        batch_size, set_size = selected_indices.shape
+        for batch_index in range(batch_size):
+            target = batch.target_indices[batch_index]
+            if bool(((selected_indices[batch_index] == target) & selected_mask[batch_index]).any()):
+                continue
+            invalid = (~selected_mask[batch_index]).nonzero(as_tuple=False).flatten()
+            slot = int(invalid[0].item()) if invalid.numel() else set_size - 1
+            selected_indices[batch_index, slot] = target
+            selected_mask[batch_index, slot] = True
+        return selected_indices, selected_mask
 
     def _target_branch_delta_residual(
         self,

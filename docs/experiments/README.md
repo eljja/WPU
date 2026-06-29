@@ -149,6 +149,15 @@ Use these reports for paper-level claims:
   improves from `0.377478` to `0.163802`. Dense state copy remains the
   raw-accuracy upper bound, so the result is a bounded-correction regime, not a
   universal WPU win.
+- `world_copy_uncertainty_observation_policy_probe_results.md` and
+  `world_copy_uncertainty_observation_policy_probe_results.ko.md`: v3
+  correction-loop probe for causal objects missing from active region, relation
+  frontier, and adjacent correction pool. It uses a bounded external observation
+  budget instead of full serialization. At `N=8192`, `escape_rate=0.75`, and
+  observation budget `8`, it improves MSE from neighbor-only `0.323295` to
+  `0.098747` with selected `K=32`; at `escape_rate=0.50`, MSE improves from
+  `0.255797` to `0.083280`. Dense state copy remains exact, so this is a
+  bounded observation/correction result rather than raw-accuracy dominance.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

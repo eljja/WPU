@@ -323,6 +323,18 @@ uncertainty escalation has access to bounded correction candidates; if causal
 objects are absent from all local indexes and observation pools, sparse WPU must
 ask for external observation or escalate beyond the local budget.
 
+The uncertainty-observation policy probe implements that request path in a
+bounded form. When local support evidence is insufficient, WPU asks for a small
+external observation budget and patches only the observed objects into the
+causal slice. At `N=8192`, `escape_rate=0.75`, and observation budget `8`,
+`wpu-uncertainty-observation` improves MSE from the neighbor-only range around
+`0.323295` to `0.098747` while keeping selected `K=32`. At `escape_rate=0.50`,
+the same budget improves MSE from `0.255797` to `0.083280`. Dense state copy
+still wins exact raw accuracy, so this is not a universal superiority result.
+It is a v3 correction-loop result: WPU can remain sublinear after local-index
+failure if uncertainty buys bounded observation rather than full-state
+serialization.
+
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on
 state accuracy, latency, memory traffic, and long-horizon integrity under the

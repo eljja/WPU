@@ -124,6 +124,13 @@ benchmark requirement, success/failure criteria를 정의한다.
   `K=32`를 유지한다. `escape_rate=0.50`에서는 같은 budget이 MSE를 `0.255797`에서
   `0.083280`으로 낮춘다. 이는 executable world copy에 uncertainty-gated observation이
   필요하다는 증거이지, sparse WPU가 exact하다는 주장은 아니다.
+- Adaptive observation-budget probe는 이 observation budget이 고정 hyperparameter가
+  아니라 WPU correction-loop decision이 될 수 있음을 보인다. `N=8192`,
+  `escape_rate=0.75`에서 anomaly-gated adaptive observation은 mean budget `4.3125`만
+  사용해 selected `K=32`를 유지하고, fixed-budget과 비슷한 MSE를 유지하면서 cost-aware
+  objective를 `0.199620`에서 `0.143985`로 낮춘다. `escape_rate=0.0`에서는 observation
+  budget을 쓰지 않아 낭비 correction을 피한다. 이는 hand-specified uncertainty logic이지
+  learned policy 완료가 아니다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

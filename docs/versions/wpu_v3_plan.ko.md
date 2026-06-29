@@ -320,6 +320,16 @@ object만 causal slice에 patch한다. `N=8192`, `escape_rate=0.75`, observation
 failure 이후에도 uncertainty가 full-state serialization이 아니라 bounded observation을
 구매할 수 있으면 WPU는 sublinear로 남을 수 있다.
 
+Adaptive observation-budget probe는 이어서 fixed observation budget 가정을 제거한다.
+Local support deficit과 cheap anomaly signal을 함께 사용해 bounded observation을 요청할지,
+얼마나 요청할지 결정한다. `N=8192`, `escape_rate=0.0`에서는 observation budget을 쓰지
+않고 fixed-budget objective penalty를 피한다(`0.082287` 대 `0.206153`).
+`escape_rate=0.75`에서는 mean budget `4.3125`만 쓰고 selected `K=32`를 유지하며,
+MSE `0.079298`을 달성한다. 이는 fixed-budget `0.079620`과 비슷하거나 조금 낮고,
+cost-aware objective는 `0.199620`에서 `0.143985`로 개선된다. 아직 hand-specified
+uncertainty logic이지 learned policy는 아니지만, observation budget을 WPU correction
+loop의 native variable로 만든다.
+
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon
 integrity 기준으로 비교하는 baseline-complete learned propagation benchmark다.

@@ -283,3 +283,18 @@ than growing with `N`. At `escape_rate=0.50`, budget `8` improves MSE from
 setup, so the result does not prove raw-accuracy superiority. It shows the
 state-native correction pattern WPU needs for real world copies: uncertainty
 must be able to buy bounded observation when local indexes are insufficient.
+
+### Adaptive observation-budget boundary
+
+The `world_copy_adaptive_observation_budget_probe` moves observation from a
+fixed human-chosen budget to a bounded WPU decision. The policy combines local
+support deficit with a cheap anomaly signal, so it does not spend observation
+when missing support can be explained by harmless index noise. At `N=8192` and
+`escape_rate=0.0`, adaptive observation spends budget `0.0`, keeps selected
+`K=24`, and avoids the fixed-budget objective penalty (`0.082287` versus
+`0.206153`). At `escape_rate=0.75`, it spends mean budget `4.3125` instead of
+`8`, keeps selected `K=32`, and reaches MSE `0.079298` versus fixed-budget
+`0.079620`, lowering the cost-aware objective from `0.199620` to `0.143985`.
+This is not yet a learned policy, but it fixes the next runtime contract:
+observation is a state-native correction decision with a bounded budget, not a
+constant full-world fallback.

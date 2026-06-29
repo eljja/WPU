@@ -158,6 +158,15 @@ Use these reports for paper-level claims:
   `0.098747` with selected `K=32`; at `escape_rate=0.50`, MSE improves from
   `0.255797` to `0.083280`. Dense state copy remains exact, so this is a
   bounded observation/correction result rather than raw-accuracy dominance.
+- `world_copy_adaptive_observation_budget_probe_results.md` and
+  `world_copy_adaptive_observation_budget_probe_results.ko.md`: v3 follow-up
+  showing that bounded observation budget can be selected from support deficit
+  and anomaly evidence rather than fixed by hand. At `N=8192`,
+  `escape_rate=0.75`, adaptive observation spends mean budget `4.3125` instead
+  of `8`, keeps selected `K=32`, and lowers the cost-aware objective from
+  `0.199620` to `0.143985`. At `escape_rate=0.0`, it spends zero observation
+  budget, avoiding the fixed-budget penalty. This is still a hand-specified
+  policy substrate, not learned observation control.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

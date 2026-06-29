@@ -134,6 +134,14 @@ The current repository supports an early but meaningful prototype-level claim:
   with selected `K=32`; at `escape_rate=0.50`, the same budget improves MSE
   from `0.255797` to `0.083280`. This supports the need for uncertainty-gated
   observation in an executable world copy, not a claim that sparse WPU is exact.
+- The adaptive observation-budget probe shows that this observation budget can
+  be a WPU correction-loop decision rather than a fixed hyperparameter. At
+  `N=8192`, `escape_rate=0.75`, anomaly-gated adaptive observation spends mean
+  budget `4.3125` instead of `8`, keeps selected `K=32`, and lowers the
+  cost-aware objective from `0.199620` to `0.143985` while matching fixed-budget
+  MSE. At `escape_rate=0.0`, it spends no observation budget, avoiding wasteful
+  correction. This is hand-specified uncertainty logic, not learned policy
+  completion.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

@@ -335,6 +335,17 @@ It is a v3 correction-loop result: WPU can remain sublinear after local-index
 failure if uncertainty buys bounded observation rather than full-state
 serialization.
 
+The adaptive observation-budget probe then removes the fixed observation budget
+assumption. It uses local support deficit plus a cheap anomaly signal to decide
+whether and how much bounded observation to request. At `N=8192`,
+`escape_rate=0.0`, it spends no observation budget and avoids the fixed-budget
+objective penalty (`0.082287` versus `0.206153`). At `escape_rate=0.75`, it
+spends mean budget `4.3125` rather than `8`, keeps selected `K=32`, and reaches
+MSE `0.079298` versus fixed-budget `0.079620`, improving the cost-aware
+objective from `0.199620` to `0.143985`. This is still hand-specified
+uncertainty logic, not a learned policy, but it makes observation budget a
+native WPU correction-loop variable.
+
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on
 state accuracy, latency, memory traffic, and long-horizon integrity under the

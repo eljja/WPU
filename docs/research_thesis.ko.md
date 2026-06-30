@@ -145,12 +145,16 @@ benchmark requirement, success/failure criteria를 정의한다.
   남은 한계는 unlabeled 또는 online calibration이다.
 - Online observation-calibration probe는 labeled calibration set 대신 observation hit/miss
   feedback으로 anomaly sensitivity를 갱신해 이 한계를 부분적으로 줄인다. Bounded verifier를
-  붙이면 `N=8192`, `escape_rate=0.75`에서 `noisy_anomaly` objective는 `0.266729`에서
-  `0.193491`로, `weak_anomaly`는 `0.334783`에서 `0.201318`로 개선되며 selected work는 약
-  `32`를 유지한다. 같은 verifier는 clean learned objective `0.166575`를 `0.159234`로
+  붙이면 `N=8192`, `escape_rate=0.75`에서 `noisy_anomaly` objective는 `0.266230`에서
+  `0.193756`으로, `weak_anomaly`는 `0.334783`에서 `0.202128`로 개선되며 selected work는 약
+  `32`를 유지한다. 같은 verifier는 clean learned objective `0.166565`를 `0.159351`로
   개선해 hand adaptive `0.154890`에 가까워진다. Top-up decision은 이제 value-gated다.
-  하지만 첫 base-budget value trimming ablation은 negative이므로 더 안전한 base-budget
-  calibration이 미해결이다.
+  첫 naive base-budget value trimming ablation은 negative지만, sequential hit/miss stopping은
+  noisy over-observation에 positive다. `N=8192`, `escape_rate=0.75`에서 base budget은
+  `6.796875`에서 `6.140625`로 줄고, recall은 `0.960938`로 유지되며, noisy objective는
+  `0.181400`으로 개선되어 labeled calibration set 없이 labeled calibration `0.180582`에
+  근접한다. 다만 weak anomaly는
+  해결하지 못하므로, 남은 단계는 sequential stopping과 verified top-up의 composition이다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

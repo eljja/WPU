@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 import random
 from dataclasses import dataclass
 from pathlib import Path
@@ -87,6 +88,7 @@ def main() -> None:
                     "wpu-online-calibrated-observation",
                     "wpu-verified-online-observation",
                     "wpu-value-budget-online-observation",
+                    "wpu-sequential-online-observation",
                     "wpu-labeled-calibrated-observation",
                     "wpu-hand-adaptive",
                     "dense-state-copy",
@@ -171,6 +173,7 @@ def evaluate_stream(
             "wpu-online-calibrated-observation",
             "wpu-verified-online-observation",
             "wpu-value-budget-online-observation",
+            "wpu-sequential-online-observation",
         }:
             update_online_calibration(calibration, result, args.online_lr)
 
@@ -342,6 +345,7 @@ def evaluate_scene(
         "wpu-online-calibrated-observation",
         "wpu-verified-online-observation",
         "wpu-value-budget-online-observation",
+        "wpu-sequential-online-observation",
     }:
         credit = neighbor_support_credit(scene) if should_apply_neighbor_credit(calibration) else 0
         budget = max(0, predict_budget(scene, policy, max_budget, calibration) - credit)
@@ -362,7 +366,13 @@ def evaluate_scene(
 
         def observation_score(oid: str) -> float:
             score = calibrated_anomaly(scene.anomaly.get(oid, 0.0), calibration)
-            if mode in {"wpu-online-calibrated-observation", "wpu-verified-online-observation", "wpu-labeled-calibrated-observation"}:
+            if mode in {
+                "wpu-online-calibrated-observation",
+                "wpu-verified-online-observation",
+                "wpu-value-budget-online-observation",
+                "wpu-sequential-online-observation",
+                "wpu-labeled-calibrated-observation",
+            }:
                 score *= 0.5 + 0.5 * scene.confidence.get(oid, 0.0)
             return score
 
@@ -378,7 +388,12 @@ def evaluate_scene(
             )
             base_budget_trim = budget - value_budget
             budget = value_budget
-        observed = set(ranked_observations[:budget])
+        if mode == "wpu-sequential-online-observation":
+            observed = sequential_observation_set(scene, ranked_observations, budget, calibration)
+            base_budget_trim = budget - len(observed)
+            budget = len(observed)
+        else:
+            observed = set(ranked_observations[:budget])
         if mode == "wpu-verified-online-observation":
             verifier_topup, estimated_topup_value = verifier_topup_decision(
                 scene,
@@ -506,6 +521,33 @@ def base_value_calibrated_budget(
     if marginal_value < -0.002 and proposed_budget > 1:
         return proposed_budget - 1
     return proposed_budget
+
+
+def sequential_observation_set(
+    scene: Scene,
+    ranked_observations: list[str],
+    proposed_budget: int,
+    calibration: Calibration,
+) -> set[str]:
+    if proposed_budget <= 0:
+        return set()
+    if calibration.offset > 0.03 or calibration.miss_streak > 0:
+        return set(ranked_observations[:proposed_budget])
+    observed: list[str] = []
+    hits = 0
+    false_streak = 0
+    min_hits_before_stop = max(2, int(math.ceil(0.45 * proposed_budget)))
+    for oid in ranked_observations[:proposed_budget]:
+        observed.append(oid)
+        if oid in scene.hidden_unknown:
+            hits += 1
+            false_streak = 0
+            continue
+        false_streak += 1
+        precision = hits / max(len(observed), 1)
+        if false_streak >= 1 and hits >= min_hits_before_stop and precision >= 0.65:
+            break
+    return set(observed)
 
 
 def average_missed_error_per_object(k: int, horizon: int) -> float:

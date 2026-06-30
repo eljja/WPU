@@ -343,22 +343,34 @@ the observation repaired missing causal state, and adjusts future observation
 sensitivity without serializing the full world.
 
 At `N=8192`, `escape_rate=0.75`, `noisy_anomaly` improves from learned
-objective `0.266729` to verified online `0.193491`, with recall rising from
+objective `0.266230` to verified online `0.193756`, with recall rising from
 `0.800781` to `0.957031`. Under `weak_anomaly`, verified online improves
-learned objective `0.334783` to `0.201318`, improving on unverified online
-`0.208850` and approaching labeled calibration `0.196083`; recall rises from
-`0.390625` to `0.824219`. In the clean paired stream, verified online improves
-learned objective `0.166575` to `0.159234`, moving toward hand adaptive
+learned objective `0.334783` to `0.202128`, improving on unverified online
+`0.210699` and approaching labeled calibration `0.197261`; recall rises from
+`0.390625` to `0.822266`. In the clean paired stream, verified online improves
+learned objective `0.166565` to `0.159351`, moving toward hand adaptive
 `0.154890`. The mean verifier top-up remains bounded and value-gated:
 `0.171875` in clean, `0.0` in noisy anomaly, and `1.09375` in weak anomaly at
 this setting.
 Dense state copy remains exact but touches all `8192` state units.
 
-The remaining boundary is now sharper. Value-gated top-up is useful for weak
-anomaly and selected clean misses, but noisy shift still trails labeled
-calibration because the base online budget is too large before top-up is even
-considered. A first base-budget value trimming ablation is negative: at the same
-setting it reduces noisy budget but collapses recall enough to worsen objective
-to `0.256521`, and it also weakens `weak_anomaly` to `0.242431`. The next
-failure is therefore safer base-budget value calibration, not naive tail
-trimming.
+The remaining boundary is now sharper, but the first safe base-budget result is
+positive. Naive value trimming was negative because it removed tail observations
+before measuring whether they repaired hidden causal state. The sequential
+online verifier instead observes ranked candidates one at a time, stops only
+after hit/miss evidence suggests that remaining marginal value is low, and falls
+back to the full proposed budget when calibration is unstable. At the same
+`N=8192`, `escape_rate=0.75` noisy setting, it reduces mean base observation
+budget from `6.796875` to `6.140625`, keeps recall slightly higher
+(`0.957031` to `0.960938`), and improves objective from online/verified
+`0.193756` to `0.181400`, nearly matching the small labeled-calibration
+objective `0.180582` without using a labeled calibration set.
+
+This is still not a closed solution. Under `weak_anomaly`, sequential stopping
+does not help because the failure is under-observation rather than
+over-observation; verified top-up remains better (`0.202128` versus
+`0.210699`), and labeled calibration is still best (`0.197261`). In clean
+paired streams, sequential stopping is neutral while verified top-up gives the
+best WPU result. The next failure is therefore composition: select or learn when
+to apply sequential base-budget stopping, verified top-up, or both without
+using token-style full-state recomputation.

@@ -89,6 +89,7 @@ def main() -> None:
                     "wpu-verified-online-observation",
                     "wpu-value-budget-online-observation",
                     "wpu-sequential-online-observation",
+                    "wpu-composed-online-observation",
                     "wpu-labeled-calibrated-observation",
                     "wpu-hand-adaptive",
                     "dense-state-copy",
@@ -174,6 +175,7 @@ def evaluate_stream(
             "wpu-verified-online-observation",
             "wpu-value-budget-online-observation",
             "wpu-sequential-online-observation",
+            "wpu-composed-online-observation",
         }:
             update_online_calibration(calibration, result, args.online_lr)
 
@@ -346,6 +348,7 @@ def evaluate_scene(
         "wpu-verified-online-observation",
         "wpu-value-budget-online-observation",
         "wpu-sequential-online-observation",
+        "wpu-composed-online-observation",
     }:
         credit = neighbor_support_credit(scene) if should_apply_neighbor_credit(calibration) else 0
         budget = max(0, predict_budget(scene, policy, max_budget, calibration) - credit)
@@ -371,6 +374,7 @@ def evaluate_scene(
                 "wpu-verified-online-observation",
                 "wpu-value-budget-online-observation",
                 "wpu-sequential-online-observation",
+                "wpu-composed-online-observation",
                 "wpu-labeled-calibrated-observation",
             }:
                 score *= 0.5 + 0.5 * scene.confidence.get(oid, 0.0)
@@ -388,13 +392,14 @@ def evaluate_scene(
             )
             base_budget_trim = budget - value_budget
             budget = value_budget
-        if mode == "wpu-sequential-online-observation":
+        use_composed_verified_path = mode == "wpu-composed-online-observation" and calibration.offset > 0.03
+        if mode in {"wpu-sequential-online-observation", "wpu-composed-online-observation"} and not use_composed_verified_path:
             observed = sequential_observation_set(scene, ranked_observations, budget, calibration)
             base_budget_trim = budget - len(observed)
             budget = len(observed)
         else:
             observed = set(ranked_observations[:budget])
-        if mode == "wpu-verified-online-observation":
+        if mode == "wpu-verified-online-observation" or use_composed_verified_path:
             verifier_topup, estimated_topup_value = verifier_topup_decision(
                 scene,
                 observed,

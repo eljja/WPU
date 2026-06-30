@@ -369,10 +369,10 @@ post-observation hit/miss feedback instead of a labeled shift calibration set.
 The updated version evaluates modes on paired event streams, adds conservative
 stability gating, and adds a value-gated bounded correction-policy verifier. At
 `N=8192`, `escape_rate=0.75`, verified online improves `noisy_anomaly`
-objective from learned `0.266230` to `0.193756`, and `weak_anomaly` from
-`0.334783` to `0.202128`, while keeping selected work near `32` rather than
+objective from learned `0.266230` to `0.193618`, and `weak_anomaly` from
+`0.334783` to `0.202765`, while keeping selected work near `32` rather than
 dense `8192`. On the paired clean stream, verified online improves learned
-objective `0.166565` to `0.159351`, approaching hand adaptive `0.154890`. The
+objective `0.166575` to `0.159478`, approaching hand adaptive `0.154890`. The
 verifier spends mean top-up budget `0.171875` in clean, `0.0` in noisy anomaly,
 and `1.09375` in weak anomaly. This is positive WPU-native correction evidence,
 but not a closed solution. A first naive base-budget value trimming ablation is
@@ -381,11 +381,14 @@ negative: noisy shift worsens to `0.256521`, and weak anomaly worsens to
 case by making base observations one at a time and stopping from observed
 hit/miss evidence. At the same `N=8192`, `escape_rate=0.75` noisy setting, it
 reduces mean base budget from `6.796875` to `6.140625`, preserves recall
-(`0.957031` to `0.960938`), and improves objective from `0.193756` to
-`0.181400`, nearly matching labeled calibration `0.180582`. It is neutral on clean
-streams and does not solve weak anomaly, where verified top-up still wins
-(`0.202128` versus `0.210699`). The next criterion is a WPU-native composition
-policy for sequential base-budget stopping plus verified top-up.
+(`0.957031` to `0.960938`), and improves objective from `0.193618` to
+`0.181400`, nearly matching labeled calibration `0.180837`. The first composed
+selector chooses verified top-up when calibration indicates under-observation
+and sequential stopping otherwise. It preserves the noisy sequential objective
+`0.181400` and the weak verified objective `0.202765`, but remains neutral on
+clean streams (`0.166575`) where verified top-up is better (`0.159478`). The
+next criterion is a learned no-harm composition gate, not more hand-tuned
+composition.
 
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on

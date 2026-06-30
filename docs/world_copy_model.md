@@ -343,12 +343,12 @@ the observation repaired missing causal state, and adjusts future observation
 sensitivity without serializing the full world.
 
 At `N=8192`, `escape_rate=0.75`, `noisy_anomaly` improves from learned
-objective `0.266230` to verified online `0.193756`, with recall rising from
+objective `0.266230` to verified online `0.193618`, with recall rising from
 `0.800781` to `0.957031`. Under `weak_anomaly`, verified online improves
-learned objective `0.334783` to `0.202128`, improving on unverified online
-`0.210699` and approaching labeled calibration `0.197261`; recall rises from
+learned objective `0.334783` to `0.202765`, improving on unverified online
+`0.211687` and approaching labeled calibration `0.196455`; recall rises from
 `0.390625` to `0.822266`. In the clean paired stream, verified online improves
-learned objective `0.166565` to `0.159351`, moving toward hand adaptive
+learned objective `0.166575` to `0.159478`, moving toward hand adaptive
 `0.154890`. The mean verifier top-up remains bounded and value-gated:
 `0.171875` in clean, `0.0` in noisy anomaly, and `1.09375` in weak anomaly at
 this setting.
@@ -363,14 +363,17 @@ back to the full proposed budget when calibration is unstable. At the same
 `N=8192`, `escape_rate=0.75` noisy setting, it reduces mean base observation
 budget from `6.796875` to `6.140625`, keeps recall slightly higher
 (`0.957031` to `0.960938`), and improves objective from online/verified
-`0.193756` to `0.181400`, nearly matching the small labeled-calibration
-objective `0.180582` without using a labeled calibration set.
+`0.193618` to `0.181400`, nearly matching the small labeled-calibration
+objective `0.180837` without using a labeled calibration set.
 
-This is still not a closed solution. Under `weak_anomaly`, sequential stopping
-does not help because the failure is under-observation rather than
-over-observation; verified top-up remains better (`0.202128` versus
-`0.210699`), and labeled calibration is still best (`0.197261`). In clean
-paired streams, sequential stopping is neutral while verified top-up gives the
-best WPU result. The next failure is therefore composition: select or learn when
-to apply sequential base-budget stopping, verified top-up, or both without
-using token-style full-state recomputation.
+The first composition policy is now implemented as
+`wpu-composed-online-observation`: when online calibration indicates
+under-observation (`offset > 0.03`), it selects the verified top-up path;
+otherwise it selects sequential base-budget stopping. This selector preserves
+the noisy sequential result (`0.181400`) and the weak verified result
+(`0.202765`) while keeping `K` bounded near `32`. It is not a universal best
+policy: in clean streams it is neutral (`0.166575`) and worse than verified
+top-up (`0.159478`), while labeled calibration still wins under weak anomaly
+(`0.196455`). The next failure is therefore not path composition itself, but
+learning a no-harm composition gate that can also recover clean misses without
+reintroducing noisy over-observation.

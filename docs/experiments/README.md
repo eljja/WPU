@@ -191,19 +191,21 @@ Use these reports for paper-level claims:
   modes on paired event streams, uses conservative stability gating, and adds
   `wpu-verified-online-observation`, a value-gated bounded correction-policy
   verifier. At `N=8192`, `escape_rate=0.75`, verified online improves
-  `noisy_anomaly` objective from learned `0.266230` to `0.193756` and
-  `weak_anomaly` from `0.334783` to `0.202128`, while keeping selected work near
-  `32`. It also improves the clean paired stream from learned `0.166565` to
-  `0.159351`, approaching hand adaptive `0.154890`. The verifier spends bounded
+  `noisy_anomaly` objective from learned `0.266230` to `0.193618` and
+  `weak_anomaly` from `0.334783` to `0.202765`, while keeping selected work near
+  `32`. It also improves the clean paired stream from learned `0.166575` to
+  `0.159478`, approaching hand adaptive `0.154890`. The verifier spends bounded
   mean top-up budget (`0.171875` clean, `0.0` noisy anomaly, `1.09375` weak
   anomaly). A first naive base-budget value trimming ablation is negative, but
   the sequential online verifier is positive on noisy over-observation: at
   `N=8192`, `escape_rate=0.75`, it reduces base budget from `6.796875` to
   `6.140625`, preserves recall (`0.960938`), and improves noisy objective from
-  `0.193756` to `0.181400`, nearly matching labeled calibration `0.180582`. It is
-  neutral on clean streams and weaker than verified top-up on `weak_anomaly`
-  (`0.210699` versus `0.202128`). The remaining failure is a composition policy
-  for sequential base-budget stopping and verified top-up.
+  `0.193618` to `0.181400`, nearly matching labeled calibration `0.180837`.
+  `wpu-composed-online-observation` selects sequential stopping unless online
+  calibration indicates under-observation, in which case it selects verified
+  top-up. It preserves the noisy sequential objective `0.181400` and the weak
+  verified objective `0.202765`, but remains neutral on clean streams
+  (`0.166575`). The remaining failure is a learned no-harm composition gate.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

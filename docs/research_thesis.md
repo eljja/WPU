@@ -160,17 +160,18 @@ The current repository supports an early but meaningful prototype-level claim:
   updating anomaly sensitivity from observation hit/miss feedback rather than a
   labeled calibration set. With a bounded verifier, at `N=8192`,
   `escape_rate=0.75`, it improves `noisy_anomaly` objective from `0.266230` to
-  `0.193756` and `weak_anomaly` from `0.334783` to `0.202128`, while keeping
+  `0.193618` and `weak_anomaly` from `0.334783` to `0.202765`, while keeping
   selected work near `32`. The same verifier improves clean learned objective
-  from `0.166565` to `0.159351`, approaching hand adaptive `0.154890`. The
+  from `0.166575` to `0.159478`, approaching hand adaptive `0.154890`. The
   top-up decision is now value-gated. A first naive base-budget value trimming
   ablation is negative, but sequential hit/miss stopping is positive for noisy
   over-observation: at `N=8192`, `escape_rate=0.75`, it reduces base budget
   from `6.796875` to `6.140625`, preserves recall (`0.960938`), and improves
-  noisy objective to `0.181400`, nearly matching labeled calibration `0.180582`
+  noisy objective to `0.181400`, nearly matching labeled calibration `0.180837`
   without using a labeled calibration set.
-  It does not solve weak anomaly, so the unresolved step is composition of
-  sequential stopping and verified top-up.
+  A first composed selector preserves the noisy sequential result and the weak
+  verified result, but remains neutral on clean streams; the unresolved step is
+  a learned no-harm gate for composition.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

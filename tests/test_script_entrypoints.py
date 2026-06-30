@@ -572,6 +572,7 @@ def test_world_copy_online_calibration_policy_probe_runs(tmp_path: Path) -> None
     assert "wpu-verified-online-observation" in text
     assert "wpu-value-budget-online-observation" in text
     assert "wpu-sequential-online-observation" in text
+    assert "wpu-composed-online-observation" in text
     assert "final_offset" in text
     assert "mean_base_budget_trim" in text
     assert "mean_verifier_topup" in text

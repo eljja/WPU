@@ -349,21 +349,23 @@ Online observation-calibration probe는 이 경계를 공격한다. Labeled shif
 대신 observation 이후 hit/miss feedback을 사용한다. 업데이트된 버전은 mode들을 paired
 event stream에서 평가하고, conservative stability gate와 value-gated bounded
 correction-policy verifier를 추가한다. `N=8192`, `escape_rate=0.75`에서 verified online은
-`noisy_anomaly` objective를 learned `0.266230`에서 `0.193756`으로 개선하고, `weak_anomaly`를
-`0.334783`에서 `0.202128`로 개선한다. Selected work는 dense `8192`가 아니라 약 `32`
+`noisy_anomaly` objective를 learned `0.266230`에서 `0.193618`로 개선하고, `weak_anomaly`를
+`0.334783`에서 `0.202765`로 개선한다. Selected work는 dense `8192`가 아니라 약 `32`
 근처로 유지된다. Paired clean stream에서는 verified online이 learned objective `0.166575`를
-`0.159351`로 개선해 hand adaptive `0.154890`에 가까워진다. Verifier가 쓰는 mean top-up
+`0.159478`로 개선해 hand adaptive `0.154890`에 가까워진다. Verifier가 쓰는 mean top-up
 budget은 clean `0.171875`, `noisy_anomaly` `0.0`, `weak_anomaly` `1.09375`이다. 이는
 WPU-native correction evidence로 긍정적이지만, 닫힌 해법은 아니다. 첫 naive base-budget
 value trimming ablation은 negative다. Noisy shift는 `0.256521`로 악화되고, weak anomaly도
 `0.242431`로 악화된다. Sequential online verifier는 base observation을 하나씩 수행하고
 관측된 hit/miss evidence로 중단해 noisy over-observation case를 개선한다. 같은 `N=8192`,
 `escape_rate=0.75` noisy setting에서 mean base budget은 `6.796875`에서 `6.140625`로 줄고,
-recall은 `0.957031`에서 `0.960938`로 유지 또는 소폭 개선되며, objective는 `0.193756`에서
-`0.181400`으로 개선된다. 이는 labeled calibration `0.180582`에 근접한다. Clean stream에서는
-neutral이고, weak anomaly는 해결하지 못한다. 이 경우 verified top-up이 `0.202128`로
-sequential `0.210699`보다 낫다. 따라서 다음 기준은 sequential base-budget stopping과
-verified top-up을 결합하는 WPU-native composition policy다.
+recall은 `0.957031`에서 `0.960938`로 유지 또는 소폭 개선되며, objective는 `0.193618`에서
+`0.181400`으로 개선된다. 이는 labeled calibration `0.180837`에 근접한다. 첫 composed
+selector는 calibration이 under-observation을 가리키면 verified top-up을 선택하고, 그 외에는
+sequential stopping을 선택한다. 이 selector는 noisy sequential objective `0.181400`과 weak
+verified objective `0.202765`를 보존하지만, clean stream에서는 neutral(`0.166575`)이며
+verified top-up `0.159478`보다 나쁘다. 따라서 다음 기준은 hand-tuned composition을 더하는
+것이 아니라 learned no-harm composition gate다.
 
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon

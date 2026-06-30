@@ -86,6 +86,7 @@ def main() -> None:
                     "wpu-learned-observation",
                     "wpu-online-calibrated-observation",
                     "wpu-verified-online-observation",
+                    "wpu-value-budget-online-observation",
                     "wpu-labeled-calibrated-observation",
                     "wpu-hand-adaptive",
                     "dense-state-copy",
@@ -112,6 +113,7 @@ def main() -> None:
                         "mean_selected_k": trials["mean_selected_k"],
                         "max_selected_k": trials["max_selected_k"],
                         "mean_observation_budget": trials["mean_observation_budget"],
+                        "mean_base_budget_trim": trials["mean_base_budget_trim"],
                         "mean_verifier_topup": trials["mean_verifier_topup"],
                         "mean_estimated_topup_value": trials["mean_estimated_topup_value"],
                         "causal_recall": trials["causal_recall"],
@@ -165,7 +167,11 @@ def evaluate_stream(
             horizon=args.horizon,
         )
         rows.append(result)
-        if mode in {"wpu-online-calibrated-observation", "wpu-verified-online-observation"}:
+        if mode in {
+            "wpu-online-calibrated-observation",
+            "wpu-verified-online-observation",
+            "wpu-value-budget-online-observation",
+        }:
             update_online_calibration(calibration, result, args.online_lr)
 
     return {
@@ -176,6 +182,7 @@ def evaluate_stream(
         "mean_selected_k": mean(rows, "selected_k"),
         "max_selected_k": max(row["selected_k"] for row in rows),
         "mean_observation_budget": mean(rows, "observation_budget"),
+        "mean_base_budget_trim": mean(rows, "base_budget_trim"),
         "mean_verifier_topup": mean(rows, "verifier_topup"),
         "mean_estimated_topup_value": mean(rows, "estimated_topup_value"),
         "causal_recall": mean(rows, "recall"),
@@ -331,7 +338,11 @@ def evaluate_scene(
         budget = rule_budget(scene, max_budget)
     elif mode == "wpu-learned-observation":
         budget = predict_budget(scene, policy, max_budget, Calibration())
-    elif mode in {"wpu-online-calibrated-observation", "wpu-verified-online-observation"}:
+    elif mode in {
+        "wpu-online-calibrated-observation",
+        "wpu-verified-online-observation",
+        "wpu-value-budget-online-observation",
+    }:
         credit = neighbor_support_credit(scene) if should_apply_neighbor_credit(calibration) else 0
         budget = max(0, predict_budget(scene, policy, max_budget, calibration) - credit)
     elif mode == "wpu-labeled-calibrated-observation":
@@ -343,6 +354,7 @@ def evaluate_scene(
         raise ValueError(mode)
     candidates = set(scene.active) | scene.relation_frontier | scene.neighbor_pool
     observed: set[str] = set()
+    base_budget_trim = 0
     verifier_topup = 0
     estimated_topup_value = 0.0
     if budget > 0:
@@ -355,6 +367,17 @@ def evaluate_scene(
             return score
 
         ranked_observations = sorted(observation_candidates, key=observation_score, reverse=True)
+        if mode == "wpu-value-budget-online-observation":
+            value_budget = base_value_calibrated_budget(
+                scene,
+                ranked_observations,
+                budget,
+                calibration,
+                cost_lambda,
+                horizon,
+            )
+            base_budget_trim = budget - value_budget
+            budget = value_budget
         observed = set(ranked_observations[:budget])
         if mode == "wpu-verified-online-observation":
             verifier_topup, estimated_topup_value = verifier_topup_decision(
@@ -404,6 +427,7 @@ def evaluate_scene(
     return {
         "selected_k": float(len(selected)),
         "observation_budget": float(budget),
+        "base_budget_trim": float(base_budget_trim),
         "verifier_topup": float(verifier_topup),
         "estimated_topup_value": float(estimated_topup_value),
         "recall": recall,
@@ -459,6 +483,29 @@ def verifier_topup_decision(
     if estimated_value <= 0.0:
         return 0, round(estimated_value, 6)
     return proposed, round(estimated_value, 6)
+
+
+def base_value_calibrated_budget(
+    scene: Scene,
+    ranked_observations: list[str],
+    proposed_budget: int,
+    calibration: Calibration,
+    cost_lambda: float,
+    horizon: int,
+) -> int:
+    if proposed_budget <= 0:
+        return 0
+    if calibration.offset > 0.03 or calibration.miss_streak > 0:
+        return proposed_budget
+    per_hit_gain = average_missed_error_per_object(scene.k, horizon)
+    tail = ranked_observations[proposed_budget - 1]
+    score = calibrated_anomaly(scene.anomaly.get(tail, 0.0), calibration)
+    score *= 0.5 + 0.5 * scene.confidence.get(tail, 0.0)
+    hit_probability = clamp((score - 0.45) / 0.55, 0.0, 1.0)
+    marginal_value = hit_probability * per_hit_gain - cost_lambda
+    if marginal_value < -0.002 and proposed_budget > 1:
+        return proposed_budget - 1
+    return proposed_budget
 
 
 def average_missed_error_per_object(k: int, horizon: int) -> float:
@@ -528,14 +575,15 @@ def report(rows: list[dict[str, object]], source: Path, ko: bool) -> str:
         "",
         f"Source CSV: `{source.as_posix()}`.",
         "",
-        "| mode | shift | N | escape | final scale | final offset | mean K | budget | top-up | top-up value | recall | missed | MSE | objective | work | bytes |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| mode | shift | N | escape | final scale | final offset | mean K | budget | trim | top-up | top-up value | recall | missed | MSE | objective | work | bytes |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         lines.append(
             f"| {row['mode']} | {row['shift']} | {row['total_n']} | {float(row['escape_rate']):.2f} | "
             f"{float(row['final_scale']):.3f} | {float(row['final_offset']):.3f} | "
             f"{float(row['mean_selected_k']):.3f} | {float(row['mean_observation_budget']):.3f} | "
+            f"{float(row['mean_base_budget_trim']):.3f} | "
             f"{float(row['mean_verifier_topup']):.3f} | "
             f"{float(row['mean_estimated_topup_value']):.4f} | "
             f"{float(row['causal_recall']):.3f} | {float(row['missed_hidden_rate']):.3f} | "

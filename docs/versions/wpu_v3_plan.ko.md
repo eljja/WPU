@@ -349,15 +349,15 @@ Online observation-calibration probe는 이 경계를 공격한다. Labeled shif
 대신 observation 이후 hit/miss feedback을 사용한다. 업데이트된 버전은 mode들을 paired
 event stream에서 평가하고, conservative stability gate와 value-gated bounded
 correction-policy verifier를 추가한다. `N=8192`, `escape_rate=0.75`에서 verified online은
-`noisy_anomaly` objective를 learned `0.266740`에서 `0.193756`으로 개선하고, `weak_anomaly`를
-`0.333978`에서 `0.201456`으로 개선한다. Selected work는 dense `8192`가 아니라 약 `32`
-근처로 유지된다. Paired clean stream에서는 verified online이 learned objective `0.165791`을
-`0.159096`으로 개선해 hand adaptive `0.154890`에 가까워진다. Verifier가 쓰는 mean top-up
-budget은 clean `0.171875`, `noisy_anomaly` `0.0`, `weak_anomaly` `1.09375`이고, 해당
-estimated top-up value는 `0.006895`, `0.0`, `0.043876`이다. 이는 WPU-native correction
-evidence로 긍정적이지만, 닫힌 해법은 아니다. Noisy shift는 base online budget이 너무 커서
-labeled calibration보다 아직 약하다. 따라서 다음 기준은 top-up gate가 아니라 base-budget
-value calibration이다.
+`noisy_anomaly` objective를 learned `0.266729`에서 `0.193491`로 개선하고, `weak_anomaly`를
+`0.334783`에서 `0.201318`로 개선한다. Selected work는 dense `8192`가 아니라 약 `32`
+근처로 유지된다. Paired clean stream에서는 verified online이 learned objective `0.166575`를
+`0.159234`로 개선해 hand adaptive `0.154890`에 가까워진다. Verifier가 쓰는 mean top-up
+budget은 clean `0.171875`, `noisy_anomaly` `0.0`, `weak_anomaly` `1.09375`이다. 이는
+WPU-native correction evidence로 긍정적이지만, 닫힌 해법은 아니다. 첫 base-budget value
+trimming ablation은 negative다. Noisy shift는 `0.256521`로 악화되고, weak anomaly도
+`0.242431`로 악화된다. 따라서 다음 기준은 naive tail trimming이 아니라 더 안전한
+base-budget value calibration이다.
 
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon

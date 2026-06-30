@@ -343,19 +343,22 @@ the observation repaired missing causal state, and adjusts future observation
 sensitivity without serializing the full world.
 
 At `N=8192`, `escape_rate=0.75`, `noisy_anomaly` improves from learned
-objective `0.266740` to verified online `0.193756`, with recall rising from
+objective `0.266729` to verified online `0.193491`, with recall rising from
 `0.800781` to `0.957031`. Under `weak_anomaly`, verified online improves
-learned objective `0.333978` to `0.201456`, improving on unverified online
-`0.208829` and approaching labeled calibration `0.197006`; recall rises from
+learned objective `0.334783` to `0.201318`, improving on unverified online
+`0.208850` and approaching labeled calibration `0.196083`; recall rises from
 `0.390625` to `0.824219`. In the clean paired stream, verified online improves
-learned objective `0.165791` to `0.159096`, moving toward hand adaptive
+learned objective `0.166575` to `0.159234`, moving toward hand adaptive
 `0.154890`. The mean verifier top-up remains bounded and value-gated:
-`0.171875` with estimated value `0.006895` in clean, `0.0` in noisy anomaly,
-and `1.09375` with estimated value `0.043876` in weak anomaly at this setting.
+`0.171875` in clean, `0.0` in noisy anomaly, and `1.09375` in weak anomaly at
+this setting.
 Dense state copy remains exact but touches all `8192` state units.
 
 The remaining boundary is now sharper. Value-gated top-up is useful for weak
 anomaly and selected clean misses, but noisy shift still trails labeled
 calibration because the base online budget is too large before top-up is even
-considered. The next failure is therefore base-budget value calibration:
-estimating when fewer observations are sufficient, not merely when to add more.
+considered. A first base-budget value trimming ablation is negative: at the same
+setting it reduces noisy budget but collapses recall enough to worsen objective
+to `0.256521`, and it also weakens `weak_anomaly` to `0.242431`. The next
+failure is therefore safer base-budget value calibration, not naive tail
+trimming.

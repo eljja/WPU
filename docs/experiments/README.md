@@ -189,15 +189,16 @@ Use these reports for paper-level claims:
   removes the labeled calibration-set assumption and updates observation
   calibration from hit/miss correction feedback. The updated probe evaluates
   modes on paired event streams, uses conservative stability gating, and adds
-  `wpu-verified-online-observation`, a bounded correction-policy verifier. At
-  `N=8192`, `escape_rate=0.75`, verified online improves `noisy_anomaly`
-  objective from learned `0.266984` to `0.193618` and `weak_anomaly` from
-  `0.334646` to `0.202138`, while keeping selected work near `32`. It also
-  improves the clean paired stream from learned `0.166851` to `0.159361`,
-  approaching hand adaptive `0.154890`. The verifier spends bounded mean top-up
-  budget (`0.171875` clean, `0.0` noisy anomaly, `1.09375` weak anomaly at this
-  setting). It still trails labeled calibration under noisy shift, so marginal
-  correction-value estimation remains unresolved.
+  `wpu-verified-online-observation`, a value-gated bounded correction-policy
+  verifier. At `N=8192`, `escape_rate=0.75`, verified online improves
+  `noisy_anomaly` objective from learned `0.266740` to `0.193756` and
+  `weak_anomaly` from `0.333978` to `0.201456`, while keeping selected work near
+  `32`. It also improves the clean paired stream from learned `0.165791` to
+  `0.159096`, approaching hand adaptive `0.154890`. The verifier spends bounded
+  mean top-up budget (`0.171875` clean, `0.0` noisy anomaly, `1.09375` weak
+  anomaly) with positive estimated value where top-up is used. It still trails
+  labeled calibration under noisy shift because the base online budget is too
+  large before top-up is considered.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

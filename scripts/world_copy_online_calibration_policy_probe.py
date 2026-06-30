@@ -113,6 +113,7 @@ def main() -> None:
                         "max_selected_k": trials["max_selected_k"],
                         "mean_observation_budget": trials["mean_observation_budget"],
                         "mean_verifier_topup": trials["mean_verifier_topup"],
+                        "mean_estimated_topup_value": trials["mean_estimated_topup_value"],
                         "causal_recall": trials["causal_recall"],
                         "trajectory_mse": trials["trajectory_mse"],
                         "state_integrity": trials["state_integrity"],
@@ -176,6 +177,7 @@ def evaluate_stream(
         "max_selected_k": max(row["selected_k"] for row in rows),
         "mean_observation_budget": mean(rows, "observation_budget"),
         "mean_verifier_topup": mean(rows, "verifier_topup"),
+        "mean_estimated_topup_value": mean(rows, "estimated_topup_value"),
         "causal_recall": mean(rows, "recall"),
         "trajectory_mse": mean(rows, "mse"),
         "state_integrity": mean(rows, "integrity"),
@@ -342,6 +344,7 @@ def evaluate_scene(
     candidates = set(scene.active) | scene.relation_frontier | scene.neighbor_pool
     observed: set[str] = set()
     verifier_topup = 0
+    estimated_topup_value = 0.0
     if budget > 0:
         observation_candidates = scene.hidden_unknown | set(scene.background[: min(128, len(scene.background))])
 
@@ -354,7 +357,13 @@ def evaluate_scene(
         ranked_observations = sorted(observation_candidates, key=observation_score, reverse=True)
         observed = set(ranked_observations[:budget])
         if mode == "wpu-verified-online-observation":
-            verifier_topup = verifier_topup_budget(scene, observed, max_budget - budget)
+            verifier_topup, estimated_topup_value = verifier_topup_decision(
+                scene,
+                observed,
+                max_budget - budget,
+                cost_lambda,
+                horizon,
+            )
             if verifier_topup > 0:
                 extra = [oid for oid in ranked_observations if oid not in observed][:verifier_topup]
                 observed.update(extra)
@@ -396,6 +405,7 @@ def evaluate_scene(
         "selected_k": float(len(selected)),
         "observation_budget": float(budget),
         "verifier_topup": float(verifier_topup),
+        "estimated_topup_value": float(estimated_topup_value),
         "recall": recall,
         "mse": mse,
         "integrity": 1.0 / (1.0 + mse),
@@ -428,15 +438,35 @@ def should_apply_neighbor_credit(calibration: Calibration) -> bool:
     return calibration.offset < -0.03 or calibration.false_streak >= 2
 
 
-def verifier_topup_budget(scene: Scene, observed: set[str], remaining_budget: int) -> int:
+def verifier_topup_decision(
+    scene: Scene,
+    observed: set[str],
+    remaining_budget: int,
+    cost_lambda: float,
+    horizon: int,
+) -> tuple[int, float]:
     if remaining_budget <= 0 or not observed or not scene.hidden_unknown:
-        return 0
+        return 0, 0.0
     hits = len(observed & scene.hidden_unknown)
     precision = hits / max(len(observed), 1)
     missed_rate = len(scene.hidden_unknown - observed) / max(len(scene.hidden_unknown), 1)
     if precision < 0.55 or missed_rate < 0.15:
-        return 0
-    return min(2, remaining_budget, max(1, round(missed_rate * len(scene.hidden_unknown))))
+        return 0, 0.0
+    proposed = min(2, remaining_budget, max(1, round(missed_rate * len(scene.hidden_unknown))))
+    expected_hits = min(len(scene.hidden_unknown - observed), proposed * precision)
+    per_hit_gain = average_missed_error_per_object(scene.k, horizon)
+    estimated_value = expected_hits * per_hit_gain - proposed * cost_lambda
+    if estimated_value <= 0.0:
+        return 0, round(estimated_value, 6)
+    return proposed, round(estimated_value, 6)
+
+
+def average_missed_error_per_object(k: int, horizon: int) -> float:
+    total = 0.0
+    for step in range(horizon):
+        force = 0.5 + 0.04 * step
+        total += (force * 0.65) ** 2 / max(k, 1)
+    return total / horizon
 
 
 def rule_budget(scene: Scene, max_budget: int) -> int:
@@ -498,8 +528,8 @@ def report(rows: list[dict[str, object]], source: Path, ko: bool) -> str:
         "",
         f"Source CSV: `{source.as_posix()}`.",
         "",
-        "| mode | shift | N | escape | final scale | final offset | mean K | budget | top-up | recall | missed | MSE | objective | work | bytes |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| mode | shift | N | escape | final scale | final offset | mean K | budget | top-up | top-up value | recall | missed | MSE | objective | work | bytes |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         lines.append(
@@ -507,6 +537,7 @@ def report(rows: list[dict[str, object]], source: Path, ko: bool) -> str:
             f"{float(row['final_scale']):.3f} | {float(row['final_offset']):.3f} | "
             f"{float(row['mean_selected_k']):.3f} | {float(row['mean_observation_budget']):.3f} | "
             f"{float(row['mean_verifier_topup']):.3f} | "
+            f"{float(row['mean_estimated_topup_value']):.4f} | "
             f"{float(row['causal_recall']):.3f} | {float(row['missed_hidden_rate']):.3f} | "
             f"{float(row['trajectory_mse']):.4f} | {float(row['objective']):.4f} | "
             f"{float(row['work_proxy']):.1f} | {float(row['bytes_proxy']):.1f} |"

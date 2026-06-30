@@ -159,12 +159,12 @@ The current repository supports an early but meaningful prototype-level claim:
 - The online observation-calibration probe partially closes that limitation by
   updating anomaly sensitivity from observation hit/miss feedback rather than a
   labeled calibration set. With a bounded verifier, at `N=8192`,
-  `escape_rate=0.75`, it improves `noisy_anomaly` objective from `0.266984` to
-  `0.193618` and `weak_anomaly` from `0.334646` to `0.202138`, while keeping
+  `escape_rate=0.75`, it improves `noisy_anomaly` objective from `0.266740` to
+  `0.193756` and `weak_anomaly` from `0.333978` to `0.201456`, while keeping
   selected work near `32`. The same verifier improves clean learned objective
-  from `0.166851` to `0.159361`, approaching hand adaptive `0.154890`. It still
-  trails labeled calibration under noisy shift, so marginal correction-value
-  estimation remains unresolved.
+  from `0.165791` to `0.159096`, approaching hand adaptive `0.154890`. The
+  top-up decision is now value-gated, but noisy shift still trails labeled
+  calibration because the base online budget is too large.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

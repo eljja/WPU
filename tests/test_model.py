@@ -674,6 +674,7 @@ def test_mechanism_target_route_uses_target_delta_expert_without_dense_compute()
 
 
 def test_mechanism_target_constrained_route_only_residualizes_state_channels() -> None:
+    torch.manual_seed(9)
     dataset = WorkingSetPhysicsDataset(size=2, seed=9, background_objects=32, causal_obstacles=8, interaction_mode="pairwise")
     batch, target_delta, labels, _ = collate_working_set_samples([dataset[0], dataset[1]])
     base = create_model(

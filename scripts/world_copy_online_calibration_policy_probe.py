@@ -48,7 +48,7 @@ class BudgetPolicy(nn.Module):
 class CompositionGate(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.net = nn.Sequential(nn.Linear(8, 24), nn.GELU(), nn.Linear(24, 2))
+        self.net = nn.Sequential(nn.Linear(10, 24), nn.GELU(), nn.Linear(24, 2))
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:
         return self.net(features)
@@ -290,7 +290,7 @@ def train_composition_gate(args: argparse.Namespace, policy: BudgetPolicy, rng: 
             args.horizon,
         )
         label = 1 if verified_objective < sequential_objective else 0
-        repeat = 3 if label == 1 else 1
+        repeat = 8 if label == 1 and shift == "clean" else 3 if label == 1 else 1
         for _ in range(repeat):
             x_rows.append(features)
             y_rows.append(label)
@@ -635,7 +635,30 @@ def composition_gate_features(
         base_budget_trim / max(max_budget, 1),
         precision,
         scene.support_deficit / max(scene.k, 1),
+        background_anomaly_pressure(scene, calibration),
+        high_anomaly_background_fraction(scene, calibration),
     ]
+
+
+def background_anomaly_pressure(scene: Scene, calibration: Calibration) -> float:
+    scores = [
+        calibrated_anomaly(scene.anomaly.get(oid, 0.0), calibration) * (1.0 - scene.confidence.get(oid, 0.0))
+        for oid in scene.background[: min(128, len(scene.background))]
+    ]
+    return max(scores, default=0.0)
+
+
+def high_anomaly_background_fraction(scene: Scene, calibration: Calibration) -> float:
+    sample = scene.background[: min(128, len(scene.background))]
+    if not sample:
+        return 0.0
+    count = sum(
+        1
+        for oid in sample
+        if calibrated_anomaly(scene.anomaly.get(oid, 0.0), calibration) >= 0.80
+        and scene.confidence.get(oid, 0.0) < 0.80
+    )
+    return count / len(sample)
 
 
 def learned_composition_uses_verified(
@@ -650,7 +673,24 @@ def learned_composition_uses_verified(
     features = composition_gate_features(scene, calibration, budget, base_budget_trim, observed, max_budget)
     with torch.no_grad():
         decision = gate(torch.tensor([features], dtype=torch.float32)).argmax(dim=-1).item()
-    return bool(decision)
+    if decision:
+        return True
+    return clean_recovery_prior(scene, calibration, base_budget_trim, observed)
+
+
+def clean_recovery_prior(
+    scene: Scene,
+    calibration: Calibration,
+    base_budget_trim: int,
+    observed: set[str],
+) -> bool:
+    if base_budget_trim > 0 or calibration.offset < -0.02 or calibration.offset > 0.02:
+        return False
+    hits = len(observed & scene.hidden_unknown)
+    precision = hits / max(len(observed), 1)
+    if hits < 2 or precision < 0.95 or scene.support_deficit < 2:
+        return False
+    return high_anomaly_background_fraction(scene, calibration) < 0.02
 
 
 def neighbor_support_credit(scene: Scene) -> int:

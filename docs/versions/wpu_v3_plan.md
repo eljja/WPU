@@ -392,12 +392,14 @@ composition.
 
 That learned gate is now implemented as
 `wpu-learned-composed-online-observation`. It trains on paired
-sequential-versus-verified outcomes and uses only local feedback features, not
-tokenized full-state recomputation. At `N=8192`, `escape_rate=0.75`, it keeps
-the noisy objective at the sequential level (`0.181089`) while improving weak
-anomaly to `0.196211`, better than verified (`0.200978`) and hand-composed
-(`0.207649`). The gate remains neutral on clean streams (`0.166563`), so the
-next criterion is clean no-harm top-up recovery.
+sequential-versus-verified outcomes and uses local feedback features plus a
+conservative clean-recovery prior, not tokenized full-state recomputation. At
+`N=8192`, `escape_rate=0.75`, it recovers clean misses to `0.159211`, keeps the
+noisy objective at the sequential level (`0.181089`), and improves weak anomaly
+to `0.194131`, better than verified (`0.200840`) and hand-composed
+(`0.207904`). The next criterion is to replace the hand-coded clean prior with a
+learned safety-calibrated gate and close the remaining weak/clean gap to
+labeled or hand-adaptive references.
 
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on

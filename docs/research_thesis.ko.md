@@ -155,10 +155,10 @@ benchmark requirement, success/failure criteria를 정의한다.
   `0.181400`으로 개선되어 labeled calibration set 없이 labeled calibration `0.180837`에
   근접한다. 첫 composed selector는 noisy sequential 결과와 weak verified 결과를 보존하지만
   clean stream에서는 neutral이다. 업데이트된 learned safety-calibrated composition gate는
-  inference-time clean prior를 제거하고 paired-objective threshold calibration을 사용한다.
-  clean은 `0.159201`, weak anomaly는 `0.201223`으로 verified 수준까지 복구되며 work는 bounded로
-  유지된다. 남은 단계는 noisy strict no-harm이다. noisy objective는 sequential에 가깝지만
-  (`0.181323` versus `0.181089`) 아직 정확히 no-harm은 아니다.
+  inference-time clean prior를 제거하고 paired-objective threshold calibration 및 local trim
+  abstention을 사용한다. clean은 `0.159879`, weak anomaly는 `0.200428`으로 verified 수준까지
+  복구되며 noisy strict no-harm도 `0.181089`로 보존된다. 남은 단계는 labeled shift data 없이
+  labeled calibration과의 잔여 gap을 줄이는 것이다.
 - PyBullet experiment는 simulator-derived object state에서 mechanism shift, calibration,
   objectification quality, long-horizon rollout diagnostic을 제공한다.
 - Relation-conditioned sparse propagation은 현재 가장 강한 large-state evidence다.

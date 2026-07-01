@@ -171,11 +171,12 @@ The current repository supports an early but meaningful prototype-level claim:
   without using a labeled calibration set.
   A first composed selector preserves the noisy sequential result and the weak
   verified result, but remains neutral on clean streams. The updated learned
-  safety-calibrated composition gate removes the inference-time clean prior and
-  uses paired-objective threshold calibration. It recovers clean to `0.159201`
-  and weak anomaly to `0.201223`, both at the verified level, while keeping
-  work bounded. The unresolved step is strict noisy no-harm: noisy objective is
-  near sequential (`0.181323` versus `0.181089`) but not exactly no-harm.
+  safety-calibrated composition gate removes the inference-time clean prior,
+  uses paired-objective threshold calibration, and adds local trim abstention.
+  It recovers clean to `0.159879` and weak anomaly to `0.200428`, both at the
+  verified level, while preserving noisy strict no-harm at `0.181089`. The
+  unresolved step is closing the residual gap to labeled calibration without
+  using labeled shift data.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

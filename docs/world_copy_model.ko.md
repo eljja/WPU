@@ -355,9 +355,10 @@ verified path의 paired outcome에서 학습하며, calibration offset/scale, st
 budget, sequential trim, observed hit precision, support deficit, background anomaly pressure,
 high-anomaly background fraction, clean-recovery evidence 같은 WPU-native feedback feature를
 사용한다. 이제 inference-time clean-recovery prior는 쓰지 않고, held-out paired objective로
-verification threshold를 보정한다. `N=8192`, `escape_rate=0.75`에서 learned-composed는 clean
-miss를 verified 수준인 `0.159201`까지 복구한다(sequential `0.166711`). 또한 weak anomaly도
-verified 수준인 `0.201223`까지 복구한다(sequential `0.215576`). selected work는 dense
-`N=8192`보다 훨씬 작은 `K≈32` 근처로 유지된다. 남은 gap은 noisy anomaly에서 strict no-harm이다.
-learned-composed는 sequential에 매우 가깝지만(`0.181323` versus `0.181089`) 작은 추가 observation
-cost를 지불하며, labeled calibration `0.180643`이 아직 약간 더 좋다.
+verification threshold를 보정하며, local trim abstention으로 stable noisy stream에서 learned gate가
+sequential budget cut을 되돌리지 않게 한다. `N=8192`, `escape_rate=0.75`에서 learned-composed는
+clean miss를 verified 수준인 `0.159879`까지 복구한다(sequential `0.166986`). 또한 weak anomaly도
+verified 수준인 `0.200428`까지 복구한다(sequential `0.215341`). noisy strict no-harm도 보존되어
+`0.181089`로 sequential과 같고 verified `0.193234`보다 좋다. selected work는 dense `N=8192`보다
+훨씬 작은 `K≈32` 근처로 유지된다. 남은 gap은 noisy no-harm이 아니라, labeled shift data 없이
+noisy labeled-calibration reference `0.180643`과의 차이를 줄이는 것이다.

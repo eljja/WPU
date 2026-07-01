@@ -208,11 +208,12 @@ Use these reports for paper-level claims:
   (`0.166575`). `wpu-learned-composed-online-observation` trains a safety gate
   from paired sequential/verified outcomes and calibrates its verification
   threshold on paired objectives, without an inference-time clean-recovery
-  prior. It recovers clean to verified level (`0.159201`) and weak anomaly to
-  verified level (`0.201223`), while keeping selected work bounded near `K=32`.
-  The remaining failure is strict noisy no-harm: noisy objective is close to
-  sequential (`0.181323` versus `0.181089`) but still pays a tiny extra
-  observation cost.
+  prior. A local trim abstention prevents the learned gate from undoing
+  sequential budget cuts in stable noisy streams. It recovers clean to verified
+  level (`0.159879`), weak anomaly to verified level (`0.200428`), and preserves
+  noisy strict no-harm at the sequential objective (`0.181089`), while keeping
+  selected work bounded near `K=32`. The remaining failure is closing the noisy
+  labeled-calibration gap (`0.180643`) without labeled shift data.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

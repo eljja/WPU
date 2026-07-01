@@ -384,11 +384,13 @@ feedback features: calibration offset/scale, streak state, proposed budget,
 sequential trim, observed hit precision, support deficit, background anomaly
 pressure, high-anomaly background fraction, and clean-recovery evidence. It no
 longer uses an inference-time clean-recovery prior; instead, a held-out paired
-objective calibration chooses the verification threshold. At `N=8192`,
-`escape_rate=0.75`, learned-composed recovers clean misses to the verified
-level (`0.159201` versus sequential `0.166711`) and recovers weak anomaly to
-verified level (`0.201223` versus sequential `0.215576`). It keeps selected
-work bounded near `K=32`, far below dense `N=8192`. The remaining gap is strict
-no-harm under noisy anomaly: learned-composed is still near sequential
-(`0.181323` versus `0.181089`) but pays a tiny extra observation cost, while
-labeled calibration remains slightly better (`0.180643`).
+objective calibration chooses the verification threshold, and a local trim
+abstention prevents the learned gate from undoing sequential budget cuts in
+stable noisy streams. At `N=8192`, `escape_rate=0.75`, learned-composed recovers
+clean misses to the verified level (`0.159879` versus sequential `0.166986`),
+recovers weak anomaly to verified level (`0.200428` versus sequential
+`0.215341`), and preserves strict noisy no-harm (`0.181089`, equal to
+sequential and better than verified `0.193234`). It keeps selected work bounded
+near `K=32`, far below dense `N=8192`. The remaining gap is no longer noisy
+no-harm, but closing the noisy labeled-calibration reference gap (`0.180643`)
+without using labeled shift data.

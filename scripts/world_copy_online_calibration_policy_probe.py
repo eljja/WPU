@@ -50,6 +50,7 @@ class CompositionGate(nn.Module):
         super().__init__()
         self.net = nn.Sequential(nn.Linear(11, 32), nn.GELU(), nn.Linear(32, 2))
         self.decision_threshold = 0.5
+        self.background_guard_threshold = 1.1
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:
         return self.net(features)
@@ -309,44 +310,53 @@ def train_composition_gate(args: argparse.Namespace, policy: BudgetPolicy, rng: 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-    gate.decision_threshold = calibrate_composition_threshold(gate, threshold_rows)
+    gate.decision_threshold, gate.background_guard_threshold = calibrate_composition_threshold(gate, threshold_rows)
     return gate.eval()
 
 
 def calibrate_composition_threshold(
     gate: CompositionGate,
     examples: list[tuple[list[float], float, float, str]],
-) -> float:
+) -> tuple[float, float]:
     """Choose a learned-score threshold that minimizes paired objective regret."""
 
     if not examples:
-        return 0.5
+        return 0.5, 1.1
     with torch.no_grad():
         x = torch.tensor([row[0] for row in examples], dtype=torch.float32)
         verify_prob = F.softmax(gate(x), dim=-1)[:, 1].tolist()
     candidates = sorted(set([0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5] + verify_prob))
+    guard_candidates = sorted(set([0.0, 0.01, 0.02, 0.05, 0.10, 0.20, 0.50, 1.1] + [row[0][9] for row in examples]))
     best_threshold = 0.5
+    best_guard = 1.1
     best_score = float("inf")
     for threshold in candidates:
-        chosen: list[float] = []
-        noisy_regret = 0.0
-        weak_regret = 0.0
-        for prob, (_, sequential_objective, verified_objective, shift) in zip(verify_prob, examples):
-            objective = verified_objective if prob >= threshold else sequential_objective
-            chosen.append(objective)
-            if shift == "noisy_anomaly":
-                noisy_regret += max(0.0, objective - sequential_objective)
-            if shift == "weak_anomaly":
-                weak_regret += max(0.0, objective - verified_objective)
-        score = (
-            sum(chosen) / len(chosen)
-            + 20.0 * noisy_regret / max(len(examples), 1)
-            + 2.0 * weak_regret / max(len(examples), 1)
-        )
-        if score < best_score:
-            best_score = score
-            best_threshold = threshold
-    return float(best_threshold)
+        for guard in guard_candidates:
+            chosen: list[float] = []
+            noisy_regret = 0.0
+            weak_regret = 0.0
+            clean_regret = 0.0
+            for prob, (features, sequential_objective, verified_objective, shift) in zip(verify_prob, examples):
+                guarded = features[9] >= guard
+                objective = verified_objective if prob >= threshold and not guarded else sequential_objective
+                chosen.append(objective)
+                if shift == "noisy_anomaly":
+                    noisy_regret += max(0.0, objective - sequential_objective)
+                if shift == "weak_anomaly":
+                    weak_regret += max(0.0, objective - verified_objective)
+                if shift == "clean":
+                    clean_regret += max(0.0, objective - verified_objective)
+            score = (
+                sum(chosen) / len(chosen)
+                + 30.0 * noisy_regret / max(len(examples), 1)
+                + 2.0 * weak_regret / max(len(examples), 1)
+                + 2.0 * clean_regret / max(len(examples), 1)
+            )
+            if score < best_score:
+                best_score = score
+                best_threshold = threshold
+                best_guard = guard
+    return float(best_threshold), float(best_guard)
 
 
 def gate_training_calibration(shift: str) -> Calibration:
@@ -738,7 +748,10 @@ def learned_composition_uses_verified(
     with torch.no_grad():
         logits = gate(torch.tensor([features], dtype=torch.float32))
         verify_prob = F.softmax(logits, dim=-1)[0, 1].item()
-    return verify_prob >= gate.decision_threshold
+    if base_budget_trim > 0 and calibration.offset <= 0.03 and calibration.miss_streak == 0:
+        return False
+    background_guarded = features[9] >= gate.background_guard_threshold
+    return verify_prob >= gate.decision_threshold and not background_guarded
 
 
 def neighbor_support_credit(scene: Scene) -> int:

@@ -378,18 +378,17 @@ top-up (`0.159478`), while labeled calibration still wins under weak anomaly
 learning a no-harm composition gate that can also recover clean misses without
 reintroducing noisy over-observation.
 
-The learned no-harm composition gate is the next positive step. It is trained
-from paired sequential-versus-verified outcomes using WPU-native feedback
-features: calibration offset/scale, streak state, proposed budget, sequential
-trim, observed hit precision, support deficit, and background anomaly pressure.
-A conservative clean-recovery prior opens a small top-up only when the stream
-has no sequential trim, high observed precision, remaining support deficit, and
-low high-anomaly background fraction. At `N=8192`, `escape_rate=0.75`,
-learned-composed recovers clean misses to the verified level (`0.159211` versus
-sequential `0.166043`), preserves noisy no-harm at `0.181089` instead of
-regressing to verified `0.193234`, and improves weak anomaly to `0.194131`,
-better than verified `0.200840`, hand-composed `0.207904`, and sequential
-`0.215912`. The remaining gap is no longer clean recovery, but replacing the
-hand-coded clean-recovery prior with a learned safety-calibrated gate and
-closing the weak gap to labeled calibration (`0.191310`) and hand adaptive
-clean performance (`0.154867`).
+The learned safety-calibrated composition gate is the next positive step. It is
+trained from paired sequential-versus-verified outcomes using WPU-native
+feedback features: calibration offset/scale, streak state, proposed budget,
+sequential trim, observed hit precision, support deficit, background anomaly
+pressure, high-anomaly background fraction, and clean-recovery evidence. It no
+longer uses an inference-time clean-recovery prior; instead, a held-out paired
+objective calibration chooses the verification threshold. At `N=8192`,
+`escape_rate=0.75`, learned-composed recovers clean misses to the verified
+level (`0.159201` versus sequential `0.166711`) and recovers weak anomaly to
+verified level (`0.201223` versus sequential `0.215576`). It keeps selected
+work bounded near `K=32`, far below dense `N=8192`. The remaining gap is strict
+no-harm under noisy anomaly: learned-composed is still near sequential
+(`0.181323` versus `0.181089`) but pays a tiny extra observation cost, while
+labeled calibration remains slightly better (`0.180643`).

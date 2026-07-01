@@ -48,7 +48,8 @@ class BudgetPolicy(nn.Module):
 class CompositionGate(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.net = nn.Sequential(nn.Linear(10, 24), nn.GELU(), nn.Linear(24, 2))
+        self.net = nn.Sequential(nn.Linear(11, 32), nn.GELU(), nn.Linear(32, 2))
+        self.decision_threshold = 0.5
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:
         return self.net(features)
@@ -270,6 +271,7 @@ def train_composition_gate(args: argparse.Namespace, policy: BudgetPolicy, rng: 
     optimizer = torch.optim.AdamW(gate.parameters(), lr=2e-3, weight_decay=1e-4)
     x_rows: list[list[float]] = []
     y_rows: list[int] = []
+    threshold_rows: list[tuple[list[float], float, float, str]] = []
     shifts = ["clean", "noisy_anomaly", "weak_anomaly"]
     for index in range(max(384, args.train_samples // 2)):
         shift = shifts[index % len(shifts)]
@@ -290,7 +292,13 @@ def train_composition_gate(args: argparse.Namespace, policy: BudgetPolicy, rng: 
             args.horizon,
         )
         label = 1 if verified_objective < sequential_objective else 0
-        repeat = 8 if label == 1 and shift == "clean" else 3 if label == 1 else 1
+        threshold_rows.append((features, sequential_objective, verified_objective, shift))
+        if label == 1 and shift == "clean":
+            repeat = 8
+        elif label == 1:
+            repeat = 3
+        else:
+            repeat = 1
         for _ in range(repeat):
             x_rows.append(features)
             y_rows.append(label)
@@ -301,7 +309,44 @@ def train_composition_gate(args: argparse.Namespace, policy: BudgetPolicy, rng: 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+    gate.decision_threshold = calibrate_composition_threshold(gate, threshold_rows)
     return gate.eval()
+
+
+def calibrate_composition_threshold(
+    gate: CompositionGate,
+    examples: list[tuple[list[float], float, float, str]],
+) -> float:
+    """Choose a learned-score threshold that minimizes paired objective regret."""
+
+    if not examples:
+        return 0.5
+    with torch.no_grad():
+        x = torch.tensor([row[0] for row in examples], dtype=torch.float32)
+        verify_prob = F.softmax(gate(x), dim=-1)[:, 1].tolist()
+    candidates = sorted(set([0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5] + verify_prob))
+    best_threshold = 0.5
+    best_score = float("inf")
+    for threshold in candidates:
+        chosen: list[float] = []
+        noisy_regret = 0.0
+        weak_regret = 0.0
+        for prob, (_, sequential_objective, verified_objective, shift) in zip(verify_prob, examples):
+            objective = verified_objective if prob >= threshold else sequential_objective
+            chosen.append(objective)
+            if shift == "noisy_anomaly":
+                noisy_regret += max(0.0, objective - sequential_objective)
+            if shift == "weak_anomaly":
+                weak_regret += max(0.0, objective - verified_objective)
+        score = (
+            sum(chosen) / len(chosen)
+            + 20.0 * noisy_regret / max(len(examples), 1)
+            + 2.0 * weak_regret / max(len(examples), 1)
+        )
+        if score < best_score:
+            best_score = score
+            best_threshold = threshold
+    return float(best_threshold)
 
 
 def gate_training_calibration(shift: str) -> Calibration:
@@ -637,6 +682,7 @@ def composition_gate_features(
         scene.support_deficit / max(scene.k, 1),
         background_anomaly_pressure(scene, calibration),
         high_anomaly_background_fraction(scene, calibration),
+        clean_recovery_evidence(scene, calibration, base_budget_trim, observed),
     ]
 
 
@@ -661,6 +707,24 @@ def high_anomaly_background_fraction(scene: Scene, calibration: Calibration) -> 
     return count / len(sample)
 
 
+def clean_recovery_evidence(
+    scene: Scene,
+    calibration: Calibration,
+    base_budget_trim: int,
+    observed: set[str],
+) -> float:
+    """Local evidence that sequential stopping likely missed useful clean top-up."""
+
+    hits = len(observed & scene.hidden_unknown)
+    precision = hits / max(len(observed), 1)
+    offset_stability = max(0.0, 1.0 - abs(calibration.offset) / 0.08)
+    trim_stability = 1.0 if base_budget_trim == 0 else 0.0
+    hit_support = min(hits / 2.0, 1.0)
+    deficit_support = min(scene.support_deficit / 2.0, 1.0)
+    background_safety = max(0.0, 1.0 - high_anomaly_background_fraction(scene, calibration) / 0.02)
+    return offset_stability * trim_stability * precision * hit_support * deficit_support * background_safety
+
+
 def learned_composition_uses_verified(
     gate: CompositionGate,
     scene: Scene,
@@ -672,25 +736,9 @@ def learned_composition_uses_verified(
 ) -> bool:
     features = composition_gate_features(scene, calibration, budget, base_budget_trim, observed, max_budget)
     with torch.no_grad():
-        decision = gate(torch.tensor([features], dtype=torch.float32)).argmax(dim=-1).item()
-    if decision:
-        return True
-    return clean_recovery_prior(scene, calibration, base_budget_trim, observed)
-
-
-def clean_recovery_prior(
-    scene: Scene,
-    calibration: Calibration,
-    base_budget_trim: int,
-    observed: set[str],
-) -> bool:
-    if base_budget_trim > 0 or calibration.offset < -0.02 or calibration.offset > 0.02:
-        return False
-    hits = len(observed & scene.hidden_unknown)
-    precision = hits / max(len(observed), 1)
-    if hits < 2 or precision < 0.95 or scene.support_deficit < 2:
-        return False
-    return high_anomaly_background_fraction(scene, calibration) < 0.02
+        logits = gate(torch.tensor([features], dtype=torch.float32))
+        verify_prob = F.softmax(logits, dim=-1)[0, 1].item()
+    return verify_prob >= gate.decision_threshold
 
 
 def neighbor_support_credit(scene: Scene) -> int:

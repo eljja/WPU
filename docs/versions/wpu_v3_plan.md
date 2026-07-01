@@ -392,14 +392,16 @@ composition.
 
 That learned gate is now implemented as
 `wpu-learned-composed-online-observation`. It trains on paired
-sequential-versus-verified outcomes and uses local feedback features plus a
-conservative clean-recovery prior, not tokenized full-state recomputation. At
-`N=8192`, `escape_rate=0.75`, it recovers clean misses to `0.159211`, keeps the
-noisy objective at the sequential level (`0.181089`), and improves weak anomaly
-to `0.194131`, better than verified (`0.200840`) and hand-composed
-(`0.207904`). The next criterion is to replace the hand-coded clean prior with a
-learned safety-calibrated gate and close the remaining weak/clean gap to
-labeled or hand-adaptive references.
+sequential-versus-verified outcomes and uses local feedback features plus
+held-out paired-objective threshold calibration, not tokenized full-state
+recomputation and not an inference-time clean-recovery prior. At `N=8192`,
+`escape_rate=0.75`, it recovers clean misses to verified level (`0.159201`
+versus sequential `0.166711`) and weak anomaly to verified level (`0.201223`
+versus sequential `0.215576`). Selected work remains bounded near `K=32`. The
+remaining criterion is strict noisy no-harm: learned-composed stays close to
+sequential (`0.181323` versus `0.181089`) but still pays a tiny extra
+observation cost. Labeled calibration also remains slightly better
+(`0.180643`).
 
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on

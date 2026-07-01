@@ -368,12 +368,13 @@ verified top-up `0.159478`보다 나쁘다. 따라서 다음 기준은 hand-tune
 것이 아니라 learned no-harm composition gate다.
 
 이 learned gate는 `wpu-learned-composed-online-observation`으로 구현됐다. Sequential path와
-verified path의 paired outcome에서 학습하고, tokenized full-state recomputation이 아니라 local
-feedback feature와 conservative clean-recovery prior를 사용한다. `N=8192`, `escape_rate=0.75`에서
-clean miss는 `0.159211`까지 복구되고, noisy objective는 sequential 수준인 `0.181089`를 유지하며,
-weak anomaly는 `0.194131`까지 개선된다. 이는 verified `0.200840`과 hand-composed `0.207904`보다
-좋다. 다음 기준은 hand-coded clean prior를 learned safety-calibrated gate로 대체하고 labeled 또는
-hand-adaptive reference와의 weak/clean gap을 줄이는 것이다.
+verified path의 paired outcome에서 학습하고, tokenized full-state recomputation이나
+inference-time clean-recovery prior가 아니라 local feedback feature와 held-out paired-objective
+threshold calibration을 사용한다. `N=8192`, `escape_rate=0.75`에서 clean miss는 verified 수준인
+`0.159201`까지 복구되고(sequential `0.166711`), weak anomaly도 verified 수준인 `0.201223`까지
+복구된다(sequential `0.215576`). selected work는 `K≈32` 근처로 bounded하게 유지된다. 다음 기준은
+noisy strict no-harm이다. learned-composed는 sequential에 가깝지만(`0.181323` versus `0.181089`)
+아직 작은 추가 observation cost를 지불하며, labeled calibration `0.180643`도 약간 더 좋다.
 
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon

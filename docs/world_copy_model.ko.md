@@ -350,15 +350,14 @@ universal best policy는 아니다. Clean stream에서는 neutral(`0.166575`)이
 따라서 다음 실패는 path composition 자체가 아니라, noisy over-observation을 다시 만들지 않으면서
 clean miss까지 복구하는 no-harm composition gate를 학습하는 것이다.
 
-Learned no-harm composition gate는 다음 positive step이다. 이 gate는 sequential path와
+Learned safety-calibrated composition gate는 다음 positive step이다. 이 gate는 sequential path와
 verified path의 paired outcome에서 학습하며, calibration offset/scale, streak state, proposed
-budget, sequential trim, observed hit precision, support deficit, background anomaly pressure 같은
-WPU-native feedback feature를 사용한다. Conservative clean-recovery prior는 sequential trim이
-없고, observed precision이 높고, support deficit이 남아 있으며, high-anomaly background fraction이
-낮을 때만 작은 top-up을 연다. `N=8192`, `escape_rate=0.75`에서 learned-composed는 clean miss를
-verified 수준인 `0.159211`까지 복구한다(sequential `0.166043`). 동시에 noisy no-harm은
-`0.181089`로 보존해 verified `0.193234`로 퇴행하지 않고, weak anomaly는 `0.194131`까지
-개선되어 verified `0.200840`, hand-composed `0.207904`, sequential `0.215912`보다 좋다. 남은
-gap은 clean recovery 자체가 아니라, hand-coded clean-recovery prior를 learned safety-calibrated
-gate로 대체하고 weak labeled calibration `0.191310` 및 clean hand adaptive `0.154867`과의 차이를
-줄이는 것이다.
+budget, sequential trim, observed hit precision, support deficit, background anomaly pressure,
+high-anomaly background fraction, clean-recovery evidence 같은 WPU-native feedback feature를
+사용한다. 이제 inference-time clean-recovery prior는 쓰지 않고, held-out paired objective로
+verification threshold를 보정한다. `N=8192`, `escape_rate=0.75`에서 learned-composed는 clean
+miss를 verified 수준인 `0.159201`까지 복구한다(sequential `0.166711`). 또한 weak anomaly도
+verified 수준인 `0.201223`까지 복구한다(sequential `0.215576`). selected work는 dense
+`N=8192`보다 훨씬 작은 `K≈32` 근처로 유지된다. 남은 gap은 noisy anomaly에서 strict no-harm이다.
+learned-composed는 sequential에 매우 가깝지만(`0.181323` versus `0.181089`) 작은 추가 observation
+cost를 지불하며, labeled calibration `0.180643`이 아직 약간 더 좋다.

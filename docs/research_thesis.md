@@ -170,8 +170,9 @@ The current repository supports an early but meaningful prototype-level claim:
   noisy objective to `0.181400`, nearly matching labeled calibration `0.180837`
   without using a labeled calibration set.
   A first composed selector preserves the noisy sequential result and the weak
-  verified result, but remains neutral on clean streams; the unresolved step is
-  a learned no-harm gate for composition.
+  verified result, but remains neutral on clean streams. A learned no-harm
+  composition gate improves weak anomaly further to `0.196211` while preserving
+  noisy no-harm at `0.181089`; the unresolved step is clean no-harm top-up.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.

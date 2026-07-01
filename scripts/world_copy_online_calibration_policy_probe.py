@@ -45,6 +45,15 @@ class BudgetPolicy(nn.Module):
         return self.net(features)
 
 
+class CompositionGate(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.net = nn.Sequential(nn.Linear(8, 24), nn.GELU(), nn.Linear(24, 2))
+
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        return self.net(features)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Probe unlabeled online calibration for WPU observation-budget correction."
@@ -73,6 +82,7 @@ def main() -> None:
     torch.manual_seed(args.seed)
     rng = random.Random(args.seed)
     policy = train_policy(args, rng)
+    composition_gate = train_composition_gate(args, policy, random.Random(rng.randrange(2**31)))
     labeled_calibrations = {
         shift: calibrate_shift(args, shift, random.Random(rng.randrange(2**31)))
         for shift in args.eval_shifts
@@ -90,6 +100,7 @@ def main() -> None:
                     "wpu-value-budget-online-observation",
                     "wpu-sequential-online-observation",
                     "wpu-composed-online-observation",
+                    "wpu-learned-composed-online-observation",
                     "wpu-labeled-calibrated-observation",
                     "wpu-hand-adaptive",
                     "dense-state-copy",
@@ -101,6 +112,7 @@ def main() -> None:
                         n=n,
                         escape_rate=escape_rate,
                         policy=policy,
+                        composition_gate=composition_gate,
                         labeled_calibration=labeled_calibrations[shift],
                         stream_seeds=stream_seeds,
                     )
@@ -147,6 +159,7 @@ def evaluate_stream(
     n: int,
     escape_rate: float,
     policy: BudgetPolicy,
+    composition_gate: CompositionGate,
     labeled_calibration: Calibration,
     stream_seeds: list[int],
 ) -> dict[str, float]:
@@ -163,6 +176,7 @@ def evaluate_stream(
             scene,
             mode=mode,
             policy=policy,
+            composition_gate=composition_gate,
             calibration=calibration,
             fixed_budget=args.fixed_budget,
             max_budget=args.max_budget,
@@ -176,6 +190,7 @@ def evaluate_stream(
             "wpu-value-budget-online-observation",
             "wpu-sequential-online-observation",
             "wpu-composed-online-observation",
+            "wpu-learned-composed-online-observation",
         }:
             update_online_calibration(calibration, result, args.online_lr)
 
@@ -248,6 +263,74 @@ def train_policy(args: argparse.Namespace, rng: random.Random) -> BudgetPolicy:
         loss.backward()
         optimizer.step()
     return policy.eval()
+
+
+def train_composition_gate(args: argparse.Namespace, policy: BudgetPolicy, rng: random.Random) -> CompositionGate:
+    gate = CompositionGate()
+    optimizer = torch.optim.AdamW(gate.parameters(), lr=2e-3, weight_decay=1e-4)
+    x_rows: list[list[float]] = []
+    y_rows: list[int] = []
+    shifts = ["clean", "noisy_anomaly", "weak_anomaly"]
+    for index in range(max(384, args.train_samples // 2)):
+        shift = shifts[index % len(shifts)]
+        calibration = gate_training_calibration(shift)
+        scene = make_scene(
+            args,
+            rng.choice(args.world_sizes),
+            rng.choice(args.escape_rate),
+            shift,
+            random.Random(rng.randrange(2**31)),
+        )
+        features, sequential_objective, verified_objective = composition_training_example(
+            scene,
+            policy,
+            calibration,
+            args.max_budget,
+            args.cost_lambda,
+            args.horizon,
+        )
+        label = 1 if verified_objective < sequential_objective else 0
+        repeat = 3 if label == 1 else 1
+        for _ in range(repeat):
+            x_rows.append(features)
+            y_rows.append(label)
+    x = torch.tensor(x_rows, dtype=torch.float32)
+    y = torch.tensor(y_rows, dtype=torch.long)
+    for _ in range(max(160, args.train_steps // 3)):
+        loss = F.cross_entropy(gate(x), y)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    return gate.eval()
+
+
+def gate_training_calibration(shift: str) -> Calibration:
+    if shift == "weak_anomaly":
+        return Calibration(scale=1.03, offset=0.11)
+    return Calibration()
+
+
+def composition_training_example(
+    scene: Scene,
+    policy: BudgetPolicy,
+    calibration: Calibration,
+    max_budget: int,
+    cost_lambda: float,
+    horizon: int,
+) -> tuple[list[float], float, float]:
+    budget = max(0, predict_budget(scene, policy, max_budget, calibration))
+    ranked = ranked_observation_candidates(scene, calibration)
+    sequential_observed = sequential_observation_set(scene, ranked, budget, calibration)
+    base_trim = budget - len(sequential_observed)
+    seq_selected = selected_after_observation(scene, sequential_observed, budget)
+    seq_objective = objective_for_selected(scene, seq_selected, len(sequential_observed), cost_lambda, horizon)
+    verified_observed = set(ranked[:budget])
+    topup, _ = verifier_topup_decision(scene, verified_observed, max_budget - budget, cost_lambda, horizon)
+    if topup > 0:
+        verified_observed.update([oid for oid in ranked if oid not in verified_observed][:topup])
+    verified_selected = selected_after_observation(scene, verified_observed, budget + topup)
+    verified_objective = objective_for_selected(scene, verified_selected, len(verified_observed), cost_lambda, horizon)
+    return composition_gate_features(scene, calibration, budget, base_trim, sequential_observed, max_budget), seq_objective, verified_objective
 
 
 def calibrate_shift(args: argparse.Namespace, shift: str, rng: random.Random) -> Calibration:
@@ -333,6 +416,7 @@ def evaluate_scene(
     *,
     mode: str,
     policy: BudgetPolicy,
+    composition_gate: CompositionGate,
     calibration: Calibration,
     fixed_budget: int,
     max_budget: int,
@@ -349,6 +433,7 @@ def evaluate_scene(
         "wpu-value-budget-online-observation",
         "wpu-sequential-online-observation",
         "wpu-composed-online-observation",
+        "wpu-learned-composed-online-observation",
     }:
         credit = neighbor_support_credit(scene) if should_apply_neighbor_credit(calibration) else 0
         budget = max(0, predict_budget(scene, policy, max_budget, calibration) - credit)
@@ -375,6 +460,7 @@ def evaluate_scene(
                 "wpu-value-budget-online-observation",
                 "wpu-sequential-online-observation",
                 "wpu-composed-online-observation",
+                "wpu-learned-composed-online-observation",
                 "wpu-labeled-calibrated-observation",
             }:
                 score *= 0.5 + 0.5 * scene.confidence.get(oid, 0.0)
@@ -393,7 +479,23 @@ def evaluate_scene(
             base_budget_trim = budget - value_budget
             budget = value_budget
         use_composed_verified_path = mode == "wpu-composed-online-observation" and calibration.offset > 0.03
-        if mode in {"wpu-sequential-online-observation", "wpu-composed-online-observation"} and not use_composed_verified_path:
+        if mode == "wpu-learned-composed-online-observation":
+            trial_observed = sequential_observation_set(scene, ranked_observations, budget, calibration)
+            trial_trim = budget - len(trial_observed)
+            use_composed_verified_path = learned_composition_uses_verified(
+                composition_gate,
+                scene,
+                calibration,
+                budget,
+                trial_trim,
+                trial_observed,
+                max_budget,
+            )
+        if mode in {
+            "wpu-sequential-online-observation",
+            "wpu-composed-online-observation",
+            "wpu-learned-composed-online-observation",
+        } and not use_composed_verified_path:
             observed = sequential_observation_set(scene, ranked_observations, budget, calibration)
             base_budget_trim = budget - len(observed)
             budget = len(observed)
@@ -468,6 +570,87 @@ def predict_budget(scene: Scene, policy: BudgetPolicy, max_budget: int, calibrat
     with torch.no_grad():
         logits = policy(torch.tensor([scene_features(scene, max_budget, calibration)], dtype=torch.float32))
     return int(logits.argmax(dim=-1).item())
+
+
+def ranked_observation_candidates(scene: Scene, calibration: Calibration) -> list[str]:
+    observation_candidates = scene.hidden_unknown | set(scene.background[: min(128, len(scene.background))])
+
+    def observation_score(oid: str) -> float:
+        score = calibrated_anomaly(scene.anomaly.get(oid, 0.0), calibration)
+        score *= 0.5 + 0.5 * scene.confidence.get(oid, 0.0)
+        return score
+
+    return sorted(observation_candidates, key=observation_score, reverse=True)
+
+
+def selected_after_observation(scene: Scene, observed: set[str], budget: int) -> set[str]:
+    candidates = set(scene.active) | scene.relation_frontier | scene.neighbor_pool | observed
+    cap = 3 * scene.k if budget == 0 else 4 * scene.k
+    return score_and_cap(
+        candidates,
+        scene.relation_frontier | scene.neighbor_pool | observed,
+        scene.role,
+        scene.confidence,
+        cap,
+    )
+
+
+def objective_for_selected(
+    scene: Scene,
+    selected: set[str],
+    observation_budget: int,
+    cost_lambda: float,
+    horizon: int,
+) -> float:
+    false_selected = selected - set(scene.causal)
+    missed_error = 0.0
+    false_error = 0.0
+    for step in range(horizon):
+        force = 0.5 + 0.04 * step
+        missed_error += sum(
+            (force * (0.6 + 0.05 * (i % 3))) ** 2
+            for i, oid in enumerate(scene.causal)
+            if oid not in selected
+        ) / scene.k
+        false_error += sum((force * scene.confidence[oid] * 0.25) ** 2 for oid in false_selected) / scene.k
+    return missed_error / horizon + false_error / horizon + cost_lambda * float(observation_budget)
+
+
+def composition_gate_features(
+    scene: Scene,
+    calibration: Calibration,
+    budget: int,
+    base_budget_trim: int,
+    observed: set[str],
+    max_budget: int,
+) -> list[float]:
+    hits = len(observed & scene.hidden_unknown)
+    precision = hits / max(len(observed), 1)
+    return [
+        5.0 * calibration.offset,
+        2.0 * (calibration.scale - 1.0),
+        min(calibration.miss_streak, 3) / 3.0,
+        min(calibration.false_streak, 3) / 3.0,
+        budget / max(max_budget, 1),
+        base_budget_trim / max(max_budget, 1),
+        precision,
+        scene.support_deficit / max(scene.k, 1),
+    ]
+
+
+def learned_composition_uses_verified(
+    gate: CompositionGate,
+    scene: Scene,
+    calibration: Calibration,
+    budget: int,
+    base_budget_trim: int,
+    observed: set[str],
+    max_budget: int,
+) -> bool:
+    features = composition_gate_features(scene, calibration, budget, base_budget_trim, observed, max_budget)
+    with torch.no_grad():
+        decision = gate(torch.tensor([features], dtype=torch.float32)).argmax(dim=-1).item()
+    return bool(decision)
 
 
 def neighbor_support_credit(scene: Scene) -> int:

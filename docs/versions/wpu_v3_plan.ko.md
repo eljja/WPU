@@ -367,6 +367,13 @@ verified objective `0.202765`를 보존하지만, clean stream에서는 neutral(
 verified top-up `0.159478`보다 나쁘다. 따라서 다음 기준은 hand-tuned composition을 더하는
 것이 아니라 learned no-harm composition gate다.
 
+이 learned gate는 `wpu-learned-composed-online-observation`으로 구현됐다. Sequential path와
+verified path의 paired outcome에서 학습하고, tokenized full-state recomputation이 아니라 local
+feedback feature만 사용한다. `N=8192`, `escape_rate=0.75`에서 noisy objective는 sequential
+수준인 `0.181089`를 유지하고, weak anomaly는 `0.196211`까지 개선된다. 이는 verified
+`0.200978`과 hand-composed `0.207649`보다 좋다. 하지만 clean stream에서는 `0.166563`으로
+neutral이므로, 다음 기준은 clean no-harm top-up recovery다.
+
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon
 integrity 기준으로 비교하는 baseline-complete learned propagation benchmark다.

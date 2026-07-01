@@ -377,3 +377,17 @@ top-up (`0.159478`), while labeled calibration still wins under weak anomaly
 (`0.196455`). The next failure is therefore not path composition itself, but
 learning a no-harm composition gate that can also recover clean misses without
 reintroducing noisy over-observation.
+
+The learned no-harm composition gate is the next positive step. It is trained
+from paired sequential-versus-verified outcomes using only WPU-native feedback
+features: calibration offset/scale, streak state, proposed budget, sequential
+trim, observed hit precision, and support deficit. At `N=8192`,
+`escape_rate=0.75`, it preserves the noisy sequential objective `0.181089`
+instead of regressing to verified `0.193234`, and improves weak anomaly beyond
+both hand-composed and verified policies: learned-composed reaches `0.196211`,
+compared with verified `0.200978`, hand-composed `0.207649`, and sequential
+`0.215107`. It still does not recover clean misses: clean learned-composed
+remains neutral at `0.166563`, whereas verified top-up reaches `0.159338` and
+hand adaptive reaches `0.154867`. The next failure is therefore clean no-harm
+top-up: learning when a clean stream should spend a small correction budget
+without opening the noisy over-observation failure again.

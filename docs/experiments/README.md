@@ -205,7 +205,11 @@ Use these reports for paper-level claims:
   calibration indicates under-observation, in which case it selects verified
   top-up. It preserves the noisy sequential objective `0.181400` and the weak
   verified objective `0.202765`, but remains neutral on clean streams
-  (`0.166575`). The remaining failure is a learned no-harm composition gate.
+  (`0.166575`). `wpu-learned-composed-online-observation` trains a no-harm gate
+  from paired sequential/verified outcomes. It preserves noisy no-harm at
+  `0.181089` and improves weak anomaly to `0.196211`, better than verified
+  `0.200978`, but remains neutral on clean streams (`0.166563`). The remaining
+  failure is clean no-harm top-up.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

@@ -349,3 +349,14 @@ universal best policy는 아니다. Clean stream에서는 neutral(`0.166575`)이
 `0.159478`보다 나쁘며, weak anomaly에서는 labeled calibration `0.196455`가 여전히 가장 좋다.
 따라서 다음 실패는 path composition 자체가 아니라, noisy over-observation을 다시 만들지 않으면서
 clean miss까지 복구하는 no-harm composition gate를 학습하는 것이다.
+
+Learned no-harm composition gate는 다음 positive step이다. 이 gate는 sequential path와
+verified path의 paired outcome에서 학습하며, calibration offset/scale, streak state, proposed
+budget, sequential trim, observed hit precision, support deficit 같은 WPU-native feedback
+feature만 사용한다. `N=8192`, `escape_rate=0.75`에서 learned gate는 noisy sequential objective
+`0.181089`를 보존해 verified `0.193234`로 퇴행하지 않는다. 동시에 weak anomaly에서는
+learned-composed가 `0.196211`까지 개선되어 verified `0.200978`, hand-composed `0.207649`,
+sequential `0.215107`보다 좋다. 하지만 clean miss는 아직 복구하지 못한다. Clean
+learned-composed는 `0.166563`으로 neutral이고, verified top-up `0.159338` 및 hand adaptive
+`0.154867`보다 나쁘다. 따라서 다음 실패는 clean no-harm top-up이다. Clean stream에서 작은
+correction budget을 써야 할 때를 학습하되, noisy over-observation 실패를 다시 열지 않아야 한다.

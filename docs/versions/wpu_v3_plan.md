@@ -390,6 +390,15 @@ clean streams (`0.166575`) where verified top-up is better (`0.159478`). The
 next criterion is a learned no-harm composition gate, not more hand-tuned
 composition.
 
+That learned gate is now implemented as
+`wpu-learned-composed-online-observation`. It trains on paired
+sequential-versus-verified outcomes and uses only local feedback features, not
+tokenized full-state recomputation. At `N=8192`, `escape_rate=0.75`, it keeps
+the noisy objective at the sequential level (`0.181089`) while improving weak
+anomaly to `0.196211`, better than verified (`0.200978`) and hand-composed
+(`0.207649`). The gate remains neutral on clean streams (`0.166563`), so the
+next criterion is clean no-harm top-up recovery.
+
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on
 state accuracy, latency, memory traffic, and long-horizon integrity under the

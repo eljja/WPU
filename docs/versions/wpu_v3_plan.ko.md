@@ -371,12 +371,13 @@ verified top-up `0.159478`보다 나쁘다. 따라서 다음 기준은 hand-tune
 verified path의 paired outcome에서 학습하고, tokenized full-state recomputation이나
 inference-time clean-recovery prior가 아니라 local feedback feature와 held-out paired-objective
 threshold calibration을 사용한다. 또한 local trim abstention이 stable noisy stream에서 learned gate가
-sequential budget cut을 되돌리지 않게 한다. `N=8192`, `escape_rate=0.75`에서 clean miss는 verified
-수준인 `0.159879`까지 복구되고(sequential `0.166986`), weak anomaly도 verified 수준인 `0.200428`까지
-복구된다(sequential `0.215341`). noisy strict no-harm도 sequential objective `0.181089`로 보존되며
-verified `0.193234`보다 좋다. selected work는 `K≈32` 근처로 bounded하게 유지된다. 다음 기준은
-labeled shift data 없이 noisy labeled-calibration gap `0.180643`을 줄이고, 이후 baseline-complete
-learned propagation으로 넘어가는 것이다.
+sequential budget cut을 되돌리지 않게 하며, high false-positive-pressure stopping은 labeled shift
+data 없이 over-observation을 줄인다. `N=8192`, `escape_rate=0.75`에서 clean miss는 verified 수준인
+`0.159349`까지 복구되고(sequential `0.166053`), weak anomaly도 verified 수준인 `0.200713`까지
+복구된다(sequential `0.215764`). noisy shift는 `0.174402`까지 개선되어 labeled calibration
+`0.180113`과 verified `0.193234`보다 좋다. selected work는 `K≈32` 근처로 bounded하게 유지된다.
+다음 기준은 labeled shift calibration이 더 작은 budget을 선택하는 lower-escape noisy gap을 줄이고,
+이후 baseline-complete learned propagation으로 넘어가는 것이다.
 
 하지만 이것은 P2 완료가 아니다. 다음에 필요한 것은 같은 world-copy stream에서 WPU와
 token/graph/dense baseline을 state accuracy, latency, memory traffic, long-horizon

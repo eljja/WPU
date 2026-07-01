@@ -209,11 +209,13 @@ Use these reports for paper-level claims:
   from paired sequential/verified outcomes and calibrates its verification
   threshold on paired objectives, without an inference-time clean-recovery
   prior. A local trim abstention prevents the learned gate from undoing
-  sequential budget cuts in stable noisy streams. It recovers clean to verified
-  level (`0.159879`), weak anomaly to verified level (`0.200428`), and preserves
-  noisy strict no-harm at the sequential objective (`0.181089`), while keeping
-  selected work bounded near `K=32`. The remaining failure is closing the noisy
-  labeled-calibration gap (`0.180643`) without labeled shift data.
+  sequential budget cuts in stable noisy streams, and high false-positive
+  pressure stopping reduces over-observation without labeled shift data. It
+  recovers clean to verified level (`0.159349`), weak anomaly to verified level
+  (`0.200713`), and improves high-escape noisy shift to `0.174402`, better than
+  labeled calibration `0.180113`, while keeping selected work bounded near
+  `K=32`. The remaining failure is lower-escape noisy regimes where labeled
+  shift calibration can still select smaller budgets.
 - `objectification_relation_repair_probe_results.md`: objectification repair
   probe showing that geometry-derived relation hypotheses can recover a missing
   sparse frontier, while type-aware objectification is needed to avoid

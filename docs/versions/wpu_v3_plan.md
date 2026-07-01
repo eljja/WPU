@@ -395,14 +395,16 @@ That learned gate is now implemented as
 sequential-versus-verified outcomes and uses local feedback features plus
 held-out paired-objective threshold calibration, not tokenized full-state
 recomputation and not an inference-time clean-recovery prior. A local trim
-abstention now prevents the learned gate from undoing sequential budget cuts in
-stable noisy streams. At `N=8192`, `escape_rate=0.75`, it recovers clean misses
-to verified level (`0.159879` versus sequential `0.166986`), weak anomaly to
-verified level (`0.200428` versus sequential `0.215341`), and strict noisy
-no-harm to the sequential objective (`0.181089`, better than verified
-`0.193234`). Selected work remains bounded near `K=32`. The next criterion is
-closing the residual noisy labeled-calibration gap (`0.180643`) without using
-labeled shift data, then moving to baseline-complete learned propagation.
+abstention prevents the learned gate from undoing sequential budget cuts in
+stable noisy streams, and high false-positive-pressure stopping reduces
+over-observation without labeled shift data. At `N=8192`, `escape_rate=0.75`,
+it recovers clean misses to verified level (`0.159349` versus sequential
+`0.166053`), weak anomaly to verified level (`0.200713` versus sequential
+`0.215764`), and noisy shift to `0.174402`, better than labeled calibration
+`0.180113` and verified `0.193234`. Selected work remains bounded near `K=32`.
+The next criterion is closing the remaining lower-escape noisy gaps where
+labeled shift calibration still selects smaller budgets, then moving to
+baseline-complete learned propagation.
 
 This does not complete P2. The missing next step is a baseline-complete learned
 propagation benchmark that compares WPU against token/graph/dense baselines on

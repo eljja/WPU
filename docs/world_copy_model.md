@@ -386,11 +386,13 @@ pressure, high-anomaly background fraction, and clean-recovery evidence. It no
 longer uses an inference-time clean-recovery prior; instead, a held-out paired
 objective calibration chooses the verification threshold, and a local trim
 abstention prevents the learned gate from undoing sequential budget cuts in
-stable noisy streams. At `N=8192`, `escape_rate=0.75`, learned-composed recovers
-clean misses to the verified level (`0.159879` versus sequential `0.166986`),
-recovers weak anomaly to verified level (`0.200428` versus sequential
-`0.215341`), and preserves strict noisy no-harm (`0.181089`, equal to
-sequential and better than verified `0.193234`). It keeps selected work bounded
-near `K=32`, far below dense `N=8192`. The remaining gap is no longer noisy
-no-harm, but closing the noisy labeled-calibration reference gap (`0.180643`)
-without using labeled shift data.
+stable noisy streams. The latest sequential stopper also becomes more
+cost-aware when bounded background evidence indicates high false-positive
+pressure. At `N=8192`, `escape_rate=0.75`, learned-composed recovers clean
+misses to the verified level (`0.159349` versus sequential `0.166053`),
+recovers weak anomaly to verified level (`0.200713` versus sequential
+`0.215764`), and improves noisy shift to `0.174402`, better than labeled
+calibration `0.180113` and verified `0.193234`. It keeps selected work bounded
+near `K=32`, far below dense `N=8192`. The remaining gap is not high-escape
+noisy shift; it is the lower-escape noisy regime, where labeled shift
+calibration can still choose a smaller budget than online hit/miss feedback.

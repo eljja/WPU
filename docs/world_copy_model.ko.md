@@ -356,9 +356,11 @@ budget, sequential trim, observed hit precision, support deficit, background ano
 high-anomaly background fraction, clean-recovery evidence 같은 WPU-native feedback feature를
 사용한다. 이제 inference-time clean-recovery prior는 쓰지 않고, held-out paired objective로
 verification threshold를 보정하며, local trim abstention으로 stable noisy stream에서 learned gate가
-sequential budget cut을 되돌리지 않게 한다. `N=8192`, `escape_rate=0.75`에서 learned-composed는
-clean miss를 verified 수준인 `0.159879`까지 복구한다(sequential `0.166986`). 또한 weak anomaly도
-verified 수준인 `0.200428`까지 복구한다(sequential `0.215341`). noisy strict no-harm도 보존되어
-`0.181089`로 sequential과 같고 verified `0.193234`보다 좋다. selected work는 dense `N=8192`보다
-훨씬 작은 `K≈32` 근처로 유지된다. 남은 gap은 noisy no-harm이 아니라, labeled shift data 없이
-noisy labeled-calibration reference `0.180643`과의 차이를 줄이는 것이다.
+sequential budget cut을 되돌리지 않게 한다. 최신 sequential stopper는 bounded background evidence가
+높은 false-positive pressure를 가리킬 때 더 cost-aware하게 멈춘다. `N=8192`,
+`escape_rate=0.75`에서 learned-composed는 clean miss를 verified 수준인 `0.159349`까지 복구한다
+(sequential `0.166053`). 또한 weak anomaly도 verified 수준인 `0.200713`까지 복구한다(sequential
+`0.215764`). noisy shift는 `0.174402`까지 개선되어 labeled calibration `0.180113`과 verified
+`0.193234`보다 좋다. selected work는 dense `N=8192`보다 훨씬 작은 `K≈32` 근처로 유지된다.
+남은 gap은 high-escape noisy shift가 아니라, labeled shift calibration이 online hit/miss feedback보다
+더 작은 budget을 선택할 수 있는 lower-escape noisy regime이다.

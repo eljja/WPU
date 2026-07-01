@@ -825,7 +825,13 @@ def sequential_observation_set(
     observed: list[str] = []
     hits = 0
     false_streak = 0
-    min_hits_before_stop = max(2, int(math.ceil(0.45 * proposed_budget)))
+    noisy_false_positive_pressure = high_anomaly_background_fraction(scene, calibration)
+    if noisy_false_positive_pressure >= 0.10 and calibration.offset <= 0.03:
+        min_hits_before_stop = max(1, int(math.ceil(0.25 * proposed_budget)))
+        min_precision_before_stop = 0.50
+    else:
+        min_hits_before_stop = max(2, int(math.ceil(0.45 * proposed_budget)))
+        min_precision_before_stop = 0.65
     for oid in ranked_observations[:proposed_budget]:
         observed.append(oid)
         if oid in scene.hidden_unknown:
@@ -834,7 +840,7 @@ def sequential_observation_set(
             continue
         false_streak += 1
         precision = hits / max(len(observed), 1)
-        if false_streak >= 1 and hits >= min_hits_before_stop and precision >= 0.65:
+        if false_streak >= 1 and hits >= min_hits_before_stop and precision >= min_precision_before_stop:
             break
     return set(observed)
 

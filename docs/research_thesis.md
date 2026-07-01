@@ -173,10 +173,10 @@ The current repository supports an early but meaningful prototype-level claim:
   verified result, but remains neutral on clean streams. The updated learned
   safety-calibrated composition gate removes the inference-time clean prior,
   uses paired-objective threshold calibration, and adds local trim abstention.
-  It recovers clean to `0.159879` and weak anomaly to `0.200428`, both at the
-  verified level, while preserving noisy strict no-harm at `0.181089`. The
-  unresolved step is closing the residual gap to labeled calibration without
-  using labeled shift data.
+  It recovers clean to `0.159349` and weak anomaly to `0.200713`, both at the
+  verified level, while improving high-escape noisy shift to `0.174402`, better
+  than labeled calibration `0.180113`. The unresolved step is closing
+  lower-escape noisy gaps without labeled shift data.
 - PyBullet experiments ground the claim in simulator-derived object state,
   including mechanism shift, calibration, objectification quality, and
   long-horizon rollout diagnostics.
